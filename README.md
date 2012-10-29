@@ -46,6 +46,16 @@ First, you need to install the Python dependencies:
 easy_install --user rope ropemode ropemacs
 ```
 
+Sadly, Pymacs itself is not available via pypi, so you need to install
+it by hand:
+
+```
+git clone https://github.com/pinard/Pymacs.git
+cd Pymacs
+make
+python setup.py install --user
+```
+
 Then, add the following to your .emacs:
 
 ```Lisp
