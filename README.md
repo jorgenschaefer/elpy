@@ -185,3 +185,7 @@ If you like to live on the edge, get the dependencies as source:
 - Ropemacs: `hg clone https://bitbucket.org/agr/ropemacs`
 - auto-complete: `git clone git://github.com/auto-complete/auto-complete.git`
 - yasnippet: `git clone git://github.com/capitaomorte/yasnippet.git`
+
+## Name
+
+_Pyde_ rhymes with _Hyde._ Dr. Reckyll was not available for comment.
