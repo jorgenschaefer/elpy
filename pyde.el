@@ -504,16 +504,45 @@ See `pyde-refactor-list' for a list of commands."
 
 (defun pyde-doc-show (package object)
   "Show the Python web documentation on package PACKAGE and object OBJECT."
-  (interactive
-   (let* ((package (completing-read "Documentation on package: "
-                                    (pyde--doc-package-index)
-                                    nil t))
-          (object (completing-read (format "Documentation on object in %s: "
-                                           package)
-                                   (pyde--doc-package-list package))))
-     (list package object)))
+  (interactive (pyde--doc-show-read-package-and-object))
   (browse-url (format"http://docs.python.org/library/%s.html#%s"
-                     package object)))
+                     package
+                     (format "%s.%s" package object))))
+
+(defun pyde--doc-read-backspace (&rest args)
+  "Function called on backspace when completing in minibuffer."
+  (interactive)
+  (if (equal "" (field-string))
+      (throw 'one-level-up nil)
+    (call-interactively 'delete-backward-char)))
+
+(defun pyde--doc-show-read-package-and-object ()
+  "Read a package and object within that package from the user."
+  (let* ((package-map
+          (let ((map (make-sparse-keymap)))
+            (set-keymap-parent map minibuffer-local-must-match-map)
+            (define-key map (kbd ".") 'minibuffer-complete-and-exit)
+            map))
+         (object-map
+          (let ((map (make-sparse-keymap)))
+            (set-keymap-parent map minibuffer-local-completion-map)
+            (define-key map (kbd "DEL") 'pyde--doc-read-backspace)
+            (define-key map (kbd "<backspace>") 'pyde--doc-read-backspace)
+            map))
+         package object)
+    (while (not object)
+      (setq package
+            (let ((minibuffer-local-must-match-map package-map))
+              (completing-read "Documentation: "
+                               (pyde--doc-package-index)
+                               nil t package)))
+      (setq object
+            (catch 'one-level-up
+              (let ((minibuffer-local-completion-map object-map))
+                (completing-read (format "Documentation: %s."
+                                         package)
+                                 (pyde--doc-package-list package))))))
+    (list package object)))
 
 (defvar pyde--doc-package-index nil
   "Cache of the the documentation index for Python.")
