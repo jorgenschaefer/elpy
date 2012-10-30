@@ -619,6 +619,8 @@ This also initializes `pyde--ropemacs-docs'."
 (defun ac-yasnippet-candidates ()
   (all-completions ac-prefix (yas-active-keys)))
 
+;;; yasnippet 0.8 lacks this useful helper function, will be included
+;;; in yasnippet 0.9.
 (when (not (fboundp 'yas-active-keys))
   (defun yas-active-keys ()
     "Return all active trigger keys for current buffer and point"
