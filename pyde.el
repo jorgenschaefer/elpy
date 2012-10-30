@@ -533,10 +533,10 @@ This is an alist mapping titles to URLs."
                         "href=\"\\([a-zA-Z][^\"#]*\\)\\.html.*&#8212;"
                         nil t)
                   (add-to-list 'result (match-string 1)))
-                (setq pyde--doc-index (nreverse result))))
+                (setq pyde--doc-package-index (nreverse result))))
           (kill-buffer buf)))))
 
-(defvar pyde--doc-package-list (make-hash-table)
+(defvar pyde--doc-package-list (make-hash-table :test 'equal)
   "A hash mapping package names to their contents.")
 (defun pyde--doc-package-list (package)
   "Return a list of objects in this package."
