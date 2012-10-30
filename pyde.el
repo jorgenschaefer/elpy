@@ -333,7 +333,7 @@ C-c C-r      `pyde-refactor'"
         (new (locate-dominating-file buffer-file-name ".ropeproject")))
     (cond
      ;; Everything is set up correctly
-     ((equal old new)
+     ((and old new (equal old new))
       t)
      ;; A better project exists, open it
      (new 
