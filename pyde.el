@@ -485,6 +485,7 @@ See `pyde-refactor-list' for a list of commands."
 
 (defun pyde-doc-rope ()
   "Show Rope documentation on the thing at point."
+  (interactive)
   (let ((doc (rope-get-doc)))
     (if doc
         (with-help-window "*Python Doc*"
