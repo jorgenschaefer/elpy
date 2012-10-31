@@ -503,12 +503,14 @@ See `pyde-refactor-list' for a list of commands."
    (format "https://www.google.com/search?q=site:docs.python.org%%20%s"
            what)))
 
-(defun pyde-doc-show (package object)
-  "Show the Python web documentation on package PACKAGE and object OBJECT."
+(defun pyde-doc-show (package object anchor)
+  "Show the Python web documentation on package PACKAGE and object OBJECT.
+
+ANCHOR is the package name in the HTML file."
   (interactive (pyde--doc-show-read-package-and-object))
   (browse-url (format"http://docs.python.org/library/%s.html#%s"
                      package
-                     (format "%s.%s" package object))))
+                     (format "%s.%s" anchor object))))
 
 (defun pyde--doc-read-backspace (&rest args)
   "Function called on backspace when completing in minibuffer."
@@ -530,7 +532,7 @@ See `pyde-refactor-list' for a list of commands."
             (define-key map (kbd "DEL") 'pyde--doc-read-backspace)
             (define-key map (kbd "<backspace>") 'pyde--doc-read-backspace)
             map))
-         package object)
+         package object anchor)
     (while (not object)
       (setq package
             (let ((minibuffer-local-must-match-map package-map))
@@ -543,7 +545,10 @@ See `pyde-refactor-list' for a list of commands."
                 (completing-read (format "Documentation: %s."
                                          package)
                                  (pyde--doc-package-list package))))))
-    (list package object)))
+    (setq anchor (gethash (cons package object)
+                          pyde--doc-package-anchors
+                          object))
+    (list package object (or anchor package))))
 
 (defvar pyde--doc-package-index nil
   "Cache of the the documentation index for Python.")
@@ -568,6 +573,10 @@ This is an alist mapping titles to URLs."
 
 (defvar pyde--doc-package-list (make-hash-table :test 'equal)
   "A hash mapping package names to their contents.")
+
+(defvar pyde--doc-package-anchors (make-hash-table :test 'equal)
+  "A hash mapping object names to their HTML anchors.")
+
 (defun pyde--doc-package-list (package)
   "Return a list of objects in this package."
   (or (gethash package pyde--doc-package-list)
@@ -576,12 +585,16 @@ This is an alist mapping titles to URLs."
                           package))))
         (unwind-protect
             (with-current-buffer buf
-              (let ((result nil))
+              (let ((result nil)
+                    (case-fold-search t))
                 (goto-char (point-min))
                 (while (re-search-forward
-                        (format "id=\"%s.\\([^\"]*\\)\"" package)
+                        (format "id=\"\\([^\"]*\\)\\.\\([^\"]*\\)\"" package)
                         nil t)
-                  (add-to-list 'result (match-string 1)))
+                  (puthash (cons package (match-string 2))
+                           (match-string 1)
+                           pyde--doc-package-anchors)
+                  (add-to-list 'result (match-string 2)))
                 (setq result (nreverse result))
                 (puthash package result pyde--doc-package-list)
                 result))
