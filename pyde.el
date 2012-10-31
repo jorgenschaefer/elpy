@@ -188,6 +188,7 @@ then.
 If you are still having trouble, visit #emacs on
 irc.freenode.net.")))
 
+(require 'python)
 (when (not (require 'pymacs nil t))
   (pyde-installation-instructions)
   (error "Error during Pyde initialization"))
@@ -305,6 +306,9 @@ C-c C-r      `pyde-refactor'"
     (pyde-setup-project))
   (cond
    (pyde-mode
+    (eldoc-mode 1)
+    (set (make-local-variable 'eldoc-documentation-function)
+         'pyde-eldoc-documentation)
     (yas-reload-all)
     (yas-minor-mode 1)
     (setq ac-sources
@@ -315,17 +319,16 @@ C-c C-r      `pyde-refactor'"
             ac-source-dictionary
             ac-source-words-in-same-mode-buffers))
     (auto-complete-mode 1)
-    (set (make-local-variable 'eldoc-documentation-function)
-         'pyde-eldoc-documentation)
     )
    (t
+    (eldoc-mode 1)
+    (set (make-local-variable 'eldoc-documentation-function)
+         nil)
     (yas-minor-mode 0)
     (auto-complete-mode 0)
     (setq ac-sources '(ac-source-abbrev
                        ac-source-dictionary
-                       ac-source-words-in-same-mode-buffers))
-    (set (make-local-variable 'eldoc-documentation-function)
-         nil))))
+                       ac-source-words-in-same-mode-buffers)))))
 
 (defun pyde-setup-project ()
   "Set up the Rope project for the current file."
