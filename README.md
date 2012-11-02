@@ -19,12 +19,14 @@ Python.
   While you write, the minibuffer will show the call signature of
   the current function.
 - **Code Navigation (using rope and python.el):**
-  Quickly jump to the definition of a function or class, find
-  callers of the current function, or browse all definitions in the
-  current file. `find-file-at-point' will also find module source
-  files from import statements.
+  Quickly jump to the definition of a function or class, find callers
+  of the current function, or browse all definitions in the current
+  file. `find-file-at-point` will also find module source files from
+  import statements.
 - **Inline Documentation (using rope):**
   Read the help() output of the object at point with a quick key shortcut.
+- **On-the-fly checks (using flymake)**
+  Highlight errors in your code while you edit it.
 - **Python web documentation:**
   Simply access the Python web documentation using a tab-completed
   list of modules and objects.
@@ -71,6 +73,15 @@ Then, add further lines:
 ```Lisp
 (package-initialize)
 (pyde-enable)
+```
+
+You need to set `python-check-command` to a command you have
+installed. Any combination of `pyflakes`, `pep8` and `pylint` are
+useful, and all available via `easy_install` and `pip`. Also see the
+`python-check.sh` utility to use all of them at once.
+
+```Lisp
+(setq python-check-command "python-check.sh")
 ```
 
 If you want to use IPython (make sure it's installed), add:

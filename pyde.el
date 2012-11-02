@@ -52,7 +52,11 @@
 ;;   files from import statements.
 
 ;; - Inline Documentation (using rope)
-;;   Read the help() output of the object at point with a quick key shortcut.
+;;   Read the help() output of the object at point with a quick key
+;;   shortcut.
+
+;; - **On-the-fly checks (using flymake)**
+;;   Highlight errors in your code while you edit it.
 
 ;; - Python web documentation
 ;;   Simply access the Python web documentation using a tab-completed
@@ -73,6 +77,15 @@
 
 ;; (package-initialize)
 ;; (pyde-enable)
+
+;; To use on-the-fly highlighting of errors and for the code check
+;; command, you need to set `python-check-command' to a command you
+;; have installed. Any combination of pyflakes, pep8 and pylint are
+;; useful, and all available via easy_install and pip. Also see the
+;; python-check.sh utility from the same repository as this file to
+;; use all of them at once.
+
+;; (setq python-check-command "python-check.sh")
 
 ;; If you want to use IPython (make sure it's installed), add:
 
@@ -231,9 +244,6 @@ irc.freenode.net.")))
     (define-key map (kbd "M-e") 'pyde-nav-forward-statement)
     (define-key map (kbd "M-a") 'pyde-nav-backward-statement)
 
-    ;; Syntax checking
-    (define-key map (kbd "C-c C-v") 'pyde-check)
-
     ;; Shell interaction
     (define-key map (kbd "C-c C-c") 'pyde-shell-send-region-or-buffer)
 
@@ -244,6 +254,7 @@ irc.freenode.net.")))
     (define-key map (kbd "C-c C-g C-g") 'rope-jump-to-global)
 
     ;; Documentation
+    (define-key map (kbd "C-c C-w") 'pyde-check)
     (define-key map (kbd "C-c C-d") 'pyde-doc-rope)
     (define-key map (kbd "C-c C-w C-s") 'pyde-doc-search)
     (define-key map (kbd "C-c C-w C-w") 'pyde-doc-show)
@@ -285,10 +296,6 @@ C-c >        `python-indent-shift-right'
 C-M-q        `prog-indent-sexp'
 M-q          `python-fill-paragraph'
 
-Syntax Checking:
-
-C-c C-v      `pyde-check'
-
 Python Shell Interaction:
 
 C-c C-z      `python-shell-switch-to-shell'
@@ -311,7 +318,7 @@ M-e          `pyde-nav-forward-statement'
 
 Documentation
 
-C-c C-v      `python-check'
+C-c C-w      `pyde-check'
 
 C-c C-d      `pyde-doc-rope'
 C-c C-w C-s  `pyde-doc-search'
@@ -346,8 +353,7 @@ C-c C-r      `pyde-refactor'"
             ac-source-abbrev
             ac-source-dictionary
             ac-source-words-in-same-mode-buffers))
-    (auto-complete-mode 1)
-    )
+    (auto-complete-mode 1))
    (t
     (eldoc-mode 0)
     (flymake-mode 0)
@@ -424,6 +430,7 @@ whole buffer."
                         " "
                         (shell-quote-argument (buffer-file-name)))))
 
+
 (defun pyde-nav-forward-statement ()
   "Move forward one statement.
 
@@ -446,7 +453,6 @@ beginning of the previous one if already at the beginning."
     (python-nav-beginning-of-statement)
     (when (= old (point))
       (python-nav-backward-statement))))
-
 
 (defvar pyde-refactor-list
   '(("Redo" . rope-redo)
