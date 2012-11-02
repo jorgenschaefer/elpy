@@ -90,6 +90,26 @@
 ;; set. We are using `defvar' to avoid overwriting a user's
 ;; configuration, if any.
 
+(defvar flymake-no-changes-timeout 60
+  "Time to wait after last change before starting compilation.
+
+The original value of 0.5 is too short for Python code, as that
+will result in the current line to be highlighted most of the
+time, and that's annoying. This value might be on the long side,
+but at least it does not, in general, interfere with normal
+interaction.
+
+Value set by pyde.")
+
+(defvar flymake-start-syntax-check-on-newline nil
+  "Start syntax check if newline char was added/removed from the buffer.
+
+This should be nil for Python, as most lines with a colon at the
+end will mean the next line is always highlighted as error, which
+is not helpful and mostly annoying.
+
+Value set by pyde.")
+
 (defvar ropemacs-enable-autoimport t
   "Specifies whether autoimport should be enabled.
 
@@ -316,6 +336,7 @@ C-c C-r      `pyde-refactor'"
     (eldoc-mode 1)
     (set (make-local-variable 'eldoc-documentation-function)
          'pyde-eldoc-documentation)
+    (flymake-mode 1)
     (yas-reload-all)
     (yas-minor-mode 1)
     (setq ac-sources
@@ -328,9 +349,8 @@ C-c C-r      `pyde-refactor'"
     (auto-complete-mode 1)
     )
    (t
-    (eldoc-mode 1)
-    (set (make-local-variable 'eldoc-documentation-function)
-         nil)
+    (eldoc-mode 0)
+    (flymake-mode 0)
     (yas-minor-mode 0)
     (auto-complete-mode 0)
     (setq ac-sources '(ac-source-abbrev
@@ -503,6 +523,22 @@ See `pyde-refactor-list' for a list of commands."
         ;; Hence, we don't do anything for now.
         (buffer-string)))))
 
+
+;;;;;;;;;;;
+;;; Flymake
+
+(eval-after-load "flymake"
+  '(add-to-list 'flymake-allowed-file-name-masks 
+                '("\\.py\\'" pyde-flymake-python-init)))
+
+(defun pyde-flymake-python-init () 
+  ;; Make sure it's not a remote buffer or flymake would not work
+  (let* ((temp-file (flymake-init-create-temp-buffer-copy 
+                     'flymake-create-temp-inplace)) 
+         (local-file (file-relative-name 
+                      temp-file 
+                      (file-name-directory buffer-file-name)))) 
+    (list python-check-command (list local-file))))
 
 ;;;;;;;;;;;;;;;;;;;;;;
 ;;; Rope documentation
