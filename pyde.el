@@ -211,6 +211,9 @@ irc.freenode.net.")))
     (define-key map (kbd "M-e") 'pyde-nav-forward-statement)
     (define-key map (kbd "M-a") 'pyde-nav-backward-statement)
 
+    ;; Syntax checking
+    (define-key map (kbd "C-c C-v") 'pyde-check)
+
     ;; Shell interaction
     (define-key map (kbd "C-c C-c") 'pyde-shell-send-region-or-buffer)
 
@@ -261,6 +264,10 @@ C-c <        `python-indent-shift-left'
 C-c >        `python-indent-shift-right'
 C-M-q        `prog-indent-sexp'
 M-q          `python-fill-paragraph'
+
+Syntax Checking:
+
+C-c C-v      `pyde-check'
 
 Python Shell Interaction:
 
@@ -387,6 +394,15 @@ whole buffer."
   (if (region-active-p)
       (python-shell-send-region)
     (python-shell-send-buffer)))
+
+(defun pyde-check ()
+  "Run `python-check-command' on the current buffer's file."
+  (interactive)
+  (when (not (buffer-file-name))
+    (error "Can't check a buffer without a file."))
+  (python-check (concat python-check-command
+                        " "
+                        (shell-quote-argument (buffer-file-name)))))
 
 (defun pyde-nav-forward-statement ()
   "Move forward one statement.
