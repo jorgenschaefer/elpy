@@ -486,10 +486,26 @@ See `pyde-refactor-list' for a list of commands."
 ;;;;;;;;;;;;;;;;;;;;;;
 ;;; Rope documentation
 
+(defun pyde-rope-get-doc ()
+  "Return a docstring for the symbol at point, or nil."
+  (let ((doc (rope-get-doc)))
+    (when (and doc
+               (not (equal doc "")))
+      doc)))
+
 (defun pyde-doc-rope ()
   "Show Rope documentation on the thing at point."
   (interactive)
-  (let ((doc (rope-get-doc)))
+  (let ((doc (or (pyde-rope-get-doc)
+                 ;; This will get the right position for
+                 ;; multiprocessing.Queue(quxqux_|_)
+                 (ignore-errors
+                  (save-excursion
+                    (pyde-nav-backward-statement)
+                    (with-syntax-table python-dotty-syntax-table
+                      (forward-symbol 1)
+                      (backward-char 1))
+                    (pyde-rope-get-doc))))))
     (if doc
         (with-help-window "*Python Doc*"
           (princ doc))
