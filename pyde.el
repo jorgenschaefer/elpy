@@ -348,18 +348,23 @@ C-c C-r      `pyde-refactor'"
 (defun pyde-use-ipython ()
   "Set defaults to use IPython instead of the standard interpreter."
   (interactive)
-  ;; This is from the python.el commentary.
-  ;; Settings for IPython 0.11:
-  (setq python-shell-interpreter "ipython"
-        python-shell-interpreter-args ""
-        python-shell-prompt-regexp "In \\[[0-9]+\\]: "
-        python-shell-prompt-output-regexp "Out\\[[0-9]+\\]: "
-        python-shell-completion-setup-code
-        "from IPython.core.completerlib import module_completion"
-        python-shell-completion-module-string-code
-        "';'.join(module_completion('''%s'''))\n"
-        python-shell-completion-string-code
-        "';'.join(get_ipython().Completer.all_completions('''%s'''))\n"))
+  (if (boundp 'python-python-command)
+      ;; Emacs 24 until 24.3
+      (setq python-python-command "ipython")
+    ;; Emacs 24.3 and onwards.
+
+    ;; This is from the python.el commentary.
+    ;; Settings for IPython 0.11:
+    (setq python-shell-interpreter "ipython"
+          python-shell-interpreter-args ""
+          python-shell-prompt-regexp "In \\[[0-9]+\\]: "
+          python-shell-prompt-output-regexp "Out\\[[0-9]+\\]: "
+          python-shell-completion-setup-code
+          "from IPython.core.completerlib import module_completion"
+          python-shell-completion-module-string-code
+          "';'.join(module_completion('''%s'''))\n"
+          python-shell-completion-string-code
+          "';'.join(get_ipython().Completer.all_completions('''%s'''))\n")))
 
 (defun pyde-clean-modeline ()
   "Clean up the mode line by removing some lighters.
@@ -688,6 +693,20 @@ This also initializes `pyde--ropemacs-docs'."
     "Return all active trigger keys for current buffer and point"
     (remove-duplicates (mapcan #'yas--table-all-keys (yas--get-snippet-tables))
                        :test #'string=)))
+
+;; Functions for Emacs 24 before 24.3
+(when (not (fboundp 'python-shell-send-region))
+  (defalias 'python-shell-send-region 'python-send-region))
+(when (not (fboundp 'python-shell-send-buffer))
+  (defalias 'python-shell-send-buffer 'python-send-buffer))
+(when (not (fboundp 'python-nav-end-of-statement))
+  (defalias 'python-nav-end-of-statement 'python-end-of-statement))
+(when (not (fboundp 'python-nav-beginning-of-statement))
+  (defalias 'python-nav-beginning-of-statement 'beginning-of-sexp))
+(when (not (fboundp 'python-nav-forward-statement))
+  (defalias 'python-nav-forward-statement 'forward-sexp))
+(when (not (fboundp 'python-nav-backward-statement))
+  (defalias 'python-nav-backward-statement 'backward-sexp))
 
 (provide 'pyde)
 ;;; pyde.el ends here
