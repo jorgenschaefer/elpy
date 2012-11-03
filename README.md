@@ -127,6 +127,17 @@ C-M-x        Send the current class or function to the interpreter
 C-c C-c      Send the current region (if active) or buffer to the interpreter
 ```
 
+### Virtual Environment Support
+
+Easily switch between virtual environments. You will need to restart
+any inferior Python shell or Pymacs interaction after switching a
+virtual environment.
+
+```
+C-c C-e      Create, activate or switch to a virtual environment
+C-u C-c C-e  Deactivate the current virtual environment
+```
+
 ### Code Navigation
 
 Navigate quickly through your source file and project.
