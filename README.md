@@ -25,9 +25,9 @@ Python.
   import statements.
 - **Inline Documentation (using rope):**
   Read the help() output of the object at point with a quick key shortcut.
-- **On-the-fly checks (using flymake)**
+- **On-the-fly checks (using flymake):**
   Highlight errors in your code while you edit it.
-- **Virtualenv support**
+- **Virtualenv support:**
   Use C-c C-e to activate a virtual environment thorough your Emacs
   and for subprocesses. Use C-u C-c C-e to disable a virtual
   environment.
