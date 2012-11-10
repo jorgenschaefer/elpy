@@ -12,6 +12,9 @@ Python.
   Emacs will suggest completions as you type and, after a short
   delay, pop up a select box with proposed completions, including
   docstrings for those completions when available.
+- **Indentation highlighting (using highlight-indentation):**
+  Highlight indentation levels in code so you can always see which
+  code belongs where.
 - **Snippet Expansion (using yasnippet and auto-complete):**
   Some completion options are highlighted and will expand into full
   code snippets that you just need to fill out.

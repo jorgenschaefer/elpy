@@ -37,6 +37,10 @@
 ;;   delay, pop up a select box with proposed completions, including
 ;;   docstrings for those completions when available.
 
+;; - Indentation highlighting (using highlight-indentation)
+;;   Highlight indentation levels in code so you can always see which
+;;   code belongs where.
+
 ;; - Snippet Expansion (using yasnippet and auto-complete)
 ;;   Some completion options are highlighted and will expand into full
 ;;   code snippets that you just need to fill out.
@@ -236,6 +240,7 @@ irc.freenode.net.")))
    (pyde-installation-instructions)
    (error "Error during Pyde initialization")))
 (require 'virtualenv)
+(require 'highlight-indentation)
 (require 'yasnippet)
 (require 'auto-complete-config)
 
@@ -358,6 +363,7 @@ C-c C-r      `pyde-refactor'"
          'pyde-eldoc-documentation)
     (flymake-mode 1)
     (virtualenv-mode 1)
+    (highlight-indentation-mode 1)
     (yas-reload-all)
     (yas-minor-mode 1)
     (setq ac-sources
@@ -373,6 +379,7 @@ C-c C-r      `pyde-refactor'"
     (flymake-mode 0)
     ;; Global mode, leave it alone
     ;; (virtualenv-mode 0)
+    (highlight-indentation-mode 0)
     (yas-minor-mode 0)
     (auto-complete-mode 0)
     (setq ac-sources '(ac-source-abbrev
@@ -780,6 +787,17 @@ This also initializes `pyde--ropemacs-docs'."
   (defalias 'python-nav-forward-statement 'forward-sexp))
 (when (not (fboundp 'python-nav-backward-statement))
   (defalias 'python-nav-backward-statement 'backward-sexp))
+
+;; highlight-indentation 0.5 does not use modes yet
+(when (not (fboundp 'highlight-indentation-mode))
+  (defun highlight-indentation-mode (on-or-off)
+    (cond
+     ((and (= on-or-off 1)
+           (not highlight-indent-active))
+      (highlight-indentation))
+     ((and (= on-or-off 0)
+           highlight-indent-active)
+      (highlight-indentation)))))
 
 (provide 'pyde)
 ;;; pyde.el ends here
