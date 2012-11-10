@@ -58,7 +58,7 @@
 ;; - On-the-fly checks (using flymake)
 ;;   Highlight errors in your code while you edit it.
 
-;; - Virtualenv support
+;; - Virtualenv support (using virtualenv)
 ;;   Use C-c C-e to activate a virtual environment thorough your Emacs
 ;;   and for subprocesses. Use C-u C-c C-e to disable a virtual
 ;;   environment.
@@ -235,6 +235,7 @@ irc.freenode.net.")))
   (error
    (pyde-installation-instructions)
    (error "Error during Pyde initialization")))
+(require 'virtualenv)
 (require 'yasnippet)
 (require 'auto-complete-config)
 
@@ -253,7 +254,7 @@ irc.freenode.net.")))
     (define-key map (kbd "C-c C-c") 'pyde-shell-send-region-or-buffer)
 
     ;; Virtual Env support
-    (define-key map (kbd "C-c C-e") 'pyde-virtualenv)
+    (define-key map (kbd "C-c C-e") 'virtualenv)
 
     ;; Goto
     (define-key map (kbd "C-c C-g C-d") 'rope-goto-definition)
@@ -313,7 +314,7 @@ C-c C-c      `pyde-shell-send-region-or-buffer'
 
 Virtual Environments:
 
-C-c C-e      `pyde-virtualenv'
+C-c C-e      `virtualenv'
 
 Code Navigation
 
@@ -336,10 +337,6 @@ C-c C-d      `pyde-doc-rope'
 C-c C-w C-s  `pyde-doc-search'
 C-c C-w C-w  `pyde-doc-show'
 
-Virtualenv support
-
-C-c C-v      `pyde-virtualenv'
-
 Project support
 
 C-c C-p C-o  `rope-open-project'
@@ -360,7 +357,7 @@ C-c C-r      `pyde-refactor'"
     (set (make-local-variable 'eldoc-documentation-function)
          'pyde-eldoc-documentation)
     (flymake-mode 1)
-    (pyde-virtualenv-init-modeline)
+    (virtualenv-mode 1)
     (yas-reload-all)
     (yas-minor-mode 1)
     (setq ac-sources
@@ -374,7 +371,8 @@ C-c C-r      `pyde-refactor'"
    (t
     (eldoc-mode 0)
     (flymake-mode 0)
-    (pyde-virtualenv-init-modeline :disable)
+    ;; Global mode, leave it alone
+    ;; (virtualenv-mode 0)
     (yas-minor-mode 0)
     (auto-complete-mode 0)
     (setq ac-sources '(ac-source-abbrev
@@ -514,116 +512,6 @@ See `pyde-refactor-list' for a list of commands."
          (command (cdr (assoc action pyde-refactor-list))))
     (when (functionp command)
       (call-interactively command))))
-
-;;;;;;;;;;;;;;
-;;; Virtualenv
-
-(defvar pyde-virtualenv-current nil
-  "The current virtual env, or nil if none.")
-
-(defvar pyde-virtualenv-mode-line nil
-  "The mode line entry for virtualenv support.")
-
-(defun pyde-virtualenv-init-modeline (&optional disable)
-  "Initialize virtualenv support, or disable it for non-nil DISABLE.
-
-This will modify `moyde-line-format' to include the virtualenv
-indicator."
-  (if disable
-      (when (memq 'pyde-virtualenv-mode-line mode-line-format)
-        (setq mode-line-format (delq 'pyde-virtualenv-mode-line
-                                     mode-line-format)))
-    (let ((rest mode-line-format))
-      (catch 'break
-        (while rest
-          (when (eq 'vc-mode (car-safe (cadr rest)))
-            (setcdr rest (cons 'pyde-virtualenv-mode-line
-                               (cdr rest)))
-            (throw 'break nil))
-          (setq rest (cdr rest)))))))
-
-(defun pyde-virtualenv (virtualenv)
-  "Switch to virtualenv VIRTUALENV.
-
-If VIRTUALENV is an existing directory, it is assumed to be the
-location of an existing virtual environment. If it does not
-exist, it's created as a new virtual environment, and activated.
-
-If the argument is nil, or when a prefix argument is given, all
-changes to the environment are removed.
-
-NOTE: Both Pymacs and any inferior Python shell will be
-unaffected by this until you restart them. Doing so automatically
-might lose data, so we avoid that."
-  (interactive (list (if current-prefix-arg
-                         nil
-                       (read-directory-name "Virtual Environment: "))))
-  (when pyde-virtualenv-current
-    (pyde-virtualenv-deactivate))
-  (when virtualenv
-    (setq virtualenv (expand-file-name virtualenv))
-    (when (not (file-directory-p virtualenv))
-      (pyde-virtualenv-create virtualenv))
-    (pyde-virtualenv-activate virtualenv))
-  (if pyde-virtualenv-current
-      (message "Switched to virtualenv %s" (pyde-virtualenv-name))
-    (message "Deactivated virtualenv")))
-
-(defun pyde-virtualenv-name (&optional dir)
-  "Return the base name of directory DIR.
-
-Defaults to `pyde-virtualenv-current'."
-  (when (not dir)
-    (setq dir pyde-virtualenv-current))
-  (if (equal "/" (substring dir -1))
-      (file-name-base (substring dir 0 -1))
-    (file-name-base dir)))
-
-(defun pyde-virtualenv-activate (dir)
-  "Activate the virtual environment in DIR.
-
-This adjusts `exec-path' and $PATH, as well as making the
-virtualenv show up in the mode line."
-  (when (not (pyde-virtualenv-is-virtualenv dir))
-    (error (format "Directory %s is not a virtual environment"
-                   dir)))
-  (when pyde-virtualenv-current
-    (pyde-virtualenv-deactivate))
-  (setq exec-path (cons dir exec-path))
-  (setenv "PATH" (concat dir ":" (getenv "PATH")))
-  (setq pyde-virtualenv-current dir
-        pyde-virtualenv-mode-line (format "VEnv:%s"
-                                          (pyde-virtualenv-name)))
-  (force-mode-line-update))
-
-(defun pyde-virtualenv-deactivate ()
-  "Deactivate the current environment."
-  (when pyde-virtualenv-current
-    (setq exec-path (delete pyde-virtualenv-current exec-path))
-    (setenv "PATH"
-            (let ((dir pyde-virtualenv-current)
-                  (path (getenv "PATH")))
-              (with-temp-buffer
-                (insert path)
-                (goto-char (point-min))
-                (while (search-forward (concat dir ":") nil t)
-                  (replace-match ""))
-                (buffer-string))))
-    (setq pyde-virtualenv-current nil
-          pyde-virtualenv-mode-line nil)
-    (force-mode-line-update)))
-
-(defun pyde-virtualenv-create (dir)
-  "Create a new virtualenv in DIR."
-  (shell-command (format "virtualenv %s"
-                         (shell-quote-argument dir))))
-
-(defun pyde-virtualenv-is-virtualenv (dir)
-  "Return a true value iff DIR is an actual virtualenv."
-  (and (file-directory-p dir)
-       (file-exists-p (format "%s/bin/activate_this.py" dir))
-       (file-exists-p (format "%s/bin/python" dir))))
-
 
 ;;;;;;;;;
 ;;; Eldoc
