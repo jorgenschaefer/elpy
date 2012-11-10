@@ -248,13 +248,23 @@ Value set by pyde.")
     (with-current-buffer "*Pyde Installation*"
       (insert "Pyde could not be loaded successfully.\n"
               "\n")
-      (when (and (eq (car error) 'error)
-                 (stringp (cadr error))
-                 (string-match "Python:" (cadr error)))
+      (cond
+       ((and (eq (car error) 'error)
+             (stringp (cadr error))
+             (string-match "Python:" (cadr error)))
         (insert
 "The following Python error occurred
 
 " (cadr error)))
+       ((and (eq (car error) 'error)
+             (stringp (cadr error))
+             (string-match "Pymacs helper did not start" (cadr error))
+             (with-current-buffer (get-buffer-create "*Pymacs*")
+               (goto-char (point-min))
+               (re-search-forward "No module named Pymacs" nil t)))
+        (insert
+"Python can not find the Pymacs module, which means that the Python
+side of Pymacs was not correctly installed.")))
       (insert "
 The Python Development Environment requires a few Python packages
 to be installed before working properly. You can just use the
