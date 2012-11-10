@@ -201,20 +201,85 @@ Value set by pyde.")
 
 ;; Now, load the various modes we use.
 
-(defun pyde-installation-instructions ()
+(defun pyde-install-python-packages (&optional ignored)
+  "Install the required Python packages for the user."
+  (with-current-buffer (get-buffer-create "*Python Install*")
+    (fundamental-mode)
+    (erase-buffer)
+    (display-buffer (current-buffer))
+    (with-selected-window (get-buffer-window (current-buffer))
+      (insert "Installing Python packages.\n"
+              "Scroll down to see if there were any errors.\n\n")
+      (let ((commandlist nil)
+            (packages '("rope" "ropemode" "ropemacs")))
+        (cond
+         ((executable-find "easy_install")
+          (dolist (package packages)
+            (add-to-list 'commandlist
+                         (format "easy_install --user %s" package))))
+         ((executable-find "pip")
+          (dolist (package packages)
+            (add-to-list 'commandlist
+                         (format "pip install --user %s" package))))
+         (t
+          (insert "$ ...\n")
+          (insert "ERROR: Can't find either easy_install or pip, can't "
+                  "install packages.\n")))
+        (setq commandlist
+              (append commandlist
+                      '("mkdir ~/pyde-temp-install"
+                        "cd ~/pyde-temp-install && git clone https://github.com/pinard/Pymacs.git"
+                        "cd ~/pyde-temp-install/Pymacs && make"
+                        "cd ~/pyde-temp-install/Pymacs && python setup.py install --user")))
+        (dolist (cmd commandlist)
+          (insert "$ " cmd "\n")
+          (sit-for 0)
+          (call-process "sh" nil (current-buffer) t
+                        "-c" cmd)
+          (insert "\n")
+          (goto-char (point-max)))
+        (insert "\n"
+                "All done. Check for errors above and try to load Pyde again.\n")))))
+
+(defun pyde-installation-instructions (&optional error)
   "Show installation instructions."
   (interactive)
   (with-help-window "*Pyde Installation*"
-    (princ "Pyde installation is not finished yet.
+    (with-current-buffer "*Pyde Installation*"
+      (insert "Pyde could not be loaded successfully.\n"
+              "\n")
+      (when (and (eq (car error) 'error)
+                 (stringp (cadr error))
+                 (string-match "Python:" (cadr error)))
+        (insert
+"The following Python error occurred
 
+" (cadr error)))
+      (insert "
 The Python Development Environment requires a few Python packages
-to be installed before working properly. Sadly, one of them is a
-bit more complex.
+to be installed before working properly. You can just use the
+following button to install them automatically, or you can follow
+the instructions below to do so by hand.
+
+")
+        (insert-text-button "Install Python packages"
+                            'action 'pyde-install-python-packages)
+        (insert "
+
+If you are still having trouble, visit #emacs on
+irc.freenode.net.
+
+
+Manual installation:
 
 First, the easy ones. Please run the following command in a
 shell:
 
   easy_install --user rope ropemode ropemacs
+
+If you do not have easy_install, pip might be available:
+
+  pip install --user rope ropemode ropemacs
 
 The last missing module is Pymacs, which is sadly not available
 via easy_install. You will need to run the following:
@@ -225,20 +290,17 @@ via easy_install. You will need to run the following:
   python setup.py install --user
 
 Try loading pyde again once that is done. Everything should work
-then.
-
-If you are still having trouble, visit #emacs on
-irc.freenode.net.")))
+then."))))
 
 (require 'python)
-(when (not (require 'pymacs nil t))
-  (pyde-installation-instructions)
-  (error "Error during Pyde initialization"))
+
 (condition-case err
-    (pymacs-load "ropemacs" "rope-")
+    (progn
+      (require 'pymacs)
+      (pymacs-load "ropemacs" "rope-"))
   (error
-   (pyde-installation-instructions)
-   (error "Error during Pyde initialization")))
+   (pyde-installation-instructions err)))
+
 (require 'virtualenv)
 (require 'highlight-indentation)
 (require 'yasnippet)
