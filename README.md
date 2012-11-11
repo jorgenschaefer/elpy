@@ -30,9 +30,9 @@ Python.
   Read the help() output of the object at point with a quick key shortcut.
 - **On-the-fly checks (using flymake):**
   Highlight errors in your code while you edit it.
-- **Virtualenv support:**
-  Use C-c C-e to activate a virtual environment thorough your Emacs
-  and for subprocesses. Use C-u C-c C-e to disable a virtual
+- **Virtualenv support (using pyvirtualenv):**
+  Use `C-c C-e` to activate a virtual environment thorough your Emacs
+  and for subprocesses. Use `C-u C-c C-e` to disable a virtual
   environment.
 - **Python web documentation:**
   Simply access the Python web documentation using a tab-completed

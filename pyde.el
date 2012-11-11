@@ -62,7 +62,7 @@
 ;; - On-the-fly checks (using flymake)
 ;;   Highlight errors in your code while you edit it.
 
-;; - Virtualenv support (using virtualenv)
+;; - Virtualenv support (using pyvirtualenv)
 ;;   Use C-c C-e to activate a virtual environment thorough your Emacs
 ;;   and for subprocesses. Use C-u C-c C-e to disable a virtual
 ;;   environment.
@@ -311,7 +311,7 @@ then."))))
   (error
    (pyde-installation-instructions err)))
 
-(require 'virtualenv)
+(require 'pyvirtualenv)
 (require 'highlight-indentation)
 (require 'yasnippet)
 (require 'auto-complete-config)
@@ -331,7 +331,7 @@ then."))))
     (define-key map (kbd "C-c C-c") 'pyde-shell-send-region-or-buffer)
 
     ;; Virtual Env support
-    (define-key map (kbd "C-c C-e") 'virtualenv)
+    (define-key map (kbd "C-c C-e") 'pyvirtualenv)
 
     ;; Goto
     (define-key map (kbd "C-c C-g C-d") 'rope-goto-definition)
@@ -391,7 +391,7 @@ C-c C-c      `pyde-shell-send-region-or-buffer'
 
 Virtual Environments:
 
-C-c C-e      `virtualenv'
+C-c C-e      `pyvirtualenv'
 
 Code Navigation
 
@@ -434,7 +434,7 @@ C-c C-r      `pyde-refactor'"
     (set (make-local-variable 'eldoc-documentation-function)
          'pyde-eldoc-documentation)
     (flymake-mode 1)
-    (virtualenv-mode 1)
+    (pyvirtualenv-mode 1)
     (highlight-indentation-mode 1)
     (yas-reload-all)
     (yas-minor-mode 1)
@@ -450,7 +450,7 @@ C-c C-r      `pyde-refactor'"
     (eldoc-mode 0)
     (flymake-mode 0)
     ;; Global mode, leave it alone
-    ;; (virtualenv-mode 0)
+    ;; (pyvirtualenv-mode 0)
     (highlight-indentation-mode 0)
     (yas-minor-mode 0)
     (auto-complete-mode 0)
