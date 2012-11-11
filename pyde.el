@@ -243,7 +243,6 @@ Value set by pyde.")
 
 (defun pyde-installation-instructions (&optional error)
   "Show installation instructions."
-  (interactive)
   (with-help-window "*Pyde Installation*"
     (with-current-buffer "*Pyde Installation*"
       (insert "Pyde could not be loaded successfully.\n"
@@ -253,9 +252,10 @@ Value set by pyde.")
              (stringp (cadr error))
              (string-match "Python:" (cadr error)))
         (insert
-"The following Python error occurred
+"The following Python error occurred:
 
-" (cadr error)))
+" (cadr error) "
+"))
        ((and (eq (car error) 'error)
              (stringp (cadr error))
              (string-match "Pymacs helper did not start" (cadr error))
@@ -264,7 +264,13 @@ Value set by pyde.")
                (re-search-forward "No module named Pymacs" nil t)))
         (insert
 "Python can not find the Pymacs module, which means that the Python
-side of Pymacs was not correctly installed.")))
+side of Pymacs was not correctly installed.
+"))
+       (t
+        (insert "The following Emacs Lisp error occurred:
+
+" (format "%s" error) "
+")))
       (insert "
 The Python Development Environment requires a few Python packages
 to be installed before working properly. You can just use the
