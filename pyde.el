@@ -239,7 +239,9 @@ Value set by pyde.")
           (insert "\n")
           (goto-char (point-max)))
         (insert "\n"
-                "All done. Check for errors above and try to load Pyde again.\n")))))
+                "All done. Check for errors above and try to load Pyde again.\n\n")
+        (insert-text-button "Reload Pyde"
+                            'action 'pyde-load-python-packages)))))
 
 (defun pyde-installation-instructions (&optional error)
   "Show installation instructions."
@@ -308,15 +310,16 @@ via easy_install. You will need to run the following:
 Try loading pyde again once that is done. Everything should work
 then."))))
 
+(defun pyde-load-python-packages (&rest ignored)
+  (condition-case err
+      (progn
+        (require 'pymacs)
+        (pymacs-load "ropemacs" "rope-"))
+    (error
+     (pyde-installation-instructions err))))
+
 (require 'python)
-
-(condition-case err
-    (progn
-      (require 'pymacs)
-      (pymacs-load "ropemacs" "rope-"))
-  (error
-   (pyde-installation-instructions err)))
-
+(pyde-load-python-packages)
 (require 'pyvirtualenv)
 (require 'highlight-indentation)
 (require 'yasnippet)
