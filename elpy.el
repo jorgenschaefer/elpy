@@ -1,9 +1,9 @@
-;;; pyde.el --- Python Development Environment
+;;; elpy.el --- Emacs Lisp Python Environment
 
 ;; Copyright (C) 2012  Jorgen Schaefer <forcer@forcix.cx>
 
 ;; Author: Jorgen Schaefer <forcer@forcix.cx>
-;; URL: https://github.com/jorgenschaefer/pyde
+;; URL: https://github.com/jorgenschaefer/elpy
 ;; Version: 0.6
 ;; Package-Requires: ((pymacs "0.25") (auto-complete "1.4") (yasnippet "0.8") (fuzzy "0.1") (pyvirtualenv "1.0"))
 
@@ -22,7 +22,7 @@
 
 ;;; Commentary:
 
-;; The Python Development Environment in Emacs
+;; The Emacs Lisp Python Environment in Emacs
 
 ;; Emacs has excellent Python support through a number of packages.
 ;; The only problem is that every user needs to set up all of these
@@ -78,14 +78,14 @@
 ;;   your imports.
 
 ;; - Easy IPython support for those who use it
-;;   Simply run (pyde-use-ipython).
+;;   Simply run (elpy-use-ipython).
 
 ;; Setup:
 
 ;; Add the following to your .emacs:
 
 ;; (package-initialize)
-;; (pyde-enable)
+;; (elpy-enable)
 
 ;; To use on-the-fly highlighting of errors and for the code check
 ;; command, you need to set `python-check-command' to a command you
@@ -98,12 +98,12 @@
 
 ;; If you want to use IPython (make sure it's installed), add:
 
-;; (pyde-use-ipython)
+;; (elpy-use-ipython)
 
-;; If you find the (Python Pyde yas AC Rope ElDoc Fill) mode line
+;; If you find the (Python Elpy yas AC Rope ElDoc Fill) mode line
 ;; annoying, also add:
 
-;; (pyde-clean-modeline)
+;; (elpy-clean-modeline)
 
 ;;; Code:
 
@@ -121,7 +121,7 @@ time, and that's annoying. This value might be on the long side,
 but at least it does not, in general, interfere with normal
 interaction.
 
-Value set by pyde.")
+Value set by elpy.")
 
 (defvar flymake-start-syntax-check-on-newline nil
   "Start syntax check if newline char was added/removed from the buffer.
@@ -130,12 +130,12 @@ This should be nil for Python, as most lines with a colon at the
 end will mean the next line is always highlighted as error, which
 is not helpful and mostly annoying.
 
-Value set by pyde.")
+Value set by elpy.")
 
 (defvar ropemacs-enable-autoimport t
   "Specifies whether autoimport should be enabled.
 
-Value set by pyde.")
+Value set by elpy.")
 
 (defvar ropemacs-guess-project t
   "Try to guess the project when needed.
@@ -144,7 +144,7 @@ If non-nil, ropemacs tries to guess and open the project that contains
 a file on which the rope command is performed when no project is
 already opened.
 
-Value set by pyde.")
+Value set by elpy.")
 
 (defvar ropemacs-confirm-saving nil
   "Shows whether to confirm saving modified buffers before refactorings.
@@ -153,43 +153,43 @@ If non-nil, you have to confirm saving all modified
 python files before refactorings; otherwise they are
 saved automatically.
 
-Value set by pyde.")
+Value set by elpy.")
 
 (defvar ropemacs-enable-shortcuts nil
   "Shows whether to bind ropemacs shortcuts keys.
 
-Value set by pyde, as we set our own key bindings.")
+Value set by elpy, as we set our own key bindings.")
 
 (defvar ropemacs-local-prefix nil
   "The prefix for ropemacs refactorings.
 
 Use nil to prevent binding keys.
 
-Value set by pyde, as we set our own key bindings.")
+Value set by elpy, as we set our own key bindings.")
 
 (defvar ropemacs-global-prefix nil
   "The prefix for ropemacs project commands.
 
 Use nil to prevent binding keys.
 
-Value set by pyde, as we set our own key bindings.")
+Value set by elpy, as we set our own key bindings.")
 
 (defvar ac-trigger-key "TAB"
   "Non-nil means `auto-complete' will start by typing this key.
 If you specify this TAB, for example, `auto-complete' will start by typing TAB,
 and if there is no completions, an original command will be fallbacked.
 
-Value set by pyde.")
+Value set by elpy.")
 
 (defvar ac-auto-show-menu 0.5
   "Non-nil means completion menu will be automatically shown.
 
-Value set by pyde.")
+Value set by elpy.")
 
 (defvar ac-quick-help-delay 0.5
   "Delay to show quick help.
 
-Value set by pyde.")
+Value set by elpy.")
 
 (defvar yas/trigger-key (kbd "C-c C-p C-s")
   "The key bound to `yas-expand' when `yas-minor-mode' is active.
@@ -197,11 +197,11 @@ Value set by pyde.")
 Value is a string that is converted to the internal Emacs key
 representation using `read-kbd-macro'.
 
-Value set by pyde.")
+Value set by elpy.")
 
 ;; Now, load the various modes we use.
 
-(defun pyde-install-python-packages (&optional ignored)
+(defun elpy-install-python-packages (&optional ignored)
   "Install the required Python packages for the user."
   (with-current-buffer (get-buffer-create "*Python Install*")
     (fundamental-mode)
@@ -227,10 +227,10 @@ Value set by pyde.")
                   "install packages.\n")))
         (setq commandlist
               (append commandlist
-                      '("mkdir ~/pyde-temp-install"
-                        "cd ~/pyde-temp-install && git clone https://github.com/pinard/Pymacs.git"
-                        "cd ~/pyde-temp-install/Pymacs && make"
-                        "cd ~/pyde-temp-install/Pymacs && python setup.py install --user")))
+                      '("mkdir ~/elpy-temp-install"
+                        "cd ~/elpy-temp-install && git clone https://github.com/pinard/Pymacs.git"
+                        "cd ~/elpy-temp-install/Pymacs && make"
+                        "cd ~/elpy-temp-install/Pymacs && python setup.py install --user")))
         (dolist (cmd commandlist)
           (insert "$ " cmd "\n")
           (sit-for 0)
@@ -239,15 +239,15 @@ Value set by pyde.")
           (insert "\n")
           (goto-char (point-max)))
         (insert "\n"
-                "All done. Check for errors above and try to load Pyde again.\n\n")
-        (insert-text-button "Reload Pyde"
-                            'action 'pyde-load-python-packages)))))
+                "All done. Check for errors above and try to load Elpy again.\n\n")
+        (insert-text-button "Reload Elpy"
+                            'action 'elpy-load-python-packages)))))
 
-(defun pyde-installation-instructions (&optional error)
+(defun elpy-installation-instructions (&optional error)
   "Show installation instructions."
-  (with-help-window "*Pyde Installation*"
-    (with-current-buffer "*Pyde Installation*"
-      (insert "Pyde could not be loaded successfully.\n"
+  (with-help-window "*Elpy Installation*"
+    (with-current-buffer "*Elpy Installation*"
+      (insert "Elpy could not be loaded successfully.\n"
               "\n")
       (cond
        ((and (eq (car error) 'error)
@@ -274,14 +274,14 @@ side of Pymacs was not correctly installed.
 " (format "%s" error) "
 ")))
       (insert "
-The Python Development Environment requires a few Python packages
+The Emacs Lisp Python Environment requires a few Python packages
 to be installed before working properly. You can just use the
 following button to install them automatically, or you can follow
 the instructions below to do so by hand.
 
 ")
         (insert-text-button "Install Python packages"
-                            'action 'pyde-install-python-packages)
+                            'action 'elpy-install-python-packages)
         (insert "
 
 If you are still having trouble, visit #emacs on
@@ -307,37 +307,37 @@ via easy_install. You will need to run the following:
   make
   python setup.py install --user
 
-Try loading pyde again once that is done. Everything should work
+Try loading elpy again once that is done. Everything should work
 then."))))
 
-(defun pyde-load-python-packages (&rest ignored)
+(defun elpy-load-python-packages (&rest ignored)
   (condition-case err
       (progn
         (require 'pymacs)
         (pymacs-load "ropemacs" "rope-"))
     (error
-     (pyde-installation-instructions err))))
+     (elpy-installation-instructions err))))
 
 (require 'python)
-(pyde-load-python-packages)
+(elpy-load-python-packages)
 (require 'pyvirtualenv)
 (require 'highlight-indentation)
 (require 'yasnippet)
 (require 'auto-complete-config)
 
 ;;;;;;;;;;;;;;;
-;;; Pyde itself
+;;; Elpy itself
 
-(defvar pyde-mode-map
+(defvar elpy-mode-map
   (let ((map (make-sparse-keymap)))
     (define-key map (kbd "C-c C-f") 'rope-find-file)
 
     ;; Movement
-    (define-key map (kbd "M-e") 'pyde-nav-forward-statement)
-    (define-key map (kbd "M-a") 'pyde-nav-backward-statement)
+    (define-key map (kbd "M-e") 'elpy-nav-forward-statement)
+    (define-key map (kbd "M-a") 'elpy-nav-backward-statement)
 
     ;; Shell interaction
-    (define-key map (kbd "C-c C-c") 'pyde-shell-send-region-or-buffer)
+    (define-key map (kbd "C-c C-c") 'elpy-shell-send-region-or-buffer)
 
     ;; Virtual Env support
     (define-key map (kbd "C-c C-e") 'pyvirtualenv)
@@ -349,10 +349,10 @@ then."))))
     (define-key map (kbd "C-c C-g C-g") 'rope-jump-to-global)
 
     ;; Documentation
-    (define-key map (kbd "C-c C-v") 'pyde-check)
-    (define-key map (kbd "C-c C-d") 'pyde-doc-rope)
-    (define-key map (kbd "C-c C-w C-s") 'pyde-doc-search)
-    (define-key map (kbd "C-c C-w C-w") 'pyde-doc-show)
+    (define-key map (kbd "C-c C-v") 'elpy-check)
+    (define-key map (kbd "C-c C-d") 'elpy-doc-rope)
+    (define-key map (kbd "C-c C-w C-s") 'elpy-doc-search)
+    (define-key map (kbd "C-c C-w C-w") 'elpy-doc-show)
 
     ;; Rope Project
     (define-key map (kbd "C-c C-p C-o") 'rope-open-project)
@@ -360,25 +360,25 @@ then."))))
     (define-key map (kbd "C-c C-p C-p") 'rope-project-config)
 
     ;; Rope Refactoring
-    (define-key map (kbd "C-c C-r") 'pyde-refactor)
+    (define-key map (kbd "C-c C-r") 'elpy-refactor)
     map)
-  "Key map for the Python Development Environment.")
+  "Key map for the Emacs Lisp Python Environment.")
 
 ;;;###autoload
-(defun pyde-enable ()
-  "Enable Pyde in all future Python buffers."
+(defun elpy-enable ()
+  "Enable Elpy in all future Python buffers."
   (interactive)
-  (add-hook 'python-mode-hook 'pyde-mode))
+  (add-hook 'python-mode-hook 'elpy-mode))
 
 ;;;###autoload
-(defun pyde-disable ()
-  "Disable Pyde in all future Python buffers."
+(defun elpy-disable ()
+  "Disable Elpy in all future Python buffers."
   (interactive)
-  (remove-hook 'python-mode-hook 'pyde-mode))
+  (remove-hook 'python-mode-hook 'elpy-mode))
 
 ;;;###autoload
-(define-minor-mode pyde-mode
-  "Minor mode in Python buffers for the Python Development Environment.
+(define-minor-mode elpy-mode
+  "Minor mode in Python buffers for the Emacs Lisp Python Environment.
 
 Key bindings
 
@@ -396,7 +396,7 @@ Python Shell Interaction:
 C-c C-z      `python-shell-switch-to-shell'
 
 C-M-x        `python-shell-send-defun'
-C-c C-c      `pyde-shell-send-region-or-buffer'
+C-c C-c      `elpy-shell-send-region-or-buffer'
 
 Virtual Environments:
 
@@ -412,16 +412,16 @@ C-c C-g C-i  `rope-find-implementations'
 C-c C-g C-g  `rope-jump-to-global'
 
 C-M-up       `python-nav-backward-up-list'
-M-a          `pyde-nav-backward-statement'
-M-e          `pyde-nav-forward-statement'
+M-a          `elpy-nav-backward-statement'
+M-e          `elpy-nav-forward-statement'
 
 Documentation
 
-C-c C-v      `pyde-check'
+C-c C-v      `elpy-check'
 
-C-c C-d      `pyde-doc-rope'
-C-c C-w C-s  `pyde-doc-search'
-C-c C-w C-w  `pyde-doc-show'
+C-c C-d      `elpy-doc-rope'
+C-c C-w C-s  `elpy-doc-search'
+C-c C-w C-w  `elpy-doc-show'
 
 Project support
 
@@ -431,17 +431,17 @@ C-c C-p C-p  `rope-project-config'
 
 Refactoring
 
-C-c C-r      `pyde-refactor'"
-  :lighter " Pyde"
+C-c C-r      `elpy-refactor'"
+  :lighter " Elpy"
   (when (not (eq major-mode 'python-mode))
-    (error "Pyde only works with `python-mode'"))
+    (error "Elpy only works with `python-mode'"))
   (when buffer-file-name
-    (pyde-setup-project))
+    (elpy-setup-project))
   (cond
-   (pyde-mode
+   (elpy-mode
     (eldoc-mode 1)
     (set (make-local-variable 'eldoc-documentation-function)
-         'pyde-eldoc-documentation)
+         'elpy-eldoc-documentation)
     (flymake-mode 1)
     (pyvirtualenv-mode 1)
     (highlight-indentation-mode 1)
@@ -467,7 +467,7 @@ C-c C-r      `pyde-refactor'"
                        ac-source-dictionary
                        ac-source-words-in-same-mode-buffers)))))
 
-(defun pyde-setup-project ()
+(defun elpy-setup-project ()
   "Set up the Rope project for the current file."
   (let ((old (rope-get-project-root))
         (new (locate-dominating-file buffer-file-name ".ropeproject")))
@@ -482,7 +482,7 @@ C-c C-r      `pyde-refactor'"
      ((not new)
       (rope-open-project)))))
 
-(defun pyde-use-ipython ()
+(defun elpy-use-ipython ()
   "Set defaults to use IPython instead of the standard interpreter."
   (interactive)
   (if (boundp 'python-python-command)
@@ -503,19 +503,19 @@ C-c C-r      `pyde-refactor'"
           python-shell-completion-string-code
           "';'.join(get_ipython().Completer.all_completions('''%s'''))\n")))
 
-(defun pyde-clean-modeline ()
+(defun elpy-clean-modeline ()
   "Clean up the mode line by removing some lighters.
 
-It's not necessary to see (Python Pyde yas AC Rope ElDoc) all the
+It's not necessary to see (Python Elpy yas AC Rope ElDoc) all the
 time. Honestly."
   (interactive)
   (setq eldoc-minor-mode-string nil)
-  (dolist (mode '(pyde-mode yas-minor-mode auto-complete-mode
+  (dolist (mode '(elpy-mode yas-minor-mode auto-complete-mode
                             ropemacs-mode))
     (setcdr (assq mode minor-mode-alist)
             (list ""))))
 
-(defun pyde-shell-send-region-or-buffer ()
+(defun elpy-shell-send-region-or-buffer ()
   "Send the active region or the buffer to the Python shell.
 
 If there is an active region, send that. Otherwise, send the
@@ -525,7 +525,7 @@ whole buffer."
       (python-shell-send-region)
     (python-shell-send-buffer)))
 
-(defun pyde-check ()
+(defun elpy-check ()
   "Run `python-check-command' on the current buffer's file."
   (interactive)
   (when (not (buffer-file-name))
@@ -535,7 +535,7 @@ whole buffer."
                         (shell-quote-argument (buffer-file-name)))))
 
 
-(defun pyde-nav-forward-statement ()
+(defun elpy-nav-forward-statement ()
   "Move forward one statement.
 
 This will go to the end of the current statement, or the end of
@@ -547,7 +547,7 @@ the next one if already at the end."
       (python-nav-forward-statement)
       (python-nav-end-of-statement))))
 
-(defun pyde-nav-backward-statement ()
+(defun elpy-nav-backward-statement ()
   "Move backward one statement.
 
 This will go to the beginning of the current statement, or the
@@ -558,7 +558,7 @@ beginning of the previous one if already at the beginning."
     (when (= old (point))
       (python-nav-backward-statement))))
 
-(defvar pyde-refactor-list
+(defvar elpy-refactor-list
   '(("Redo" . rope-redo)
     ("Undo" . rope-undo)
     ("New Module" . rope-create-module)
@@ -579,32 +579,32 @@ beginning of the previous one if already at the beginning."
     ;; Templates would require more complex explanation
     ;; ("Restructure Code According to Template" . rope-restructure)
     )
-  "Valid arguments and functions to call for `pyde-refactor'.")
+  "Valid arguments and functions to call for `elpy-refactor'.")
 
-(defvar pyde-refactor-history nil
-  "The history used for `pyde-refactor'.")
-(defun pyde-refactor ()
+(defvar elpy-refactor-history nil
+  "The history used for `elpy-refactor'.")
+(defun elpy-refactor ()
   "Call a Rope refactoring command.
 
-See `pyde-refactor-list' for a list of commands."
+See `elpy-refactor-list' for a list of commands."
   (interactive)
-  (let* ((prompt (if pyde-refactor-history
+  (let* ((prompt (if elpy-refactor-history
                      (format "Refactor [%s]: "
-                             (car pyde-refactor-history))
+                             (car elpy-refactor-history))
                    "Refactor: "))
          (action (completing-read prompt
-                                  pyde-refactor-list
+                                  elpy-refactor-list
                                   nil t nil
-                                  'pyde-refactor-history
-                                  (car pyde-refactor-history)))
-         (command (cdr (assoc action pyde-refactor-list))))
+                                  'elpy-refactor-history
+                                  (car elpy-refactor-history)))
+         (command (cdr (assoc action elpy-refactor-list))))
     (when (functionp command)
       (call-interactively command))))
 
 ;;;;;;;;;
 ;;; Eldoc
 
-(defun pyde-eldoc-documentation ()
+(defun elpy-eldoc-documentation ()
   "Return a call tip for the python call at point."
   (let ((calltip (rope-get-calltip)))
     (when calltip
@@ -638,9 +638,9 @@ See `pyde-refactor-list' for a list of commands."
 
 (eval-after-load "flymake"
   '(add-to-list 'flymake-allowed-file-name-masks 
-                '("\\.py\\'" pyde-flymake-python-init)))
+                '("\\.py\\'" elpy-flymake-python-init)))
 
-(defun pyde-flymake-python-init () 
+(defun elpy-flymake-python-init () 
   ;; Make sure it's not a remote buffer or flymake would not work
   (let* ((temp-file (flymake-init-create-temp-buffer-copy 
                      'flymake-create-temp-inplace)) 
@@ -652,26 +652,26 @@ See `pyde-refactor-list' for a list of commands."
 ;;;;;;;;;;;;;;;;;;;;;;
 ;;; Rope documentation
 
-(defun pyde-rope-get-doc ()
+(defun elpy-rope-get-doc ()
   "Return a docstring for the symbol at point, or nil."
   (let ((doc (rope-get-doc)))
     (when (and doc
                (not (equal doc "")))
       doc)))
 
-(defun pyde-doc-rope ()
+(defun elpy-doc-rope ()
   "Show Rope documentation on the thing at point."
   (interactive)
-  (let ((doc (or (pyde-rope-get-doc)
+  (let ((doc (or (elpy-rope-get-doc)
                  ;; This will get the right position for
                  ;; multiprocessing.Queue(quxqux_|_)
                  (ignore-errors
                   (save-excursion
-                    (pyde-nav-backward-statement)
+                    (elpy-nav-backward-statement)
                     (with-syntax-table python-dotty-syntax-table
                       (forward-symbol 1)
                       (backward-char 1))
-                    (pyde-rope-get-doc))))))
+                    (elpy-rope-get-doc))))))
     (if doc
         (with-help-window "*Python Doc*"
           (princ doc))
@@ -681,30 +681,30 @@ See `pyde-refactor-list' for a list of commands."
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Python web documentation
 
-(defun pyde-doc-search (what)
+(defun elpy-doc-search (what)
   "Search the Python web documentation for the string WHAT."
   (interactive "sSearch for: ")
   (browse-url
    (format "https://www.google.com/search?q=site:docs.python.org%%20%s"
            what)))
 
-(defun pyde-doc-show (package object anchor)
+(defun elpy-doc-show (package object anchor)
   "Show the Python web documentation on package PACKAGE and object OBJECT.
 
 ANCHOR is the package name in the HTML file."
-  (interactive (pyde--doc-show-read-package-and-object))
+  (interactive (elpy--doc-show-read-package-and-object))
   (browse-url (format"http://docs.python.org/library/%s.html#%s"
                      package
                      (format "%s.%s" anchor object))))
 
-(defun pyde--doc-read-backspace (&rest args)
+(defun elpy--doc-read-backspace (&rest args)
   "Function called on backspace when completing in minibuffer."
   (interactive)
   (if (equal "" (field-string))
       (throw 'one-level-up nil)
     (call-interactively 'delete-backward-char)))
 
-(defun pyde--doc-show-read-package-and-object ()
+(defun elpy--doc-show-read-package-and-object ()
   "Read a package and object within that package from the user."
   (let* ((package-map
           (let ((map (make-sparse-keymap)))
@@ -714,35 +714,35 @@ ANCHOR is the package name in the HTML file."
          (object-map
           (let ((map (make-sparse-keymap)))
             (set-keymap-parent map minibuffer-local-completion-map)
-            (define-key map (kbd "DEL") 'pyde--doc-read-backspace)
-            (define-key map (kbd "<backspace>") 'pyde--doc-read-backspace)
+            (define-key map (kbd "DEL") 'elpy--doc-read-backspace)
+            (define-key map (kbd "<backspace>") 'elpy--doc-read-backspace)
             map))
          package object anchor)
     (while (not object)
       (setq package
             (let ((minibuffer-local-must-match-map package-map))
               (completing-read "Documentation: "
-                               (pyde--doc-package-index)
+                               (elpy--doc-package-index)
                                nil t package)))
       (setq object
             (catch 'one-level-up
               (let ((minibuffer-local-completion-map object-map))
                 (completing-read (format "Documentation: %s."
                                          package)
-                                 (pyde--doc-package-list package))))))
+                                 (elpy--doc-package-list package))))))
     (setq anchor (gethash (cons package object)
-                          pyde--doc-package-anchors
+                          elpy--doc-package-anchors
                           object))
     (list package object (or anchor package))))
 
-(defvar pyde--doc-package-index nil
+(defvar elpy--doc-package-index nil
   "Cache of the the documentation index for Python.")
 
-(defun pyde--doc-package-index ()
+(defun elpy--doc-package-index ()
   "Return the documentation index.
 
 This is an alist mapping titles to URLs."
-  (or pyde--doc-package-index
+  (or elpy--doc-package-index
       (let ((buf (url-retrieve-synchronously
                   "http://docs.python.org/library/")))
         (unwind-protect
@@ -753,18 +753,18 @@ This is an alist mapping titles to URLs."
                         "href=\"\\([a-zA-Z][^\"#]*\\)\\.html.*&#8212;"
                         nil t)
                   (add-to-list 'result (match-string 1)))
-                (setq pyde--doc-package-index (nreverse result))))
+                (setq elpy--doc-package-index (nreverse result))))
           (kill-buffer buf)))))
 
-(defvar pyde--doc-package-list (make-hash-table :test 'equal)
+(defvar elpy--doc-package-list (make-hash-table :test 'equal)
   "A hash mapping package names to their contents.")
 
-(defvar pyde--doc-package-anchors (make-hash-table :test 'equal)
+(defvar elpy--doc-package-anchors (make-hash-table :test 'equal)
   "A hash mapping object names to their HTML anchors.")
 
-(defun pyde--doc-package-list (package)
+(defun elpy--doc-package-list (package)
   "Return a list of objects in this package."
-  (or (gethash package pyde--doc-package-list)
+  (or (gethash package elpy--doc-package-list)
       (let ((buf (url-retrieve-synchronously
                   (format "http://docs.python.org/library/%s.html"
                           package))))
@@ -778,10 +778,10 @@ This is an alist mapping titles to URLs."
                         nil t)
                   (puthash (cons package (match-string 2))
                            (match-string 1)
-                           pyde--doc-package-anchors)
+                           elpy--doc-package-anchors)
                   (add-to-list 'result (match-string 2)))
                 (setq result (nreverse result))
-                (puthash package result pyde--doc-package-list)
+                (puthash package result elpy--doc-package-list)
                 result))
           (kill-buffer buf)))))
 
@@ -799,46 +799,46 @@ This is an alist mapping titles to URLs."
 ;; Adapted from Michael Markert:
 ;; https://github.com/cofi/dotfiles/blob/master/emacs.d/config/cofi-python.el
 
-(defvar pyde--ropemacs-docs nil
+(defvar elpy--ropemacs-docs nil
   "List of current expansions and docstrings.")
 
-(defun pyde--ropemacs-candidates ()
+(defun elpy--ropemacs-candidates ()
   "Return a list of possible expansions at points.
 
-This also initializes `pyde--ropemacs-docs'."
-  (setq pyde--ropemacs-docs nil)
+This also initializes `elpy--ropemacs-docs'."
+  (setq elpy--ropemacs-docs nil)
   (dolist (completion (rope-extended-completions))
     (let ((name (car completion))
           (doc (cadr completion)))
       (when (not (string-prefix-p "_" name))
         (push (cons (concat ac-prefix name)
                     doc)
-              pyde--ropemacs-docs))))
-  (mapcar 'car pyde--ropemacs-docs))
+              elpy--ropemacs-docs))))
+  (mapcar 'car elpy--ropemacs-docs))
 
-(defun pyde--ropemacs-document (name)
+(defun elpy--ropemacs-document (name)
   "Return the documentation for the symbol NAME."
-  (assoc-default name pyde--ropemacs-docs))
+  (assoc-default name elpy--ropemacs-docs))
 
-(defun pyde--ropemacs-available ()
+(defun elpy--ropemacs-available ()
   "Return non-nil if rope is available for this file."
   (locate-dominating-file buffer-file-name ".ropeproject"))
 
 (ac-define-source nropemacs
-  '((candidates . pyde--ropemacs-candidates)
+  '((candidates . elpy--ropemacs-candidates)
     (symbol     . "p")
-    (document   . pyde--ropemacs-document)
+    (document   . elpy--ropemacs-document)
     (cache      . t)
-    (available .  pyde--ropemacs-available)))
+    (available .  elpy--ropemacs-available)))
 
 (ac-define-source nropemacs-dot
-  '((candidates . pyde--ropemacs-candidates)
+  '((candidates . elpy--ropemacs-candidates)
     (symbol     . "p")
-    (document   . pyde--ropemacs-document)
+    (document   . elpy--ropemacs-document)
     (cache      . t)
     (prefix     . c-dot)
     (requires   . 0)
-    (available . pyde--ropemacs-available)))
+    (available . elpy--ropemacs-available)))
 
 ;;; Backports, because stuff's not current. Argh.
 
@@ -880,5 +880,5 @@ This also initializes `pyde--ropemacs-docs'."
            highlight-indent-active)
       (highlight-indentation)))))
 
-(provide 'pyde)
-;;; pyde.el ends here
+(provide 'elpy)
+;;; elpy.el ends here

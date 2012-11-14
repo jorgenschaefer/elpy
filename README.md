@@ -1,4 +1,4 @@
-# Pyde, the Python Development Environment
+# Elpy, the Emacs Lisp Python Environment
 
 Emacs has excellent Python support through a number of packages. The
 only problem is that every user needs to set up all of these packages
@@ -43,11 +43,11 @@ Python.
   identifiers, modules or packages, or just automatically clean up
   your imports.
 - **Easy IPython support for those who use it:**
-  Simply run (pyde-use-ipython).
+  Simply run (elpy-use-ipython).
 
 ## Installation
 
-Pyde requires Emacs 24.
+Elpy requires Emacs 24.
 
 First, you need to install the Python dependencies:
 
@@ -73,13 +73,13 @@ Then, add the following to your .emacs:
 ```
 
 Once this is evaluated, you should be able to run `M-x package-install
-RET pyde RET`.
+RET elpy RET`.
 
 Then, add further lines:
 
 ```Lisp
 (package-initialize)
-(pyde-enable)
+(elpy-enable)
 ```
 
 You need to set `python-check-command` to a command you have
@@ -94,14 +94,14 @@ useful, and all available via `easy_install` and `pip`. Also see the
 If you want to use IPython (make sure it's installed), add:
 
 ```
-(pyde-use-ipython)
+(elpy-use-ipython)
 ```
 
-If you find the (Python Pyde yas AC Rope ElDoc Fill) mode line
+If you find the (Python Elpy yas AC Rope ElDoc Fill) mode line
 annoying, also add:
 
 ```
-(pyde-clean-modeline)
+(elpy-clean-modeline)
 ```
 
 ## Keybindings
@@ -174,7 +174,7 @@ C-c C-w C-w  Browse the Python web documentation
 ### Refactoring
 
 While Rope provides auto-completion, it's actually a refactoring tool.
-Pyde wraps that in a simple interactive refactoring session.
+Elpy wraps that in a simple interactive refactoring session.
 
 ```
 C-c C-r      Start refactoring interaction
@@ -214,7 +214,3 @@ If you like to live on the edge, get the dependencies as source:
 - Ropemacs: `hg clone https://bitbucket.org/agr/ropemacs`
 - auto-complete: `git clone git://github.com/auto-complete/auto-complete.git`
 - yasnippet: `git clone git://github.com/capitaomorte/yasnippet.git`
-
-## Name
-
-_Pyde_ rhymes with _Hyde._ Dr. Reckyll was not available for comment.
