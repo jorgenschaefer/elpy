@@ -181,13 +181,16 @@ and if there is no completions, an original command will be fallbacked.
 
 Value set by elpy.")
 
-(defvar ac-auto-show-menu 0.5
+(defvar ac-auto-show-menu 0.4
   "Non-nil means completion menu will be automatically shown.
 
 Value set by elpy.")
 
 (defvar ac-quick-help-delay 0.5
   "Delay to show quick help.
+
+This value should be greater than `ac-auto-show-menu' to show
+help for the first entry as well.
 
 Value set by elpy.")
 
