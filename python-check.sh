@@ -6,6 +6,8 @@ then
     exit 1
 fi
 
+EXITVALUE=0
+
 for checker in pyflakes pep8 pylint
 do
     if which "$checker" &>/dev/null
@@ -14,10 +16,18 @@ do
         echo
         if [ "$checker" = "pylint" ]
         then
-            "$checker" --output-format=parseable "$1"
+            "$checker" --output-format=parseable --include-ids=y \
+                --reports=no --errors-only "$1"
         else
             "$checker" "$1"
+        fi
+        RV="$?"
+        if [ "$EXITVALUE" = "0" ]
+        then 
+            EXITVALUE="$RV"
         fi
         echo
     fi
 done
+
+exit "$EXITVALUE"
