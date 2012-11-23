@@ -533,9 +533,14 @@ whole buffer."
   (interactive)
   (when (not (buffer-file-name))
     (error "Can't check a buffer without a file."))
-  (python-check (concat python-check-command
-                        " "
-                        (shell-quote-argument (buffer-file-name)))))
+  (save-some-buffers (not compilation-ask-about-save) nil)
+  (let ((process-environment (python-shell-calculate-process-environment))
+        (exec-path (python-shell-calculate-exec-path)))
+    (compilation-start (concat python-check-command
+                               " "
+                               (shell-quote-argument (buffer-file-name)))
+                       nil (lambda (mode-name)
+                             "*Python Check*"))))
 
 
 (defun elpy-nav-forward-statement ()
