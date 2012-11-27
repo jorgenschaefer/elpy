@@ -5,7 +5,7 @@
 ;; Author: Jorgen Schaefer <forcer@forcix.cx>
 ;; URL: https://github.com/jorgenschaefer/elpy
 ;; Version: 0.7
-;; Package-Requires: ((pymacs "0.25") (auto-complete "1.4") (yasnippet "0.8") (fuzzy "0.1") (pyvirtualenv "1.0") (highlight-indentation "0.5.0"))
+;; Package-Requires: ((pymacs "0.25") (auto-complete "1.4") (yasnippet "0.8") (fuzzy "0.1") (virtualenv "1.2") (highlight-indentation "0.5.0"))
 
 ;; This program is free software; you can redistribute it and/or
 ;; modify it under the terms of the GNU General Public License
@@ -62,10 +62,9 @@
 ;; - On-the-fly checks (using flymake)
 ;;   Highlight errors in your code while you edit it.
 
-;; - Virtualenv support (using pyvirtualenv)
+;; - Virtualenv support (using virtualenv)
 ;;   Use C-c C-e to activate a virtual environment thorough your Emacs
-;;   and for subprocesses. Use C-u C-c C-e to disable a virtual
-;;   environment.
+;;   and for subprocesses.
 
 ;; - Python web documentation
 ;;   Simply access the Python web documentation using a tab-completed
@@ -323,7 +322,7 @@ then."))))
 
 (require 'python)
 (elpy-load-python-packages)
-(require 'pyvirtualenv)
+(require 'virtualenv)
 (require 'highlight-indentation)
 (require 'yasnippet)
 (require 'auto-complete-config)
@@ -343,7 +342,7 @@ then."))))
     (define-key map (kbd "C-c C-c") 'elpy-shell-send-region-or-buffer)
 
     ;; Virtual Env support
-    (define-key map (kbd "C-c C-e") 'pyvirtualenv)
+    (define-key map (kbd "C-c C-e") 'virtualenv-workon)
 
     ;; Goto
     (define-key map (kbd "C-c C-g C-d") 'rope-goto-definition)
@@ -403,7 +402,7 @@ C-c C-c      `elpy-shell-send-region-or-buffer'
 
 Virtual Environments:
 
-C-c C-e      `pyvirtualenv'
+C-c C-e      `virtualenv-workon'
 
 Code Navigation
 
@@ -446,7 +445,6 @@ C-c C-r      `elpy-refactor'"
     (set (make-local-variable 'eldoc-documentation-function)
          'elpy-eldoc-documentation)
     (flymake-mode 1)
-    (pyvirtualenv-mode 1)
     (highlight-indentation-mode 1)
     (yas-reload-all)
     (yas-minor-mode 1)
@@ -461,8 +459,6 @@ C-c C-r      `elpy-refactor'"
    (t
     (eldoc-mode 0)
     (flymake-mode 0)
-    ;; Global mode, leave it alone
-    ;; (pyvirtualenv-mode 0)
     (highlight-indentation-mode 0)
     (yas-minor-mode 0)
     (auto-complete-mode 0)
