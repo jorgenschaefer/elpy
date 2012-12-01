@@ -330,6 +330,15 @@ then."))))
 ;;;;;;;;;;;;;;;
 ;;; Elpy itself
 
+(defgroup elpy nil
+  "The Emacs Lisp Python Environment."
+  :prefix "elpy-"
+  :group 'languages)
+
+(defcustom elpy-mode-hook nil
+  "Hook run when `elpy-mode' is enabled."
+  :group 'elpy)
+
 (defvar elpy-mode-map
   (let ((map (make-sparse-keymap)))
     (define-key map (kbd "C-c C-f") 'rope-find-file)
@@ -475,7 +484,7 @@ C-c C-r      `elpy-refactor'"
      ((and old new (equal old new))
       t)
      ;; A better project exists, open it
-     (new 
+     (new
       (rope-open-project new))
      ;; Project doesn't exist, create a new one
      ((not new)
@@ -641,16 +650,16 @@ See `elpy-refactor-list' for a list of commands."
 ;;; Flymake
 
 (eval-after-load "flymake"
-  '(add-to-list 'flymake-allowed-file-name-masks 
+  '(add-to-list 'flymake-allowed-file-name-masks
                 '("\\.py\\'" elpy-flymake-python-init)))
 
-(defun elpy-flymake-python-init () 
+(defun elpy-flymake-python-init ()
   ;; Make sure it's not a remote buffer or flymake would not work
-  (let* ((temp-file (flymake-init-create-temp-buffer-copy 
-                     'flymake-create-temp-inplace)) 
-         (local-file (file-relative-name 
-                      temp-file 
-                      (file-name-directory buffer-file-name)))) 
+  (let* ((temp-file (flymake-init-create-temp-buffer-copy
+                     'flymake-create-temp-inplace))
+         (local-file (file-relative-name
+                      temp-file
+                      (file-name-directory buffer-file-name))))
     (list python-check-command (list local-file))))
 
 ;;;;;;;;;;;;;;;;;;;;;;
