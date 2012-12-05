@@ -657,9 +657,7 @@ See `elpy-refactor-list' for a list of commands."
   ;; Make sure it's not a remote buffer or flymake would not work
   (let* ((temp-file (flymake-init-create-temp-buffer-copy
                      'flymake-create-temp-inplace))
-         (local-file (file-relative-name
-                      temp-file
-                      (file-name-directory buffer-file-name))))
+         (local-file (expand-file-name buffer-file-name)))
     (list python-check-command (list local-file))))
 
 ;;;;;;;;;;;;;;;;;;;;;;
