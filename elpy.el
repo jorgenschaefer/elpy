@@ -193,7 +193,7 @@ help for the first entry as well.
 
 Value set by elpy.")
 
-(defvar yas/trigger-key (kbd "C-c C-p C-s")
+(defvar yas/trigger-key (kbd "C-c C-i")
   "The key bound to `yas-expand' when `yas-minor-mode' is active.
 
 Value is a string that is converted to the internal Emacs key
@@ -458,8 +458,7 @@ C-c C-r      `elpy-refactor'"
     (yas-reload-all)
     (yas-minor-mode 1)
     (setq ac-sources
-          '(ac-source-yasnippet
-            ac-source-nropemacs-dot
+          '(ac-source-nropemacs-dot
             ac-source-nropemacs
             ac-source-abbrev
             ac-source-dictionary
@@ -853,21 +852,6 @@ This also initializes `elpy--ropemacs-docs'."
     (prefix     . c-dot)
     (requires   . 0)
     (available . elpy--ropemacs-available)))
-
-;;; Backports, because stuff's not current. Argh.
-
-;;; auto-complete 1.4 does not work with yasnippet 0.8. This will be
-;;; corrected in auto-complete 1.5.
-(defun ac-yasnippet-candidates ()
-  (all-completions ac-prefix (yas-active-keys)))
-
-;;; yasnippet 0.8 lacks this useful helper function, will be included
-;;; in yasnippet 0.9.
-(when (not (fboundp 'yas-active-keys))
-  (defun yas-active-keys ()
-    "Return all active trigger keys for current buffer and point"
-    (remove-duplicates (mapcan #'yas--table-all-keys (yas--get-snippet-tables))
-                       :test #'string=)))
 
 ;; Functions for Emacs 24 before 24.3
 (when (not (fboundp 'python-shell-send-region))

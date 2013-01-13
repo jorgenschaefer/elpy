@@ -15,9 +15,8 @@ Python.
 - **Indentation highlighting (using highlight-indentation):**
   Highlight indentation levels in code so you can always see which
   code belongs where.
-- **Snippet Expansion (using yasnippet and auto-complete):**
-  Some completion options are highlighted and will expand into full
-  code snippets that you just need to fill out.
+- **Snippet Expansion (using yasnippet):**
+  Use powerful templates for quick code generation.
 - **Code hinting (using eldoc and rope):**
   While you write, the minibuffer will show the call signature of
   the current function.
@@ -127,6 +126,14 @@ C-c C-z      Switch to a Python interpreter
 
 C-M-x        Send the current class or function to the interpreter
 C-c C-c      Send the current region (if active) or buffer to the interpreter
+```
+
+### Template Support
+
+Complete Yasnippet templates.
+
+```
+C-c C-i      Expand Yasnippet template
 ```
 
 ### Virtual Environment Support
