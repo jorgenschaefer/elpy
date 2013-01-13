@@ -519,7 +519,7 @@ time. Honestly."
   (interactive)
   (setq eldoc-minor-mode-string nil)
   (dolist (mode '(elpy-mode yas-minor-mode auto-complete-mode
-                            ropemacs-mode))
+                            flymake-mode ropemacs-mode))
     (setcdr (assq mode minor-mode-alist)
             (list ""))))
 
