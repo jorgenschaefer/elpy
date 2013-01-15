@@ -335,6 +335,16 @@ then."))))
   :prefix "elpy-"
   :group 'languages)
 
+(defcustom elpy-project-markers '(".git" ".svn" ".hg"
+                                  ".ropeproject" "setup.py")
+  "List of files and directories that mark a project.
+
+Elpy will search up the directory hierarchy for the first
+occurrence of such a file and assume this is the root of your
+project."
+  :type '(repeat string)
+  :group 'elpy)
+
 (defcustom elpy-mode-hook nil
   "Hook run when `elpy-mode' is enabled."
   :group 'elpy)
@@ -474,10 +484,52 @@ C-c C-r      `elpy-refactor'"
                        ac-source-dictionary
                        ac-source-words-in-same-mode-buffers)))))
 
+(defvar elpy-project-root 'not-initialized
+  "The root of the project the current buffer is in.")
+(make-variable-buffer-local 'elpy-project-root)
+
+(defun elpy-project-root ()
+  "Return the root of the current buffer's project.
+
+You can set the variable `elpy-project-root' in, for example,
+.dir-locals.el to configure this."
+  (when (eq elpy-project-root 'not-initialized)
+    (setq elpy-project-root
+          (or (elpy-project-find-root)
+              (read-directory-name "Project root: "
+                                   default-directory))))
+  elpy-project-root)
+
+(defun elpy-project-find-root ()
+  "Find an appropriate project root for the current buffer.
+
+This is either the first directory up the root with a file
+matching any string in `elpy-project-markers', or the last
+directory to contain an __init__.el file.
+
+If no root directory is found, nil is returned."
+  (let ((dir (expand-file-name default-directory))
+        (last-dir-with-init nil)
+        (regexp (format "^%s$" (regexp-opt elpy-project-markers))))
+    (catch 'return
+      (while (not (equal dir "/"))
+        (when (file-exists-p (format "%s/__init__.py" dir))
+          (setq last-dir-with-init dir))
+        (when (directory-files dir nil regexp t)
+          (throw 'return dir))
+        (setq dir (elpy-directory-parent dir)))
+      last-dir-with-init)))
+
+(defun elpy-directory-parent (directory)
+  "Return the parent directory of DIRECTORY."
+  (if (equal directory "/")
+      directory
+    (file-name-directory (replace-regexp-in-string "/*$" "" directory))))
+
 (defun elpy-setup-project ()
   "Set up the Rope project for the current file."
   (let ((old (rope-get-project-root))
-        (new (locate-dominating-file buffer-file-name ".ropeproject")))
+        (new (elpy-project-root)))
     (cond
      ;; Everything is set up correctly
      ((and old new (equal old new))
