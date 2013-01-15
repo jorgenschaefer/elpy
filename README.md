@@ -20,11 +20,11 @@ Python.
 - **Code hinting (using eldoc and rope):**
   While you write, the minibuffer will show the call signature of
   the current function.
-- **Code Navigation (using rope and python.el):**
-  Quickly jump to the definition of a function or class, find callers
-  of the current function, or browse all definitions in the current
-  file. `find-file-at-point` will also find module source files from
-  import statements.
+- **Code Navigation (using rope, python.el, and find-file-in-project)**
+  Quickly jump to the definition of a function or class, find
+  callers of the current function, or browse all definitions in the
+  current file. `C-c C-f` will also allow you to quickly open any
+  file in your current project.
 - **Inline Documentation (using rope):**
   Read the help() output of the object at point with a quick key shortcut.
 - **On-the-fly checks (using flymake):**

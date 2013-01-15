@@ -5,7 +5,7 @@
 ;; Author: Jorgen Schaefer <forcer@forcix.cx>
 ;; URL: https://github.com/jorgenschaefer/elpy
 ;; Version: 0.7
-;; Package-Requires: ((pymacs "0.25") (auto-complete "1.4") (yasnippet "0.8") (fuzzy "0.1") (virtualenv "1.2") (highlight-indentation "0.5.0"))
+;; Package-Requires: ((pymacs "0.25") (auto-complete "1.4") (yasnippet "0.8") (fuzzy "0.1") (virtualenv "1.2") (highlight-indentation "0.5.0") (find-file-in-project "3.2"))
 
 ;; This program is free software; you can redistribute it and/or
 ;; modify it under the terms of the GNU General Public License
@@ -49,11 +49,11 @@
 ;;   While you write, the minibuffer will show the call signature of
 ;;   the current function.
 
-;; - Code Navigation (using rope and python.el)
+;; - Code Navigation (using rope, python.el, and find-file-in-project)
 ;;   Quickly jump to the definition of a function or class, find
 ;;   callers of the current function, or browse all definitions in the
-;;   current file. `find-file-at-point' will also find module source
-;;   files from import statements.
+;;   current file. C-c C-f will also allow you to quickly open any
+;;   file in your current project.
 
 ;; - Inline Documentation (using rope)
 ;;   Read the help() output of the object at point with a quick key
@@ -326,6 +326,7 @@ then."))))
 (require 'highlight-indentation)
 (require 'yasnippet)
 (require 'auto-complete-config)
+(require 'find-file-in-project)
 
 ;;;;;;;;;;;;;;;
 ;;; Elpy itself
@@ -351,7 +352,7 @@ project."
 
 (defvar elpy-mode-map
   (let ((map (make-sparse-keymap)))
-    (define-key map (kbd "C-c C-f") 'rope-find-file)
+    (define-key map (kbd "C-c C-f") 'find-file-in-project)
 
     ;; Movement
     (define-key map (kbd "M-e") 'elpy-nav-forward-statement)
@@ -426,7 +427,7 @@ C-c C-e      `virtualenv-workon'
 Code Navigation
 
 C-c C-j      `imenu'
-C-c C-f      `rope-find-file'
+C-c C-f      `find-file-in-project'
 C-c C-g C-d  `rope-goto-definition'
 C-c C-g C-c  `rope-find-occurrences'
 C-c C-g C-i  `rope-find-implementations'
@@ -456,10 +457,11 @@ C-c C-r      `elpy-refactor'"
   :lighter " Elpy"
   (when (not (eq major-mode 'python-mode))
     (error "Elpy only works with `python-mode'"))
-  (when buffer-file-name
-    (elpy-setup-project))
   (cond
    (elpy-mode
+    (when buffer-file-name
+      (elpy-setup-project)
+      (setq ffip-project-root (elpy-project-root)))
     (eldoc-mode 1)
     (set (make-local-variable 'eldoc-documentation-function)
          'elpy-eldoc-documentation)
@@ -539,7 +541,8 @@ If no root directory is found, nil is returned."
       (rope-open-project new))
      ;; Project doesn't exist, create a new one
      ((not new)
-      (rope-open-project)))))
+      (rope-open-project)
+      (setq elpy-project-root (rope-get-project-root))))))
 
 (defun elpy-use-ipython ()
   "Set defaults to use IPython instead of the standard interpreter."
