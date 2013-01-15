@@ -5,7 +5,7 @@
 ;; Author: Jorgen Schaefer <forcer@forcix.cx>
 ;; URL: https://github.com/jorgenschaefer/elpy
 ;; Version: 0.7
-;; Package-Requires: ((pymacs "0.25") (auto-complete "1.4") (yasnippet "0.8") (fuzzy "0.1") (virtualenv "1.2") (highlight-indentation "0.5.0") (find-file-in-project "3.2"))
+;; Package-Requires: ((pymacs "0.25") (auto-complete "1.4") (yasnippet "0.8") (fuzzy "0.1") (virtualenv "1.2") (highlight-indentation "0.5.0") (find-file-in-project "3.2") (idomenu "0.1"))
 
 ;; This program is free software; you can redistribute it and/or
 ;; modify it under the terms of the GNU General Public License
@@ -49,7 +49,7 @@
 ;;   While you write, the minibuffer will show the call signature of
 ;;   the current function.
 
-;; - Code Navigation (using rope, python.el, and find-file-in-project)
+;; - Code Navigation (using rope, python.el, find-file-in-project, and idomenu)
 ;;   Quickly jump to the definition of a function or class, find
 ;;   callers of the current function, or browse all definitions in the
 ;;   current file. C-c C-f will also allow you to quickly open any
@@ -327,6 +327,7 @@ then."))))
 (require 'yasnippet)
 (require 'auto-complete-config)
 (require 'find-file-in-project)
+(require 'idomenu)
 
 ;;;;;;;;;;;;;;;
 ;;; Elpy itself
@@ -353,6 +354,7 @@ project."
 (defvar elpy-mode-map
   (let ((map (make-sparse-keymap)))
     (define-key map (kbd "C-c C-f") 'find-file-in-project)
+    (define-key map (kbd "C-c C-j") 'idomenu)
 
     ;; Movement
     (define-key map (kbd "M-e") 'elpy-nav-forward-statement)
@@ -426,7 +428,7 @@ C-c C-e      `virtualenv-workon'
 
 Code Navigation
 
-C-c C-j      `imenu'
+C-c C-j      `idomenu'
 C-c C-f      `find-file-in-project'
 C-c C-g C-d  `rope-goto-definition'
 C-c C-g C-c  `rope-find-occurrences'

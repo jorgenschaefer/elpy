@@ -20,7 +20,7 @@ Python.
 - **Code hinting (using eldoc and rope):**
   While you write, the minibuffer will show the call signature of
   the current function.
-- **Code Navigation (using rope, python.el, and find-file-in-project)**
+- **Code Navigation (using rope, python.el, find-file-in-project, and idomenu)**
   Quickly jump to the definition of a function or class, find
   callers of the current function, or browse all definitions in the
   current file. `C-c C-f` will also allow you to quickly open any
