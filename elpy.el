@@ -5,7 +5,7 @@
 ;; Author: Jorgen Schaefer <forcer@forcix.cx>
 ;; URL: https://github.com/jorgenschaefer/elpy
 ;; Version: 0.7
-;; Package-Requires: ((pymacs "0.25") (auto-complete "1.4") (yasnippet "0.8") (fuzzy "0.1") (virtualenv "1.2") (highlight-indentation "0.5.0") (find-file-in-project "3.2") (idomenu "0.1"))
+;; Package-Requires: ((pymacs "0.25") (auto-complete "1.4") (yasnippet "0.8") (fuzzy "0.1") (virtualenv "1.2") (highlight-indentation "0.5.0") (find-file-in-project "3.2") (idomenu "0.1") (nose "0.1.1"))
 
 ;; This program is free software; you can redistribute it and/or
 ;; modify it under the terms of the GNU General Public License
@@ -69,6 +69,10 @@
 ;; - Python web documentation
 ;;   Simply access the Python web documentation using a tab-completed
 ;;   list of modules and objects.
+
+;; - Test running (using nose)
+;;   Run all your tests, the tests for the current module or just the
+;;   current unit with a simple keystroke.
 
 ;; - Refactoring (using rope)
 ;;   Use any of multiple powerful refactoring tools, such extracting
@@ -328,6 +332,7 @@ then."))))
 (require 'auto-complete-config)
 (require 'find-file-in-project)
 (require 'idomenu)
+(require 'nose)
 
 ;;;;;;;;;;;;;;;
 ;;; Elpy itself
@@ -377,6 +382,12 @@ project."
     (define-key map (kbd "C-c C-d") 'elpy-doc-rope)
     (define-key map (kbd "C-c C-w C-s") 'elpy-doc-search)
     (define-key map (kbd "C-c C-w C-w") 'elpy-doc-show)
+
+    ;; Nose tests
+    (define-key map (kbd "C-c C-s") 'nosetests-all)
+    (define-key map (kbd "C-c C-t a") 'nosetests-all)
+    (define-key map (kbd "C-c C-t m") 'nosetests-module)
+    (define-key map (kbd "C-c C-t o") 'nosetests-one)
 
     ;; Rope Project
     (define-key map (kbd "C-c C-p C-o") 'rope-open-project)
@@ -446,6 +457,12 @@ C-c C-v      `elpy-check'
 C-c C-d      `elpy-doc-rope'
 C-c C-w C-s  `elpy-doc-search'
 C-c C-w C-w  `elpy-doc-show'
+
+Test running
+
+C-c C-s      `nosetests-all'
+C-c C-t m    `nosetests-module'
+C-c C-t o    `nosetests-one'
 
 Project support
 
@@ -854,6 +871,12 @@ This is an alist mapping titles to URLs."
                 (puthash package result elpy--doc-package-list)
                 result))
           (kill-buffer buf)))))
+
+
+;;;;;;;;
+;;; nose
+
+(defalias 'nose-find-project-root 'elpy-project-root)
 
 ;;;;;;;;;;;;;
 ;;; Yasnippet

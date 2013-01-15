@@ -35,6 +35,9 @@ Python.
 - **Python web documentation:**
   Simply access the Python web documentation using a tab-completed
   list of modules and objects.
+- **Test running (using nose)**
+  Run all your tests, the tests for the current module or just the
+  current unit with a simple keystroke.
 - **Refactoring (using rope):**
   Use any of multiple powerful refactoring tools, such extracting
   the region to a variable or a separate function, renaming
@@ -175,6 +178,16 @@ C-c C-v      Run a python checking program (e.g. pyflakes)
 C-c C-d      Show documentation of the object at point
 C-c C-w C-s  Search the Python web documentation
 C-c C-w C-w  Browse the Python web documentation
+```
+
+### Test running
+
+Run tests using nosetests with a quick keyboard command.
+
+```
+C-c C-s      Run all tests
+C-c C-t m    Test the current module
+C-c C-t o    Test the current unit
 ```
 
 ### Refactoring
