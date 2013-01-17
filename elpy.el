@@ -333,6 +333,7 @@ then."))))
 (require 'find-file-in-project)
 (require 'idomenu)
 (require 'nose)
+(require 'flymake)
 
 ;;;;;;;;;;;;;;;
 ;;; Elpy itself
