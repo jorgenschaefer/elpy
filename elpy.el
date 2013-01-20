@@ -360,11 +360,12 @@ project."
 (defvar elpy-mode-map
   (let ((map (make-sparse-keymap)))
     (define-key map (kbd "C-c C-f") 'find-file-in-project)
-    (define-key map (kbd "C-c C-j") 'idomenu)
 
     ;; Movement
     (define-key map (kbd "M-e") 'elpy-nav-forward-statement)
     (define-key map (kbd "M-a") 'elpy-nav-backward-statement)
+    (define-key map (kbd "C-c C-j") 'idomenu)
+    (define-key map (kbd "C-c C-o") 'elpy-occur-definitions)
 
     ;; Shell interaction
     (define-key map (kbd "C-c C-c") 'elpy-shell-send-region-or-buffer)
@@ -441,6 +442,7 @@ C-c C-e      `virtualenv-workon'
 Code Navigation
 
 C-c C-j      `idomenu'
+C-c C-o      `elpy-occur-definitions'
 C-c C-f      `find-file-in-project'
 C-c C-g C-d  `rope-goto-definition'
 C-c C-g C-c  `rope-find-occurrences'
@@ -644,6 +646,18 @@ beginning of the previous one if already at the beginning."
     (python-nav-beginning-of-statement)
     (when (= old (point))
       (python-nav-backward-statement))))
+
+(defun elpy-occur-definitions ()
+  "Display an occur buffer of all definitions in the current buffer.
+
+Also, switch to that buffer."
+  (interactive)
+  (let ((list-matching-lines-face nil))
+    (occur "^ *\\(def\\|class\\) "))
+  (let ((window (get-buffer-window "*Occur*")))
+    (if window
+        (select-window window)
+      (switch-to-buffer "*Occur*"))))
 
 (defvar elpy-refactor-list
   '(("Redo" . rope-redo)

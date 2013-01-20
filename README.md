@@ -156,6 +156,7 @@ Navigate quickly through your source file and project.
 
 ```
 C-c C-j      Jump to a definition in the current buffer
+C-c C-o      Show an outline of definitions in the current buffer
 C-c C-f      Find a file in the current project
 C-c C-g C-d  Go to the definition of the function at point
 C-c C-g C-c  Find callers of the function at point
