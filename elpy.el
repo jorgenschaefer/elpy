@@ -532,23 +532,29 @@ matching any string in `elpy-project-markers', or the last
 directory to contain an __init__.el file.
 
 If no root directory is found, nil is returned."
-  (let ((dir (expand-file-name default-directory))
-        (last-dir-with-init nil)
-        (regexp (format "^%s$" (regexp-opt elpy-project-markers))))
-    (catch 'return
-      (while (not (equal dir "/"))
-        (when (file-exists-p (format "%s/__init__.py" dir))
-          (setq last-dir-with-init dir))
-        (when (directory-files dir nil regexp t)
-          (throw 'return dir))
-        (setq dir (elpy-directory-parent dir)))
-      last-dir-with-init)))
+  (or ;; (getenv "PROJECT_HOME")
+      (locate-dominating-file default-directory
+                              'elpy-project-root-p)
+      (elpy-project-find-library-root)
+      (read-directory-name "Project root: "
+                           nil nil t)))
 
-(defun elpy-directory-parent (directory)
-  "Return the parent directory of DIRECTORY."
-  (if (equal directory "/")
-      directory
-    (file-name-directory (replace-regexp-in-string "/*$" "" directory))))
+(defun elpy-project-root-p (dir)
+  "Return true iff the given directory is a project root."
+  (or (file-exists-p (format "%s/.git" dir))
+      (file-exists-p (format "%s/.hg" dir))
+      (file-exists-p (format "%s/.ropeproject" dir))
+      (file-exists-p (format "%s/setup.py" dir))
+      (and (file-exists-p (format "%s/.svn" dir))
+           (not (file-exists-p (format "%s/../.svn" dir))))))
+
+(defun elpy-project-find-library-root ()
+  "Find the first directory in the tree not containing an __init__.py"
+  (when (file-exists-p (format "%s/__init__.py" default-directory))
+    (locate-dominating-file default-directory
+                            (lambda (dir)
+                              (not (file-exists-p
+                                    (format "%s/__init__.py" dir)))))))
 
 (defun elpy-setup-project ()
   "Set up the Rope project for the current file."
@@ -891,7 +897,8 @@ This is an alist mapping titles to URLs."
 ;;;;;;;;
 ;;; nose
 
-(defalias 'nose-find-project-root 'elpy-project-root)
+(eval-after-load "nose"
+  '(defalias 'nose-find-project-root 'elpy-project-find-library-root))
 
 ;;;;;;;;;;;;;
 ;;; Yasnippet
