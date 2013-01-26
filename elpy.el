@@ -384,6 +384,7 @@ project."
     (define-key map (kbd "C-c C-d") 'elpy-doc-rope)
     (define-key map (kbd "C-c C-w C-s") 'elpy-doc-search)
     (define-key map (kbd "C-c C-w C-w") 'elpy-doc-show)
+    (define-key map (kbd "C-c C-q") 'elpy-show-defun)
 
     ;; Nose tests
     (define-key map (kbd "C-c C-s") 'nosetests-all)
@@ -629,6 +630,14 @@ whole buffer."
                        nil (lambda (mode-name)
                              "*Python Check*"))))
 
+(defun elpy-show-defun ()
+  "Show the current class and method, in case they are not on
+screen."
+  (interactive)
+  (let ((function (python-info-current-defun)))
+    (if function
+        (message "%s()" function)
+      (message "Not in a function"))))
 
 (defun elpy-nav-forward-statement ()
   "Move forward one statement.
