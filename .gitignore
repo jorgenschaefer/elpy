@@ -1,0 +1,4 @@
+.ropeproject
+.coverage
+*.pyc
+*.elc
