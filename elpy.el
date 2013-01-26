@@ -370,6 +370,8 @@ project."
     (define-key map (kbd "M-n") 'elpy-forward-definition)
     (define-key map (kbd "<M-up>") 'elpy-backward-definition)
     (define-key map (kbd "M-p") 'elpy-backward-definition)
+    (define-key map (kbd "C-c C-n") 'elpy-flymake-forward-error)
+    (define-key map (kbd "C-c C-p") 'elpy-flymake-backward-error)
 
     ;; Shell interaction
     (define-key map (kbd "C-c C-c") 'elpy-shell-send-region-or-buffer)
@@ -787,6 +789,30 @@ See `elpy-refactor-list' for a list of commands."
                         temp-file
                         (file-name-directory buffer-file-name))))
       (list python-check-command (list local-file)))))
+
+(defun elpy-flymake-forward-error ()
+  "Move forward to the next Flymake error and show a
+description."
+  (interactive)
+  (flymake-goto-next-error)
+  (elpy-flymake-show-error))
+
+(defun elpy-flymake-backward-error ()
+  "Move backward to the previous Flymake error and show a
+description."
+  (interactive)
+  (flymake-goto-prev-error)
+  (elpy-flymake-show-error))
+
+(defun elpy-flymake-show-error ()
+  "Show the flymake error message at point."
+  (let* ((lineno (flymake-current-line-no))
+         (err-info (car (flymake-find-err-info flymake-err-info
+                                               lineno)))
+         (text (mapconcat #'flymake-ler-text
+                          err-info
+                          ", ")))
+    (message "%s" text)))
 
 ;;;;;;;;;;;;;;;;;;;;;;
 ;;; Rope documentation
