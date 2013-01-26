@@ -366,6 +366,10 @@ project."
     (define-key map (kbd "M-a") 'elpy-nav-backward-statement)
     (define-key map (kbd "C-c C-j") 'idomenu)
     (define-key map (kbd "C-c C-o") 'elpy-occur-definitions)
+    (define-key map (kbd "<M-down>") 'elpy-forward-definition)
+    (define-key map (kbd "M-n") 'elpy-forward-definition)
+    (define-key map (kbd "<M-up>") 'elpy-backward-definition)
+    (define-key map (kbd "M-p") 'elpy-backward-definition)
 
     ;; Shell interaction
     (define-key map (kbd "C-c C-c") 'elpy-shell-send-region-or-buffer)
@@ -661,6 +665,24 @@ beginning of the previous one if already at the beginning."
     (python-nav-beginning-of-statement)
     (when (= old (point))
       (python-nav-backward-statement))))
+
+(defun elpy-forward-definition ()
+  "Move forward to the next definition (class or function)."
+  (interactive)
+  (if (save-excursion
+        (forward-char 1)
+        (re-search-forward "^ *\\(def\\|class\\) " nil t))
+      (goto-char (match-beginning 1))
+    (goto-char (point-max))))
+
+(defun elpy-backward-definition ()
+  "Move backward to the previous definition (class or function)."
+  (interactive)
+  (if (save-excursion
+        (forward-char -1)
+        (re-search-backward "^ *\\(def\\|class\\) " nil t))
+      (goto-char (match-beginning 1))
+    (goto-char (point-min))))
 
 (defun elpy-occur-definitions ()
   "Display an occur buffer of all definitions in the current buffer.
