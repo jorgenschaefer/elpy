@@ -5,7 +5,7 @@
 ;; Author: Jorgen Schaefer <forcer@forcix.cx>
 ;; URL: https://github.com/jorgenschaefer/elpy
 ;; Version: 0.7
-;; Package-Requires: ((pymacs "0.25") (auto-complete "1.4") (yasnippet "0.8") (fuzzy "0.1") (virtualenv "1.2") (highlight-indentation "0.5.0") (find-file-in-project "3.2") (idomenu "0.1") (nose "0.1.1"))
+;; Package-Requires: ((auto-complete "1.4") (yasnippet "0.8") (fuzzy "0.1") (virtualenv "1.2") (highlight-indentation "0.5.0") (find-file-in-project "3.2") (idomenu "0.1") (nose "0.1.1"))
 
 ;; This program is free software; you can redistribute it and/or
 ;; modify it under the terms of the GNU General Public License
@@ -32,7 +32,7 @@
 
 ;; Features include:
 
-;; - Code completion (using auto-complete and rope)
+;; - Code completion (using auto-complete and rope or jedi)
 ;;   Emacs will suggest completions as you type and, after a short
 ;;   delay, pop up a select box with proposed completions, including
 ;;   docstrings for those completions when available.
@@ -45,17 +45,17 @@
 ;;   Some completion options are highlighted and will expand into full
 ;;   code snippets that you just need to fill out.
 
-;; - Code hinting (using eldoc and rope)
+;; - Code hinting (using eldoc and rope or jedi)
 ;;   While you write, the minibuffer will show the call signature of
 ;;   the current function.
 
-;; - Code Navigation (using rope, python.el, find-file-in-project, and idomenu)
+;; - Code Navigation (using rope, jedi, python.el, find-file-in-project, and idomenu)
 ;;   Quickly jump to the definition of a function or class, find
 ;;   callers of the current function, or browse all definitions in the
 ;;   current file. C-c C-f will also allow you to quickly open any
 ;;   file in your current project.
 
-;; - Inline Documentation (using rope)
+;; - Inline Documentation (using rope or jedi)
 ;;   Read the help() output of the object at point with a quick key
 ;;   shortcut.
 
@@ -73,12 +73,6 @@
 ;; - Test running (using nose)
 ;;   Run all your tests, the tests for the current module or just the
 ;;   current unit with a simple keystroke.
-
-;; - Refactoring (using rope)
-;;   Use any of multiple powerful refactoring tools, such extracting
-;;   the region to a variable or a separate function, renaming
-;;   identifiers, modules or packages, or just automatically clean up
-;;   your imports.
 
 ;; - Easy IPython support for those who use it
 ;;   Simply run (elpy-use-ipython).
@@ -103,7 +97,7 @@
 
 ;; (elpy-use-ipython)
 
-;; If you find the (Python Elpy yas AC Rope ElDoc Fill) mode line
+;; If you find the (Python Elpy yas AC ElDoc Fill) mode line
 ;; annoying, also add:
 
 ;; (elpy-clean-modeline)
@@ -135,48 +129,6 @@ is not helpful and mostly annoying.
 
 Value set by elpy.")
 
-(defvar ropemacs-enable-autoimport t
-  "Specifies whether autoimport should be enabled.
-
-Value set by elpy.")
-
-(defvar ropemacs-guess-project t
-  "Try to guess the project when needed.
-
-If non-nil, ropemacs tries to guess and open the project that contains
-a file on which the rope command is performed when no project is
-already opened.
-
-Value set by elpy.")
-
-(defvar ropemacs-confirm-saving nil
-  "Shows whether to confirm saving modified buffers before refactorings.
-
-If non-nil, you have to confirm saving all modified
-python files before refactorings; otherwise they are
-saved automatically.
-
-Value set by elpy.")
-
-(defvar ropemacs-enable-shortcuts nil
-  "Shows whether to bind ropemacs shortcuts keys.
-
-Value set by elpy, as we set our own key bindings.")
-
-(defvar ropemacs-local-prefix nil
-  "The prefix for ropemacs refactorings.
-
-Use nil to prevent binding keys.
-
-Value set by elpy, as we set our own key bindings.")
-
-(defvar ropemacs-global-prefix nil
-  "The prefix for ropemacs project commands.
-
-Use nil to prevent binding keys.
-
-Value set by elpy, as we set our own key bindings.")
-
 (defvar ac-trigger-key "TAB"
   "Non-nil means `auto-complete' will start by typing this key.
 If you specify this TAB, for example, `auto-complete' will start by typing TAB,
@@ -207,125 +159,7 @@ Value set by elpy.")
 
 ;; Now, load the various modes we use.
 
-(defun elpy-install-python-packages (&optional ignored)
-  "Install the required Python packages for the user."
-  (with-current-buffer (get-buffer-create "*Python Install*")
-    (fundamental-mode)
-    (erase-buffer)
-    (display-buffer (current-buffer))
-    (with-selected-window (get-buffer-window (current-buffer))
-      (insert "Installing Python packages.\n"
-              "Scroll down to see if there were any errors.\n\n")
-      (let ((commandlist nil)
-            (packages '("rope" "ropemode" "ropemacs")))
-        (cond
-         ((executable-find "easy_install")
-          (dolist (package packages)
-            (add-to-list 'commandlist
-                         (format "easy_install --user %s" package))))
-         ((executable-find "pip")
-          (dolist (package packages)
-            (add-to-list 'commandlist
-                         (format "pip install --user %s" package))))
-         (t
-          (insert "$ ...\n")
-          (insert "ERROR: Can't find either easy_install or pip, can't "
-                  "install packages.\n")))
-        (setq commandlist
-              (append commandlist
-                      '("mkdir ~/elpy-temp-install"
-                        "cd ~/elpy-temp-install && git clone https://github.com/pinard/Pymacs.git"
-                        "cd ~/elpy-temp-install/Pymacs && make"
-                        "cd ~/elpy-temp-install/Pymacs && python setup.py install --user")))
-        (dolist (cmd commandlist)
-          (insert "$ " cmd "\n")
-          (sit-for 0)
-          (call-process "sh" nil (current-buffer) t
-                        "-c" cmd)
-          (insert "\n")
-          (goto-char (point-max)))
-        (insert "\n"
-                "All done. Check for errors above and try to load Elpy again.\n\n")
-        (insert-text-button "Reload Elpy"
-                            'action 'elpy-load-python-packages)))))
-
-(defun elpy-installation-instructions (&optional error)
-  "Show installation instructions."
-  (with-help-window "*Elpy Installation*"
-    (with-current-buffer "*Elpy Installation*"
-      (insert "Elpy could not be loaded successfully.\n"
-              "\n")
-      (cond
-       ((and (eq (car error) 'error)
-             (stringp (cadr error))
-             (string-match "Python:" (cadr error)))
-        (insert
-"The following Python error occurred:
-
-" (cadr error) "
-"))
-       ((and (eq (car error) 'error)
-             (stringp (cadr error))
-             (string-match "Pymacs helper did not start" (cadr error))
-             (with-current-buffer (get-buffer-create "*Pymacs*")
-               (goto-char (point-min))
-               (re-search-forward "No module named Pymacs" nil t)))
-        (insert
-"Python can not find the Pymacs module, which means that the Python
-side of Pymacs was not correctly installed.
-"))
-       (t
-        (insert "The following Emacs Lisp error occurred:
-
-" (format "%s" error) "
-")))
-      (insert "
-The Emacs Lisp Python Environment requires a few Python packages
-to be installed before working properly. You can just use the
-following button to install them automatically, or you can follow
-the instructions below to do so by hand.
-
-")
-        (insert-text-button "Install Python packages"
-                            'action 'elpy-install-python-packages)
-        (insert "
-
-If you are still having trouble, visit #emacs on
-irc.freenode.net.
-
-
-Manual installation:
-
-First, the easy ones. Please run the following command in a
-shell:
-
-  easy_install --user rope ropemode ropemacs
-
-If you do not have easy_install, pip might be available:
-
-  pip install --user rope ropemode ropemacs
-
-The last missing module is Pymacs, which is sadly not available
-via easy_install. You will need to run the following:
-
-  git clone https://github.com/pinard/Pymacs.git
-  cd Pymacs
-  make
-  python setup.py install --user
-
-Try loading elpy again once that is done. Everything should work
-then."))))
-
-(defun elpy-load-python-packages (&rest ignored)
-  (condition-case err
-      (progn
-        (require 'pymacs)
-        (pymacs-load "ropemacs" "rope-"))
-    (error
-     (elpy-installation-instructions err))))
-
 (require 'python)
-(elpy-load-python-packages)
 (require 'virtualenv)
 (require 'highlight-indentation)
 (require 'yasnippet)
@@ -334,6 +168,7 @@ then."))))
 (require 'idomenu)
 (require 'nose)
 (require 'flymake)
+(require 'json)
 
 ;;;;;;;;;;;;;;;
 ;;; Elpy itself
@@ -342,6 +177,20 @@ then."))))
   "The Emacs Lisp Python Environment."
   :prefix "elpy-"
   :group 'languages)
+
+(defcustom elpy-rpc-backend nil
+  "Your preferred backend.
+
+nil    - Select a backend automatically.
+rope   - Use the Rope refactoring library. This will create
+         .ropeproject directories in your project roots.
+jedi   - Use the Jedi completion library.
+native - Do not use any backend, use native Python methods only."
+  :type '(choice (const "rope")
+                 (const "jedi")
+                 (const "native")
+                 (const nil))
+  :group 'elpy)
 
 (defcustom elpy-project-markers '(".git" ".svn" ".hg"
                                   ".ropeproject" "setup.py")
@@ -365,6 +214,7 @@ project."
     (define-key map (kbd "M-e") 'elpy-nav-forward-statement)
     (define-key map (kbd "M-a") 'elpy-nav-backward-statement)
     (define-key map (kbd "C-c C-j") 'idomenu)
+    (define-key map (kbd "M-.") 'elpy-goto-definition)
     (define-key map (kbd "C-c C-o") 'elpy-occur-definitions)
     (define-key map (kbd "<M-down>") 'elpy-forward-definition)
     (define-key map (kbd "M-n") 'elpy-forward-definition)
@@ -379,15 +229,9 @@ project."
     ;; Virtual Env support
     (define-key map (kbd "C-c C-e") 'virtualenv-workon)
 
-    ;; Goto
-    (define-key map (kbd "C-c C-g C-d") 'rope-goto-definition)
-    (define-key map (kbd "C-c C-g C-c") 'rope-find-occurrences)
-    (define-key map (kbd "C-c C-g C-i") 'rope-find-implementations)
-    (define-key map (kbd "C-c C-g C-g") 'rope-jump-to-global)
-
     ;; Documentation
     (define-key map (kbd "C-c C-v") 'elpy-check)
-    (define-key map (kbd "C-c C-d") 'elpy-doc-rope)
+    (define-key map (kbd "C-c C-d") 'elpy-doc)
     (define-key map (kbd "C-c C-w C-s") 'elpy-doc-search)
     (define-key map (kbd "C-c C-w C-w") 'elpy-doc-show)
     (define-key map (kbd "C-c C-q") 'elpy-show-defun)
@@ -398,13 +242,6 @@ project."
     (define-key map (kbd "C-c C-t m") 'nosetests-module)
     (define-key map (kbd "C-c C-t o") 'nosetests-one)
 
-    ;; Rope Project
-    (define-key map (kbd "C-c C-p C-o") 'rope-open-project)
-    (define-key map (kbd "C-c C-p C-c") 'rope-close-project)
-    (define-key map (kbd "C-c C-p C-p") 'rope-project-config)
-
-    ;; Rope Refactoring
-    (define-key map (kbd "C-c C-r") 'elpy-refactor)
     map)
   "Key map for the Emacs Lisp Python Environment.")
 
@@ -424,72 +261,18 @@ project."
 (define-minor-mode elpy-mode
   "Minor mode in Python buffers for the Emacs Lisp Python Environment.
 
-Key bindings
+This mode fully supports virtualenvs. Once you switch a
+virtualenv using \\[virtualenv-workon], you can use
+\\[elpy-rpc-restart] to make the elpy Python process use your
+virtualenv.
 
-Indentation and Filling:
-
-TAB          indent line if at the beginning of it, else complete
-C-j          `newline-and-indent'
-C-c <        `python-indent-shift-left'
-C-c >        `python-indent-shift-right'
-C-M-q        `prog-indent-sexp'
-M-q          `python-fill-paragraph'
-
-Python Shell Interaction:
-
-C-c C-z      `python-shell-switch-to-shell'
-
-C-M-x        `python-shell-send-defun'
-C-c C-c      `elpy-shell-send-region-or-buffer'
-
-Virtual Environments:
-
-C-c C-e      `virtualenv-workon'
-
-Code Navigation
-
-C-c C-j      `idomenu'
-C-c C-o      `elpy-occur-definitions'
-C-c C-f      `find-file-in-project'
-C-c C-g C-d  `rope-goto-definition'
-C-c C-g C-c  `rope-find-occurrences'
-C-c C-g C-i  `rope-find-implementations'
-C-c C-g C-g  `rope-jump-to-global'
-
-C-M-up       `python-nav-backward-up-list'
-M-a          `elpy-nav-backward-statement'
-M-e          `elpy-nav-forward-statement'
-
-Documentation
-
-C-c C-v      `elpy-check'
-
-C-c C-d      `elpy-doc-rope'
-C-c C-w C-s  `elpy-doc-search'
-C-c C-w C-w  `elpy-doc-show'
-
-Test running
-
-C-c C-s      `nosetests-all'
-C-c C-t m    `nosetests-module'
-C-c C-t o    `nosetests-one'
-
-Project support
-
-C-c C-p C-o  `rope-open-project'
-C-c C-p C-c  `rope-close-project'
-C-c C-p C-p  `rope-project-config'
-
-Refactoring
-
-C-c C-r      `elpy-refactor'"
+\\{elpy-mode-map}"
   :lighter " Elpy"
   (when (not (eq major-mode 'python-mode))
     (error "Elpy only works with `python-mode'"))
   (cond
    (elpy-mode
     (when buffer-file-name
-      (elpy-setup-project)
       (setq ffip-project-root (elpy-project-root)))
     (eldoc-mode 1)
     (set (make-local-variable 'eldoc-documentation-function)
@@ -499,12 +282,14 @@ C-c C-r      `elpy-refactor'"
     (yas-reload-all)
     (yas-minor-mode 1)
     (setq ac-sources
-          '(ac-source-nropemacs-dot
-            ac-source-nropemacs
+          '(ac-source-elpy
+            ac-source-elpy-dot
             ac-source-abbrev
             ac-source-dictionary
             ac-source-words-in-same-mode-buffers))
-    (auto-complete-mode 1))
+    (auto-complete-mode 1)
+    (add-hook 'before-save-hook 'elpy-rpc-before-save nil t)
+    (add-hook 'after-save-hook 'elpy-rpc-after-save nil t))
    (t
     (eldoc-mode 0)
     (flymake-mode 0)
@@ -513,7 +298,81 @@ C-c C-r      `elpy-refactor'"
     (auto-complete-mode 0)
     (setq ac-sources '(ac-source-abbrev
                        ac-source-dictionary
-                       ac-source-words-in-same-mode-buffers)))))
+                       ac-source-words-in-same-mode-buffers))
+    (remove-hook 'before-save-hook 'elpy-rpc-before-save t)
+    (remove-hook 'after-save-hook 'elpy-rpc-after-save t))))
+
+(defun elpy-installation-instructions (message &optional show-elpy-module)
+  "Display a window with installation instructions for the Python
+side of elpy.
+
+MESSAGE is shown as the first paragraph.
+
+If SHOW-ELPY-MODULE is non-nil, the help buffer will first
+explain how to install the elpy module."
+  (with-help-window "*Elpy Installation*"
+    (with-current-buffer "*Elpy Installation*"
+      (let ((inhibit-read-only t))
+        (erase-buffer)
+        (insert "Elpy Installation Instructions\n")
+        (insert "\n")
+        (insert message)
+        (when (not (bolp))
+          (insert "\n"))
+        (insert "\n")
+        (when elpy-rpc-buffer
+          (let ((elpy-rpc-output (with-current-buffer elpy-rpc-buffer
+                                   (buffer-string))))
+            (when (not (equal elpy-rpc-output ""))
+              (insert (format "The contents of the %s buffer "
+                              (buffer-name elpy-rpc-buffer))
+                      "might provide further information "
+                      "on the problem.\n")
+              (insert "\n"))))
+        (when show-elpy-module
+          (insert "Elpy requires the Python module \"elpy\". The module "
+                  "is available from pypi, so you can install it using "
+                  "the following command:\n")
+          (insert "\n")
+          (elpy-installation-command "elpy")
+          (insert "\n"))
+        (insert "To find possible completions, Elpy uses one of two "
+                "Python modules. Either \"rope\" or \"jedi\". To use "
+                "Elpy to its fullest potential, you should install "
+                "either one of them. Which one is a matter of taste. "
+                "You can try both and even switch at runtime using "
+                "M-x elpy-set-backend.\n")
+        (insert "\n")
+        (elpy-installation-command "rope")
+        (insert "\n")
+        (elpy-installation-command "jedi")
+        (insert "\n")
+        (insert "If you are using virtualenvs, you can use Elpy's "
+                "C-c C-e command to switch to a virtualenv of your "
+                "choice. Afterwards, running the command M-x "
+                "elpy-rpc-restart will use the packages in "
+                "that virtualenv.")
+        (fill-region (point-min) (point-max))))))
+
+(defun elpy-installation-command (python-module)
+  "Insert an installation command description for PYTHON-MODULE."
+  (let ((command (cond
+                  ((executable-find "pip")
+                   (format "pip install --user %s" python-module))
+                  ((executable-find "easy_install")
+                   (format "easy_install --user %s" python-module))
+                  (t
+                   nil))))
+    (if (not command)
+        (insert "... hm. It appears you have neither pip nor easy_install "
+                "available. You might want to get the python-pip or "
+                "or python-setuptools package.\n")
+      (insert-text-button "[run]"
+                          'action (lambda (button)
+                                    (async-shell-command
+                                     (button-get button 'command)))
+                          'command command)
+      (insert " " command "\n"))))
 
 (defvar elpy-project-root 'not-initialized
   "The root of the project the current buffer is in.")
@@ -563,21 +422,10 @@ If no root directory is found, nil is returned."
                               (not (file-exists-p
                                     (format "%s/__init__.py" dir)))))))
 
-(defun elpy-setup-project ()
-  "Set up the Rope project for the current file."
-  (let ((old (rope-get-project-root))
-        (new (elpy-project-root)))
-    (cond
-     ;; Everything is set up correctly
-     ((and old new (equal old new))
-      t)
-     ;; A better project exists, open it
-     (new
-      (rope-open-project new))
-     ;; Project doesn't exist, create a new one
-     ((not new)
-      (rope-open-project)
-      (setq elpy-project-root (rope-get-project-root))))))
+(defun elpy-set-project-root (new-root)
+  "Set the Elpy project root to NEW-ROOT."
+  (interactive "DNew project root: ")
+  (setq elpy-project-root new-root))
 
 (defun elpy-use-ipython ()
   "Set defaults to use IPython instead of the standard interpreter."
@@ -603,12 +451,12 @@ If no root directory is found, nil is returned."
 (defun elpy-clean-modeline ()
   "Clean up the mode line by removing some lighters.
 
-It's not necessary to see (Python Elpy yas AC Rope ElDoc) all the
+It's not necessary to see (Python Elpy yas AC ElDoc) all the
 time. Honestly."
   (interactive)
   (setq eldoc-minor-mode-string nil)
   (dolist (mode '(elpy-mode yas-minor-mode auto-complete-mode
-                            flymake-mode ropemacs-mode))
+                            flymake-mode))
     (setcdr (assq mode minor-mode-alist)
             (list ""))))
 
@@ -644,6 +492,21 @@ screen."
     (if function
         (message "%s()" function)
       (message "Not in a function"))))
+
+(defun elpy-goto-definition ()
+  "Go to the definition of the symbol at point, if found."
+  (interactive)
+  (let ((location (elpy-rpc-get-definition)))
+    (if location
+        (elpy-goto-location (car location) (cadr location))
+      (error "No definition found"))))
+
+(defun elpy-goto-location (filename offset)
+  "Show FILENAME at OFFSET to the user."
+  (let ((buffer (find-file filename)))
+    (with-current-buffer buffer
+      (with-selected-window (get-buffer-window buffer)
+        (goto-char (1+ offset))))))
 
 (defun elpy-nav-forward-statement ()
   "Move forward one statement.
@@ -698,55 +561,13 @@ Also, switch to that buffer."
         (select-window window)
       (switch-to-buffer "*Occur*"))))
 
-(defvar elpy-refactor-list
-  '(("Redo" . rope-redo)
-    ("Undo" . rope-undo)
-    ("New Module" . rope-create-module)
-    ("New Package" . rope-create-package)
-    ("New Factory for Class at Point" . rope-introduce-factory)
-    ("Inline Function at Point" . rope-inline)
-    ("Region to Variable" . rope-extract-variable)
-    ("Region to Method" . rope-extract-method)
-    ("Module to Package" . rope-module-to-package)
-    ("Organize Imports" . rope-organize-imports)
-    ("Rename Identifier at Point" . rope-rename)
-    ("Rename Current Module" . rope-rename-current-module)
-    ("Move Current Module" . rope-move-current-module)
-    ("Change Signature of Function at Point" . rope-change-signature)
-    ("Move to Module" . rope-move)
-    ;; Didn't get this one to work at all
-    ;; ("Use Function Wherever Possible" . rope-use-function)
-    ;; Templates would require more complex explanation
-    ;; ("Restructure Code According to Template" . rope-restructure)
-    )
-  "Valid arguments and functions to call for `elpy-refactor'.")
-
-(defvar elpy-refactor-history nil
-  "The history used for `elpy-refactor'.")
-(defun elpy-refactor ()
-  "Call a Rope refactoring command.
-
-See `elpy-refactor-list' for a list of commands."
-  (interactive)
-  (let* ((prompt (if elpy-refactor-history
-                     (format "Refactor [%s]: "
-                             (car elpy-refactor-history))
-                   "Refactor: "))
-         (action (completing-read prompt
-                                  elpy-refactor-list
-                                  nil t nil
-                                  'elpy-refactor-history
-                                  (car elpy-refactor-history)))
-         (command (cdr (assoc action elpy-refactor-list))))
-    (when (functionp command)
-      (call-interactively command))))
 
 ;;;;;;;;;
 ;;; Eldoc
 
 (defun elpy-eldoc-documentation ()
   "Return a call tip for the python call at point."
-  (let ((calltip (rope-get-calltip)))
+  (let ((calltip (elpy-rpc-get-calltip)))
     (when calltip
       (with-temp-buffer
         ;; multiprocessing.queues.Queue.cancel_join_thread(self)
@@ -814,20 +635,13 @@ description."
                           ", ")))
     (message "%s" text)))
 
-;;;;;;;;;;;;;;;;;;;;;;
-;;; Rope documentation
+;;;;;;;;;;;;;;;;;
+;;; Documentation
 
-(defun elpy-rope-get-doc ()
-  "Return a docstring for the symbol at point, or nil."
-  (let ((doc (rope-get-doc)))
-    (when (and doc
-               (not (equal doc "")))
-      doc)))
-
-(defun elpy-doc-rope ()
-  "Show Rope documentation on the thing at point."
+(defun elpy-doc ()
+  "Show documentation on the thing at point."
   (interactive)
-  (let ((doc (or (elpy-rope-get-doc)
+  (let ((doc (or (elpy-rpc-get-docstring)
                  ;; This will get the right position for
                  ;; multiprocessing.Queue(quxqux_|_)
                  (ignore-errors
@@ -836,12 +650,18 @@ description."
                     (with-syntax-table python-dotty-syntax-table
                       (forward-symbol 1)
                       (backward-char 1))
-                    (elpy-rope-get-doc))))))
+                    (elpy-rpc-get-docstring))))))
     (if doc
         (with-help-window "*Python Doc*"
-          (princ doc))
+          (with-current-buffer "*Python Doc*"
+            (erase-buffer)
+            (insert doc)
+            (goto-char (point-min))
+            (while (re-search-forward "\\(.\\)\\1" nil t)
+              (replace-match (propertize (match-string 1)
+                                         'face 'bold)
+                             t t))))
       (message "No documentation available."))))
-
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Python web documentation
@@ -951,6 +771,250 @@ This is an alist mapping titles to URLs."
           (kill-buffer buf)))))
 
 
+;;;;;;;;;;;;;;;;;;;;;
+;;; elpy-rpc backends
+
+;; elpy-rpc is a simple JSON-based RPC protocol. It's mostly JSON-RPC
+;; 1.0, except we do not implement the full protocol as we do not need
+;; all the features. Emacs starts a Python subprocess which runs a
+;; special module. The module reads JSON-RPC requests and responds
+;; with JSON-RPC responses.
+
+(defvar elpy-rpc-call-id 0
+  "Call id for the current elpy-rpc call.
+
+See `elpy-rpc-call'.")
+(make-variable-buffer-local 'elpy-rpc-call-id)
+
+(defvar elpy-rpc-buffer-p nil
+  "True iff the current buffer is an elpy-rpc buffer.")
+(make-variable-buffer-local 'elpy-rpc-buffer-p)
+
+(defvar elpy-rpc-buffer nil
+  "The global elpy-rpc buffer.")
+
+(defun elpy-rpc (method-name &rest params)
+  "Run an elpy-rpc method on the elpy-rpc process."
+  (elpy-rpc-ensure-open)
+  (with-current-buffer elpy-rpc-buffer
+    (apply 'elpy-rpc-call method-name params)))
+
+(defun elpy-rpc-ensure-open ()
+  "Ensure that the global elpy-rpc subprocess is active."
+  (when (not (and elpy-rpc-buffer
+                  (get-buffer-process elpy-rpc-buffer)
+                  (process-live-p (get-buffer-process elpy-rpc-buffer))))
+    (when elpy-rpc-buffer
+      (kill-buffer elpy-rpc-buffer))
+    (condition-case err
+        (setq elpy-rpc-buffer
+              (elpy-rpc-open "*elpy-rpc*" "python" "-m" "elpy"))
+      (error
+       (elpy-installation-instructions
+        (format "Could not start the Python subprocess: %s"
+                (cadr err))
+        t)
+       (error (cadr err))))
+    (cond
+     ;; User requested a backend that's not installed
+     (elpy-rpc-backend
+      (when (not (member elpy-rpc-backend (elpy-rpc-get-available-backends)))
+        (elpy-installation-instructions
+         (format (concat "The %s backend is unavailable. "
+                         "Please install the appropriate Python library.")
+                 elpy-rpc-backend))
+        (error (format "Backend %s not found" elpy-rpc-backend)))
+      (elpy-rpc-set-backend elpy-rpc-backend))
+     ;; User did not specifically request the native backend, but it's
+     ;; chosen by default.
+     ((and (not elpy-rpc-backend)
+           (equal "native" (elpy-rpc-get-backend)))
+      (elpy-installation-instructions
+       (concat "Only the basic native backend is available. "
+               "You might want to install an appropriate "
+               "Python library. If you are happy with the native "
+               "backend, please add the following to your .emacs:"
+               "\n\n(setq elpy-rpc-backend \"native\")"))))))
+
+(defun elpy-rpc-restart ()
+  "Restart the elpy-rpc subprocess if it is running.
+
+Actually, just closes the elpy-rpc buffer"
+  (interactive)
+  (when elpy-rpc-buffer
+    (kill-buffer elpy-rpc-buffer)
+    (setq elpy-rpc-buffer nil)))
+
+(defun elpy-rpc-open (name program &rest program-args)
+  "Start a new elpy-rpc subprocess.
+
+NAME is a suggested name for the buffer and the name for the
+process. The process will be PROGRAM called with PROGRAM-ARGS as
+arguments.
+
+This function returns the buffer created to communicate with
+elpy-rpc. This buffer needs to be the current buffer for
+subsequent calls to `elpy-rpc-call'."
+  (let* ((buffer (generate-new-buffer name))
+         ;; Leaving process-connection-type non-nil can truncate
+         ;; communication
+         (proc (let ((process-connection-type nil))
+                 (apply #'start-process name buffer program program-args))))
+    (set-process-query-on-exit-flag proc nil)
+    (with-current-buffer buffer
+      (setq elpy-rpc-buffer-p t)
+      (let ((line (elpy-rpc--receive-line)))
+        (cond
+         ((equal line "elpy-rpc ready")
+          buffer)
+         ((string-match "No module named \\(.*\\)" line)
+          (goto-char (point-min))
+          (insert line "\n")
+          (set-marker (process-mark proc) (point))
+          (error (format "The Python module %s is not installed"
+                         (match-string 1 line))))
+         (t
+          (goto-char (point-min))
+          (insert line "\n")
+          (set-marker (process-mark proc) (point))
+          (error "Unknown output from Python elpy-rpc")))))))
+
+(defun elpy-rpc-call (method &rest params)
+  "Call the METHOD with PARAMS on the current RPC server.
+
+Ths current buffer needs to be an elpy-rpc buffer."
+  (when (not elpy-rpc-buffer-p)
+    (error "`elpy-rpc-call' called outside of an RPC buffer"))
+  (erase-buffer)
+  (setq elpy-rpc-call-id (1+ elpy-rpc-call-id))
+  (elpy-rpc--send-json `((id . ,elpy-rpc-call-id)
+                         (method . ,method)
+                         (params . ,params)))
+  (let ((response (elpy-rpc--receive-json)))
+    (cond
+     ((not (= elpy-rpc-call-id (cdr (assq 'id response))))
+      (error "Protocol desynchronization, restart subprocess"))
+     ((cdr (assq 'error response))
+      (error (cdr (assq 'error response))))
+     (t
+      (cdr (assq 'result response))))))
+
+(defun elpy-rpc--send-json (obj)
+  "Send an object encoded as JSON to the current process."
+  (process-send-string (get-buffer-process (current-buffer))
+                       (format "%s\n" (json-encode obj))))
+
+(defun elpy-rpc--receive-line ()
+  "Read a single line from the current process."
+  (let ((inhibit-quit nil))
+    (while (not (progn
+                  (goto-char (point-min))
+                  (re-search-forward "^\\(.*\\)\n" nil t)))
+      (accept-process-output)))
+  (let ((line (match-string 1)))
+    (replace-match "")
+    line))
+
+(defun elpy-rpc--receive-json ()
+  "Read a single JSON object from the current process."
+  (let ((json-array-type 'list))
+    (json-read-from-string (elpy-rpc--receive-line))))
+
+(defun elpy-rpc-get-completions ()
+  "Call the find_completions API function.
+
+Returns a list of possible completions for the Python symbol at
+point."
+  (elpy-rpc "get_completions"
+            (elpy-project-root)
+            buffer-file-name
+            (buffer-string)
+            (- (point)
+               (point-min))))
+
+(defun elpy-rpc-get-calltip ()
+  "Call the get_calltip API function.
+
+Returns a calltip string for the function call at point."
+  (elpy-rpc "get_calltip"
+            (elpy-project-root)
+            buffer-file-name
+            (buffer-string)
+            (- (point)
+               (point-min))))
+
+(defun elpy-rpc-get-docstring ()
+  "Call the get_docstring API function.
+
+Returns a possible multi-line docstring for the symbol at point."
+  (elpy-rpc "get_docstring"
+            (elpy-project-root)
+            buffer-file-name
+            (buffer-string)
+            (- (point)
+               (point-min))))
+
+(defun elpy-rpc-get-definition ()
+  "Call the find_definition API function.
+
+Returns nil or a list of (filename, point)."
+  (elpy-rpc "get_definition"
+            (elpy-project-root)
+            buffer-file-name
+            (buffer-string)
+            (- (point)
+               (point-min))))
+
+(defun elpy-rpc-before-save ()
+  "Call the before_save API function.
+
+Used for state keeping in the backend."
+  ;; If there is no backend, we do not need to keep state.
+  (when elpy-rpc-buffer
+    (elpy-rpc "before_save"
+              (elpy-project-root)
+              buffer-file-name)))
+
+(defun elpy-rpc-after-save ()
+  "Call the after_save API function.
+
+Used for state keeping in the backend."
+  ;; If there is no backend, we do not need to keep state.
+  (when elpy-rpc-buffer
+    (elpy-rpc "before_save"
+              (elpy-project-root)
+              buffer-file-name)))
+
+(defun elpy-rpc-get-backend ()
+  "Call the get_backend API function.
+
+Returns the name of the backend currently in use."
+  (elpy-rpc "get_backend"))
+
+(defun elpy-rpc-get-available-backends ()
+  "Call the get_available_backends API function.
+
+Returns a list of names of available backends, depending on which
+Python libraries are installed."
+  (elpy-rpc "get_available_backends"))
+
+(defun elpy-rpc-set-backend (backend)
+  "Call the set_backend API function.
+
+This changes the current backend to the named backend. Raises an
+error if the backend is not supported."
+  (elpy-rpc "set_backend" backend))
+
+(defun elpy-set-backend (backend)
+  "Set the backend used by elpy."
+  (interactive
+   (list (completing-read
+          (format "Switch elpy backend (currently %s): "
+                  (elpy-rpc-get-backend))
+          (elpy-rpc-get-available-backends)
+          nil t)))
+  (elpy-rpc-set-backend backend))
+
 ;;;;;;;;
 ;;; nose
 
@@ -965,52 +1029,41 @@ This is an alist mapping titles to URLs."
 ;;;;;;;;;;;;;;;;;
 ;;; Auto-Complete
 
-;; The default ropemacs interaction is distinctly broken and even
-;; marked as unsupported. Make our own.
-
-;; Adapted from Michael Markert:
-;; https://github.com/cofi/dotfiles/blob/master/emacs.d/config/cofi-python.el
-
-(defvar elpy--ropemacs-docs nil
+(defvar elpy--ac-cache nil
   "List of current expansions and docstrings.")
 
-(defun elpy--ropemacs-candidates ()
+(defun elpy--ac-candidates ()
   "Return a list of possible expansions at points.
 
-This also initializes `elpy--ropemacs-docs'."
-  (setq elpy--ropemacs-docs nil)
-  (dolist (completion (rope-extended-completions))
+This also initializes `elpy--ac-cache'."
+  (setq elpy--ac-cache nil)
+  (dolist (completion (elpy-rpc-get-completions))
     (let ((name (car completion))
           (doc (cadr completion)))
       (when (not (string-prefix-p "_" name))
         (push (cons (concat ac-prefix name)
                     doc)
-              elpy--ropemacs-docs))))
-  (mapcar 'car elpy--ropemacs-docs))
+              elpy--ac-cache))))
+  (mapcar #'car elpy--ac-cache))
 
-(defun elpy--ropemacs-document (name)
+(defun elpy--ac-document (name)
   "Return the documentation for the symbol NAME."
-  (assoc-default name elpy--ropemacs-docs))
+  (assoc-default name elpy--ac-cache))
 
-(defun elpy--ropemacs-available ()
-  "Return non-nil if rope is available for this file."
-  (locate-dominating-file buffer-file-name ".ropeproject"))
-
-(ac-define-source nropemacs
-  '((candidates . elpy--ropemacs-candidates)
+(ac-define-source elpy
+  '((candidates . elpy--ac-candidates)
     (symbol     . "p")
-    (document   . elpy--ropemacs-document)
-    (cache      . t)
-    (available .  elpy--ropemacs-available)))
+    (document   . elpy--ac-document)
+    (cache      . t)))
 
-(ac-define-source nropemacs-dot
-  '((candidates . elpy--ropemacs-candidates)
+(ac-define-source elpy-dot
+  '((candidates . elpy--ac-candidates)
     (symbol     . "p")
-    (document   . elpy--ropemacs-document)
+    (document   . elpy--ac-document)
     (cache      . t)
     (prefix     . c-dot)
-    (requires   . 0)
-    (available . elpy--ropemacs-available)))
+    (requires   . 0)))
+
 
 ;; Functions for Emacs 24 before 24.3
 (when (not (fboundp 'python-shell-send-region))

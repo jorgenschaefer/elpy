@@ -8,7 +8,7 @@ Python.
 
 ## Features
 
-- **Code completion (using auto-complete and rope):**
+- **Code completion (using auto-complete and rope or jedi):**
   Emacs will suggest completions as you type and, after a short
   delay, pop up a select box with proposed completions, including
   docstrings for those completions when available.
@@ -17,15 +17,15 @@ Python.
   code belongs where.
 - **Snippet Expansion (using yasnippet):**
   Use powerful templates for quick code generation.
-- **Code hinting (using eldoc and rope):**
+- **Code hinting (using eldoc and rope or jedi):**
   While you write, the minibuffer will show the call signature of
   the current function.
-- **Code Navigation (using rope, python.el, find-file-in-project, and idomenu)**
+- **Code Navigation (using rope, jedi, python.el, find-file-in-project, and idomenu)**
   Quickly jump to the definition of a function or class, find
   callers of the current function, or browse all definitions in the
   current file. `C-c C-f` will also allow you to quickly open any
   file in your current project.
-- **Inline Documentation (using rope):**
+- **Inline Documentation (using rope or jedi):**
   Read the help() output of the object at point with a quick key shortcut.
 - **On-the-fly checks (using flymake):**
   Highlight errors in your code while you edit it.
@@ -38,11 +38,6 @@ Python.
 - **Test running (using nose)**
   Run all your tests, the tests for the current module or just the
   current unit with a simple keystroke.
-- **Refactoring (using rope):**
-  Use any of multiple powerful refactoring tools, such extracting
-  the region to a variable or a separate function, renaming
-  identifiers, modules or packages, or just automatically clean up
-  your imports.
 - **Easy IPython support for those who use it:**
   Simply run (elpy-use-ipython).
 
@@ -53,17 +48,13 @@ Elpy requires Emacs 24.
 First, you need to install the Python dependencies:
 
 ```
-easy_install --user rope ropemode ropemacs
+easy_install --user elpy rope
 ```
 
-Sadly, Pymacs itself is not available via pypi, so you need to install
-it by hand:
+or:
 
 ```
-git clone https://github.com/pinard/Pymacs.git
-cd Pymacs
-make
-python setup.py install --user
+easy_install --user elpy jedi
 ```
 
 Then, add the following to your .emacs:
@@ -98,7 +89,7 @@ If you want to use IPython (make sure it's installed), add:
 (elpy-use-ipython)
 ```
 
-If you find the (Python Elpy yas AC Rope ElDoc Fill) mode line
+If you find the (Python Elpy yas AC ElDoc Fill) mode line
 annoying, also add:
 
 ```
@@ -191,27 +182,6 @@ C-c C-t m    Test the current module
 C-c C-t o    Test the current unit
 ```
 
-### Refactoring
-
-While Rope provides auto-completion, it's actually a refactoring tool.
-Elpy wraps that in a simple interactive refactoring session.
-
-```
-C-c C-r      Start refactoring interaction
-```
-
-### Project support
-
-Rope uses projects. Usually, you only need to set it up once and say
-where the project root is, but these allow you to set up and configure
-projects on the fly.
-
-```
-C-c C-p C-o  Open a new Rope project
-C-c C-p C-c  Close the current Rope project
-C-c C-p C-p  Configure the current Rope project
-```
-
 ## Other Tweaks
 
 The following would overwrite keys that can get in the way when using
@@ -224,13 +194,3 @@ a-c-mode around, but if it really annoys you, use these.
 (define-key ac-completing-map (kbd "RET") nil)
 (define-key ac-completing-map (kbd "<return>") nil)
 ```
-
-## Dependencies from Source
-
-If you like to live on the edge, get the dependencies as source:
-
-- Pymacs: `git clone git://github.com/pinard/Pymacs.git`
-- Ropemode: `hg clone https://bitbucket.org/agr/ropemode`
-- Ropemacs: `hg clone https://bitbucket.org/agr/ropemacs`
-- auto-complete: `git clone git://github.com/auto-complete/auto-complete.git`
-- yasnippet: `git clone git://github.com/capitaomorte/yasnippet.git`
