@@ -1079,6 +1079,55 @@ This also initializes `elpy--ac-cache'."
 (when (not (fboundp 'python-nav-backward-statement))
   (defalias 'python-nav-backward-statement 'backward-sexp))
 
+;; Emacs 24.2 made `locate-dominating-file' accept a predicate instead
+;; of a string. Simply overwrite the current one, it's
+;; backwards-compatible. The code below is taken from Emacs 24.3.
+(when (or (< emacs-major-version 24)
+          (and (= emacs-major-version 24)
+               (<= emacs-minor-version 1)))
+  (defun locate-dominating-file (file name)
+    "Look up the directory hierarchy from FILE for a directory containing NAME.
+Stop at the first parent directory containing a file NAME,
+and return the directory.  Return nil if not found.
+Instead of a string, NAME can also be a predicate taking one argument
+\(a directory) and returning a non-nil value if that directory is the one for
+which we're looking."
+    ;; We used to use the above locate-dominating-files code, but the
+    ;; directory-files call is very costly, so we're much better off doing
+    ;; multiple calls using the code in here.
+    ;;
+    ;; Represent /home/luser/foo as ~/foo so that we don't try to look for
+    ;; `name' in /home or in /.
+    (setq file (abbreviate-file-name file))
+    (let ((root nil)
+          ;; `user' is not initialized outside the loop because
+          ;; `file' may not exist, so we may have to walk up part of the
+          ;; hierarchy before we find the "initial UID".  Note: currently unused
+          ;; (user nil)
+          try)
+      (while (not (or root
+                      (null file)
+                      ;; FIXME: Disabled this heuristic because it is sometimes
+                      ;; inappropriate.
+                      ;; As a heuristic, we stop looking up the hierarchy of
+                      ;; directories as soon as we find a directory belonging
+                      ;; to another user.  This should save us from looking in
+                      ;; things like /net and /afs.  This assumes that all the
+                      ;; files inside a project belong to the same user.
+                      ;; (let ((prev-user user))
+                      ;;   (setq user (nth 2 (file-attributes file)))
+                      ;;   (and prev-user (not (equal user prev-user))))
+                      (string-match locate-dominating-stop-dir-regexp file)))
+        (setq try (if (stringp name)
+                      (file-exists-p (expand-file-name name file))
+                    (funcall name file)))
+        (cond (try (setq root file))
+              ((equal file (setq file (file-name-directory
+                                       (directory-file-name file))))
+               (setq file nil))))
+      (if root (file-name-as-directory root))))
+  )
+
 ;; highlight-indentation 0.5 does not use modes yet
 (when (not (fboundp 'highlight-indentation-mode))
   (defun highlight-indentation-mode (on-or-off)
