@@ -926,7 +926,7 @@ Ths current buffer needs to be an elpy-rpc buffer."
 Returns a list of possible completions for the Python symbol at
 point."
   (elpy-rpc "get_completions"
-            (elpy-project-root)
+            (expand-file-name (elpy-project-root))
             buffer-file-name
             (buffer-string)
             (- (point)
@@ -937,7 +937,7 @@ point."
 
 Returns a calltip string for the function call at point."
   (elpy-rpc "get_calltip"
-            (elpy-project-root)
+            (expand-file-name (elpy-project-root))
             buffer-file-name
             (buffer-string)
             (- (point)
@@ -948,7 +948,7 @@ Returns a calltip string for the function call at point."
 
 Returns a possible multi-line docstring for the symbol at point."
   (elpy-rpc "get_docstring"
-            (elpy-project-root)
+            (expand-file-name (elpy-project-root))
             buffer-file-name
             (buffer-string)
             (- (point)
@@ -959,7 +959,7 @@ Returns a possible multi-line docstring for the symbol at point."
 
 Returns nil or a list of (filename, point)."
   (elpy-rpc "get_definition"
-            (elpy-project-root)
+            (expand-file-name (elpy-project-root))
             buffer-file-name
             (buffer-string)
             (- (point)
@@ -972,7 +972,7 @@ Used for state keeping in the backend."
   ;; If there is no backend, we do not need to keep state.
   (when elpy-rpc-buffer
     (elpy-rpc "before_save"
-              (elpy-project-root)
+              (expand-file-name (elpy-project-root))
               buffer-file-name)))
 
 (defun elpy-rpc-after-save ()
@@ -982,7 +982,7 @@ Used for state keeping in the backend."
   ;; If there is no backend, we do not need to keep state.
   (when elpy-rpc-buffer
     (elpy-rpc "before_save"
-              (elpy-project-root)
+              (expand-file-name (elpy-project-root))
               buffer-file-name)))
 
 (defun elpy-rpc-get-backend ()
