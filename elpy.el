@@ -232,8 +232,6 @@ project."
     ;; Documentation
     (define-key map (kbd "C-c C-v") 'elpy-check)
     (define-key map (kbd "C-c C-d") 'elpy-doc)
-    (define-key map (kbd "C-c C-w C-s") 'elpy-doc-search)
-    (define-key map (kbd "C-c C-w C-w") 'elpy-doc-show)
     (define-key map (kbd "C-c C-q") 'elpy-show-defun)
 
     ;; Nose tests
@@ -672,103 +670,6 @@ description."
   (browse-url
    (format "https://www.google.com/search?q=site:docs.python.org%%20%s"
            what)))
-
-(defun elpy-doc-show (package object anchor)
-  "Show the Python web documentation on package PACKAGE and object OBJECT.
-
-ANCHOR is the package name in the HTML file."
-  (interactive (elpy--doc-show-read-package-and-object))
-  (browse-url (format"http://docs.python.org/library/%s.html#%s"
-                     package
-                     (format "%s.%s" anchor object))))
-
-(defun elpy--doc-read-backspace (&rest args)
-  "Function called on backspace when completing in minibuffer."
-  (interactive)
-  (if (equal "" (field-string))
-      (throw 'one-level-up nil)
-    (call-interactively 'delete-backward-char)))
-
-(defun elpy--doc-show-read-package-and-object ()
-  "Read a package and object within that package from the user."
-  (let* ((package-map
-          (let ((map (make-sparse-keymap)))
-            (set-keymap-parent map minibuffer-local-must-match-map)
-            (define-key map (kbd ".") 'minibuffer-complete-and-exit)
-            map))
-         (object-map
-          (let ((map (make-sparse-keymap)))
-            (set-keymap-parent map minibuffer-local-completion-map)
-            (define-key map (kbd "DEL") 'elpy--doc-read-backspace)
-            (define-key map (kbd "<backspace>") 'elpy--doc-read-backspace)
-            map))
-         package object anchor)
-    (while (not object)
-      (setq package
-            (let ((minibuffer-local-must-match-map package-map))
-              (completing-read "Documentation: "
-                               (elpy--doc-package-index)
-                               nil t package)))
-      (setq object
-            (catch 'one-level-up
-              (let ((minibuffer-local-completion-map object-map))
-                (completing-read (format "Documentation: %s."
-                                         package)
-                                 (elpy--doc-package-list package))))))
-    (setq anchor (gethash (cons package object)
-                          elpy--doc-package-anchors
-                          object))
-    (list package object (or anchor package))))
-
-(defvar elpy--doc-package-index nil
-  "Cache of the the documentation index for Python.")
-
-(defun elpy--doc-package-index ()
-  "Return the documentation index.
-
-This is an alist mapping titles to URLs."
-  (or elpy--doc-package-index
-      (let ((buf (url-retrieve-synchronously
-                  "http://docs.python.org/library/")))
-        (unwind-protect
-            (with-current-buffer buf
-              (let ((result nil))
-                (goto-char (point-min))
-                (while (re-search-forward
-                        "href=\"\\([a-zA-Z][^\"#]*\\)\\.html.*&#8212;"
-                        nil t)
-                  (add-to-list 'result (match-string 1)))
-                (setq elpy--doc-package-index (nreverse result))))
-          (kill-buffer buf)))))
-
-(defvar elpy--doc-package-list (make-hash-table :test 'equal)
-  "A hash mapping package names to their contents.")
-
-(defvar elpy--doc-package-anchors (make-hash-table :test 'equal)
-  "A hash mapping object names to their HTML anchors.")
-
-(defun elpy--doc-package-list (package)
-  "Return a list of objects in this package."
-  (or (gethash package elpy--doc-package-list)
-      (let ((buf (url-retrieve-synchronously
-                  (format "http://docs.python.org/library/%s.html"
-                          package))))
-        (unwind-protect
-            (with-current-buffer buf
-              (let ((result nil)
-                    (case-fold-search t))
-                (goto-char (point-min))
-                (while (re-search-forward
-                        (format "id=\"\\([^\"]*\\)\\.\\([^\"]*\\)\"" package)
-                        nil t)
-                  (puthash (cons package (match-string 2))
-                           (match-string 1)
-                           elpy--doc-package-anchors)
-                  (add-to-list 'result (match-string 2)))
-                (setq result (nreverse result))
-                (puthash package result elpy--doc-package-list)
-                result))
-          (kill-buffer buf)))))
 
 
 ;;;;;;;;;;;;;;;;;;;;;
