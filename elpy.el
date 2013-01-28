@@ -290,13 +290,18 @@ explain how to install the elpy module."
 
 (defun elpy-installation-command (python-module)
   "Insert an installation command description for PYTHON-MODULE."
-  (let ((command (cond
-                  ((executable-find "pip")
-                   (format "pip install --user %s" python-module))
-                  ((executable-find "easy_install")
-                   (format "easy_install --user %s" python-module))
-                  (t
-                   nil))))
+  (let* ((do-user-install (not (or (getenv "VIRTUAL_ENV")
+                                   virtualenv-workon-session)))
+         (user-option (if do-user-install
+                          "--user "
+                        ""))
+         (command (cond
+                   ((executable-find "pip")
+                    (format "pip install %s%s" user-option python-module))
+                   ((executable-find "easy_install")
+                    (format "easy_install %s%s" user-option python-module))
+                   (t
+                    nil))))
     (if (not command)
         (insert "... hm. It appears you have neither pip nor easy_install "
                 "available. You might want to get the python-pip or "
