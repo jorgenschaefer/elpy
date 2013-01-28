@@ -103,6 +103,7 @@ Value set by elpy.")
 (require 'flymake)
 (require 'json)
 
+
 ;;;;;;;;;;;;;;;
 ;;; Elpy itself
 
@@ -540,79 +541,6 @@ Also, switch to that buffer."
       (switch-to-buffer "*Occur*"))))
 
 
-;;;;;;;;;
-;;; Eldoc
-
-(defun elpy-eldoc-documentation ()
-  "Return a call tip for the python call at point."
-  (let ((calltip (elpy-rpc-get-calltip)))
-    (when calltip
-      (with-temp-buffer
-        ;; multiprocessing.queues.Queue.cancel_join_thread(self)
-        (insert calltip)
-        (goto-char (point-min))
-        ;; First, remove the whole path up to the second-to-last dot. We
-        ;; retain the class just to make it nicer.
-        (while (search-forward "." nil t)
-          nil)
-        (when (search-backward "." nil t 2)
-          (delete-region (point-min) (1+ (point))))
-        ;; Then remove the occurrence of "self", that's not passed by
-        ;; the user.
-        (when (re-search-forward "(self\\(, \\)?" nil t)
-          (replace-match "("))
-        (goto-char (point-min))
-        ;; Lastly, we'd like to highlight the argument are on.
-
-        ;; This is tricky with keyword vs. positions arguments, and
-        ;; possibly quite complex argument values making calculation of
-        ;; the current argument tricky.
-
-        ;; Hence, we don't do anything for now.
-        (buffer-string)))))
-
-
-;;;;;;;;;;;
-;;; Flymake
-
-(eval-after-load "flymake"
-  '(add-to-list 'flymake-allowed-file-name-masks
-                '("\\.py\\'" elpy-flymake-python-init)))
-
-(defun elpy-flymake-python-init ()
-  ;; Make sure it's not a remote buffer or flymake would not work
-  (when (not (file-remote-p buffer-file-name))
-    (let* ((temp-file (flymake-init-create-temp-buffer-copy
-                       'flymake-create-temp-inplace))
-           (local-file (file-relative-name
-                        temp-file
-                        (file-name-directory buffer-file-name))))
-      (list python-check-command (list local-file)))))
-
-(defun elpy-flymake-forward-error ()
-  "Move forward to the next Flymake error and show a
-description."
-  (interactive)
-  (flymake-goto-next-error)
-  (elpy-flymake-show-error))
-
-(defun elpy-flymake-backward-error ()
-  "Move backward to the previous Flymake error and show a
-description."
-  (interactive)
-  (flymake-goto-prev-error)
-  (elpy-flymake-show-error))
-
-(defun elpy-flymake-show-error ()
-  "Show the flymake error message at point."
-  (let* ((lineno (flymake-current-line-no))
-         (err-info (car (flymake-find-err-info flymake-err-info
-                                               lineno)))
-         (text (mapconcat #'flymake-ler-text
-                          err-info
-                          ", ")))
-    (message "%s" text)))
-
 ;;;;;;;;;;;;;;;;;
 ;;; Documentation
 
@@ -640,9 +568,6 @@ description."
                                          'face 'bold)
                              t t))))
       (message "No documentation available."))))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;; Python web documentation
 
 (defun elpy-doc-search (what)
   "Search the Python web documentation for the string WHAT."
@@ -896,16 +821,93 @@ error if the backend is not supported."
           nil t)))
   (elpy-rpc-set-backend backend))
 
+
+;;;;;;;;;
+;;; Eldoc
+
+(defun elpy-eldoc-documentation ()
+  "Return a call tip for the python call at point."
+  (let ((calltip (elpy-rpc-get-calltip)))
+    (when calltip
+      (with-temp-buffer
+        ;; multiprocessing.queues.Queue.cancel_join_thread(self)
+        (insert calltip)
+        (goto-char (point-min))
+        ;; First, remove the whole path up to the second-to-last dot. We
+        ;; retain the class just to make it nicer.
+        (while (search-forward "." nil t)
+          nil)
+        (when (search-backward "." nil t 2)
+          (delete-region (point-min) (1+ (point))))
+        ;; Then remove the occurrence of "self", that's not passed by
+        ;; the user.
+        (when (re-search-forward "(self\\(, \\)?" nil t)
+          (replace-match "("))
+        (goto-char (point-min))
+        ;; Lastly, we'd like to highlight the argument are on.
+
+        ;; This is tricky with keyword vs. positions arguments, and
+        ;; possibly quite complex argument values making calculation of
+        ;; the current argument tricky.
+
+        ;; Hence, we don't do anything for now.
+        (buffer-string)))))
+
+
+;;;;;;;;;;;
+;;; Flymake
+
+(eval-after-load "flymake"
+  '(add-to-list 'flymake-allowed-file-name-masks
+                '("\\.py\\'" elpy-flymake-python-init)))
+
+(defun elpy-flymake-python-init ()
+  ;; Make sure it's not a remote buffer or flymake would not work
+  (when (not (file-remote-p buffer-file-name))
+    (let* ((temp-file (flymake-init-create-temp-buffer-copy
+                       'flymake-create-temp-inplace))
+           (local-file (file-relative-name
+                        temp-file
+                        (file-name-directory buffer-file-name))))
+      (list python-check-command (list local-file)))))
+
+(defun elpy-flymake-forward-error ()
+  "Move forward to the next Flymake error and show a
+description."
+  (interactive)
+  (flymake-goto-next-error)
+  (elpy-flymake-show-error))
+
+(defun elpy-flymake-backward-error ()
+  "Move backward to the previous Flymake error and show a
+description."
+  (interactive)
+  (flymake-goto-prev-error)
+  (elpy-flymake-show-error))
+
+(defun elpy-flymake-show-error ()
+  "Show the flymake error message at point."
+  (let* ((lineno (flymake-current-line-no))
+         (err-info (car (flymake-find-err-info flymake-err-info
+                                               lineno)))
+         (text (mapconcat #'flymake-ler-text
+                          err-info
+                          ", ")))
+    (message "%s" text)))
+
+
 ;;;;;;;;
 ;;; nose
 
 (eval-after-load "nose"
   '(defalias 'nose-find-project-root 'elpy-project-find-library-root))
 
+
 ;;;;;;;;;;;;;
 ;;; Yasnippet
 
 ;; No added configuration needed. Nice mode. :o)
+
 
 ;;;;;;;;;;;;;;;;;
 ;;; Auto-Complete
@@ -945,6 +947,21 @@ This also initializes `elpy--ac-cache'."
     (prefix     . c-dot)
     (requires   . 0)))
 
+
+;;;;;;;;;;;;;;
+;;; Virtualenv
+
+(defadvice virtualenv-workon (around elpy-virtualenv-workon activate)
+  "Restart the elpy-rpc backend on virtualenv change."
+  (let ((old-env virtualenv-workon-session))
+    ad-do-it
+    (when (and (not (equal old-env virtualenv-workon-session))
+               (y-or-n-p "Virtualenv changed, restart Elpy-RPC? "))
+      (elpy-rpc-restart))))
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; Backwards compatibility
 
 ;; Functions for Emacs 24 before 24.3
 (when (not (fboundp 'python-shell-send-region))
