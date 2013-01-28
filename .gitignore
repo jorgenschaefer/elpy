@@ -2,3 +2,5 @@
 .coverage
 *.pyc
 *.elc
+MANIFEST
+dist/
