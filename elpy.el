@@ -382,6 +382,45 @@ If no root directory is found, nil is returned."
           python-shell-completion-string-code
           "';'.join(get_ipython().Completer.all_completions('''%s'''))\n")))
 
+(defun elpy-use-cpython ()
+  "Set defaults to use the standard interpreter instead of IPython."
+  (interactive)
+  (if (boundp 'python-python-command)
+      ;; Emacs 24 until 24.3
+      (setq python-python-command "python")
+    ;; Emacs 24.3 and onwards.
+
+    ;; This is from the python.el commentary.
+    ;; Settings for IPython 0.11:
+    (setq python-shell-interpreter "python"
+          python-shell-interpreter-args "-i"
+          python-shell-prompt-regexp ">>> "
+          python-shell-prompt-output-regexp ""
+          python-shell-completion-setup-code
+"try:
+    import readline
+except ImportError:
+    def __COMPLETER_all_completions(text): []
+else:
+    import rlcompleter
+    readline.set_completer(rlcompleter.Completer().complete)
+    def __COMPLETER_all_completions(text):
+        import sys
+        completions = []
+        try:
+            i = 0
+            while True:
+                res = readline.get_completer()(text, i)
+                if not res: break
+                i += 1
+                completions.append(res)
+        except NameError:
+            pass
+        return completions"
+          python-shell-completion-module-string-code ""
+          python-shell-completion-string-code
+          "';'.join(__COMPLETER_all_completions('''%s'''))\n")))
+
 (defun elpy-clean-modeline ()
   "Clean up the mode line by removing some lighters.
 
