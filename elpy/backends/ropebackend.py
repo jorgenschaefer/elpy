@@ -6,6 +6,7 @@ http://rope.sourceforge.net/
 
 """
 
+import os
 import time
 
 from elpy.backends.nativebackend import NativeBackend
@@ -65,6 +66,8 @@ class RopeBackend(NativeBackend):
         if project_root is None:
             raise ValueError("No project root is specified, "
                              "but required for Rope")
+        if not os.path.isdir(project_root):
+            return None
         project = self.projects.get(project_root)
         if project is None:
             project = self.projectlib.Project(project_root)
@@ -75,6 +78,14 @@ class RopeBackend(NativeBackend):
             project.validate()
             self.last_validation[project_root] = now
         return project
+
+    def get_resource(self, project, filename):
+        if os.path.exists(filename):
+            return self.libutils.path_to_resource(project,
+                                                  filename,
+                                                  'file')
+        else:
+            return None
 
     def rpc_before_save(self, project_root, filename):
         try:
@@ -96,7 +107,7 @@ class RopeBackend(NativeBackend):
 
     def rpc_get_completions(self, project_root, filename, source, offset):
         project = self.get_project(project_root)
-        resource = self.libutils.path_to_resource(project, filename, 'file')
+        resource = self.get_resource(project, filename)
         proposals = self.codeassist.code_assist(project, source, offset,
                                                 resource,
                                                 maxfixes=MAXFIXES)
@@ -107,7 +118,10 @@ class RopeBackend(NativeBackend):
 
     def rpc_get_definition(self, project_root, filename, source, offset):
         project = self.get_project(project_root)
-        resource = self.libutils.path_to_resource(project, filename, 'file')
+        resource = self.get_resource(project, filename)
+        # The find_definition call fails on an empty strings
+        if source == '':
+            return None
         location = self.findit.find_definition(project, source, offset,
                                                resource, MAXFIXES)
         if location is None:
@@ -121,7 +135,7 @@ class RopeBackend(NativeBackend):
         if open_paren > -1:
             offset = open_paren
         project = self.get_project(project_root)
-        resource = self.libutils.path_to_resource(project, filename, 'file')
+        resource = self.get_resource(project, filename)
         try:
             return self.codeassist.get_calltip(project, source, offset,
                                                resource, MAXFIXES,
@@ -133,7 +147,7 @@ class RopeBackend(NativeBackend):
 
     def rpc_get_docstring(self, project_root, filename, source, offset):
         project = self.get_project(project_root)
-        resource = self.libutils.path_to_resource(project, filename, 'file')
+        resource = self.get_resource(project, filename)
         try:
             docstring = self.codeassist.get_doc(project, source, offset,
                                                 resource, MAXFIXES)

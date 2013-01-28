@@ -46,6 +46,11 @@ class TestGetCompletions(JediBackendTestCase):
                          sorted(['hread', 'hread',
                                  'hreadError', 'imer']))
 
+    def test_should_not_fail_on_inexisting_file(self):
+        self.backend.rpc_get_completions(self.project_root,
+                                         "doesnotexist.py",
+                                         "", 0)
+
 
 class TestGetDefinition(JediBackendTestCase):
     def test_should_return_definition_location_same_file(self):
@@ -87,6 +92,11 @@ class TestGetDefinition(JediBackendTestCase):
                                                     offset)
         self.assertIsNone(locations)
 
+    def test_should_not_fail_on_inexisting_file(self):
+        self.backend.rpc_get_definition(self.project_root,
+                                        "doesnotexist.py",
+                                        "open", 0)
+
 
 class TestGetCalltip(JediBackendTestCase):
     def test_should_return_calltip(self):
@@ -108,6 +118,11 @@ class TestGetCalltip(JediBackendTestCase):
                                                source, offset)
         self.assertIsNone(calltip)
 
+    def test_should_not_fail_on_inexisting_file(self):
+        self.backend.rpc_get_calltip(self.project_root,
+                                     "doesnotexist.py",
+                                     "open(", 5)
+
 
 class TestGetDocstring(JediBackendTestCase):
     def test_should_get_docstring(self):
@@ -124,6 +139,11 @@ class TestGetDocstring(JediBackendTestCase):
                                   "Elpy Pydoc Documentation for %s",
                                   False)
         self.assertEqual(docstring, wanted)
+
+    def test_should_not_fail_on_inexisting_file(self):
+        self.backend.rpc_get_docstring(self.project_root,
+                                       "doesnotexist.py",
+                                       "open", 0)
 
 
 class TestPosToLinecol(unittest.TestCase):

@@ -40,6 +40,10 @@ class TestGetProject(RopeBackendTestCase):
         self.assertRaises(ValueError,
                           self.backend.get_project, None)
 
+    def test_should_return_none_for_inexisting_directory(self):
+        self.assertIsNone(self.backend.get_project(self.project_root +
+                                                   "/doesnotexist/"))
+
 
 class TestBeforeAfterSave(RopeBackendTestCase):
     def test_should_not_fail_on_inexisting_file(self):
@@ -60,6 +64,13 @@ class TestGetCompletions(RopeBackendTestCase):
                          sorted(["ool", "rocess", "ipe", "rocessError"]))
         self.assertIsInstance(dict(completions)['ool'],
                               unicode)
+
+    def test_should_not_fail_on_inexisting_file(self):
+        filename = self.project_root + "/doesnotexist.py"
+        self.backend.rpc_get_completions(self.project_root,
+                                         filename,
+                                         "",
+                                         0)
 
 
 class TestGetDefinition(RopeBackendTestCase):
@@ -112,6 +123,20 @@ class TestGetDefinition(RopeBackendTestCase):
                                                      offset)
         self.assertIsNone(definition)
 
+    def test_should_not_fail_on_inexisting_file(self):
+        filename = self.project_root + "/doesnotexist.py"
+        self.backend.rpc_get_definition(self.project_root,
+                                        filename,
+                                        "",
+                                        0)
+
+    def test_should_not_fail_on_empty_file(self):
+        filename = self.project_file("test.py", "")
+        self.backend.rpc_get_definition(self.project_root,
+                                        filename,
+                                        "",
+                                        0)
+
 
 class TestGetCalltip(RopeBackendTestCase):
     def test_should_get_calltip(self):
@@ -136,6 +161,13 @@ class TestGetCalltip(RopeBackendTestCase):
                                                offset)
         self.assertIsNone(calltip)
 
+    def test_should_not_fail_on_inexisting_file(self):
+        filename = self.project_root + "/doesnotexist.py"
+        self.backend.rpc_get_calltip(self.project_root,
+                                     filename,
+                                     "",
+                                     0)
+
 
 class TestGetDocstring(RopeBackendTestCase):
     def test_should_get_docstring(self):
@@ -158,3 +190,10 @@ class TestGetDocstring(RopeBackendTestCase):
                                                    source,
                                                    offset)
         self.assertIsNone(docstring)
+
+    def test_should_not_fail_on_inexisting_file(self):
+        filename = self.project_root + "/doesnotexist.py"
+        self.backend.rpc_get_docstring(self.project_root,
+                                       filename,
+                                       "",
+                                       0)

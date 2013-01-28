@@ -114,7 +114,6 @@ class JSONRPCServer(object):
         Errors are not caught, so this is a slight misnomer.
 
         """
-
         while True:
             try:
                 self.handle_request()
