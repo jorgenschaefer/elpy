@@ -8,22 +8,16 @@ fi
 
 EXITVALUE=0
 
-for checker in pyflakes pep8 pylint
+for checker in pyflakes pep8
 do
     if which "$checker" &>/dev/null
     then
         echo "*** $checker"
         echo
-        if [ "$checker" = "pylint" ]
-        then
-            "$checker" --output-format=parseable --include-ids=y \
-                --reports=no --errors-only "$1"
-        else
-            "$checker" "$1"
-        fi
+        "$checker" "$1"
         RV="$?"
         if [ "$EXITVALUE" = "0" ]
-        then 
+        then
             EXITVALUE="$RV"
         fi
         echo
