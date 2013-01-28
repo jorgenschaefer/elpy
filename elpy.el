@@ -24,83 +24,16 @@
 
 ;; The Emacs Lisp Python Environment in Emacs
 
-;; Emacs has excellent Python support through a number of packages.
-;; The only problem is that every user needs to set up all of these
-;; packages to work nicely with each other. This mode does not a lot
-;; more than to combine those packages and give them a default
-;; configuration for Python.
+;; Elpy is an Emacs package to bring powerful Python editing to Emacs.
+;; It combines a number of existing Emacs packages, and uses one of a
+;; selection of Python packages for code introspection.
 
-;; Features include:
+;; To use, you need to install not only this package, but a few Python
+;; packages as well. See the installation instructions on the wiki.
 
-;; - Code completion (using auto-complete and rope or jedi)
-;;   Emacs will suggest completions as you type and, after a short
-;;   delay, pop up a select box with proposed completions, including
-;;   docstrings for those completions when available.
+;; Documentation is available there as well.
 
-;; - Indentation highlighting (using highlight-indentation)
-;;   Highlight indentation levels in code so you can always see which
-;;   code belongs where.
-
-;; - Snippet Expansion (using yasnippet and auto-complete)
-;;   Some completion options are highlighted and will expand into full
-;;   code snippets that you just need to fill out.
-
-;; - Code hinting (using eldoc and rope or jedi)
-;;   While you write, the minibuffer will show the call signature of
-;;   the current function.
-
-;; - Code Navigation (using rope, jedi, python.el, find-file-in-project, and idomenu)
-;;   Quickly jump to the definition of a function or class, find
-;;   callers of the current function, or browse all definitions in the
-;;   current file. C-c C-f will also allow you to quickly open any
-;;   file in your current project.
-
-;; - Inline Documentation (using rope or jedi)
-;;   Read the help() output of the object at point with a quick key
-;;   shortcut.
-
-;; - On-the-fly checks (using flymake)
-;;   Highlight errors in your code while you edit it.
-
-;; - Virtualenv support (using virtualenv)
-;;   Use C-c C-e to activate a virtual environment thorough your Emacs
-;;   and for subprocesses.
-
-;; - Python web documentation
-;;   Simply access the Python web documentation using a tab-completed
-;;   list of modules and objects.
-
-;; - Test running (using nose)
-;;   Run all your tests, the tests for the current module or just the
-;;   current unit with a simple keystroke.
-
-;; - Easy IPython support for those who use it
-;;   Simply run (elpy-use-ipython).
-
-;; Setup:
-
-;; Add the following to your .emacs:
-
-;; (package-initialize)
-;; (elpy-enable)
-
-;; To use on-the-fly highlighting of errors and for the code check
-;; command, you need to set `python-check-command' to a command you
-;; have installed. Any combination of pyflakes, pep8 and pylint are
-;; useful, and all available via easy_install and pip. Also see the
-;; python-check.sh utility from the same repository as this file to
-;; use all of them at once.
-
-;; (setq python-check-command "python-check.sh")
-
-;; If you want to use IPython (make sure it's installed), add:
-
-;; (elpy-use-ipython)
-
-;; If you find the (Python Elpy yas AC ElDoc Fill) mode line
-;; annoying, also add:
-
-;; (elpy-clean-modeline)
+;; https://github.com/jorgenschaefer/elpy/wiki
 
 ;;; Code:
 
@@ -263,6 +196,9 @@ This mode fully supports virtualenvs. Once you switch a
 virtualenv using \\[virtualenv-workon], you can use
 \\[elpy-rpc-restart] to make the elpy Python process use your
 virtualenv.
+
+See https://github.com/jorgenschaefer/elpy/wiki/Keybindings for a
+more structured list.
 
 \\{elpy-mode-map}"
   :lighter " Elpy"
