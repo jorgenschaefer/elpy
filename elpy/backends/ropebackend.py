@@ -80,7 +80,7 @@ class RopeBackend(NativeBackend):
         return project
 
     def get_resource(self, project, filename):
-        if os.path.exists(filename):
+        if filename is not None and os.path.exists(filename):
             return self.libutils.path_to_resource(project,
                                                   filename,
                                                   'file')
@@ -88,6 +88,8 @@ class RopeBackend(NativeBackend):
             return None
 
     def rpc_before_save(self, project_root, filename):
+        if filename is None:
+            return
         try:
             self.before_save_data[project_root] = (
                 filename, open(filename).read())

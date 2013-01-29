@@ -51,6 +51,11 @@ class TestGetCompletions(JediBackendTestCase):
                                          "doesnotexist.py",
                                          "", 0)
 
+    def test_should_not_fail_if_file_is_none(self):
+        self.backend.rpc_get_completions(self.project_root,
+                                         None,
+                                         "open", 0)
+
 
 class TestGetDefinition(JediBackendTestCase):
     def test_should_return_definition_location_same_file(self):
@@ -97,6 +102,11 @@ class TestGetDefinition(JediBackendTestCase):
                                         "doesnotexist.py",
                                         "open", 0)
 
+    def test_should_not_fail_if_file_is_none(self):
+        self.backend.rpc_get_definition(self.project_root,
+                                        None,
+                                        "open", 0)
+
 
 class TestGetCalltip(JediBackendTestCase):
     def test_should_return_calltip(self):
@@ -123,6 +133,11 @@ class TestGetCalltip(JediBackendTestCase):
                                      "doesnotexist.py",
                                      "open(", 5)
 
+    def test_should_not_fail_if_file_is_none(self):
+        self.backend.rpc_get_calltip(self.project_root,
+                                     None,
+                                     "open", 0)
+
 
 class TestGetDocstring(JediBackendTestCase):
     def test_should_get_docstring(self):
@@ -143,6 +158,11 @@ class TestGetDocstring(JediBackendTestCase):
     def test_should_not_fail_on_inexisting_file(self):
         self.backend.rpc_get_docstring(self.project_root,
                                        "doesnotexist.py",
+                                       "open", 0)
+
+    def test_should_not_fail_if_file_is_none(self):
+        self.backend.rpc_get_docstring(self.project_root,
+                                       None,
                                        "open", 0)
 
 
