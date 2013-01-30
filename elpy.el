@@ -592,30 +592,47 @@ With two prefix args, only the current module is run."
 ;;;;;;;;;;;;;;;;;
 ;;; Documentation
 
-(defun elpy-doc ()
-  "Show documentation on the thing at point."
-  (interactive)
-  (let ((doc (or (elpy-rpc-get-docstring)
-                 ;; This will get the right position for
-                 ;; multiprocessing.Queue(quxqux_|_)
-                 (ignore-errors
-                  (save-excursion
-                    (elpy-nav-backward-statement)
-                    (with-syntax-table python-dotty-syntax-table
-                      (forward-symbol 1)
-                      (backward-char 1))
-                    (elpy-rpc-get-docstring))))))
-    (if doc
-        (with-help-window "*Python Doc*"
-          (with-current-buffer "*Python Doc*"
-            (erase-buffer)
-            (insert doc)
-            (goto-char (point-min))
-            (while (re-search-forward "\\(.\\)\\1" nil t)
-              (replace-match (propertize (match-string 1)
-                                         'face 'bold)
-                             t t))))
-      (message "No documentation available."))))
+(defun elpy-doc (&optional use-pydoc-p symbol)
+  "Show documentation on the thing at point.
+
+If USE-PYDOC is non-nil (interactively, when a prefix argument is
+given), use pydoc on the symbol SYMBOL (interactively, the symbol
+at point). The user is given the chance to edit the symbol before
+it is passed to pydoc."
+  (interactive
+   (list current-prefix-arg
+         (when current-prefix-arg
+           (read-from-minibuffer "Pydoc on: "
+                                 (with-syntax-table python-dotty-syntax-table
+                                   (let ((symbol (symbol-at-point)))
+                                     (if symbol
+                                         (symbol-name symbol)
+                                       "")))))))
+  (if use-pydoc-p
+      (with-help-window "*Pydoc*"
+        (shell-command (format "pydoc %s" (shell-quote-argument symbol))
+                       (get-buffer "*Pydoc*")))
+    (let ((doc (or (elpy-rpc-get-docstring)
+                   ;; This will get the right position for
+                   ;; multiprocessing.Queue(quxqux_|_)
+                   (ignore-errors
+                     (save-excursion
+                       (elpy-nav-backward-statement)
+                       (with-syntax-table python-dotty-syntax-table
+                         (forward-symbol 1)
+                         (backward-char 1))
+                       (elpy-rpc-get-docstring))))))
+      (if doc
+          (with-help-window "*Python Doc*"
+            (with-current-buffer "*Python Doc*"
+              (erase-buffer)
+              (insert doc)
+              (goto-char (point-min))
+              (while (re-search-forward "\\(.\\)\\1" nil t)
+                (replace-match (propertize (match-string 1)
+                                           'face 'bold)
+                               t t))))
+        (message "No documentation available.")))))
 
 (defun elpy-doc-websearch (what)
   "Search the Python web documentation for the string WHAT."
