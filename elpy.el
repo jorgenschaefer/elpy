@@ -324,10 +324,14 @@ explain how to install the elpy module."
 You can set the variable `elpy-project-root' in, for example,
 .dir-locals.el to configure this."
   (when (eq elpy-project-root 'not-initialized)
+    ;; Set it to nil so when the user runs C-g on the project root
+    ;; prompt, it's set to "no project root".
+    (setq elpy-project-root nil)
     (setq elpy-project-root
           (or (elpy-project-find-root)
               (read-directory-name "Project root: "
-                                   default-directory))))
+                                   default-directory
+                                   nil t))))
   elpy-project-root)
 
 (defun elpy-project-find-root ()
