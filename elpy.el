@@ -5,7 +5,7 @@
 ;; Author: Jorgen Schaefer <forcer@forcix.cx>
 ;; URL: https://github.com/jorgenschaefer/elpy
 ;; Version: 0.7
-;; Package-Requires: ((auto-complete "1.4") (yasnippet "0.8") (fuzzy "0.1") (virtualenv "1.2") (highlight-indentation "0.5.0") (find-file-in-project "3.2") (idomenu "0.1") (nose "0.1.1"))
+;; Package-Requires: ((auto-complete "1.4") (yasnippet "0.8") (fuzzy "0.1") (virtualenv "1.2") (highlight-indentation "0.5.0") (find-file-in-project "3.2") (idomenu "0.1") (nose "0.1.1") (iedit "0.97"))
 
 ;; This program is free software; you can redistribute it and/or
 ;; modify it under the terms of the GNU General Public License
