@@ -604,9 +604,11 @@ not all occurrences."
                              t t))))
       (message "No documentation available."))))
 
-(defun elpy-doc-search (what)
+(defun elpy-doc-websearch (what)
   "Search the Python web documentation for the string WHAT."
-  (interactive "sSearch for: ")
+  (interactive
+   (list (read-from-minibuffer "Search Python.org for: "
+                               (symbol-name (symbol-at-point)))))
   (browse-url
    (format "https://www.google.com/search?q=site:docs.python.org%%20%s"
            what)))
