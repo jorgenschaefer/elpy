@@ -82,7 +82,7 @@ help for the first entry as well.
 
 Value set by elpy.")
 
-(defvar yas-trigger-key (kbd "C-c C-i")
+(defvar yas-trigger-key "C-c C-i"
   "The key bound to `yas-expand' when `yas-minor-mode' is active.
 
 Value is a string that is converted to the internal Emacs key
