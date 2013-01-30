@@ -142,37 +142,39 @@ project."
 
 (defvar elpy-mode-map
   (let ((map (make-sparse-keymap)))
-    (define-key map (kbd "C-c C-f") 'find-file-in-project)
+    ;; Alphabetical order to make it easier to find free C-c C-X
+    ;; bindings in the future. Heh.
 
-    ;; Movement
-    (define-key map (kbd "M-e") 'elpy-nav-forward-statement)
-    (define-key map (kbd "M-a") 'elpy-nav-backward-statement)
-    (define-key map (kbd "C-c C-j") 'idomenu)
-    (define-key map (kbd "M-.") 'elpy-goto-definition)
-    (define-key map (kbd "C-c C-o") 'elpy-occur-definitions)
-    (define-key map (kbd "<M-down>") 'elpy-forward-definition)
-    (define-key map (kbd "M-n") 'elpy-forward-definition)
-    (define-key map (kbd "<M-up>") 'elpy-backward-definition)
-    (define-key map (kbd "M-p") 'elpy-backward-definition)
-    (define-key map (kbd "C-c C-n") 'elpy-flymake-forward-error)
-    (define-key map (kbd "C-c C-p") 'elpy-flymake-backward-error)
+    ;; (define-key map (kbd "<backspace>") 'python-indent-dedent-line-backspace)
+    ;; (define-key map (kbd "<backtab>")   'python-indent-dedent-line)
+    ;; (define-key map (kbd "<tab>")       'ac-trigger-key)
 
-    ;; Shell interaction
+    ;; (define-key map (kbd "C-M-x")   'python-shell-send-defun)
+    ;; (define-key map (kbd "C-c <")   'python-indent-shift-left)
+    ;; (define-key map (kbd "C-c >")   'python-indent-shift-right)
     (define-key map (kbd "C-c C-c") 'elpy-shell-send-region-or-buffer)
-
-    ;; Virtual Env support
-    (define-key map (kbd "C-c C-e") 'virtualenv-workon)
-
-    ;; Documentation
-    (define-key map (kbd "C-c C-v") 'elpy-check)
     (define-key map (kbd "C-c C-d") 'elpy-doc)
+    (define-key map (kbd "C-c C-f") 'find-file-in-project)
+    ;; (define-key map (kbd "C-c C-i") 'yasnippet-expand)
+    (define-key map (kbd "C-c C-j") 'idomenu)
+    (define-key map (kbd "C-c C-n") 'elpy-flymake-forward-error)
+    (define-key map (kbd "C-c C-o") 'elpy-occur-definitions)
+    (define-key map (kbd "C-c C-p") 'elpy-flymake-backward-error)
     (define-key map (kbd "C-c C-q") 'elpy-show-defun)
+    (define-key map (kbd "C-c C-s") 'elpy-rgrep-symbol)
+    (define-key map (kbd "C-c C-t") 'elpy-test)
+    (define-key map (kbd "C-c C-v") 'elpy-check)
+    (define-key map (kbd "C-c C-w") 'elpy-doc-websearch)
+    ;; (define-key map (kbd "C-c C-z") 'python-shell-switch-to-shell)
 
-    ;; Nose tests
-    (define-key map (kbd "C-c C-s") 'nosetests-all)
-    (define-key map (kbd "C-c C-t a") 'nosetests-all)
-    (define-key map (kbd "C-c C-t m") 'nosetests-module)
-    (define-key map (kbd "C-c C-t o") 'nosetests-one)
+    (define-key map (kbd "<C-down>") 'elpy-forward-definition)
+    (define-key map (kbd "<C-up>")  'elpy-backward-definition)
+    ;; (define-key map (kbd "M-,")     'iedit-mode
+    (define-key map (kbd "M-.")     'elpy-goto-definition)
+    (define-key map (kbd "M-a")     'elpy-nav-backward-statement)
+    (define-key map (kbd "M-e")     'elpy-nav-forward-statement)
+    (define-key map (kbd "M-n")     'elpy-forward-definition)
+    (define-key map (kbd "M-p")     'elpy-backward-definition)
 
     map)
   "Key map for the Emacs Lisp Python Environment.")
