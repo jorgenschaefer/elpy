@@ -9,6 +9,7 @@ See the documentation of the JSONRPCServer class for further details.
 
 import json
 import sys
+import traceback
 
 
 class JSONRPCServer(object):
@@ -54,6 +55,7 @@ class JSONRPCServer(object):
             self.stdout = sys.stdout
         else:
             self.stdout = stdout
+        self.last_traceback = None
 
     def read_json(self):
         """Read a single line and decode it as JSON.
@@ -107,6 +109,7 @@ class JSONRPCServer(object):
         except Exception as e:
             self.write_json(error=str(e),
                             id=request_id)
+            self.last_traceback = traceback.format_exc()
 
     def serve_forever(self):
         """Serve requests forever.

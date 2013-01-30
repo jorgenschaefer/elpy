@@ -117,6 +117,19 @@ class TestHandleRequest(TestJSONRPCServer):
                          dict(id=23,
                               error="An error was raised"))
 
+    def test_should_store_error_for_exception_in_method(self):
+        def test_method():
+            raise ValueError("An error was raised")
+        self.write(json.dumps(dict(method='foo',
+                                   id=23)))
+        self.rpc.rpc_foo = test_method
+        self.assertIsNone(self.rpc.last_traceback)
+        self.rpc.handle_request()
+        self.assertEqual(json.loads(self.read()),
+                         dict(id=23,
+                              error="An error was raised"))
+        self.assertIsNotNone(self.rpc.last_traceback)
+
 
 class TestServeForever(TestJSONRPCServer):
     def handle_request(self):
