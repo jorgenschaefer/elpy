@@ -568,7 +568,8 @@ not all occurrences."
     (if (use-region-p)
         (buffer-substring-no-properties (region-beginning)
                                         (region-end))
-      (thing-at-point 'symbol))
+      (or (thing-at-point 'symbol)
+          (read-from-minibuffer "Search for symbol: ")))
     current-prefix-arg
     ))
   (grep-compute-defaults)
