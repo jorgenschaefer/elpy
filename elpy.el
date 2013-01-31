@@ -347,7 +347,7 @@ If no root directory is found, nil is returned."
   (or ;; (getenv "PROJECT_HOME")
       (locate-dominating-file default-directory
                               'elpy-project-root-p)
-      (elpy-project-find-library-root)
+      (elpy-project-find-library-root t)
       (read-directory-name "Project root: "
                            nil nil t)))
 
@@ -360,13 +360,21 @@ If no root directory is found, nil is returned."
       (and (file-exists-p (format "%s/.svn" dir))
            (not (file-exists-p (format "%s/../.svn" dir))))))
 
-(defun elpy-project-find-library-root ()
-  "Find the first directory in the tree not containing an __init__.py"
-  (when (file-exists-p (format "%s/__init__.py" default-directory))
+(defun elpy-project-find-library-root (&optional skip-current-directory)
+  "Find the first directory in the tree not containing an __init__.py
+
+If there is no __init__.py in the current directory, return the
+current directory unless SKIP-CURRENT-DIRECTORY is non-nil."
+  (cond
+   ((file-exists-p (format "%s/__init__.py" default-directory))
     (locate-dominating-file default-directory
                             (lambda (dir)
                               (not (file-exists-p
-                                    (format "%s/__init__.py" dir)))))))
+                                    (format "%s/__init__.py" dir))))))
+   ((not skip-current-directory)
+    default-directory)
+   (t
+    nil)))
 
 (defun elpy-set-project-root (new-root)
   "Set the Elpy project root to NEW-ROOT."
