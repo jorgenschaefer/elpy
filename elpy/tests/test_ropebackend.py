@@ -2,7 +2,9 @@
 
 import __builtin__
 import mock
+import re
 
+from elpy import rpc
 from elpy.tests.support import BackendTestCase, source_and_offset
 from elpy.backends import ropebackend
 
@@ -83,6 +85,39 @@ class TestGetCompletions(RopeBackendTestCase):
                                          "",
                                          0)
 
+    def test_should_fail_for_module_syntax_errors(self):
+        source, offset = source_and_offset(
+            "class Foo(object):\n"
+            "  def bar(self):\n"
+            "    foo(_|_"
+            "    bar("
+            "\n"
+            "  def a(self):\n"
+            "    pass\n"
+            "\n"
+            "  def b(self):\n"
+            "  pass\n"
+            "\n"
+            "  def b(self):\n"
+            "  pass\n"
+            "\n"
+            "  def b(self):\n"
+            "  pass\n"
+            "\n"
+            "  def b(self):\n"
+            "  pass\n"
+            "\n"
+            "  def b(self):\n"
+            "  pass\n"
+        )
+
+        filename = self.project_file("test.py", source)
+        message = re.escape("Too many syntax errors in file test.py "
+                            "(lines 4, 8, 11, 14, 17, 20)")
+        self.assertRaisesRegexp(rpc.Fault, message,
+                                self.backend.rpc_get_completions,
+                                self.project_root, filename, source,
+                                offset)
 
 
 class TestGetDefinition(RopeBackendTestCase):
@@ -191,6 +226,39 @@ class TestGetCalltip(RopeBackendTestCase):
                                      None,
                                      "",
                                      0)
+
+    def test_should_return_none_for_module_syntax_errors(self):
+        source, offset = source_and_offset(
+            "class Foo(object):\n"
+            "  def bar(self):\n"
+            "    foo(_|_"
+            "    bar("
+            "\n"
+            "  def a(self):\n"
+            "    pass\n"
+            "\n"
+            "  def b(self):\n"
+            "  pass\n"
+            "\n"
+            "  def b(self):\n"
+            "  pass\n"
+            "\n"
+            "  def b(self):\n"
+            "  pass\n"
+            "\n"
+            "  def b(self):\n"
+            "  pass\n"
+            "\n"
+            "  def b(self):\n"
+            "  pass\n")
+
+        filename = self.project_file("test.py", source)
+        calltip = self.backend.rpc_get_calltip(self.project_root,
+                                               filename,
+                                               source,
+                                               offset)
+        self.assertIsNone(calltip)
+
 
 class TestGetDocstring(RopeBackendTestCase):
     def test_should_get_docstring(self):

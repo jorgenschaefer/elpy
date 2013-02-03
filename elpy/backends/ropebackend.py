@@ -7,8 +7,10 @@ http://rope.sourceforge.net/
 """
 
 import os
+import re
 import time
 
+from elpy import rpc
 from elpy.backends.nativebackend import NativeBackend
 
 VALIDATE_EVERY_SECONDS = 5
@@ -46,11 +48,13 @@ class RopeBackend(NativeBackend):
             from rope.base import project
             from rope.base import libutils
             from rope.base.exceptions import BadIdentifierError
+            from rope.base.exceptions import ModuleSyntaxError
             from rope.contrib import findit
             return {'codeassist': codeassist,
                     'projectlib': project,
                     'libutils': libutils,
                     'BadIdentifierError': BadIdentifierError,
+                    'ModuleSyntaxError': ModuleSyntaxError,
                     'findit': findit
                     }
         except:
@@ -110,9 +114,18 @@ class RopeBackend(NativeBackend):
     def rpc_get_completions(self, project_root, filename, source, offset):
         project = self.get_project(project_root)
         resource = self.get_resource(project, filename)
-        proposals = self.codeassist.code_assist(project, source, offset,
-                                                resource,
-                                                maxfixes=MAXFIXES)
+        try:
+            proposals = self.codeassist.code_assist(project, source, offset,
+                                                    resource,
+                                                    maxfixes=MAXFIXES)
+        except self.ModuleSyntaxError as e:
+            linenos = re.findall("^  \\* line ([0-9]*):", e.message,
+                                 re.MULTILINE)
+            linedesc = ", ".join(str(x) for x in linenos)
+            raise rpc.Fault(code=101,
+                            message=("Too many syntax errors in file {} "
+                                     "(lines {})"
+                                     .format(e.filename, linedesc)))
         starting_offset = self.codeassist.starting_offset(source, offset)
         prefixlen = offset - starting_offset
         return [[proposal.name[prefixlen:], proposal.get_doc()]
@@ -142,6 +155,8 @@ class RopeBackend(NativeBackend):
             return self.codeassist.get_calltip(project, source, offset,
                                                resource, MAXFIXES,
                                                remove_self=True)
+        except self.ModuleSyntaxError:
+            return None
         except (self.BadIdentifierError, IndexError):
             # IndexError seems to be a bug in Rope. I don't know what
             # it causing it, exactly.

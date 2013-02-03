@@ -31,7 +31,7 @@ class BackendTestCase(unittest.TestCase):
         except OSError:
             pass
         with open(full_name, "w") as f:
-            f.write(contents)
+            f.write(contents.encode("utf-8"))
         return full_name
 
 

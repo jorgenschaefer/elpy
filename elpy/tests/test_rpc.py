@@ -9,6 +9,20 @@ import sys
 from elpy import rpc
 
 
+class TestFault(unittest.TestCase):
+    def test_should_have_code_and_data(self):
+        fault = rpc.Fault("Hello", code=250, data="Fnord")
+        self.assertEqual(fault.message, "Hello")
+        self.assertEqual(fault.code, 250)
+        self.assertEqual(fault.data, "Fnord")
+
+    def test_should_have_defaults_for_code_and_data(self):
+        fault = rpc.Fault("Hello")
+        self.assertEqual(fault.message, "Hello")
+        self.assertEqual(fault.code, 500)
+        self.assertIsNone(fault.data)
+
+
 class TestJSONRPCServer(unittest.TestCase):
     def setUp(self):
         self.stdin = StringIO.StringIO()
