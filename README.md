@@ -26,13 +26,6 @@ pip install elpy rope pyflakes pep8
 install the elpy Python package, but simply put the repository in your
 `PYTHONPATH`.)
 
-Then put the `python-check.sh` script somewhere in your `PATH`:
-
-```
-wget -O ~/bin/python-check.sh \
-    https://raw.github.com/jorgenschaefer/elpy/master/python-check.sh
-```
-
 Evaluate this in your `*scratch*` buffer:
 
 ```Lisp
@@ -45,7 +38,6 @@ Then run `M-x package-install RET elpy RET`.
 Finally, add the following to your `.emacs`:
 
 ```Lisp
-(setq python-check-command "python-check.sh")
 (package-initialize)
 (elpy-enable)
 ```
