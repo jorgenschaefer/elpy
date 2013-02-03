@@ -1037,7 +1037,7 @@ This also initializes `elpy--ac-cache'."
 ;;;;;;;;;;;;;;
 ;;; Virtualenv
 
-(defadvice virtualenv-workon (around elpy-virtualenv-workon activate)
+(defadvice virtualenv-workon (around ad-elpy-virtualenv-workon activate)
   "Restart the elpy-rpc backend on virtualenv change."
   (let ((old-env virtualenv-workon-session))
     ad-do-it
@@ -1045,6 +1045,10 @@ This also initializes `elpy--ac-cache'."
                (y-or-n-p "Virtualenv changed, restart Elpy-RPC? "))
       (elpy-rpc-restart))))
 
+(defadvice virtualenv-deactivate (after ad-elpy-virtualenv-deactivate activate)
+  "Restart the elpy-rpc backend on virtualenv change."
+  (when (y-or-n-p "Virtualenv deactivated, restart Elpy-RPC? ")
+    (elpy-rpc-restart)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Backwards compatibility
