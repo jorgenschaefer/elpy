@@ -30,12 +30,12 @@ Emacs will start the protocol by running the module itself, like so:
 
 This will emit a greeting string on a single line, and then wait for
 the protocol to start. Details of the protocol can be found in
-elpy.rpc..
+elpy.rpc.
 
 This package is unlikely to be useful on its own.
 
 """
 
 __author__ = "Jorgen Schaefer"
-__version__ = "0.5"
+__version__ = "0.8"
 __license__ = "GPL"
