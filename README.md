@@ -22,6 +22,10 @@ First, install the required Python packages:
 pip install elpy rope pyflakes pep8
 ```
 
+(Note: If you are installing the development version of elpy, do not
+install the elpy Python package, but simply put the repository in your
+`PYTHONPATH`.)
+
 Then put the `python-check.sh` script somewhere in your `PATH`:
 
 ```
