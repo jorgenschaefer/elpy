@@ -603,6 +603,7 @@ With no prefix arg, all tests are run.
 With one prefix arg, only the current test is run.
 With two prefix args, only the current module is run."
   (interactive "p")
+  (save-some-buffers)
   (cond
    ((>= arg 16) (nosetests-module))
    ((>= arg  4) (nosetests-one))
