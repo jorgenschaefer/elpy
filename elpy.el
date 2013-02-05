@@ -42,11 +42,12 @@
 ;; configuration, if any.
 
 (let* ((elpy-el (or byte-compile-current-file
-                      buffer-file-name))
+                    buffer-file-name))
        (python-check (when elpy-el
                        (concat (file-name-directory elpy-el)
                                "python-check.sh"))))
-  (when (file-exists-p python-check)
+  (when (and python-check
+             (file-exists-p python-check))
     (defvar python-check-command  python-check
       "Command used to check a Python file.")))
 
