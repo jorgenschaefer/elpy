@@ -1074,7 +1074,7 @@ This also initializes `elpy--ac-cache'."
 ;; backwards-compatible. The code below is taken from Emacs 24.3.
 (when (or (< emacs-major-version 24)
           (and (= emacs-major-version 24)
-               (<= emacs-minor-version 1)))
+               (<= emacs-minor-version 2)))
   (defun locate-dominating-file (file name)
     "Look up the directory hierarchy from FILE for a directory containing NAME.
 Stop at the first parent directory containing a file NAME,
