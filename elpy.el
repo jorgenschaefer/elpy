@@ -41,7 +41,7 @@
 ;; set. We are using `defvar' to avoid overwriting a user's
 ;; configuration, if any.
 
-(let* ((elpy-el (or byte-compile-current-file
+(let* ((elpy-el (or load-file-name
                     buffer-file-name))
        (python-check (when elpy-el
                        (concat (file-name-directory elpy-el)
