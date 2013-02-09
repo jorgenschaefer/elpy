@@ -101,16 +101,16 @@ Value set by elpy.")
 
 ;; Now, load the various modes we use.
 
-(require 'python)
-(require 'virtualenv)
-(require 'highlight-indentation)
-(require 'yasnippet)
 (require 'auto-complete-config)
 (require 'find-file-in-project)
-(require 'idomenu)
-(require 'nose)
 (require 'flymake)
+(require 'highlight-indentation)
+(require 'idomenu)
 (require 'json)
+(require 'nose)
+(require 'python)
+(require 'virtualenv)
+(require 'yasnippet)
 
 
 ;;;;;;;;;;;;;;;
@@ -143,6 +143,14 @@ Elpy will search up the directory hierarchy for the first
 occurrence of such a file and assume this is the root of your
 project."
   :type '(repeat string)
+  :group 'elpy)
+
+(defcustom elpy-default-minor-modes '(eldoc-mode
+                                      flymake-mode
+                                      highlight-indentation-mode
+                                      yas-minor-mode
+                                      auto-complete-mode)
+  "Minor modes enabled when `elpy-mode' is enabled."
   :group 'elpy)
 
 (defcustom elpy-mode-hook nil
@@ -220,31 +228,21 @@ more structured list.
    (elpy-mode
     (when buffer-file-name
       (setq ffip-project-root (elpy-project-root)))
-    (eldoc-mode 1)
     (set (make-local-variable 'eldoc-documentation-function)
          'elpy-eldoc-documentation)
-    (flymake-mode 1)
-    (highlight-indentation-mode 1)
-    (yas-reload-all)
-    (yas-minor-mode 1)
-    (setq ac-sources
-          '(ac-source-elpy
-            ac-source-elpy-dot
-            ac-source-abbrev
-            ac-source-dictionary
-            ac-source-words-in-same-mode-buffers))
-    (auto-complete-mode 1)
+    (add-to-list 'ac-sources 'ac-source-elpy)
+    (add-to-list 'ac-sources 'ac-source-elpy-dot)
     (add-hook 'before-save-hook 'elpy-rpc-before-save nil t)
-    (add-hook 'after-save-hook 'elpy-rpc-after-save nil t))
+    (add-hook 'after-save-hook 'elpy-rpc-after-save nil t)
+    ;; Enable modes, hence the 1.
+    (run-hook-with-args 'elpy-default-minor-modes 1))
    (t
-    (eldoc-mode 0)
-    (flymake-mode 0)
-    (highlight-indentation-mode 0)
-    (yas-minor-mode 0)
-    (auto-complete-mode 0)
-    (setq ac-sources '(ac-source-abbrev
-                       ac-source-dictionary
-                       ac-source-words-in-same-mode-buffers))
+    (setq ffip-project-root nil)
+    (kill-local-variable 'eldoc-documentation-function)
+    (setq ac-sources
+          (delq 'ac-source-elpy
+                (delq 'ac-source-elpy-dot
+                      ac-sources)))
     (remove-hook 'before-save-hook 'elpy-rpc-before-save t)
     (remove-hook 'after-save-hook 'elpy-rpc-after-save t))))
 
