@@ -467,7 +467,8 @@ If there is an active region, send that. Otherwise, send the
 whole buffer."
   (interactive)
   (if (region-active-p)
-      (python-shell-send-region)
+      (python-shell-send-region (region-beginning)
+                                (region-end))
     (python-shell-send-buffer)))
 
 (defun elpy-check ()
