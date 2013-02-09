@@ -45,6 +45,22 @@ class TestInit(TestServer):
         self.assertEqual(srv.rpc_get_backend(), "native")
 
 
+class TestHandle(TestServer):
+    def test_should_fail_for_missing_method(self):
+        srv = server.ElpyRPCServer()
+        srv.backend = object()
+        self.assertRaises(server.Fault,
+                          srv.handle, "does_not_exist", ())
+
+    def test_should_call_method(self):
+        srv = server.ElpyRPCServer()
+        srv.backend = mock.MagicMock()
+        srv.backend.rpc_does_exist.return_value = "It works"
+        self.assertEqual(srv.handle("does_exist", (1, 2, 3)),
+                         "It works")
+        srv.backend.rpc_does_exist.assert_called_with(1, 2, 3)
+
+
 class TestRPCEcho(TestServer):
     def test_should_return_arguments(self):
         srv = server.ElpyRPCServer()
@@ -79,27 +95,9 @@ class TestRPCGetSetBackend(TestServer):
                          "jedi")
 
 
-class TestGetAvailableBackends(TestServer):
+class TestRPCGetAvailableBackends(TestServer):
     def test_should_return_available_backends(self):
         srv = server.ElpyRPCServer()
         self.JediBackend.return_value = None
         self.assertEqual(sorted(srv.rpc_get_available_backends()),
                          sorted(["native", "rope"]))
-
-
-class TestPassthroughRPCCalls(TestServer):
-    rpc_calls2 = ["rpc_before_save", "rpc_after_save"]
-    rpc_calls4 = ["rpc_get_completions", "rpc_get_definition",
-                  "rpc_get_calltip", "rpc_get_docstring"]
-
-    def test_should_pass_methods_to_backend(self):
-        backend = mock.MagicMock()
-        self.RopeBackend.return_value = backend
-        srv = server.ElpyRPCServer()
-        for method in self.rpc_calls2:
-            getattr(srv, method)("foo", "bar")
-            getattr(backend, method).assert_called_with("foo", "bar")
-        for method in self.rpc_calls4:
-            getattr(srv, method)("foo", "bar", 2, 3)
-            getattr(backend, method).assert_called_with("foo", "bar",
-                                                        2, 3)

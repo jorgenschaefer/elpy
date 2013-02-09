@@ -144,6 +144,17 @@ class TestHandleRequest(TestJSONRPCServer):
                               error="An error was raised"))
         self.assertIsNotNone(self.rpc.last_traceback)
 
+    def test_should_call_handle_for_unknown_method(self):
+        def test_handle(method_name, args):
+            return "It works"
+        self.write(json.dumps(dict(method="doesnotexist",
+                                   id=23)))
+        self.rpc.handle = test_handle
+        self.rpc.handle_request()
+        self.assertEqual(json.loads(self.read()),
+                         dict(id=23,
+                              result="It works"))
+
 
 class TestServeForever(TestJSONRPCServer):
     def handle_request(self):

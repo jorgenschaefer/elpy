@@ -6,7 +6,7 @@ backend.
 
 """
 
-from elpy.rpc import JSONRPCServer
+from elpy.rpc import JSONRPCServer, Fault
 
 from elpy.backends.nativebackend import NativeBackend
 from elpy.backends.ropebackend import RopeBackend
@@ -90,58 +90,11 @@ class ElpyRPCServer(JSONRPCServer):
                 result.append(backend.name)
         return result
 
-    def rpc_before_save(self, project_root, filename):
-        """Bookkeeping method.
-
-        Needs to be called before a file is saved.
+    def handle(self, method_name, args):
+        """Call the RPC method method_name with the specified args.
 
         """
-        return self.backend.rpc_before_save(
-            project_root, filename)
-
-    def rpc_after_save(self, project_root, filename):
-        """Bookkeeping method.
-
-        Needs to be called after a file is saved.
-
-        """
-        return self.backend.rpc_after_save(
-            project_root, filename)
-
-    def rpc_get_completions(self, project_root, filename, source, offset):
-        """Complete symbol at offset in source.
-
-        Returns a list of tuples of the full symbol including
-        completion and a possible docstring, or None.
-
-        """
-        return self.backend.rpc_get_completions(
-            project_root, filename, source, offset)
-
-    def rpc_get_definition(self, project_root, filename, source, offset):
-        """Return the location where the symbol at offset is defined.
-
-        The location is either a tuple of (filename, offset), or None
-        if no location could be found.
-
-        """
-        return self.backend.rpc_get_definition(
-            project_root, filename, source, offset)
-
-    def rpc_get_calltip(self, project_root, filename, source, offset):
-        """Return the calltip for the symbol at offset.
-
-        This is a string. If no calltip is found, return None.
-
-        """
-        return self.backend.rpc_get_calltip(
-            project_root, filename, source, offset)
-
-    def rpc_get_docstring(self, project_root, filename, source, offset):
-        """Return the calltip for the symbol at offset.
-
-        This is a string. If no calltip is found, return None.
-
-        """
-        return self.backend.rpc_get_docstring(
-            project_root, filename, source, offset)
+        method = getattr(self.backend, "rpc_" + method_name, None)
+        if method is None:
+            raise Fault("Unknown method {}".format(method_name))
+        return method(*args)

@@ -97,12 +97,10 @@ class JSONRPCServer(object):
         params = request.get('params') or []
         try:
             method = getattr(self, "rpc_" + method_name, None)
-            if method is None:
-                self.write_json(error=("Unknown method {}"
-                                       .format(method_name)),
-                                id=request_id)
-                return
-            result = method(*params)
+            if method is not None:
+                result = method(*params)
+            else:
+                result = self.handle(method_name, params)
             if request_id is not None:
                 self.write_json(result=result,
                                 id=request_id)
@@ -110,6 +108,13 @@ class JSONRPCServer(object):
             self.write_json(error=str(e),
                             id=request_id)
             self.last_traceback = traceback.format_exc()
+
+    def handle(self, method_name, args):
+        """Handle the call to method_name.
+
+        You should overwrite this method in a subclass.
+        """
+        raise Fault("Unknown method {}".format(method_name))
 
     def serve_forever(self):
         """Serve requests forever.
