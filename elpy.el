@@ -612,6 +612,15 @@ With two prefix args, only the current module is run."
 ;;;;;;;;;;;;;;;;;
 ;;; Documentation
 
+(defun elpy-doc-websearch (what)
+  "Search the Python web documentation for the string WHAT."
+  (interactive
+   (list (read-from-minibuffer "Search Python.org for: "
+                               (symbol-name (symbol-at-point)))))
+  (browse-url
+   (format "https://www.google.com/search?q=site:docs.python.org%%20%s"
+           what)))
+
 (defun elpy-doc (&optional use-pydoc-p symbol)
   "Show documentation on the thing at point.
 
@@ -622,12 +631,16 @@ it is passed to pydoc."
   (interactive
    (list current-prefix-arg
          (when current-prefix-arg
-           (read-from-minibuffer "Pydoc on: "
-                                 (with-syntax-table python-dotty-syntax-table
-                                   (let ((symbol (symbol-at-point)))
-                                     (if symbol
-                                         (symbol-name symbol)
-                                       "")))))))
+           (let ((initial (with-syntax-table python-dotty-syntax-table
+                            (let ((symbol (symbol-at-point)))
+                              (if symbol
+                                  (symbol-name symbol)
+                                nil)))))
+             (elpy-ido-recursive-completing-read "Pydoc: "
+                                                 'elpy-pydoc-completions
+                                                 "."
+                                                 t
+                                                 initial)))))
   (if use-pydoc-p
       (with-help-window "*Pydoc*"
         (shell-command (format "pydoc %s" (shell-quote-argument symbol))
@@ -654,14 +667,124 @@ it is passed to pydoc."
                                t t))))
         (message "No documentation available.")))))
 
-(defun elpy-doc-websearch (what)
-  "Search the Python web documentation for the string WHAT."
-  (interactive
-   (list (read-from-minibuffer "Search Python.org for: "
-                               (symbol-name (symbol-at-point)))))
-  (browse-url
-   (format "https://www.google.com/search?q=site:docs.python.org%%20%s"
-           what)))
+(defun elpy-pydoc-completions (rcr-prefix)
+  (sort (if (or (not rcr-prefix)
+                (equal rcr-prefix ""))
+            (elpy-rpc "get_pydoc_completions")
+          (elpy-rpc "get_pydoc_completions" rcr-prefix))
+        (lambda (a b)
+          (if (and (string-prefix-p "_" b)
+                   (not (string-prefix-p "_" a)))
+              t
+            (string< (downcase a)
+                     (downcase b))))))
+
+
+;;;;;;;;;;;;
+;;; elpy-ido
+
+;; This is a wrapper around ido-completing-read, which does not
+;; provide for recursive reads by default.
+
+(defvar elpy-ido-rcr-choice-function nil
+  "Internal variable for `elpy-ido-recursive-completing-read'.
+
+Don't touch. Won't help.")
+
+(defvar elpy-ido-rcr-selection nil
+  "Internal variable for `elpy-ido-recursive-completing-read'.
+
+Don't touch. Won't help.")
+
+(defvar elpy-ido-rcr-separator nil
+  "Internal variable for `elpy-ido-recursive-completing-read'.
+
+Don't touch. Won't help.")
+
+(defvar elpy-ido-rcr-choices nil
+  "Internal variable for `elpy-ido-recursive-completing-read'.
+
+Don't touch. Won't help.")
+
+(defun elpy-ido-rcr-selected ()
+  (mapconcat #'identity
+             (reverse elpy-ido-rcr-selection)
+             elpy-ido-rcr-separator))
+
+(defun elpy-ido-rcr-setup-keymap ()
+  "Set up the ido keymap for `elpy-ido-recursive-completing-read'."
+  (define-key ido-completion-map (read-kbd-macro elpy-ido-rcr-separator)
+    'elpy-ido-rcr-complete)
+  (define-key ido-completion-map (kbd "DEL") 'elpy-ido-rcr-backspace))
+
+(defun elpy-ido-rcr-complete ()
+  "Complete the current ido completion and attempt an extension."
+  (interactive)
+  (let* ((new (car ido-matches))
+         (full (concat (elpy-ido-rcr-selected)
+                       elpy-ido-rcr-separator
+                       new))
+         (choices (funcall elpy-ido-rcr-choice-function full)))
+    (when choices
+      (setq elpy-ido-rcr-choices choices
+            elpy-ido-rcr-selection (cons new elpy-ido-rcr-selection))
+      (throw 'continue t))))
+
+(defun elpy-ido-rcr-backspace (&optional n)
+  "Delete the last character in the minibuffer.
+
+If the minibuffer is empty, recurse to the last completion."
+  (interactive "p")
+  (if (= (minibuffer-prompt-end) (point))
+      (progn
+        (setq elpy-ido-rcr-selection (cdr elpy-ido-rcr-selection)
+              elpy-ido-rcr-choices (funcall elpy-ido-rcr-choice-function
+                                            (elpy-ido-rcr-selected)))
+        (throw 'continue t))
+    (delete-char (- n))))
+
+(defun elpy-ido-recursive-completing-read (prompt choice-function
+                                                  separator
+                                                  &optional
+                                                  require-match
+                                                  initial-input
+                                                  hist def)
+  (let ((ido-setup-hook (cons 'elpy-ido-rcr-setup-keymap
+                              ido-setup-hook))
+        (elpy-ido-rcr-choice-function choice-function)
+        (elpy-ido-rcr-separator separator)
+        elpy-ido-rcr-choices
+        elpy-ido-rcr-selection)
+    (when initial-input
+      (let ((parts (reverse (split-string initial-input
+                                          (regexp-quote separator)))))
+        (setq initial-input (car parts)
+              elpy-ido-rcr-selection (cdr parts))))
+    (setq elpy-ido-rcr-choices (funcall choice-function
+                                        (elpy-ido-rcr-selected)))
+    (catch 'return
+      (while t
+        (catch 'continue
+          (throw 'return
+                 (let ((completion (ido-completing-read
+                                    (concat prompt
+                                            (elpy-ido-rcr-selected)
+                                            (if elpy-ido-rcr-selection
+                                                elpy-ido-rcr-separator
+                                              ""))
+                                    elpy-ido-rcr-choices
+                                    nil require-match
+                                    initial-input hist def)))
+                   (concat
+                    (mapconcat (lambda (element)
+                                 (concat element elpy-ido-rcr-separator))
+                               (reverse elpy-ido-rcr-selection)
+                               "")
+                    completion))))
+        ;; after the first run, we don't want initial and default
+        ;; anymore.
+        (setq initial-input nil
+              def nil)))))
 
 
 ;;;;;;;;;;;;;;;;;;;;;

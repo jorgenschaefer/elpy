@@ -6,6 +6,7 @@ backend.
 
 """
 
+from elpy.utils import get_pydoc_completions
 from elpy.rpc import JSONRPCServer, Fault
 
 from elpy.backends.nativebackend import NativeBackend
@@ -39,6 +40,15 @@ class ElpyRPCServer(JSONRPCServer):
             if backend is not None:
                 self.backend = backend
                 break
+
+    def handle(self, method_name, args):
+        """Call the RPC method method_name with the specified args.
+
+        """
+        method = getattr(self.backend, "rpc_" + method_name, None)
+        if method is None:
+            raise Fault("Unknown method {}".format(method_name))
+        return method(*args)
 
     def rpc_echo(self, *args):
         """Return the arguments.
@@ -90,11 +100,13 @@ class ElpyRPCServer(JSONRPCServer):
                 result.append(backend.name)
         return result
 
-    def handle(self, method_name, args):
-        """Call the RPC method method_name with the specified args.
+    def rpc_get_pydoc_completions(self, name=None):
+        """Return a list of possible strings to pass to pydoc.
+
+        If name is given, the strings are under name. If not, top
+        level modules are returned.
 
         """
-        method = getattr(self.backend, "rpc_" + method_name, None)
-        if method is None:
-            raise Fault("Unknown method {}".format(method_name))
-        return method(*args)
+        if name is not None:
+            name = name.encode("utf-8")
+        return get_pydoc_completions(name)

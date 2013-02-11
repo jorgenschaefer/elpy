@@ -101,3 +101,21 @@ class TestRPCGetAvailableBackends(TestServer):
         self.JediBackend.return_value = None
         self.assertEqual(sorted(srv.rpc_get_available_backends()),
                          sorted(["native", "rope"]))
+
+
+class TestRPCGetPydocCompletions(TestServer):
+    @mock.patch.object(server, 'get_pydoc_completions')
+    def test_should_call_pydoc_completions(self, get_pydoc_completions):
+        srv = server.ElpyRPCServer()
+        srv.rpc_get_pydoc_completions()
+        get_pydoc_completions.assert_called_with(None)
+        srv.rpc_get_pydoc_completions("foo")
+        get_pydoc_completions.assert_called_with("foo")
+
+    @mock.patch.object(server, 'get_pydoc_completions')
+    def test_should_not_call_pydoc_completions_with_unicode_string(
+            self, get_pydoc_completions):
+        srv = server.ElpyRPCServer()
+        srv.rpc_get_pydoc_completions(u"foo")
+        self.assertIsInstance(get_pydoc_completions.call_args_list[0][0][0],
+                              str)
