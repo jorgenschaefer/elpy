@@ -36,71 +36,6 @@
 
 ;;; Code:
 
-;; Some global variables. Need to be set before the other modes are
-;; loaded, as some of them define some silly global keys without these
-;; set. We are using `defvar' to avoid overwriting a user's
-;; configuration, if any.
-
-(let* ((elpy-el (or load-file-name
-                    buffer-file-name))
-       (python-check (when elpy-el
-                       (concat (file-name-directory elpy-el)
-                               "python-check.sh"))))
-  (when (and python-check
-             (file-exists-p python-check))
-    (defvar python-check-command  python-check
-      "Command used to check a Python file.")))
-
-(defvar flymake-no-changes-timeout 60
-  "Time to wait after last change before starting compilation.
-
-The original value of 0.5 is too short for Python code, as that
-will result in the current line to be highlighted most of the
-time, and that's annoying. This value might be on the long side,
-but at least it does not, in general, interfere with normal
-interaction.
-
-Value set by elpy.")
-
-(defvar flymake-start-syntax-check-on-newline nil
-  "Start syntax check if newline char was added/removed from the buffer.
-
-This should be nil for Python, as most lines with a colon at the
-end will mean the next line is always highlighted as error, which
-is not helpful and mostly annoying.
-
-Value set by elpy.")
-
-(defvar ac-trigger-key "TAB"
-  "Non-nil means `auto-complete' will start by typing this key.
-If you specify this TAB, for example, `auto-complete' will start by typing TAB,
-and if there is no completions, an original command will be fallbacked.
-
-Value set by elpy.")
-
-(defvar ac-auto-show-menu 0.4
-  "Non-nil means completion menu will be automatically shown.
-
-Value set by elpy.")
-
-(defvar ac-quick-help-delay 0.5
-  "Delay to show quick help.
-
-This value should be greater than `ac-auto-show-menu' to show
-help for the first entry as well.
-
-Value set by elpy.")
-
-(defvar yas-trigger-key "C-c C-i"
-  "The key bound to `yas-expand' when `yas-minor-mode' is active.
-
-Value is a string that is converted to the internal Emacs key
-representation using `read-kbd-macro'.
-
-Value set by elpy.")
-
-;; Now, load the various modes we use.
-
 (require 'auto-complete-config)
 (require 'find-file-in-project)
 (require 'flymake)
@@ -200,7 +135,8 @@ project."
 (defun elpy-enable ()
   "Enable Elpy in all future Python buffers."
   (interactive)
-  (add-hook 'python-mode-hook 'elpy-mode))
+  (add-hook 'python-mode-hook 'elpy-mode)
+  (elpy-initialize-variables))
 
 ;;;###autoload
 (defun elpy-disable ()
@@ -322,6 +258,63 @@ explain how to install the elpy module."
                                      (button-get button 'command)))
                           'command command)
       (insert " " command "\n"))))
+
+(defun elpy-initialize-variables ()
+  "This sets some variables in other modes we like to set.
+
+If you want to configure your own keys, do so after this function
+is called (usually from `elpy-enable'), or override this function
+using (defalias 'elpy-initialize-variables 'identity)"
+  ;; Set `python-check-command' to the python-check.sh we ship with
+  ;; elpy.
+  (let* ((elpy-el (or load-file-name
+                      buffer-file-name))
+         (python-check (when elpy-el
+                         (concat (file-name-directory elpy-el)
+                                 "python-check.sh"))))
+    (when (and python-check
+               (file-exists-p python-check))
+      (setq python-check-command  python-check)))
+
+  ;; `flymake-no-changes-timeout': The original value of 0.5 is too
+  ;; short for Python code, as that will result in the current line to
+  ;; be highlighted most of the time, and that's annoying. This value
+  ;; might be on the long side, but at least it does not, in general,
+  ;; interfere with normal interaction.
+  (setq flymake-no-changes-timeout 60)
+
+  ;; `flymake-start-syntax-check-on-newline': This should be nil for
+  ;; Python, as;; most lines with a colon at the end will mean the next
+  ;; line is always highlighted as error, which is not helpful and
+  ;; mostly annoying.
+  (setq flymake-start-syntax-check-on-newline nil)
+
+  ;; `ac-trigger-key': TAB is a great trigger key. We also need to
+  ;; tell auto-complete about the new trigger key. This is a bad
+  ;; interface to set the trigger key. Don't do this. Just let the
+  ;; user set the key in the keymap. Stop second-guessing the user, or
+  ;; Emacs.
+  (setq ac-trigger-key "TAB")
+  (when (fboundp 'ac-set-trigger-key)
+    (ac-set-trigger-key ac-trigger-key))
+
+  ;; `ac-auto-show-menu': Short timeout because the menu is great.
+  (setq ac-auto-show-menu 0.4)
+
+  ;; `ac-quick-help-delay': I'd like to show the menu right with the
+  ;; completions, but this value should be greater than
+  ;; `ac-auto-show-menu' to show help for the first entry as well.
+  (setq ac-quick-help-delay 0.5)
+
+  ;; `yas-trigger-key': TAB, as is the default, conflicts with the
+  ;; autocompletion. We also need to tell yasnippet about the new
+  ;; binding. This is a bad interface to set the trigger key. Stop
+  ;; doing this.
+  (let ((old (when (boundp 'yas-trigger-key)
+               yas-trigger-key)))
+    (setq yas-trigger-key "C-c C-i")
+    (when (fboundp 'yas--trigger-key-reload)
+      (yas--trigger-key-reload old))))
 
 (defvar elpy-project-root 'not-initialized
   "The root of the project the current buffer is in.")
