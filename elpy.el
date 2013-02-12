@@ -605,6 +605,9 @@ With two prefix args, only the current module is run."
 ;;;;;;;;;;;;;;;;;
 ;;; Documentation
 
+(defvar elpy-doc-history nil
+  "History for the `elpy-doc' command.")
+
 (defun elpy-doc-websearch (what)
   "Search the Python web documentation for the string WHAT."
   (interactive
@@ -633,7 +636,8 @@ it is passed to pydoc."
                                                  'elpy-pydoc-completions
                                                  "."
                                                  t
-                                                 initial)))))
+                                                 initial
+                                                 'elpy-doc-history)))))
   (if use-pydoc-p
       (with-help-window "*Pydoc*"
         (shell-command (format "pydoc %s" (shell-quote-argument symbol))
@@ -661,6 +665,7 @@ it is passed to pydoc."
         (message "No documentation available.")))))
 
 (defun elpy-pydoc-completions (rcr-prefix)
+  "Return a list of modules available in pydoc starting with RCR-PREFIX."
   (sort (if (or (not rcr-prefix)
                 (equal rcr-prefix ""))
             (elpy-rpc "get_pydoc_completions")
