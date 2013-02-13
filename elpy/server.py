@@ -110,3 +110,35 @@ class ElpyRPCServer(JSONRPCServer):
         if name is not None:
             name = name.encode("utf-8")
         return get_pydoc_completions(name)
+
+    def rpc_get_refactor_options(self, project_root, filename,
+                                 start, end=None):
+        """Return a list of possible refactoring options.
+
+        This list will be filtered depending on whether it's
+        applicable at the point START and possibly the region between
+        START and END.
+
+        """
+        try:
+            from elpy import refactor
+        except:
+            raise ImportError("Rope not installed, refactorings unavailable")
+        ref = refactor.Refactor(project_root, filename)
+        return ref.get_refactor_options(start, end)
+
+    def rpc_refactor(self, project_root, filename, method, args):
+        """Return a list of changes from the refactoring action.
+
+        A change is a dictionary describing the change. See
+        elpy.refactor.translate_changes for a description.
+
+        """
+        try:
+            from elpy import refactor
+        except:
+            raise ImportError("Rope not installed, refactorings unavailable")
+        if args is None:
+            args = ()
+        ref = refactor.Refactor(project_root, filename)
+        return ref.get_changes(method, *args)

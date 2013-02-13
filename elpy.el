@@ -37,6 +37,7 @@
 ;;; Code:
 
 (require 'auto-complete-config)
+(require 'elpy-refactor)
 (require 'find-file-in-project)
 (require 'flymake)
 (require 'highlight-indentation)
@@ -113,6 +114,7 @@ project."
     (define-key map (kbd "C-c C-o") 'elpy-occur-definitions)
     (define-key map (kbd "C-c C-p") 'elpy-flymake-backward-error)
     (define-key map (kbd "C-c C-q") 'elpy-show-defun)
+    (define-key map (kbd "C-c C-r") 'elpy-refactor)
     (define-key map (kbd "C-c C-s") 'elpy-rgrep-symbol)
     (define-key map (kbd "C-c C-t") 'elpy-test)
     (define-key map (kbd "C-c C-v") 'elpy-check)

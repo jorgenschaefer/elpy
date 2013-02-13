@@ -119,3 +119,56 @@ class TestRPCGetPydocCompletions(TestServer):
         srv.rpc_get_pydoc_completions(u"foo")
         self.assertIsInstance(get_pydoc_completions.call_args_list[0][0][0],
                               str)
+
+import __builtin__
+from elpy.tests.support import BackendTestCase
+import elpy.refactor
+
+
+class RopeTestCase(BackendTestCase):
+    def setUp(self):
+        super(RopeTestCase, self).setUp()
+
+
+class TestRPCGetRefactorOptions(RopeTestCase):
+    @mock.patch.object(__builtin__, '__import__')
+    def test_should_fail_if_rope_is_not_available(self, import_):
+        import_.side_effect = ImportError
+        filename = self.project_file("foo.py", "")
+        srv = server.ElpyRPCServer()
+        self.assertRaises(ImportError, srv.rpc_get_refactor_options,
+                          self.project_root, filename, 0)
+
+    @mock.patch.object(elpy.refactor, 'Refactor')
+    def test_should_initialize_and_call_refactor_object(self, Refactor):
+        filename = self.project_file("foo.py", "import foo")
+        srv = server.ElpyRPCServer()
+        srv.rpc_get_refactor_options(self.project_root, filename, 5)
+        Refactor.assert_called_with(self.project_root, filename)
+        Refactor.return_value.get_refactor_options.assert_called_with(5, None)
+
+
+class TestRPCRefactor(RopeTestCase):
+    @mock.patch.object(__builtin__, '__import__')
+    def test_should_fail_if_rope_is_not_available(self, import_):
+        import_.side_effect = ImportError
+        filename = self.project_file("foo.py", "")
+        srv = server.ElpyRPCServer()
+        self.assertRaises(ImportError, srv.rpc_refactor,
+                          self.project_root, filename, 'foo', ())
+
+    @mock.patch.object(elpy.refactor, 'Refactor')
+    def test_should_initialize_and_call_refactor_object(self, Refactor):
+        filename = self.project_file("foo.py", "import foo")
+        srv = server.ElpyRPCServer()
+        srv.rpc_refactor(self.project_root, filename, 'foo', (1, 2, 3))
+        Refactor.assert_called_with(self.project_root, filename)
+        Refactor.return_value.get_changes.assert_called_with('foo', 1, 2, 3)
+
+    @mock.patch.object(elpy.refactor, 'Refactor')
+    def test_should_initialize_and_call_refactor_object(self, Refactor):
+        filename = self.project_file("foo.py", "import foo")
+        srv = server.ElpyRPCServer()
+        srv.rpc_refactor(self.project_root, filename, 'foo', None)
+        Refactor.assert_called_with(self.project_root, filename)
+        Refactor.return_value.get_changes.assert_called_with('foo')
