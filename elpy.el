@@ -265,6 +265,10 @@ explain how to install the elpy module."
 If you want to configure your own keys, do so after this function
 is called (usually from `elpy-enable'), or override this function
 using (defalias 'elpy-initialize-variables 'identity)"
+  ;; Local variables in `python-mode'. This is not removed when Elpy
+  ;; is disabled, which can cause some confusion.
+  (add-hook 'python-mode 'elpy-initialize-local-variables)
+
   ;; Set `python-check-command' to the python-check.sh we ship with
   ;; elpy.
   (let* ((elpy-el (or load-file-name
@@ -315,6 +319,14 @@ using (defalias 'elpy-initialize-variables 'identity)"
     (setq yas-trigger-key "C-c C-i")
     (when (fboundp 'yas--trigger-key-reload)
       (yas--trigger-key-reload old))))
+
+(defun elpy-initialize-local-variables ()
+  "Initialize local variables in python-mode.
+
+This should be run from `python-mode-hook'."
+  ;; Set `forward-sexp-function' to nil in python-mode. See
+  ;; http://debbugs.gnu.org/db/13/13642.html
+  (setq forward-sexp-function nil))
 
 (defvar elpy-project-root 'not-initialized
   "The root of the project the current buffer is in.")
