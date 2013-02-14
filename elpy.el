@@ -310,6 +310,15 @@ using (defalias 'elpy-initialize-variables 'identity)"
   ;; `ac-auto-show-menu' to show help for the first entry as well.
   (setq ac-quick-help-delay 0.5)
 
+  ;; Fix some key bindings in ac completions. Using RET when a
+  ;; completion is offered is not usually intended to complete (use
+  ;; TAB for that), but done while typing and the inputer is considere
+  ;; complete, with the intent to simply leave it as is and go to the
+  ;; next line. Much like space will not complete, but leave it as is
+  ;; and insert a space.
+  (define-key ac-completing-map (kbd "RET") nil)
+  (define-key ac-completing-map (kbd "<return>") nil)
+
   ;; `yas-trigger-key': TAB, as is the default, conflicts with the
   ;; autocompletion. We also need to tell yasnippet about the new
   ;; binding. This is a bad interface to set the trigger key. Stop
