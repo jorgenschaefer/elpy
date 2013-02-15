@@ -121,11 +121,15 @@ class RopeBackend(NativeBackend):
         except self.ModuleSyntaxError as e:
             linenos = re.findall("^  \\* line ([0-9]*):", e.message,
                                  re.MULTILINE)
-            linedesc = ", ".join(str(x) for x in linenos)
+            linenos = [int(x) for x in linenos]
+            linedesc = ", ".join(str(x) for x in sorted(set(linenos)))
             raise rpc.Fault(code=101,
                             message=("Too many syntax errors in file {} "
-                                     "(lines {})"
-                                     .format(e.filename, linedesc)))
+                                     "(line{} {})"
+                                     .format(e.filename,
+                                             "s" if ("," in linedesc)
+                                             else "",
+                                             linedesc)))
         starting_offset = self.codeassist.starting_offset(source, offset)
         prefixlen = offset - starting_offset
         return [[proposal.name[prefixlen:], proposal.get_doc()]

@@ -1149,7 +1149,12 @@ description."
 
 This also initializes `elpy--ac-cache'."
   (setq elpy--ac-cache nil)
-  (dolist (completion (elpy-rpc-get-completions))
+  (dolist (completion (condition-case err
+                          (elpy-rpc-get-completions)
+                        (error
+                         (message "Getting completions: %s"
+                                  (cadr err))
+                         nil)))
     (let ((name (car completion))
           (doc (cadr completion)))
       (when (not (string-prefix-p "_" name))
