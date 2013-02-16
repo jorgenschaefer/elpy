@@ -207,7 +207,7 @@ class TestRenameCurrentModule(RefactorTestCase):
             "foo.os\n")
         dest = os.path.join(self.project_root, "frob.py")
         ref = refactor.Refactor(self.project_root, filename)
-        a, b = ref.refactor_rename_current_module(dest)
+        a, b = ref.refactor_rename_current_module("frob")
 
         self.assertEqual(a['action'], 'change')
         self.assertEqual(a['file'], file2)

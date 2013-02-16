@@ -226,12 +226,9 @@ class Refactor(object):
         return translate_changes(changes)
 
     @options("Rename current module", category="Module",
-             args=[("new_name", "filename", "Rename to: ")])
+             args=[("new_name", "string", "Rename to: ")])
     def refactor_rename_current_module(self, new_name):
         """Rename the current module."""
-        if new_name.endswith(".py"):
-            new_name = new_name[:-3]
-        new_name = os.path.relpath(new_name, self.project_root)
         refactor = Rename(self.project, self.resource, None)
         changes = refactor.get_changes(new_name)
         return translate_changes(changes)
