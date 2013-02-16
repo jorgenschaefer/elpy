@@ -149,10 +149,7 @@ class RopeBackend(NativeBackend):
             return (location.resource.real_path, location.offset)
 
     def rpc_get_calltip(self, project_root, filename, source, offset):
-        # Rewind offset to the last ( before offset
-        open_paren = source.rfind("(", 0, offset)
-        if open_paren > -1:
-            offset = open_paren
+        offset = find_called_name_offset(source, offset)
         project = self.get_project(project_root)
         resource = self.get_resource(project, filename)
         try:
@@ -179,3 +176,24 @@ class RopeBackend(NativeBackend):
                                                        source, offset)
         else:
             return docstring
+
+
+def find_called_name_offset(source, orig_offset):
+    """Return the offset of a calling function.
+
+    This only approximates movement.
+
+    """
+    offset = min(orig_offset, len(source) - 1)
+    paren_count = 0
+    while True:
+        if offset <= 1:
+            return orig_offset
+        elif source[offset] == '(':
+            if paren_count == 0:
+                return offset - 1
+            else:
+                paren_count -= 1
+        elif source[offset] == ')':
+            paren_count += 1
+        offset -= 1

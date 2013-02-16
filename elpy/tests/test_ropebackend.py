@@ -204,6 +204,18 @@ class TestGetCalltip(RopeBackendTestCase):
                          "threading.Thread.__init__(group=None, target=None, "
                          "name=None, args=(), kwargs=None, verbose=None)")
 
+    def test_should_get_calltip_even_after_parens(self):
+        source, offset = source_and_offset(
+            "import threading\nthreading.Thread(foo()_|_")
+        filename = self.project_file("test.py", source)
+        calltip = self.backend.rpc_get_calltip(self.project_root,
+                                               filename,
+                                               source,
+                                               offset)
+        self.assertEqual(calltip,
+                         "threading.Thread.__init__(group=None, target=None, "
+                         "name=None, args=(), kwargs=None, verbose=None)")
+
     def test_should_return_none_for_bad_identifier(self):
         source, offset = source_and_offset(
             "froblgoo(_|_")
