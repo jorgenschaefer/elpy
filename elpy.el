@@ -355,8 +355,10 @@ You can set the variable `elpy-project-root' in, for example,
     (setq elpy-project-root
           (or (elpy-project-find-root)
               (read-directory-name "Project root: "
-                                   default-directory
-                                   nil t))))
+                                   default-directory)))
+    (when (and (not (file-directory-p elpy-project-root))
+               (y-or-n-p "Directory does not exist, create? "))
+      (make-directory elpy-project-root t)))
   elpy-project-root)
 
 (defun elpy-project-find-root ()
