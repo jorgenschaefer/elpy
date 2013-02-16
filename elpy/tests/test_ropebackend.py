@@ -119,6 +119,36 @@ class TestGetCompletions(RopeBackendTestCase):
                                 self.project_root, filename, source,
                                 offset)
 
+    def test_should_complete_top_level_modules_for_import(self):
+        source, offset = source_and_offset("import multi_|_")
+        filename = self.project_file("test.py", source)
+        completions = self.backend.rpc_get_completions(self.project_root,
+                                                       filename,
+                                                       source,
+                                                       offset)
+        self.assertEqual(sorted(name for (name, doc) in completions),
+                         sorted(["file", "processing"]))
+
+    def test_should_complete_packages_for_import(self):
+        source, offset = source_and_offset("import ConfigParser.Conf_|_")
+        filename = self.project_file("test.py", source)
+        completions = self.backend.rpc_get_completions(self.project_root,
+                                                       filename,
+                                                       source,
+                                                       offset)
+        self.assertEqual(sorted(name for (name, doc) in completions),
+                         sorted(["igParser"]))
+
+    def test_should_not_complete_for_import(self):
+        source, offset = source_and_offset("import foo.Conf_|_")
+        filename = self.project_file("test.py", source)
+        completions = self.backend.rpc_get_completions(self.project_root,
+                                                       filename,
+                                                       source,
+                                                       offset)
+        self.assertNotEqual(sorted(name for (name, doc) in completions),
+                            sorted(["igParser"]))
+
 
 class TestGetDefinition(RopeBackendTestCase):
     def test_should_return_location_in_same_file(self):

@@ -9,6 +9,8 @@ http://rope.sourceforge.net/
 import os
 import re
 import time
+from functools import wraps
+from elpy import utils
 
 from elpy import rpc
 from elpy.backends.nativebackend import NativeBackend
@@ -50,6 +52,7 @@ class RopeBackend(NativeBackend):
             from rope.base.exceptions import BadIdentifierError
             from rope.base.exceptions import ModuleSyntaxError
             from rope.contrib import findit
+            patch_codeassist(codeassist)
             return {'codeassist': codeassist,
                     'projectlib': project,
                     'libutils': libutils,
@@ -197,3 +200,47 @@ def find_called_name_offset(source, orig_offset):
         elif source[offset] == ')':
             paren_count += 1
         offset -= 1
+
+
+##################################################################
+# Monkey patching a method in rope because it doesn't complete import
+# statements.
+
+def patch_codeassist(codeassist):
+    if getattr(codeassist._PythonCodeAssist._code_completions,
+               'patched_by_elpy', False):
+        return
+
+    def wrapper(fun):
+        @wraps(fun)
+        def inner(self):
+            proposals = get_import_completions(self)
+            if proposals:
+                return proposals
+            else:
+                return fun(self)
+        inner.patched_by_elpy = True
+        return inner
+
+    codeassist._PythonCodeAssist._code_completions = \
+        wrapper(codeassist._PythonCodeAssist._code_completions)
+
+
+def get_import_completions(self):
+    if not self.word_finder.is_import_statement(self.offset):
+        return []
+    modulename = self.word_finder.get_primary_at(self.offset)
+    # Rope can handle modules in packages
+    if "." in modulename:
+        return []
+    return dict((name, FakeProposal(name))
+                for name in utils.get_modules()
+                if name.startswith(modulename))
+
+
+class FakeProposal(object):
+    def __init__(self, name):
+        self.name = name
+
+    def get_doc(self):
+        return None
