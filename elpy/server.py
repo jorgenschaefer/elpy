@@ -5,8 +5,7 @@ handles backend selection and passes methods on to the selected
 backend.
 
 """
-
-from elpy.utils import get_pydoc_completions
+from elpy.utils.pydocutils import get_pydoc_completions
 from elpy.rpc import JSONRPCServer, Fault
 
 from elpy.backends.nativebackend import NativeBackend

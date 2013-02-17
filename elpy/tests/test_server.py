@@ -158,7 +158,8 @@ class TestRPCRefactor(RopeTestCase):
                           self.project_root, filename, 'foo', ())
 
     @mock.patch.object(elpy.refactor, 'Refactor')
-    def test_should_initialize_and_call_refactor_object(self, Refactor):
+    def test_should_initialize_and_call_refactor_object_with_args(
+            self, Refactor):
         filename = self.project_file("foo.py", "import foo")
         srv = server.ElpyRPCServer()
         srv.rpc_refactor(self.project_root, filename, 'foo', (1, 2, 3))
@@ -166,7 +167,8 @@ class TestRPCRefactor(RopeTestCase):
         Refactor.return_value.get_changes.assert_called_with('foo', 1, 2, 3)
 
     @mock.patch.object(elpy.refactor, 'Refactor')
-    def test_should_initialize_and_call_refactor_object(self, Refactor):
+    def test_should_initialize_and_call_refactor_object_without_args(
+            self, Refactor):
         filename = self.project_file("foo.py", "import foo")
         srv = server.ElpyRPCServer()
         srv.rpc_refactor(self.project_root, filename, 'foo', None)

@@ -5,15 +5,14 @@ This backend uses the Rope library:
 http://rope.sourceforge.net/
 
 """
-
 import os
 import re
 import time
 from functools import wraps
-from elpy import utils
 
 from elpy import rpc
 from elpy.backends.nativebackend import NativeBackend
+import elpy.utils.pydocutils
 
 VALIDATE_EVERY_SECONDS = 5
 MAXFIXES = 5
@@ -234,7 +233,7 @@ def get_import_completions(self):
     if "." in modulename:
         return []
     return dict((name, FakeProposal(name))
-                for name in utils.get_modules()
+                for name in elpy.utils.pydocutils.get_modules()
                 if name.startswith(modulename))
 
 

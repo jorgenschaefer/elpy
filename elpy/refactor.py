@@ -50,8 +50,6 @@ something wrong.
 
 """
 
-import os
-
 from rope.base.project import Project
 from rope.base.libutils import path_to_resource
 from rope.base import change as rope_change
