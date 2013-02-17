@@ -63,6 +63,8 @@ from rope.refactor.inline import create_inline
 from rope.refactor.extract import ExtractMethod
 from rope.refactor.usefunction import UseFunction
 
+from elpy.utils import autoimport
+
 
 def options(description, **kwargs):
     """Decorator to set some options on a method."""
@@ -200,12 +202,16 @@ class Refactor(object):
         changes = refactor.froms_to_imports(self.resource, offset)
         return translate_changes(changes)
 
-    @options("Organize", category="Imports")
+    @options("Reorganize and clean up", category="Imports")
     def refactor_organize_imports(self):
         """Clean up and organize imports."""
         refactor = ImportOrganizer(self.project)
         changes = refactor.organize_imports(self.resource)
         return translate_changes(changes)
+
+    @options("Add missing imports", category="Imports")
+    def refactor_add_missing_imports(self):
+        return autoimport.get_changes(self.resource.real_path)
 
     @options("Convert the current module into a package", category="Module")
     def refactor_module_to_package(self):

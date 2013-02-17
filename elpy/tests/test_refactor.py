@@ -351,3 +351,15 @@ class TestUseFunction(RefactorTestCase):
                          "    return temp * c\n"
                          "\n"
                          "g = add_and_multiply(1, 2, 3)\n")
+
+
+import elpy.utils.autoimport
+
+
+class TestAddMissingImports(RefactorTestCase):
+    @mock.patch.object(elpy.utils.autoimport, 'get_changes')
+    def test_should_call_autoimport_get_changes(self, get_changes):
+        filename, offset = self.create_file("foo.py")
+        ref = refactor.Refactor(self.project_root, filename)
+        ref.refactor_add_missing_imports()
+        get_changes.assert_called_with(filename)
