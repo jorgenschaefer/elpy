@@ -580,31 +580,28 @@ Also, switch to that buffer."
         (select-window window)
       (switch-to-buffer "*Occur*"))))
 
-(defun elpy-rgrep-symbol (symbol &optional only-definitions)
-  "Search for definitions of SYMBOL in the current project.
+(defun elpy-rgrep-symbol (symbol)
+  "Search for SYMBOL in the current project.
 
 SYMBOL defaults to the symbol at point, or the current region if
 active.
 
-If ONLY-DEFINITIONS is non-nil (in interactive use a prefix
-argument is given), search only for definitions of the symbol,
-not all occurrences."
+With a prefix argument, prompt for a string to search for."
   (interactive
    (list
-    (if (use-region-p)
-        (buffer-substring-no-properties (region-beginning)
-                                        (region-end))
+    (cond
+     (current-prefix-arg
+      (read-from-minibuffer "Search for symbol: "))
+     ((use-region-p)
+      (buffer-substring-no-properties (region-beginning)
+                                      (region-end)))
+     (t
       (or (thing-at-point 'symbol)
-          (read-from-minibuffer "Search for symbol: ")))
-    current-prefix-arg
-    ))
+          (read-from-minibuffer "Search for symbol: "))))))
   (grep-compute-defaults)
-  (let ((regexp (if only-definitions
-                    (format "^\\( *def\\| *class\\) \\b%s\\b"
-                            symbol)
-                  (format "\\b%s\\b" symbol))))
-    (message "%s" prefix-arg)
-    (rgrep regexp "*.py" (elpy-project-root)))
+  (rgrep (format "\\b%s\\b" symbol)
+         "*.py"
+         (elpy-project-root))
   (with-current-buffer next-error-last-buffer
     (let ((inhibit-read-only t))
       (save-excursion
