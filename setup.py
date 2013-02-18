@@ -17,7 +17,7 @@ try:
           author_email="forcer@forcix.cx",
           url="https://github.com/jorgenschaefer/elpy",
           license="GPL",
-          packages=["elpy", "elpy.backends"],
+          packages=["elpy", "elpy.backends", "elpy.utils"],
           data_files=[('elpy', ["LICENSE"])],
           classifiers=[
               "Development Status :: 5 - Production/Stable",
