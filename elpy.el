@@ -844,7 +844,7 @@ See `elpy-rpc-call'.")
       (kill-buffer elpy-rpc-buffer))
     (condition-case err
         (setq elpy-rpc-buffer
-              (elpy-rpc-open "*elpy-rpc*" "python" "-m" "elpy"))
+              (elpy-rpc-open "*elpy-rpc*" "python" "-m" "elpy.__main__"))
       (error
        (elpy-installation-instructions
         (format "Could not start the Python subprocess: %s"
