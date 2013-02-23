@@ -3,13 +3,19 @@ from elpy.utils import findundefined
 
 
 class TestFindUndefined(unittest.TestCase):
-    def test(self):
+    def test_should_return_undefined_symbols(self):
         self.assertEqual(findundefined.find_undefined
                          ("import os\n"
                           "os.path.join()\n"
                           "shutil.rmtree\n"
                           "shutil = 1"),
                          ["shutil.rmtree"])
+
+    def test_should_not_return_duplicates(self):
+        self.assertEqual(findundefined.find_undefined
+                         ("sys.argv[1]\n"
+                          "sys.argv[2]\n"),
+                         ["sys.argv"])
 
 
 class TestVariableUse(unittest.TestCase):

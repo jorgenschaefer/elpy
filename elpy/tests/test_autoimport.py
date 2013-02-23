@@ -43,6 +43,18 @@ class TestGetChanges(unittest.TestCase):
                          "import ConfigParser\n"
                          "conf = ConfigParser.SafeConfigParser()\n")
 
+    def test_should_not_add_duplicates(self):
+        filename = self.create_file("foo.py",
+                                    "if sys.argv[1]:\n"
+                                    "    sys.exit('yiakes')\n")
+        (change,) = autoimport.get_changes(filename)
+        self.assertEqual(change['action'], 'change')
+        self.assertEqual(change['file'], filename)
+        self.assertEqual(change['contents'],
+                         "import sys\n"
+                         "if sys.argv[1]:\n"
+                         "    sys.exit('yiakes')\n")
+
 
 class TestFindModuleFor(unittest.TestCase):
     def test_should_find_direct_module(self):

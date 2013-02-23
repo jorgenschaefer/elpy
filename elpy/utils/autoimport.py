@@ -51,7 +51,7 @@ def _autoimport_add_imports(source):
         if module:
             modules.append(module)
     if modules:
-        return add_imports(source, modules)
+        return add_imports(source, sorted(set(modules)))
     else:
         return None
 

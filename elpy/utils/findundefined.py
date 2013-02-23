@@ -5,7 +5,7 @@ def find_undefined(source):
     finder = VariableUse()
     script = finder.create_script(source)
     undefined = _find_undefined_from_script(script)
-    return list(undefined)
+    return sorted(set(undefined))
 
 
 class VariableUse(ast.NodeVisitor):
