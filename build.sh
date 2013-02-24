@@ -14,7 +14,7 @@ BUILDDIR="dist/elpy-$VERSION"
 rm -rf "$BUILDDIR"
 mkdir -p "$BUILDDIR"
 
-install -m 644 elpy.el LICENSE "$BUILDDIR/"
+install -m 644 elpy.el elpy-refactor.el LICENSE "$BUILDDIR/"
 install -m 644 README.md "$BUILDDIR/README"
 install -m 755 python-check.sh "$BUILDDIR/"
 cat elpy-pkg.el.in \
