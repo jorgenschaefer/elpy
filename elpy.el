@@ -137,6 +137,8 @@ project."
 (defun elpy-enable ()
   "Enable Elpy in all future Python buffers."
   (interactive)
+  (when (< emacs-major-version 24)
+    (error "Elpy requires Emacs 24 or newer"))
   (add-hook 'python-mode-hook 'elpy-mode)
   (elpy-initialize-variables))
 
