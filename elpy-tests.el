@@ -72,6 +72,22 @@ project root of an empty directory."
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; The actual tests now
 
+(require 'package)
+
+(add-to-list 'package-archives
+             '("marmalade" . "http://marmalade-repo.org/packages/"))
+
+(package-initialize t)
+(package-refresh-contents)
+
+(dolist (pkg (with-temp-buffer
+               (insert-file-contents-literally "elpy-pkg.el.in")
+               (goto-char (point-min))
+               (let ((define-package (read (current-buffer))))
+                 (cadr (nth 4 define-package)))))
+  (when (not (package-installed-p (car pkg)))
+    (package-install (car pkg))))
+
 (package-initialize)
 
 (require 'elpy)
