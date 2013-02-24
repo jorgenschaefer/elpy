@@ -8,6 +8,8 @@ fi
 
 set -ex
 
+nosetests
+
 for EMACS in ~/Programs/emacsen/*24*/src/emacs ~/Programs/Emacs/src/emacs
 do
     $EMACS -q -batch -L `pwd` -l ert -l elpy-tests.el \
