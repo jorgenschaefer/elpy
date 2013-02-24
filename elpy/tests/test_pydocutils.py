@@ -19,16 +19,19 @@ class TestGetPydocCompletions(unittest.TestCase):
 
     def test_should_find_objects_in_module(self):
         self.assertIn(type(self).__name__,
-                      elpy.utils.pydocutils.get_pydoc_completions("elpy.tests.test_utils"))
+                      elpy.utils.pydocutils.get_pydoc_completions
+                      ("elpy.tests.test_pydocutils"))
 
     def test_should_find_attributes_of_objects(self):
-        attribs = elpy.utils.pydocutils.get_pydoc_completions("elpy.tests.test_utils.{}"
-                                              .format(type(self).__name__))
+        attribs = elpy.utils.pydocutils.get_pydoc_completions(
+            "elpy.tests.test_pydocutils.{}"
+            .format(type(self).__name__))
         self.assertIn("test_should_find_attributes_of_objects",
                       attribs)
 
     def test_should_return_none_for_inexisting_module(self):
-        self.assertIsNone(elpy.utils.pydocutils.get_pydoc_completions("does_not_exist"))
+        self.assertIsNone(elpy.utils.pydocutils.get_pydoc_completions
+                          ("does_not_exist"))
 
 
 class TestGetModules(unittest.TestCase):
@@ -48,6 +51,7 @@ class TestGetModules(unittest.TestCase):
     @mock.patch.object(elpy.utils.pydocutils, 'safeimport')
     def test_should_catch_import_errors(self, safeimport):
         def raise_function(message):
-            raise elpy.utils.pydocutils.ErrorDuringImport(message, (None, None, None))
+            raise elpy.utils.pydocutils.ErrorDuringImport(message,
+                                                          (None, None, None))
         safeimport.side_effect = raise_function
         self.assertIsNone(elpy.utils.pydocutils.get_modules("foo.bar"))
