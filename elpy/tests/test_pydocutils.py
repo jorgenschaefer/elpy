@@ -24,7 +24,7 @@ class TestGetPydocCompletions(unittest.TestCase):
 
     def test_should_find_attributes_of_objects(self):
         attribs = elpy.utils.pydocutils.get_pydoc_completions(
-            "elpy.tests.test_pydocutils.{}"
+            "elpy.tests.test_pydocutils.{0}"
             .format(type(self).__name__))
         self.assertIn("test_should_find_attributes_of_objects",
                       attribs)

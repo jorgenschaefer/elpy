@@ -8,13 +8,17 @@ fi
 
 set -ex
 
-find -name '*.pyc' -o -name '*.elc' -exec rm {} +
-
-nosetests
+for NOSE in ~/.local/bin/nosetests-*
+do
+    find -name '*.pyc' -exec rm {} +
+    $NOSE --version
+    $NOSE
+done
 
 for EMACS in ~/Programs/emacsen/*24*/src/emacs \
              ~/Programs/Emacs/src/emacs
 do
+    find -name '*.elc' -exec rm {} +
     $EMACS --version
     $EMACS -q -batch -L `pwd` -l ert -l elpy-tests.el \
         -f ert-run-tests-batch-and-exit

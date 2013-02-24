@@ -189,7 +189,7 @@ class Refactor(object):
 
         """
         if not name.startswith("refactor_"):
-            raise ValueError("Bad refactoring name {}".format(name))
+            raise ValueError("Bad refactoring name {0}".format(name))
         method = getattr(self, name)
         return method(*args)
 

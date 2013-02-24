@@ -61,9 +61,9 @@ class JediBackend(NativeBackend):
         call = script.get_in_function_call()
         if call is None:
             return None
-        return "{}({})".format(call.call_name,
-                               ", ".join(param.code
-                                         for param in call.params))
+        return "{0}({1})".format(call.call_name,
+                                 ", ".join(param.code
+                                           for param in call.params))
 
     def rpc_get_docstring(self, project_root, filename, source, offset):
         """Return a docstring for the symbol at offset.
@@ -117,11 +117,11 @@ def linecol_to_pos(text, line, col):
     for i in xrange(line - 1):
         new_offset = text.find("\n", nth_newline_offset)
         if new_offset < 0:
-            raise ValueError("Text does not have {} lines."
+            raise ValueError("Text does not have {0} lines."
                              .format(line))
         nth_newline_offset = new_offset + 1
     offset = nth_newline_offset + col
     if offset > len(text):
-        raise ValueError("Line {} column {} is not within the text"
+        raise ValueError("Line {0} column {1} is not within the text"
                          .format(line, col))
     return offset

@@ -75,7 +75,7 @@ def find_module_for(name):
 
 def add_imports(source, module_list):
     """Return a modified SOURCE that includes imports for MODULE_LIST."""
-    imports = "".join(["import {}\n".format(module)
+    imports = "".join(["import {0}\n".format(module)
                        for module in module_list])
     if source.startswith("import ") or "\nimport " in source:
         last_import_offset = source.rfind("\nimport ") + 1

@@ -121,13 +121,13 @@ class RopeBackend(NativeBackend):
                                                     resource,
                                                     maxfixes=MAXFIXES)
         except self.ModuleSyntaxError as e:
-            linenos = re.findall("^  \\* line ([0-9]*):", e.message,
+            linenos = re.findall("^  \\* line ([0-9]*):", str(e),
                                  re.MULTILINE)
             linenos = [int(x) for x in linenos]
             linedesc = ", ".join(str(x) for x in sorted(set(linenos)))
             raise rpc.Fault(code=101,
-                            message=("Too many syntax errors in file {} "
-                                     "(line{} {})"
+                            message=("Too many syntax errors in file {0} "
+                                     "(line{1} {2})"
                                      .format(e.filename,
                                              "s" if ("," in linedesc)
                                              else "",

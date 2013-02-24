@@ -12,9 +12,13 @@ before_install:
       sudo apt-get install -qq
           emacs24 emacs24-el emacs24-common-non-dfsg;
     fi
+  - if python --version 2>&1 | fgrep -q 2.6 ; then
+      pip install unittest2 --use-mirrors ;
+    fi
 install:
   - "pip install nose rope jedi --use-mirrors"
 python:
+  - "2.6"
   - "2.7"
 env:
   - EMACS=emacs24

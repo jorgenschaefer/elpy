@@ -46,7 +46,7 @@ class ElpyRPCServer(JSONRPCServer):
         """
         method = getattr(self.backend, "rpc_" + method_name, None)
         if method is None:
-            raise Fault("Unknown method {}".format(method_name))
+            raise Fault("Unknown method {0}".format(method_name))
         return method(*args)
 
     def rpc_echo(self, *args):
@@ -72,11 +72,11 @@ class ElpyRPCServer(JSONRPCServer):
 
         backend_cls = BACKEND_MAP.get(backend_name)
         if backend_cls is None:
-            raise ValueError("Unknown backend {}"
+            raise ValueError("Unknown backend {0}"
                              .format(backend_name))
         backend = backend_cls()
         if backend is None:
-            raise ValueError("Backend {} could not find the "
+            raise ValueError("Backend {0} could not find the "
                              "required Python library"
                              .format(backend_name))
         self.backend = backend

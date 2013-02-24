@@ -90,7 +90,7 @@ class JSONRPCServer(object):
         """
         request = self.read_json()
         if 'method' not in request:
-            raise ValueError("Received a bad request: {}"
+            raise ValueError("Received a bad request: {0}"
                              .format(request))
         method_name = request['method']
         request_id = request.get('id', None)
@@ -114,7 +114,7 @@ class JSONRPCServer(object):
 
         You should overwrite this method in a subclass.
         """
-        raise Fault("Unknown method {}".format(method_name))
+        raise Fault("Unknown method {0}".format(method_name))
 
     def serve_forever(self):
         """Serve requests forever.
