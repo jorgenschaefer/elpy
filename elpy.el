@@ -726,12 +726,13 @@ Don't touch. Won't help.")
 
 Don't touch. Won't help.")
 
-(defun elpy-ido-rcr-selected ()
+(defun elpy-ido--rcr-selected ()
+  "Return the currently selected compound."
   (mapconcat #'identity
              (reverse elpy-ido-rcr-selection)
              elpy-ido-rcr-separator))
 
-(defun elpy-ido-rcr-setup-keymap ()
+(defun elpy-ido--rcr-setup-keymap ()
   "Set up the ido keymap for `elpy-ido-recursive-completing-read'."
   (define-key ido-completion-map (read-kbd-macro elpy-ido-rcr-separator)
     'elpy-ido-rcr-complete)
@@ -741,7 +742,7 @@ Don't touch. Won't help.")
   "Complete the current ido completion and attempt an extension."
   (interactive)
   (let* ((new (car ido-matches))
-         (full (concat (elpy-ido-rcr-selected)
+         (full (concat (elpy-ido--rcr-selected)
                        elpy-ido-rcr-separator
                        new))
          (choices (funcall elpy-ido-rcr-choice-function full)))
@@ -759,7 +760,7 @@ If the minibuffer is empty, recurse to the last completion."
       (progn
         (setq elpy-ido-rcr-selection (cdr elpy-ido-rcr-selection)
               elpy-ido-rcr-choices (funcall elpy-ido-rcr-choice-function
-                                            (elpy-ido-rcr-selected)))
+                                            (elpy-ido--rcr-selected)))
         (throw 'continue t))
     (delete-char (- n))))
 
@@ -769,7 +770,19 @@ If the minibuffer is empty, recurse to the last completion."
                                                   require-match
                                                   initial-input
                                                   hist def)
-  (let ((ido-setup-hook (cons 'elpy-ido-rcr-setup-keymap
+  "An alternative to `ido-completing-read' supporting recursive selection.
+
+The CHOICE-FUNCTION is called with a prefix string and should
+find all possible selections with this prefix. The user is then
+prompted with those options. When the user hits RET, the
+currently selected option is returned. When the user hits the
+SEPARATOR key, though, the currently selected option is appended,
+with the separator, to the selected prefix, and the user is
+prompted for further completions returned by CHOICE-FUNCTION.
+
+For REQUIRE-MATCH, INITIAL-INPUT, HIST and DEF, see
+`completing-read'."
+  (let ((ido-setup-hook (cons 'elpy-ido--rcr-setup-keymap
                               ido-setup-hook))
         (elpy-ido-rcr-choice-function choice-function)
         (elpy-ido-rcr-separator separator)
@@ -781,14 +794,14 @@ If the minibuffer is empty, recurse to the last completion."
         (setq initial-input (car parts)
               elpy-ido-rcr-selection (cdr parts))))
     (setq elpy-ido-rcr-choices (funcall choice-function
-                                        (elpy-ido-rcr-selected)))
+                                        (elpy-ido--rcr-selected)))
     (catch 'return
       (while t
         (catch 'continue
           (throw 'return
                  (let ((completion (ido-completing-read
                                     (concat prompt
-                                            (elpy-ido-rcr-selected)
+                                            (elpy-ido--rcr-selected)
                                             (if elpy-ido-rcr-selection
                                                 elpy-ido-rcr-separator
                                               ""))
