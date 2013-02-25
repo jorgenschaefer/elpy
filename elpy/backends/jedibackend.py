@@ -48,8 +48,9 @@ class JediBackend(NativeBackend):
         else:
             loc = locations[0]
             try:
-                offset = linecol_to_pos(open(loc.module_path).read(),
-                                        *loc.start_pos)
+                with open(loc.module_path) as f:
+                    offset = linecol_to_pos(f.read(),
+                                            *loc.start_pos)
             except IOError:
                 return None
             return (loc.module_path, offset)

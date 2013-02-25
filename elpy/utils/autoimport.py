@@ -27,7 +27,8 @@ def get_changes(filename):
     change objects.
 
     """
-    orig = open(filename).read()
+    with open(filename) as f:
+        orig = f.read()
     newsource = _autoimport_add_imports(orig)
     if newsource is None:
         return []
