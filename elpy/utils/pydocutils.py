@@ -47,9 +47,9 @@ def get_modules(modulename=None):
 
     """
     if not modulename:
-        return ([modulename for (importer, modulename, ispkg)
+        return ([modname for (importer, modname, ispkg)
                  in iter_modules()
-                 if not modulename.startswith("_")] +
+                 if not modname.startswith("_")] +
                 list(sys.builtin_module_names))
     try:
         module = safeimport(modulename)
@@ -58,7 +58,7 @@ def get_modules(modulename=None):
     if module is None:
         return None
     if hasattr(module, "__path__"):
-        return [modulename for (importer, modulename, ispkg)
+        return [modname for (importer, modname, ispkg)
                 in iter_modules(module.__path__)
-                if not modulename.startswith("_")]
+                if not modname.startswith("_")]
     return None

@@ -77,7 +77,6 @@ class TestGetRefactorOptions(RefactorTestCase):
                             for opt in options))
 
 
-
 class TestGetChanges(RefactorTestCase):
     def test_should_fail_if_method_is_not_refactoring(self):
         filename, offset = self.create_file("foo.py")
