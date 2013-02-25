@@ -50,20 +50,24 @@ something wrong.
 
 """
 
-from rope.base.project import Project
-from rope.base.libutils import path_to_resource
-from rope.base import change as rope_change
-from rope.base import worder
-
-from rope.refactor.importutils import ImportOrganizer
-from rope.refactor.topackage import ModuleToPackage
-from rope.refactor.rename import Rename
-from rope.refactor.move import create_move
-from rope.refactor.inline import create_inline
-from rope.refactor.extract import ExtractMethod
-from rope.refactor.usefunction import UseFunction
+try:
+    from rope.base.project import Project
+    from rope.base.libutils import path_to_resource
+    from rope.base import change as rope_change
+    from rope.base import worder
+    from rope.refactor.importutils import ImportOrganizer
+    from rope.refactor.topackage import ModuleToPackage
+    from rope.refactor.rename import Rename
+    from rope.refactor.move import create_move
+    from rope.refactor.inline import create_inline
+    from rope.refactor.extract import ExtractMethod
+    from rope.refactor.usefunction import UseFunction
+    ROPE_AVAILABLE = True
+except ImportError:
+    ROPE_AVAILABLE = False
 
 from elpy.utils import autoimport
+from elpy.compat import StringIO
 
 
 def options(description, **kwargs):
@@ -93,8 +97,13 @@ class Refactor(object):
     """
     def __init__(self, project_root, filename):
         self.project_root = project_root
-        self.project = Project(project_root)
-        self.resource = path_to_resource(self.project, filename)
+        if ROPE_AVAILABLE:
+            self.project = Project(project_root)
+            self.resource = path_to_resource(self.project, filename)
+        else:
+            self.project = None
+            with open(filename) as f:
+                self.resource = StringIO(f.read())
 
     def get_refactor_options(self, start, end=None):
         """Return a list of options for refactoring at the given position.
@@ -113,6 +122,8 @@ class Refactor(object):
             if not symbol.startswith("refactor_"):
                 continue
             method = getattr(self, symbol)
+            if not method.refactor_notes.get('available', True):
+                continue
             category = method.refactor_notes['category']
             if end is not None and category != 'Region':
                 continue
@@ -144,6 +155,8 @@ class Refactor(object):
 
     def _is_on_symbol(self, offset):
         "Is this offset on a symbol?"
+        if not ROPE_AVAILABLE:
+            return False
         data = self.resource.read()
         if len(data) > offset and not data[offset].isalnum():
             return False
@@ -191,18 +204,22 @@ class Refactor(object):
         if not name.startswith("refactor_"):
             raise ValueError("Bad refactoring name {0}".format(name))
         method = getattr(self, name)
+        if not method.refactor_notes.get('available', True):
+            raise RuntimeError("Method not available")
         return method(*args)
 
     @options("Convert from x import y to import x.y as y", category="Imports",
              args=[("offset", "offset", None)],
-             only_on_imports=True)
+             only_on_imports=True,
+             available=ROPE_AVAILABLE)
     def refactor_froms_to_imports(self, offset):
         """Converting imports of the form "from ..." to "import ..."."""
         refactor = ImportOrganizer(self.project)
         changes = refactor.froms_to_imports(self.resource, offset)
         return translate_changes(changes)
 
-    @options("Reorganize and clean up", category="Imports")
+    @options("Reorganize and clean up", category="Imports",
+             available=ROPE_AVAILABLE)
     def refactor_organize_imports(self):
         """Clean up and organize imports."""
         refactor = ImportOrganizer(self.project)
@@ -213,7 +230,8 @@ class Refactor(object):
     def refactor_add_missing_imports(self):
         return autoimport.get_changes(self.resource.real_path)
 
-    @options("Convert the current module into a package", category="Module")
+    @options("Convert the current module into a package", category="Module",
+             available=ROPE_AVAILABLE)
     def refactor_module_to_package(self):
         """Convert the current module into a package."""
         refactor = ModuleToPackage(self.project, self.resource)
@@ -222,7 +240,8 @@ class Refactor(object):
 
     @options("Rename symbol at point", category="Symbol",
              args=[("offset", "offset", None),
-                   ("new_name", "string", "Rename to: ")])
+                   ("new_name", "string", "Rename to: ")],
+             available=ROPE_AVAILABLE)
     def refactor_rename_at_point(self, offset, new_name):
         """Rename the symbol at point."""
         refactor = Rename(self.project, self.resource, offset)
@@ -230,7 +249,8 @@ class Refactor(object):
         return translate_changes(changes)
 
     @options("Rename current module", category="Module",
-             args=[("new_name", "string", "Rename to: ")])
+             args=[("new_name", "string", "Rename to: ")],
+             available=ROPE_AVAILABLE)
     def refactor_rename_current_module(self, new_name):
         """Rename the current module."""
         refactor = Rename(self.project, self.resource, None)
@@ -239,7 +259,8 @@ class Refactor(object):
 
     @options("Move the current module to a different package",
              category="Module",
-             args=[("new_name", "directory", "Destination package: ")])
+             args=[("new_name", "directory", "Destination package: ")],
+             available=ROPE_AVAILABLE)
     def refactor_move_module(self, new_name):
         """Move the current module."""
         refactor = create_move(self.project, self.resource)
@@ -249,7 +270,8 @@ class Refactor(object):
 
     @options("Inline function call at point", category="Symbol",
              args=[("offset", "offset", None),
-                   ("only_this", "boolean", "Only this occurrence? ")])
+                   ("only_this", "boolean", "Only this occurrence? ")],
+             available=ROPE_AVAILABLE)
     def refactor_create_inline(self, offset, only_this):
         """Inline the function call at point."""
         refactor = create_inline(self.project, self.resource, offset)
@@ -263,7 +285,8 @@ class Refactor(object):
              args=[("start", "start_offset", None),
                    ("end", "end_offset", None),
                    ("name", "string", "Method name: "),
-                   ("make_global", "boolean", "Create global method? ")])
+                   ("make_global", "boolean", "Create global method? ")],
+             available=ROPE_AVAILABLE)
     def refactor_extract_method(self, start, end, name,
                                 make_global):
         """Extract region as a method."""
@@ -272,7 +295,8 @@ class Refactor(object):
         return translate_changes(changes)
 
     @options("Use the function at point wherever possible", category="Method",
-             args=[("offset", "offset", None)])
+             args=[("offset", "offset", None)],
+             available=ROPE_AVAILABLE)
     def refactor_use_function(self, offset):
         """Use the function at point wherever possible."""
         refactor = UseFunction(self.project, self.resource, offset)

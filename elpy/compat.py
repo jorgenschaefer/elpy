@@ -11,10 +11,14 @@ import sys
 if sys.version_info >= (3, 0):
     PYTHON3 = True
 
+    from io import StringIO
+
     def ensure_not_unicode(obj):
         return obj
 else:
     PYTHON3 = False
+
+    from StringIO import StringIO
 
     def ensure_not_unicode(obj):
         """Return obj. If it's a unicode string, convert it to str first.

@@ -61,6 +61,7 @@ class TestGetRefactorOptions(RefactorTestCase):
         self.assertTrue(all(opt['category'] == 'Region'
                             for opt in options))
 
+    @unittest.skipIf(not refactor.ROPE_AVAILABLE, "Requires Rope")
     def test_should_treat_from_import_special(self):
         filename, offset = self.create_file("foo.py",
                                             "import foo\n"
@@ -94,6 +95,7 @@ class TestGetChanges(RefactorTestCase):
             test.assert_called_with(1, 2)
 
 
+@unittest.skipIf(not refactor.ROPE_AVAILABLE, "Requires Rope")
 class TestFromsToImports(RefactorTestCase):
     def test_should_refactor(self):
         filename, offset = self.create_file(
@@ -111,6 +113,7 @@ class TestFromsToImports(RefactorTestCase):
                          "d = datetime.datetime(2013, 4, 7)\n")
 
 
+@unittest.skipIf(not refactor.ROPE_AVAILABLE, "Requires Rope")
 class TestOrganizeImports(RefactorTestCase):
     def test_should_refactor(self):
         filename, offset = self.create_file(
@@ -133,6 +136,7 @@ class TestOrganizeImports(RefactorTestCase):
                          "unittest.TestCase()\n")
 
 
+@unittest.skipIf(not refactor.ROPE_AVAILABLE, "Requires Rope")
 class TestModuleToPackage(RefactorTestCase):
     def test_should_refactor(self):
         filename, offset = self.create_file(
@@ -157,6 +161,7 @@ class TestModuleToPackage(RefactorTestCase):
                                                         "foo/__init__.py"))
 
 
+@unittest.skipIf(not refactor.ROPE_AVAILABLE, "Requires Rope")
 class TestRenameAtPoint(RefactorTestCase):
     def test_should_refactor(self):
         filename, offset = self.create_file(
@@ -199,6 +204,7 @@ class TestRenameAtPoint(RefactorTestCase):
                          "x.frob()")
 
 
+@unittest.skipIf(not refactor.ROPE_AVAILABLE, "Requires Rope")
 class TestRenameCurrentModule(RefactorTestCase):
     def test_should_refactor(self):
         filename, offset = self.create_file(
@@ -224,6 +230,7 @@ class TestRenameCurrentModule(RefactorTestCase):
         self.assertEqual(b['destination'], dest)
 
 
+@unittest.skipIf(not refactor.ROPE_AVAILABLE, "Requires Rope")
 class TestMoveModule(RefactorTestCase):
     def test_should_refactor(self):
         filename, offset = self.create_file(
@@ -253,6 +260,7 @@ class TestMoveModule(RefactorTestCase):
                          os.path.join(dest, "foo.py"))
 
 
+@unittest.skipIf(not refactor.ROPE_AVAILABLE, "Requires Rope")
 class TestCreateInline(RefactorTestCase):
     def setUp(self):
         super(TestCreateInline, self).setUp()
@@ -288,6 +296,7 @@ class TestCreateInline(RefactorTestCase):
                          "y = 17 + 4\n")
 
 
+@unittest.skipIf(not refactor.ROPE_AVAILABLE, "Requires Rope")
 class TestExtractMethod(RefactorTestCase):
     def setUp(self):
         super(TestExtractMethod, self).setUp()
@@ -346,6 +355,7 @@ class TestExtractMethod(RefactorTestCase):
             self.assertEqual(change['contents'], expected)
 
 
+@unittest.skipIf(not refactor.ROPE_AVAILABLE, "Requires Rope")
 class TestUseFunction(RefactorTestCase):
     def test_should_refactor(self):
         filename, offset = self.create_file(
@@ -373,6 +383,7 @@ class TestUseFunction(RefactorTestCase):
 import elpy.utils.autoimport
 
 
+@unittest.skipIf(not refactor.ROPE_AVAILABLE, "Requires Rope")
 class TestAddMissingImports(RefactorTestCase):
     @mock.patch.object(elpy.utils.autoimport, 'get_changes')
     def test_should_call_autoimport_get_changes(self, get_changes):

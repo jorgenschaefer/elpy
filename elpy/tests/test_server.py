@@ -116,11 +116,7 @@ class TestRPCGetPydocCompletions(TestServer):
 from elpy.tests import compat
 from elpy.tests.support import BackendTestCase
 
-if compat.PYTHON3:
-    # elpy.refactor can not be imported, as Rope is not supported.
-    elpy = mock.MagicMock()
-else:
-    import elpy.refactor
+import elpy.refactor
 
 
 class RopeTestCase(BackendTestCase):
