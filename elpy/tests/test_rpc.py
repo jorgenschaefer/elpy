@@ -2,11 +2,10 @@
 
 import json
 import unittest
-import StringIO
-
 import sys
 
 from elpy import rpc
+from elpy.tests.compat import StringIO
 
 
 class TestFault(unittest.TestCase):
@@ -25,20 +24,24 @@ class TestFault(unittest.TestCase):
 
 class TestJSONRPCServer(unittest.TestCase):
     def setUp(self):
-        self.stdin = StringIO.StringIO()
-        self.stdout = StringIO.StringIO()
+        self.stdin = StringIO()
+        self.stdout = StringIO()
         self.rpc = rpc.JSONRPCServer(self.stdin, self.stdout)
 
     def write(self, s):
-        self.stdin.truncate(0)
-        self.stdout.truncate(0)
+        self.stdin.seek(0)
+        self.stdin.truncate()
+        self.stdout.seek(0)
+        self.stdout.truncate()
         self.stdin.write(s)
         self.stdin.seek(0)
 
     def read(self):
         value = self.stdout.getvalue()
-        self.stdin.truncate(0)
-        self.stdout.truncate(0)
+        self.stdin.seek(0)
+        self.stdin.truncate()
+        self.stdout.seek(0)
+        self.stdout.truncate()
         return value
 
 
@@ -80,8 +83,8 @@ class TestWriteJson(TestJSONRPCServer):
                    ]
         for obj in objlist:
             self.rpc.write_json(**obj)
-            self.assertEqual(self.read(),
-                             json.dumps(obj) + "\n")
+            self.assertEqual(json.loads(self.read()),
+                             obj)
 
 
 class TestHandleRequest(TestJSONRPCServer):

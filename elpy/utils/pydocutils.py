@@ -4,6 +4,21 @@ import types
 from pydoc import safeimport, resolve, ErrorDuringImport
 from pkgutil import iter_modules
 
+from elpy import compat
+
+# Types we want to recurse into (nodes).
+CONTAINER_TYPES = (type, types.ModuleType)
+# Types of attributes we can get documentation for (leaves).
+PYDOC_TYPES = (type,
+               types.FunctionType,
+               types.BuiltinFunctionType,
+               types.BuiltinMethodType,
+               types.MethodType,
+               types.ModuleType)
+if not compat.PYTHON3:  # Python 2 old style classes
+    CONTAINER_TYPES = tuple(list(CONTAINER_TYPES) + [types.ClassType])
+    PYDOC_TYPES = tuple(list(PYDOC_TYPES) + [types.ClassType])
+
 
 def get_pydoc_completions(modulename=None):
     """Get possible completions for modulename for pydoc.
@@ -11,6 +26,7 @@ def get_pydoc_completions(modulename=None):
     Returns a list of possible values to be passed to pydoc.
 
     """
+    modulename = compat.ensure_not_unicode(modulename)
     modules = get_modules(modulename)
     if modulename is None:
         return modules
@@ -21,18 +37,11 @@ def get_pydoc_completions(modulename=None):
     except:
         return None
 
-    if isinstance(module, (type, types.ClassType,
-                           types.ModuleType)):
+    if isinstance(module, CONTAINER_TYPES):
         modules.extend(name for name in dir(module)
                        if not name.startswith("_") and
                        isinstance(getattr(module, name),
-                                  (type,
-                                   types.FunctionType,
-                                   types.BuiltinFunctionType,
-                                   types.BuiltinMethodType,
-                                   types.ClassType,
-                                   types.MethodType,
-                                   types.ModuleType)))
+                                  PYDOC_TYPES))
     if modules:
         return modules
     else:
@@ -46,6 +55,7 @@ def get_modules(modulename=None):
     and packages.
 
     """
+    modulename = compat.ensure_not_unicode(modulename)
     if not modulename:
         return ([modname for (importer, modname, ispkg)
                  in iter_modules()

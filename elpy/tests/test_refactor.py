@@ -116,20 +116,20 @@ class TestOrganizeImports(RefactorTestCase):
         filename, offset = self.create_file(
             "foo.py",
             "import unittest, base64\n"
-            "import datetime, ConfigParser\n"
+            "import datetime, json\n"
             "\n"
-            "c = ConfigParser.SafeConfigParser()\n"
+            "obj = json.dumps(23)\n"
             "unittest.TestCase()\n")
         ref = refactor.Refactor(self.project_root, filename)
         (change,) = ref.get_changes("refactor_organize_imports")
         self.assertEqual(change['action'], 'change')
         self.assertEqual(change['file'], filename)
         self.assertEqual(change['contents'],
-                         "import ConfigParser\n"
+                         "import json\n"
                          "import unittest\n"
                          "\n"
                          "\n"
-                         "c = ConfigParser.SafeConfigParser()\n"
+                         "obj = json.dumps(23)\n"
                          "unittest.TestCase()\n")
 
 
@@ -175,7 +175,11 @@ class TestRenameAtPoint(RefactorTestCase):
             "x = foo.Foo()\n"
             "x.foo()")
         ref = refactor.Refactor(self.project_root, filename)
-        a, b = ref.refactor_rename_at_point(offset, "frob")
+        first, second = ref.refactor_rename_at_point(offset, "frob")
+        if first['file'] == filename:
+            a, b = first, second
+        else:
+            a, b = second, first
         self.assertEqual(a['action'], 'change')
         self.assertEqual(a['file'], filename)
         self.assertEqual(a['contents'],
@@ -301,15 +305,22 @@ class TestExtractMethod(RefactorTestCase):
                                                 "calc", False)
         self.assertEqual(change['action'], 'change')
         self.assertEqual(change['file'], self.filename)
-        self.assertEqual(change['contents'],
-                         "class Foo(object):\n"
-                         "    def spaghetti(self, a, b):\n"
-                         "        return self.calc(a, b)\n"
-                         "\n"
-                         "    def calc(self, a, b):\n"
-                         "        x = a + 5\n"
-                         "        y = b + 23\n"
-                         "        return y\n")
+        expected = ("class Foo(object):\n"
+                    "    def spaghetti(self, a, b):\n"
+                    "        return self.calc(a, b)\n"
+                    "\n"
+                    "    def calc(self, a, b):\n"
+                    "        x = a + 5\n"
+                    "        y = b + 23\n"
+                    "        return y\n")
+        expected2 = expected.replace("return self.calc(a, b)",
+                                     "return self.calc(b, a)")
+        expected2 = expected2.replace("def calc(self, a, b)",
+                                      "def calc(self, b, a)")
+        if change['contents'] == expected2:
+            self.assertEqual(change['contents'], expected2)
+        else:
+            self.assertEqual(change['contents'], expected)
 
     def test_should_refactor_global(self):
         ref = refactor.Refactor(self.project_root, self.filename)
@@ -317,15 +328,22 @@ class TestExtractMethod(RefactorTestCase):
                                                 "calc", True)
         self.assertEqual(change['action'], 'change')
         self.assertEqual(change['file'], self.filename)
-        self.assertEqual(change['contents'],
-                         "class Foo(object):\n"
-                         "    def spaghetti(self, a, b):\n"
-                         "        return calc(a, b)\n"
-                         "\n"
-                         "def calc(a, b):\n"
-                         "    x = a + 5\n"
-                         "    y = b + 23\n"
-                         "    return y\n")
+        expected = ("class Foo(object):\n"
+                    "    def spaghetti(self, a, b):\n"
+                    "        return calc(a, b)\n"
+                    "\n"
+                    "def calc(a, b):\n"
+                    "    x = a + 5\n"
+                    "    y = b + 23\n"
+                    "    return y\n")
+        expected2 = expected.replace("return calc(a, b)",
+                                     "return calc(b, a)")
+        expected2 = expected2.replace("def calc(a, b)",
+                                      "def calc(b, a)")
+        if change['contents'] == expected2:
+            self.assertEqual(change['contents'], expected2)
+        else:
+            self.assertEqual(change['contents'], expected)
 
 
 class TestUseFunction(RefactorTestCase):

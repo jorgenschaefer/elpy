@@ -105,6 +105,10 @@ def _get_name(expr):
         return expr.id
     elif isinstance(expr, ast.Attribute):
         return _get_name(expr.value) + "." + expr.attr
+    # Python 3 has ast.arg. For Python 2, we make a duplicate check
+    # which should never be true.
+    elif isinstance(expr, getattr(ast, 'arg', ast.Name)):
+        return expr.arg
 
 
 def _find_undefined_from_script(script):

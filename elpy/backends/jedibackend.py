@@ -115,7 +115,7 @@ def linecol_to_pos(text, line, col):
 
     """
     nth_newline_offset = 0
-    for i in xrange(line - 1):
+    for i in range(line - 1):
         new_offset = text.find("\n", nth_newline_offset)
         if new_offset < 0:
             raise ValueError("Text does not have {0} lines."

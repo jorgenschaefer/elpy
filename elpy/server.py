@@ -106,8 +106,6 @@ class ElpyRPCServer(JSONRPCServer):
         level modules are returned.
 
         """
-        if name is not None:
-            name = name.encode("utf-8")
         return get_pydoc_completions(name)
 
     def rpc_get_refactor_options(self, project_root, filename,

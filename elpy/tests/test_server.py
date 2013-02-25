@@ -112,17 +112,15 @@ class TestRPCGetPydocCompletions(TestServer):
         srv.rpc_get_pydoc_completions("foo")
         get_pydoc_completions.assert_called_with("foo")
 
-    @mock.patch.object(server, 'get_pydoc_completions')
-    def test_should_not_call_pydoc_completions_with_unicode_string(
-            self, get_pydoc_completions):
-        srv = server.ElpyRPCServer()
-        srv.rpc_get_pydoc_completions(u"foo")
-        self.assertIsInstance(get_pydoc_completions.call_args_list[0][0][0],
-                              str)
 
-import __builtin__
+from elpy.tests import compat
 from elpy.tests.support import BackendTestCase
-import elpy.refactor
+
+if compat.PYTHON3:
+    # elpy.refactor can not be imported, as Rope is not supported.
+    elpy = mock.MagicMock()
+else:
+    import elpy.refactor
 
 
 class RopeTestCase(BackendTestCase):
@@ -131,7 +129,7 @@ class RopeTestCase(BackendTestCase):
 
 
 class TestRPCGetRefactorOptions(RopeTestCase):
-    @mock.patch.object(__builtin__, '__import__')
+    @mock.patch.object(compat.builtins, '__import__')
     def test_should_fail_if_rope_is_not_available(self, import_):
         import_.side_effect = ImportError
         filename = self.project_file("foo.py", "")
@@ -149,7 +147,7 @@ class TestRPCGetRefactorOptions(RopeTestCase):
 
 
 class TestRPCRefactor(RopeTestCase):
-    @mock.patch.object(__builtin__, '__import__')
+    @mock.patch.object(compat.builtins, '__import__')
     def test_should_fail_if_rope_is_not_available(self, import_):
         import_.side_effect = ImportError
         filename = self.project_file("foo.py", "")

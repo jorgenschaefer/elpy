@@ -3,8 +3,8 @@
 import unittest
 
 import mock
-import __builtin__
 
+from elpy.tests import compat
 from elpy.backends import jedibackend
 from elpy.tests.support import BackendTestCase, source_and_offset
 
@@ -22,7 +22,7 @@ class TestInit(JediBackendTestCase):
     def test_should_return_object_if_jedi_available(self):
         self.assertIsNotNone(jedibackend.JediBackend())
 
-    @mock.patch.object(__builtin__, '__import__')
+    @mock.patch.object(compat.builtins, '__import__')
     def test_should_return_none_if_no_rope(self, import_):
         import_.side_effect = ImportError
         self.assertIsNone(jedibackend.JediBackend())
@@ -37,14 +37,17 @@ class TestGetCompletions(JediBackendTestCase):
                          sorted(['SError', 'bject', 'ct', 'pen', 'r',
                                  'rd', 'verflowError']))
 
-    def test_should_autoimport(self):
+    def test_should_find_with_trailing_text(self):
         source, offset = source_and_offset(
             "import threading\nthreading.T_|_mumble mumble")
+        if compat.PYTHON3:
+            expected = ["hread", "hreadError", "IMEOUT_MAX", "imer"]
+        else:
+            expected = ["hread", "hread", "hreadError", "imer"]
         self.assertEqual(sorted([name for (name, doc) in
                                  self.backend.rpc_get_completions(
                                      None, "test.py", source, offset)]),
-                         sorted(['hread', 'hread',
-                                 'hreadError', 'imer']))
+                         sorted(expected))
 
     def test_should_not_fail_on_inexisting_file(self):
         self.backend.rpc_get_completions(self.project_root,
@@ -116,9 +119,14 @@ class TestGetCalltip(JediBackendTestCase):
         calltip = self.backend.rpc_get_calltip(self.project_root,
                                                filename,
                                                source, offset)
-        self.assertEqual(calltip,
-                         "Thread(group=None, target=None, name=None, "
-                         "args=(), kwargs=None, verbose=None)")
+        if compat.PYTHON3:
+            self.assertEqual(calltip,
+                             "Thread(group=None, target=None, name=None, "
+                             "args=(), kwargs=None, daemon=None)")
+        else:
+            self.assertEqual(calltip,
+                             "Thread(group=None, target=None, name=None, "
+                             "args=(), kwargs=None, verbose=None)")
 
     def test_should_return_none_outside_of_all(self):
         filename = self.project_file("test.py", "")

@@ -227,7 +227,14 @@ explain how to install the elpy module."
                 "You can try both and even switch at runtime using "
                 "M-x elpy-set-backend.\n")
         (insert "\n")
-        (elpy-installation-command "rope")
+        (insert "Elpy also uses the Rope module for refactoring options, "
+                "so you likely want to install it even if you use jedi "
+                "for completion.\n")
+        (insert "\n")
+        (if (string-match "Python 3" (shell-command-to-string
+                                      "python --version"))
+            (elpy-installation-command "rope_py3k")
+          (elpy-installation-command "rope"))
         (insert "\n")
         (elpy-installation-command "jedi")
         (insert "\n")

@@ -33,6 +33,10 @@ class TestGetPydocCompletions(unittest.TestCase):
         self.assertIsNone(elpy.utils.pydocutils.get_pydoc_completions
                           ("does_not_exist"))
 
+    def test_should_work_for_unicode_strings(self):
+        self.assertIsNotNone(elpy.utils.pydocutils.get_pydoc_completions
+                             (u"sys"))
+
 
 class TestGetModules(unittest.TestCase):
     def test_should_return_top_level_modules(self):

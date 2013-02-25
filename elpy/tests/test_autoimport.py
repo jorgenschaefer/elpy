@@ -23,25 +23,25 @@ class TestGetChanges(unittest.TestCase):
 
     def test_should_add_imports_with_no_prior_imports(self):
         filename = self.create_file("foo.py",
-                                    "conf = ConfigParser.SafeConfigParser()")
+                                    "obj = json.dumps(23)")
         (change,) = autoimport.get_changes(filename)
         self.assertEqual(change['action'], 'change')
         self.assertEqual(change['file'], filename)
         self.assertEqual(change['contents'],
-                         "import ConfigParser\n"
-                         "conf = ConfigParser.SafeConfigParser()")
+                         "import json\n"
+                         "obj = json.dumps(23)")
 
     def test_should_add_imports_after_other_imports(self):
         filename = self.create_file("foo.py",
                                     "import elpy\n"
-                                    "conf = ConfigParser.SafeConfigParser()\n")
+                                    "obj = json.dumps(23)\n")
         (change,) = autoimport.get_changes(filename)
         self.assertEqual(change['action'], 'change')
         self.assertEqual(change['file'], filename)
         self.assertEqual(change['contents'],
                          "import elpy\n"
-                         "import ConfigParser\n"
-                         "conf = ConfigParser.SafeConfigParser()\n")
+                         "import json\n"
+                         "obj = json.dumps(23)\n")
 
     def test_should_not_add_duplicates(self):
         filename = self.create_file("foo.py",
@@ -58,15 +58,15 @@ class TestGetChanges(unittest.TestCase):
 
 class TestFindModuleFor(unittest.TestCase):
     def test_should_find_direct_module(self):
-        self.assertEqual(autoimport.find_module_for("ConfigParser"),
-                         "ConfigParser")
+        self.assertEqual(autoimport.find_module_for("json"),
+                         "json")
         self.assertEqual(autoimport.find_module_for("xml.etree"),
                          "xml.etree")
 
     def test_should_find_prefix_module(self):
         self.assertEqual(autoimport.find_module_for
-                         ("ConfigParser.SafeConfigParser"),
-                         "ConfigParser")
+                         ("json.dumps"),
+                         "json")
         self.assertEqual(autoimport.find_module_for
                          ("xml.etree.ElementTree.parse"),
                          "xml.etree.ElementTree")

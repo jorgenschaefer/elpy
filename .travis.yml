@@ -12,14 +12,21 @@ before_install:
       sudo apt-get install -qq
           emacs24 emacs24-el emacs24-common-non-dfsg;
     fi
-  - if python --version 2>&1 | fgrep -q 2.6 ; then
+install:
+  - "pip install jedi --use-mirrors"
+  - if python --version 2>&1 | fgrep -q "Python 2.6" ; then
       pip install unittest2 --use-mirrors ;
     fi
-install:
-  - "pip install nose rope jedi --use-mirrors"
+  - if python --version 2>&1 | fgrep -q "Python 2" ; then
+      pip install rope --use-mirrors ;
+    fi
+  - if python --version 2>&1 | fgrep -q "Python 3" ; then
+      pip install rope_py3k --use-mirrors ;
+    fi
 python:
   - "2.6"
   - "2.7"
+  - "3.3"
 env:
   - EMACS=emacs24
   - EMACS=emacs-snapshot
