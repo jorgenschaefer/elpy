@@ -983,23 +983,25 @@ Ths current buffer needs to be an elpy-rpc buffer."
 
 Returns a list of possible completions for the Python symbol at
 point."
-  (elpy-rpc "get_completions"
-            (expand-file-name (elpy-project-root))
-            buffer-file-name
-            (buffer-string)
-            (- (point)
-               (point-min))))
+  (when (elpy-project-root)
+    (elpy-rpc "get_completions"
+              (expand-file-name (elpy-project-root))
+              buffer-file-name
+              (buffer-string)
+              (- (point)
+                 (point-min)))))
 
 (defun elpy-rpc-get-calltip ()
   "Call the get_calltip API function.
 
 Returns a calltip string for the function call at point."
-  (elpy-rpc "get_calltip"
-            (expand-file-name (elpy-project-root))
-            buffer-file-name
-            (buffer-string)
-            (- (point)
-               (point-min))))
+  (when (elpy-project-root)
+    (elpy-rpc "get_calltip"
+              (expand-file-name (elpy-project-root))
+              buffer-file-name
+              (buffer-string)
+              (- (point)
+                 (point-min)))))
 
 (defun elpy-rpc-get-docstring ()
   "Call the get_docstring API function.
