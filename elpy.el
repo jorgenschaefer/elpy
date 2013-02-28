@@ -278,12 +278,11 @@ is called (usually from `elpy-enable'), or override this function
 using (defalias 'elpy-initialize-variables 'identity)"
   ;; Local variables in `python-mode'. This is not removed when Elpy
   ;; is disabled, which can cause some confusion.
-  (add-hook 'python-mode 'elpy-initialize-local-variables)
+  (add-hook 'python-mode-hook 'elpy-initialize-local-variables)
 
   ;; Set `python-check-command' to the python-check.sh we ship with
   ;; elpy.
-  (let* ((elpy-el (or load-file-name
-                      buffer-file-name))
+  (let* ((elpy-el (locate-library "elpy"))
          (python-check (when elpy-el
                          (concat (file-name-directory elpy-el)
                                  "python-check.sh"))))
