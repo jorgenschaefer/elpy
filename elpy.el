@@ -238,10 +238,10 @@ explain how to install the elpy module."
         (insert "\n")
         (elpy-installation-command "jedi")
         (insert "\n")
-        (insert "If you are using virtualenvs, you can use Elpy's "
-                "C-c C-e command to switch to a virtualenv of your "
-                "choice. Afterwards, running the command M-x "
-                "elpy-rpc-restart will use the packages in "
+        (insert "If you are using virtualenvs, you can use "
+                "M-x virtualenv-workon command to switch to a virtualenv "
+                "of your choice. Afterwards, running the command "
+                "M-x elpy-rpc-restart will use the packages in "
                 "that virtualenv.")
         (fill-region (point-min) (point-max))))))
 
