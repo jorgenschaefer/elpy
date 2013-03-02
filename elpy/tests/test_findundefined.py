@@ -1,5 +1,6 @@
 import unittest
 from elpy.utils import findundefined
+from elpy.tests import compat
 
 
 class TestFindUndefined(unittest.TestCase):
@@ -68,6 +69,23 @@ class TestVariableUse(unittest.TestCase):
                           ("use", "d"),
                           ("create", "a"),
                           ("create", "b")])
+        self.assertEqual(self.script("a.b[c], d.e[f] = g.h[i], j.k[l]"),
+                         [("use", "g.h"),
+                          ("use", "i"),
+                          ("use", "j.k"),
+                          ("use", "l"),
+                          ("use", "a.b"),
+                          ("use", "c"),
+                          ("use", "d.e"),
+                          ("use", "f")])
+        self.assertEqual(self.script("[a, b] = c, d"),
+                         [("use", "c"),
+                          ("use", "d"),
+                          ("create", "a"),
+                          ("create", "b")])
+        self.assertEqual(self.script("a.b().c, d.e().f = 1, 2"),
+                         [("use", "a.b"),
+                          ("use", "d.e")])
 
     def test_functiondef(self):
         self.assertEqual(self.script("def foo():\n"
@@ -90,6 +108,14 @@ class TestVariableUse(unittest.TestCase):
                           ("create", "e"),
                           ("use", "f"),
                           ("pop", None)])
+        if not compat.PYTHON3:
+            self.assertEqual(self.script("def foo((a, b)):\n"
+                                         "    pass"),
+                             [("create", "foo"),
+                              ("push", None),
+                              ("create", "a"),
+                              ("create", "b"),
+                              ("pop", None)])
 
     def test_classdef(self):
         self.assertEqual(self.script("class Foo():\n"
@@ -110,6 +136,12 @@ class TestVariableUse(unittest.TestCase):
                           ("use", "Fnord"),
                           ("create", "__metaclass__"),
                           ("pop", None)])
+
+    def test_attribute_with_call(self):
+        self.assertEqual(self.script("foo.bar(x.y, a=b.c().d).baz"),
+                         [("use", "foo.bar"),
+                          ("use", "x.y"),
+                          ("use", "b.c")])
 
 
 class TestFindUndefinedFromScript(unittest.TestCase):

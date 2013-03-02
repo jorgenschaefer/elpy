@@ -22,11 +22,17 @@ class VariableUse(ast.NodeVisitor):
         self.script.append((op, arg))
 
     def visit_Attribute(self, node):
-        if isinstance(node.value, (ast.Attribute, ast.Name)):
-            self.add("use", _get_name(node))
+        # This can be a foo.bar.baz, then we want to "use" that. This
+        # could also be foo.bar(), then we want to visit the call.
+        components = []
+        while isinstance(node, ast.Attribute):
+            components.insert(0, node.attr)
+            node = node.value
+        if isinstance(node, ast.Name):
+            varname = ".".join([node.id] + components)
+            self.add("use", varname)
         else:
-            # foo.bar().baz, we'at baz
-            self.visit(node.value)
+            self.visit(node)
 
     def visit_Name(self, node):
         self.add("use", node.id)
@@ -56,12 +62,15 @@ class VariableUse(ast.NodeVisitor):
 
     def visit_Assign(self, node):
         self.visit(node.value)
-        for target in node.targets:
-            if isinstance(target, ast.Tuple):
-                for elt in target.elts:
-                    self.add("create", _get_name(elt))
-            else:
+        targets = list(node.targets)
+        while targets:
+            target = targets.pop(0)
+            if isinstance(target, (ast.Tuple, ast.List)):
+                targets.extend(target.elts)
+            elif isinstance(target, ast.Name):
                 self.add("create", _get_name(target))
+            else:
+                self.visit(target)
 
     def visit_Module(self, node):
         for subnode in node.body:
@@ -69,13 +78,18 @@ class VariableUse(ast.NodeVisitor):
 
     def visit_FunctionDef(self, node):
         for decorator in node.decorator_list:
-            self.add("use", _get_name(decorator))
-        for name in node.args.defaults:
-            self.add("use", _get_name(name))
+            self.visit(decorator)
+        for default in node.args.defaults:
+            self.visit(default)
         self.add("create", node.name)
         self.add("push")
-        for arg in node.args.args:
-            self.add("create", _get_name(arg))
+        argnames = list(node.args.args)
+        while argnames:
+            arg = argnames.pop(0)
+            if isinstance(arg, ast.Tuple):
+                argnames.extend(arg.elts)
+            else:
+                self.add("create", _get_name(arg))
         if node.args.vararg:
             self.add("create", node.args.vararg)
         if node.args.kwarg:
@@ -86,9 +100,9 @@ class VariableUse(ast.NodeVisitor):
 
     def visit_ClassDef(self, node):
         for decorator in node.decorator_list:
-            self.add("use", _get_name(decorator))
+            self.visit(decorator)
         for base in node.bases:
-            self.add("use", _get_name(base))
+            self.visit(base)
         self.add("create", node.name)
         self.add("push")
         for subnode in node.body:
@@ -109,6 +123,9 @@ def _get_name(expr):
     # which should never be true.
     elif isinstance(expr, getattr(ast, 'arg', ast.Name)):
         return expr.arg
+    else:
+        raise ValueError("Can't find name for class of type {}"
+                         .format(type(expr).__name__))
 
 
 def _find_undefined_from_script(script):
