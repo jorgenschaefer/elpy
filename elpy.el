@@ -1115,14 +1115,11 @@ error if the backend is not supported."
                 '("\\.py\\'" elpy-flymake-python-init)))
 
 (defun elpy-flymake-python-init ()
-  ;; Make sure it's not a remote buffer or flymake would not work
+  ;; Make sure it's not a remote buffer as flymake would not work
   (when (not (file-remote-p buffer-file-name))
     (let* ((temp-file (flymake-init-create-temp-buffer-copy
-                       'flymake-create-temp-inplace))
-           (local-file (file-relative-name
-                        temp-file
-                        (file-name-directory buffer-file-name))))
-      (list python-check-command (list local-file)))))
+                       'flymake-create-temp-inplace)))
+      (list python-check-command (list temp-file)))))
 
 (defun elpy-flymake-forward-error ()
   "Move forward to the next Flymake error and show a
