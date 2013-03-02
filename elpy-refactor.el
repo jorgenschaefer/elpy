@@ -32,6 +32,10 @@
   "Changes that will be commited on \\[elpy-refactor-commit].")
 (make-variable-buffer-local 'elpy-refactor-current-changes)
 
+(defvar elpy-refactor-window-configuration nil
+  "The old window configuration. Will be restored after commit.")
+(make-variable-buffer-local 'elpy-refactor-window-configuration)
+
 (defun elpy-refactor ()
   "Run the Elpy refactoring interface for Python code."
   (interactive)
@@ -150,11 +154,12 @@ The user can review the changes and confirm them with
   (when (not changes)
     (error "No changes for this refactoring action."))
   (with-current-buffer (get-buffer-create "*Elpy Refactor*")
-    (setq elpy-refactor-changes changes)
+    (elpy-refactor-mode)
+    (setq elpy-refactor-changes changes
+          elpy-refactor-window-configuration (current-window-configuration))
     (let ((inhibit-read-only t))
       (erase-buffer)
       (elpy-refactor-insert-changes))
-    (elpy-refactor-mode)
     (select-window (display-buffer (current-buffer)))
     (goto-char (point-min))))
 
@@ -214,19 +219,27 @@ The user can review the changes and confirm them with
   (interactive)
   (when (not elpy-refactor-changes)
     (error "No changes to commit."))
+  ;; Restore the window configuration as the first thing so that
+  ;; changes below are visible to the user. Especially the point
+  ;; change in possible buffer changes.
+  (set-window-configuration elpy-refactor-window-configuration)
   (dolist (change elpy-refactor-changes)
     (let ((action (cdr (assq 'action change))))
       (cond
        ((equal action "change")
-        (with-current-buffer (find-file (cdr (assq 'file change)))
-          (undo-boundary)
-          (erase-buffer)
-          (insert (cdr (assq 'contents change)))
-          (undo-boundary)))
+        (with-current-buffer (find-file-noselect (cdr (assq 'file change)))
+          ;; This would break for save-excursion as the buffer is
+          ;; truncated, so all markets now point to position 1.
+          (let ((old-point (point)))
+            (undo-boundary)
+            (erase-buffer)
+            (insert (cdr (assq 'contents change)))
+            (undo-boundary)
+            (goto-char old-point))))
        ((equal action "create")
         (if (equal (cdr (assq 'type change))
                    "file")
-            (find-file (cdr (assq 'file change)))
+            (find-file-noselect (cdr (assq 'file change)))
           (make-directory (cdr (assq 'path change)))))
        ((equal action "move")
         (let* ((source (cdr (assq 'source change)))
@@ -245,10 +258,7 @@ The user can review the changes and confirm them with
           (let ((name (cdr (assq 'directory change))))
             (when (y-or-n-p (format "Really delete %s? " name))
               (delete-directory name nil t))))))))
-  (let ((win (get-buffer-window (current-buffer))))
-    (kill-buffer (current-buffer))
-    (ignore-errors
-      (delete-window (get-buffer-window (current-buffer))))))
+  (kill-buffer (current-buffer)))
 
 (defun elpy-refactor-rpc-get-options ()
   "Get a list of refactoring options from the Elpy RPC."
