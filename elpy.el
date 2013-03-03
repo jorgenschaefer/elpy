@@ -652,16 +652,20 @@ With two prefix args, only the current module is run."
 
 If USE-PYDOC is non-nil (interactively, when a prefix argument is
 given), use pydoc on the symbol SYMBOL (interactively, the symbol
-at point). The user is given the chance to edit the symbol before
-it is passed to pydoc."
+at point). With a single prefix argument, the user gets a
+completion interface for possible symbols. With two prefix
+arguments,  the interface simply asks for a string."
   (interactive
    (list current-prefix-arg
-         (when current-prefix-arg
-           (let ((initial (with-syntax-table python-dotty-syntax-table
-                            (let ((symbol (symbol-at-point)))
-                              (if symbol
-                                  (symbol-name symbol)
-                                nil)))))
+         (let ((initial (with-syntax-table python-dotty-syntax-table
+                          (let ((symbol (symbol-at-point)))
+                            (if symbol
+                                (symbol-name symbol)
+                              nil)))))
+           (if (equal current-prefix-arg '(16))
+               ;; C-u C-u
+               (read-from-minibuffer "Pydoc: " initial nil nil
+                                     'elpy-doc-history)
              (elpy-ido-recursive-completing-read "Pydoc: "
                                                  'elpy-pydoc-completions
                                                  "."
