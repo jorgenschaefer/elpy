@@ -54,6 +54,15 @@ class TestGetDocstring(NativeBackendTestCase):
                          docstring)
 
 
+class TestGetPydocDocumentation(NativeBackendTestCase):
+    def test_should_find_documentation(self):
+        docstring = pydoc.render_doc("open",
+                                     "Elpy Pydoc Documentation for %s",
+                                     False)
+        self.assertEqual(self.backend.rpc_get_pydoc_documentation("open"),
+                         docstring)
+
+
 class TestFindSymbol(NativeBackendTestCase):
     def test_should_find_symbol(self):
         source, offset = source_and_offset("threading.current_th_|_read")

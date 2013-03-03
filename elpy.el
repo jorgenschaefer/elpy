@@ -668,11 +668,9 @@ it is passed to pydoc."
                                                  t
                                                  initial
                                                  'elpy-doc-history)))))
-  (if use-pydoc-p
-      (with-help-window "*Pydoc*"
-        (shell-command (format "pydoc %s" (shell-quote-argument symbol))
-                       (get-buffer "*Pydoc*")))
-    (let ((doc (or (elpy-rpc-get-docstring)
+  (let ((doc (if use-pydoc-p
+                 (elpy-rpc-get-pydoc-documentation symbol)
+               (or (elpy-rpc-get-docstring)
                    ;; This will get the right position for
                    ;; multiprocessing.Queue(quxqux_|_)
                    (ignore-errors
@@ -681,18 +679,18 @@ it is passed to pydoc."
                        (with-syntax-table python-dotty-syntax-table
                          (forward-symbol 1)
                          (backward-char 1))
-                       (elpy-rpc-get-docstring))))))
-      (if doc
-          (with-help-window "*Python Doc*"
-            (with-current-buffer "*Python Doc*"
-              (erase-buffer)
-              (insert doc)
-              (goto-char (point-min))
-              (while (re-search-forward "\\(.\\)\\1" nil t)
-                (replace-match (propertize (match-string 1)
-                                           'face 'bold)
-                               t t))))
-        (message "No documentation available.")))))
+                       (elpy-rpc-get-docstring)))))))
+    (if doc
+        (with-help-window "*Python Doc*"
+          (with-current-buffer "*Python Doc*"
+            (erase-buffer)
+            (insert doc)
+            (goto-char (point-min))
+            (while (re-search-forward "\\(.\\)\\1" nil t)
+              (replace-match (propertize (match-string 1)
+                                         'face 'bold)
+                             t t))))
+      (message "No documentation available."))))
 
 (defun elpy-pydoc-completions (rcr-prefix)
   "Return a list of modules available in pydoc starting with RCR-PREFIX."
@@ -1012,6 +1010,12 @@ Returns a possible multi-line docstring for the symbol at point."
             (buffer-string)
             (- (point)
                (point-min))))
+
+(defun elpy-rpc-get-pydoc-documentation (symbol)
+  "Get the Pydoc documentation for SYMBOL.
+
+Returns a possible multi-line docstring."
+    (elpy-rpc "get_pydoc_documentation" symbol))
 
 (defun elpy-rpc-get-definition ()
   "Call the find_definition API function.

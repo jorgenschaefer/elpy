@@ -35,6 +35,21 @@ class NativeBackend(object):
         """Method called from after-save-hook"""
         pass
 
+    def rpc_get_pydoc_documentation(self, symbol):
+        """Get the Pydoc documentation for the given symbol.
+
+        Uses pydoc and can return a string with backspace characters
+        for bold highlighting.
+
+        """
+        try:
+            return pydoc.render_doc(str(symbol),
+                                    "Elpy Pydoc Documentation for %s",
+                                    False)
+        except (ImportError, pydoc.ErrorDuringImport):
+            return None
+
+
     def rpc_get_completions(self, project_root, filename, source, offset):
         """Get completions for symbol at the offset.
 
@@ -78,13 +93,7 @@ class NativeBackend(object):
 
         """
         symbol, start, end = find_dotted_symbol(source, offset)
-        try:
-            doc = pydoc.render_doc(str(symbol),
-                                   "Elpy Pydoc Documentation for %s",
-                                   False)
-        except (ImportError, pydoc.ErrorDuringImport):
-            return None
-        return doc
+        return self.rpc_get_pydoc_documentation(symbol)
 
 
 # Helper functions
