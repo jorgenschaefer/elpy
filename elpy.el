@@ -57,6 +57,11 @@
   :prefix "elpy-"
   :group 'languages)
 
+(defcustom elpy-rpc-python-command "python"
+  "The command to be used for the RPC backend."
+  :type 'string
+  :group 'elpy)
+
 (defcustom elpy-rpc-backend nil
   "Your preferred backend.
 
@@ -442,9 +447,6 @@ current directory unless SKIP-CURRENT-DIRECTORY is non-nil."
       ;; Emacs 24 until 24.3
       (setq python-python-command "python")
     ;; Emacs 24.3 and onwards.
-
-    ;; This is from the python.el commentary.
-    ;; Settings for IPython 0.11:
     (setq python-shell-interpreter "python"
           python-shell-interpreter-args "-i"
           python-shell-prompt-regexp ">>> "
@@ -867,7 +869,8 @@ See `elpy-rpc-call'.")
       (kill-buffer elpy-rpc-buffer))
     (condition-case err
         (setq elpy-rpc-buffer
-              (elpy-rpc-open "*elpy-rpc*" "python" "-m" "elpy.__main__"))
+              (elpy-rpc-open "*elpy-rpc*"
+                             elpy-rpc-python-command "-m" "elpy.__main__"))
       (error
        (elpy-installation-instructions
         (format "Could not start the Python subprocess: %s"
