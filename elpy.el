@@ -76,16 +76,6 @@ native - Do not use any backend, use native Python methods only."
                  (const nil))
   :group 'elpy)
 
-(defcustom elpy-project-markers '(".git" ".svn" ".hg"
-                                  ".ropeproject" "setup.py")
-  "List of files and directories that mark a project.
-
-Elpy will search up the directory hierarchy for the first
-occurrence of such a file and assume this is the root of your
-project."
-  :type '(repeat string)
-  :group 'elpy)
-
 (defcustom elpy-default-minor-modes '(eldoc-mode
                                       flymake-mode
                                       highlight-indentation-mode
@@ -376,10 +366,6 @@ You can set the variable `elpy-project-root' in, for example,
 
 (defun elpy-project-find-root ()
   "Find an appropriate project root for the current buffer.
-
-This is either the first directory up the root with a file
-matching any string in `elpy-project-markers', or the last
-directory to contain an __init__.el file.
 
 If no root directory is found, nil is returned."
   (or ;; (getenv "PROJECT_HOME")
