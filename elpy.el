@@ -45,6 +45,7 @@
 (require 'json)
 (require 'nose)
 (require 'python)
+(require 'thingatpt)
 (require 'virtualenv)
 (require 'yasnippet)
 
@@ -199,7 +200,8 @@ explain how to install the elpy module."
         (when (not (bolp))
           (insert "\n"))
         (insert "\n")
-        (when elpy-rpc-buffer
+        (when (and (boundp 'elpy-rpc-buffer)
+                   elpy-rpc-buffer)
           (let ((elpy-rpc-output (with-current-buffer elpy-rpc-buffer
                                    (buffer-string))))
             (when (not (equal elpy-rpc-output ""))
