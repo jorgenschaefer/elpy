@@ -159,11 +159,11 @@ The user can review the changes and confirm them with
           elpy-refactor-window-configuration (current-window-configuration))
     (let ((inhibit-read-only t))
       (erase-buffer)
-      (elpy-refactor-insert-changes))
+      (elpy-refactor-insert-changes changes))
     (select-window (display-buffer (current-buffer)))
     (goto-char (point-min))))
 
-(defun elpy-refactor-insert-changes ()
+(defun elpy-refactor-insert-changes (changes)
   "Format and display the changes described in CHANGES."
   (insert (propertize "Use C-c C-c to apply the following changes."
                       'face 'bold)
