@@ -283,15 +283,10 @@ using (defalias 'elpy-initialize-variables 'identity)"
   ;; is disabled, which can cause some confusion.
   (add-hook 'python-mode-hook 'elpy-initialize-local-variables)
 
-  ;; Set `python-check-command' to the python-check.sh we ship with
-  ;; elpy.
-  (let* ((elpy-el (locate-library "elpy"))
-         (python-check (when elpy-el
-                         (concat (file-name-directory elpy-el)
-                                 "python-check.sh"))))
-    (when (and python-check
-               (file-exists-p python-check))
-      (setq python-check-command  python-check)))
+  ;; Flymake support using flake8, including warning faces.
+  (when (executable-find "flake8")
+    (set (make-local-variable 'flymake-warning-re) "^W[0-9]")
+    (setq python-check-command "flake8"))
 
   ;; `flymake-no-changes-timeout': The original value of 0.5 is too
   ;; short for Python code, as that will result in the current line to

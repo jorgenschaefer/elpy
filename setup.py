@@ -24,7 +24,9 @@ try:
               ("License :: OSI Approved :: "
                "GNU General Public License v3 or later (GPLv3+)"),
               "Topic :: Text Editors :: Emacs",
-          ])
+          ],
+          requires=["flake8"]
+    )
 finally:
     os.unlink("README.txt")
     try:
