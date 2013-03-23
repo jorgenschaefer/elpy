@@ -35,7 +35,9 @@ Evaluate this in your `*scratch*` buffer:
              '("marmalade" . "http://marmalade-repo.org/packages/"))
 ```
 
-Then run `M-x package-install RET elpy RET`.
+Then run `M-x package-refresh-contents` to load the contents of the
+new repository, and `M-x package-install RET elpy RET` to install
+elpy.
 
 Finally, add the following to your `.emacs`:
 
