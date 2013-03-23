@@ -652,16 +652,20 @@ arguments,  the interface simply asks for a string."
                             (if symbol
                                 (symbol-name symbol)
                               nil)))))
-           (if (equal current-prefix-arg '(16))
-               ;; C-u C-u
-               (read-from-minibuffer "Pydoc: " initial nil nil
-                                     'elpy-doc-history)
+           (cond
+            ((and initial (not current-prefix-arg))
+             initial)
+            ((equal current-prefix-arg '(16))
+             ;; C-u C-u
+             (read-from-minibuffer "Pydoc: " initial nil nil
+                                   'elpy-doc-history))
+            (t
              (elpy-ido-recursive-completing-read "Pydoc: "
                                                  'elpy-pydoc-completions
                                                  "."
                                                  t
                                                  initial
-                                                 'elpy-doc-history)))))
+                                                 'elpy-doc-history))))))
   (let ((doc (if use-pydoc-p
                  (elpy-rpc-get-pydoc-documentation symbol)
                (or (elpy-rpc-get-docstring)
