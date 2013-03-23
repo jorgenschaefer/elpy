@@ -285,7 +285,6 @@ using (defalias 'elpy-initialize-variables 'identity)"
 
   ;; Flymake support using flake8, including warning faces.
   (when (executable-find "flake8")
-    (set (make-local-variable 'flymake-warning-re) "^W[0-9]")
     (setq python-check-command "flake8"))
 
   ;; `flymake-no-changes-timeout': The original value of 0.5 is too
@@ -343,7 +342,11 @@ using (defalias 'elpy-initialize-variables 'identity)"
 This should be run from `python-mode-hook'."
   ;; Set `forward-sexp-function' to nil in python-mode. See
   ;; http://debbugs.gnu.org/db/13/13642.html
-  (setq forward-sexp-function nil))
+  (setq forward-sexp-function nil)
+  ;; Enable warning faces for flake8 output.
+  (when (string-match "flake8" python-check-command)
+    (set (make-local-variable 'flymake-warning-re) "^W[0-9]"))
+  )
 
 (defvar elpy-project-root 'not-initialized
   "The root of the project the current buffer is in.")
