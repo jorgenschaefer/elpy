@@ -130,13 +130,19 @@ native - Do not use any backend, use native Python methods only."
   "Key map for the Emacs Lisp Python Environment.")
 
 ;;;###autoload
-(defun elpy-enable ()
-  "Enable Elpy in all future Python buffers."
+(defun elpy-enable (&optional skip-initialize-variables)
+  "Enable Elpy in all future Python buffers.
+
+When SKIP-INITIALIZE-VARIABLES is non-nil, this will NOT call
+`elpy-initialize-variables' to configure various modes in a way
+that the Elpy author considers sensible. If you'd rather
+configure those modes yourself, pass t here."
   (interactive)
   (when (< emacs-major-version 24)
     (error "Elpy requires Emacs 24 or newer"))
   (add-hook 'python-mode-hook 'elpy-mode)
-  (elpy-initialize-variables))
+  (when (not skip-initialize-variables)
+    (elpy-initialize-variables)))
 
 ;;;###autoload
 (defun elpy-disable ()
