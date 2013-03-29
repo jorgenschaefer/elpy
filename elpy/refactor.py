@@ -67,7 +67,6 @@ except ImportError:
     ROPE_AVAILABLE = False
 
 from elpy.utils import autoimport
-from elpy.compat import StringIO
 
 
 def options(description, **kwargs):
@@ -102,8 +101,7 @@ class Refactor(object):
             self.resource = path_to_resource(self.project, filename)
         else:
             self.project = None
-            with open(filename) as f:
-                self.resource = StringIO(f.read())
+            self.resource = FakeResource(filename)
 
     def get_refactor_options(self, start, end=None):
         """Return a list of options for refactoring at the given position.
@@ -347,3 +345,14 @@ def translate_changes(initial_change):
                                'type': 'file',
                                'file': change.resource.real_path})
     return result
+
+
+class FakeResource(object):
+    """A fake resource in case Rope is absence."""
+
+    def __init__(self, filename):
+        self.real_path = filename
+
+    def read(self):
+        with open(filename) as f:
+            return f.read()
