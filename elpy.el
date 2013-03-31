@@ -248,6 +248,12 @@ explain how to install the elpy module."
                 "that virtualenv.")
         (fill-region (point-min) (point-max))))))
 
+(defvar elpy-set-pip-command "pip"
+  "What the `pip' command is installed as.")
+
+(defvar elpy-set-easy-install-command "easy_install"
+  "What the `easy_install' command is installed as.")
+
 (defun elpy-installation-command (python-module)
   "Insert an installation command description for PYTHON-MODULE."
   (let* ((do-user-install (not (or (getenv "VIRTUAL_ENV")
@@ -256,10 +262,12 @@ explain how to install the elpy module."
                           "--user "
                         ""))
          (command (cond
-                   ((executable-find "pip")
-                    (format "pip install %s%s" user-option python-module))
-                   ((executable-find "easy_install")
-                    (format "easy_install %s%s" user-option python-module))
+                   ((executable-find elpy-set-pip-command)
+                    (format "%s install %s%s" elpy-set-pip-command user-option
+                            python-module))
+                   ((executable-find elpy-set-easy-install-command)
+                    (format "easy_install %s%s" elpy-set-easy-install-command
+                            user-option python-module))
                    (t
                     nil))))
     (if (not command)
