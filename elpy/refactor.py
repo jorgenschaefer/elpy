@@ -354,5 +354,5 @@ class FakeResource(object):
         self.real_path = filename
 
     def read(self):
-        with open(filename) as f:
+        with open(self.real_path) as f:
             return f.read()
