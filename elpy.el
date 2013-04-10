@@ -913,10 +913,12 @@ arguments.
 This function returns the buffer created to communicate with
 elpy-rpc. This buffer needs to be the current buffer for
 subsequent calls to `elpy-rpc-call'."
+
   (let* ((buffer (generate-new-buffer name))
          ;; Leaving process-connection-type non-nil can truncate
          ;; communication
-         (proc (let ((process-connection-type nil))
+         (proc (let ((process-connection-type nil)
+		     (default-directory user-emacs-directory))
                  (apply #'start-process name buffer program program-args))))
     (set-process-query-on-exit-flag proc nil)
     (with-current-buffer buffer
