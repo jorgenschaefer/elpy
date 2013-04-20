@@ -212,7 +212,7 @@ The user can review the changes and confirm them with
 
 \\{elpy-refactor-mode-map}"
   :group 'elpy
-  (read-only-mode 1))
+  (view-mode 1))
 
 (defun elpy-refactor-commit ()
   "Commit the changes in the current buffer."

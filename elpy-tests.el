@@ -246,3 +246,8 @@ project root of an empty directory."
   (dolist (args '(("foo" nil 1 2 3)))
     (should (equal args
                    (apply #'elpy-rpc "echo" args)))))
+
+(ert-deftest test-elpy-refactor-mode ()
+  "Test that we can run `elpy-refactor-mode' at all."
+  (with-temp-buffer
+    (elpy-refactor-mode)))
