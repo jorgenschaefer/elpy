@@ -480,16 +480,20 @@ time. Honestly."
     (setcdr (assq mode minor-mode-alist)
             (list ""))))
 
-(defun elpy-shell-send-region-or-buffer ()
+(defun elpy-shell-send-region-or-buffer (&optional arg)
   "Send the active region or the buffer to the Python shell.
 
 If there is an active region, send that. Otherwise, send the
-whole buffer."
-  (interactive)
+whole buffer.
+
+Without prefix argument, this will escape the Python idiom of
+if __name__ == '__main__' to be false to avoid accidental
+execution of code. With prefix argument, this code is executed."
+  (interactive "P")
   (if (region-active-p)
       (python-shell-send-region (region-beginning)
                                 (region-end))
-    (python-shell-send-buffer)))
+    (python-shell-send-buffer arg)))
 
 (defun elpy-check ()
   "Run `python-check-command' on the current buffer's file."
