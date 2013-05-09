@@ -21,7 +21,7 @@ You can also read the [detailed installation instructions][Installation].
 First, install the required Python packages:
 
 ```
-pip install elpy rope pyflakes pep8
+pip install elpy rope
 ```
 
 (Note: If you are installing the development version of elpy, do not
