@@ -6,6 +6,9 @@ https://github.com/davidhalter/jedi
 
 """
 
+import sys
+
+
 from elpy.backends.nativebackend import NativeBackend
 
 
@@ -32,17 +35,25 @@ class JediBackend(NativeBackend):
 
     def rpc_get_completions(self, project_root, filename, source, offset):
         line, column = pos_to_linecol(source, offset)
-        script = self.jedi.Script(source, line, column, filename,
-                                  source_encoding='utf-8')
-        proposals = script.complete()
+        sys.path.append(project_root)
+        try:
+            script = self.jedi.Script(source, line, column, filename,
+                                      source_encoding='utf-8')
+            proposals = script.complete()
+        finally:
+            sys.path.pop()
         return [[proposal.complete, proposal.doc]
                 for proposal in proposals]
 
     def rpc_get_definition(self, project_root, filename, source, offset):
         line, column = pos_to_linecol(source, offset)
-        script = self.jedi.Script(source, line, column, filename,
-                                  source_encoding='utf-8')
-        locations = script.get_definition()
+        sys.path.append(project_root)
+        try:
+            script = self.jedi.Script(source, line, column, filename,
+                                      source_encoding='utf-8')
+            locations = script.get_definition()
+        finally:
+            sys.path.pop()
         if not locations:
             return None
         else:
@@ -57,9 +68,13 @@ class JediBackend(NativeBackend):
 
     def rpc_get_calltip(self, project_root, filename, source, offset):
         line, column = pos_to_linecol(source, offset)
-        script = self.jedi.Script(source, line, column, filename,
-                                  source_encoding='utf-8')
-        call = script.get_in_function_call()
+        sys.path.append(project_root)
+        try:
+            script = self.jedi.Script(source, line, column, filename,
+                                      source_encoding='utf-8')
+            call = script.get_in_function_call()
+        finally:
+            sys.path.pop()
         if call is None:
             return None
         return "{0}({1})".format(call.call_name,

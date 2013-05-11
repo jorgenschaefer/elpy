@@ -59,6 +59,26 @@ class TestGetCompletions(JediBackendTestCase):
                                          None,
                                          "open", 0)
 
+    def test_should_find_completion_different_package(self):
+        # See issue #74
+        self.project_file("project/__init__.py", "")
+        source1 = ("class Add:\n"
+                   "    def add(self, a, b):\n"
+                   "        return a + b\n")
+        self.project_file("project/add.py", source1)
+        source2, offset = source_and_offset(
+            "from project.add import Add\n"
+            "class Calculator:\n"
+            "    def add(self, a, b):\n"
+            "        c = Add()\n"
+            "        c.ad_|_\n")
+        file2 = self.project_file("project/calculator.py", source2)
+        proposals = self.backend.rpc_get_completions(self.project_root,
+                                                     file2,
+                                                     source2,
+                                                     offset)
+        self.assertEqual(proposals, [['d', 'add(self, a, b)\n\n']])
+
 
 class TestGetDefinition(JediBackendTestCase):
     def test_should_return_definition_location_same_file(self):
@@ -90,15 +110,34 @@ class TestGetDefinition(JediBackendTestCase):
     def test_should_return_definition_location_different_file(self):
         source1 = ("def test_function(a, b):\n"
                    "    return a + b\n")
-        self.project_file("test1.py", source1)
-        source2, offset = source_and_offset("from test2 import test_function\n"
+        file1 = self.project_file("test1.py", source1)
+        source2, offset = source_and_offset("from test1 import test_function\n"
                                             "test_function_|_(1, 2)\n")
         file2 = self.project_file("test2.py", source2)
-        locations = self.backend.rpc_get_definition(self.project_root,
-                                                    file2,
-                                                    source2,
-                                                    offset)
-        self.assertIsNone(locations)
+        location = self.backend.rpc_get_definition(self.project_root,
+                                                   file2,
+                                                   source2,
+                                                   offset)
+        self.assertEqual(location, (file1, 0))
+
+    def test_should_return_definition_location_different_package(self):
+        # See issue #74
+        self.project_file("project/__init__.py", "")
+        source1 = ("class Add:\n"
+                   "    def add(self, a, b):\n"
+                   "        return a + b\n")
+        file1 = self.project_file("project/add.py", source1)
+        source2, offset = source_and_offset(
+            "from project.add import Add\n"
+            "class Calculator:\n"
+            "    def add(self, a, b):\n"
+            "        return Add_|_().add(a, b)\n")
+        file2 = self.project_file("project/calculator.py", source2)
+        location = self.backend.rpc_get_definition(self.project_root,
+                                                   file2,
+                                                   source2,
+                                                   offset)
+        self.assertEqual(location, (file1, 0))
 
     def test_should_not_fail_on_inexisting_file(self):
         self.backend.rpc_get_definition(self.project_root,
@@ -145,6 +184,26 @@ class TestGetCalltip(JediBackendTestCase):
         self.backend.rpc_get_calltip(self.project_root,
                                      None,
                                      "open", 0)
+
+    def test_should_find_calltip_different_package(self):
+        # See issue #74
+        self.project_file("project/__init__.py", "")
+        source1 = ("class Add:\n"
+                   "    def add(self, a, b):\n"
+                   "        return a + b\n")
+        self.project_file("project/add.py", source1)
+        source2, offset = source_and_offset(
+            "from project.add import Add\n"
+            "class Calculator:\n"
+            "    def add(self, a, b):\n"
+            "        c = Add()\n"
+            "        c.add(_|_\n")
+        file2 = self.project_file("project/calculator.py", source2)
+        calltip = self.backend.rpc_get_calltip(self.project_root,
+                                                 file2,
+                                                 source2,
+                                                 offset)
+        self.assertEqual(calltip, 'add(a, b)')
 
 
 class TestGetDocstring(JediBackendTestCase):
