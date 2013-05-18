@@ -1053,7 +1053,7 @@ Used for state keeping in the backend."
 Used for state keeping in the backend."
   ;; If there is no backend, we do not need to keep state.
   (when elpy-rpc-buffer
-    (elpy-rpc "before_save"
+    (elpy-rpc "after_save"
               (expand-file-name (elpy-project-root))
               buffer-file-name)))
 
