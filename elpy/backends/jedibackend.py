@@ -88,7 +88,7 @@ class JediBackend(NativeBackend):
         if call is None:
             return None
         return "{0}({1})".format(call.call_name,
-                                 ", ".join(param.code
+                                 ", ".join(param.get_code().strip()
                                            for param in call.params))
 
     def rpc_get_docstring(self, project_root, filename, source, offset):

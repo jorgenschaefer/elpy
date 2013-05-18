@@ -170,11 +170,11 @@ class TestGetCalltip(JediBackendTestCase):
                                                filename,
                                                source, offset)
         if compat.PYTHON3:
-            self.assertEqual(calltip,
+            self.assertEqual(calltip.replace(" = ", "="),
                              "Thread(group=None, target=None, name=None, "
                              "args=(), kwargs=None, daemon=None)")
         else:
-            self.assertEqual(calltip,
+            self.assertEqual(calltip.replace(" = ", "="),
                              "Thread(group=None, target=None, name=None, "
                              "args=(), kwargs=None, verbose=None)")
 
