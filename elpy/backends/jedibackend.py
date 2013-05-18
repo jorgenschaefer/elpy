@@ -6,6 +6,7 @@ https://github.com/davidhalter/jedi
 
 """
 
+import os
 import sys
 
 
@@ -52,12 +53,21 @@ class JediBackend(NativeBackend):
             script = self.jedi.Script(source, line, column, filename,
                                       source_encoding='utf-8')
             locations = script.get_definition()
+            # get_definition() can return silly stuff like __builtin__
+            # for int variables, so we fall back on goto() in those
+            # cases. See issue #76.
+            if (
+                    locations and
+                    locations[0].module_path and
+                    not os.path.exists(locations[0].module_path)
+            ):
+                locations = script.goto()
         finally:
             sys.path.pop()
         if not locations:
             return None
         else:
-            loc = locations[0]
+            loc = locations[-1]
             try:
                 with open(loc.module_path) as f:
                     offset = linecol_to_pos(f.read(),
