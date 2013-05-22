@@ -351,6 +351,7 @@ This should be run from `python-mode-hook'."
 (defvar elpy-project-root 'not-initialized
   "The root of the project the current buffer is in.")
 (make-variable-buffer-local 'elpy-project-root)
+(put 'elpy-project-root 'safe-local-variable 'file-directory-p)
 
 (defun elpy-project-root ()
   "Return the root of the current buffer's project.
