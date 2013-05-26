@@ -947,7 +947,14 @@ buffers are not available anymore."
 
 (defun elpy-rpc-open-dedicated ()
   (interactive)
-  (setq elpy-rpc-buffer nil)
+
+  (let ((this-project-root (elpy-project-root)))
+    (dolist (buffer (buffer-list))
+      (with-current-buffer buffer
+        (when (and elpy-mode
+                   (equal this-project-root (elpy-project-root)))
+          (setq elpy-rpc-buffer nil)))))
+
   (let ((elpy-rpc-project-specific t))
     (elpy-rpc-ensure-open)))
 
