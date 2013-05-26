@@ -63,6 +63,14 @@
   :type 'string
   :group 'elpy)
 
+(defcustom elpy-rpc-project-specific nil
+  "Can take the value of nil, t and 'ask. Will start a project
+  specific buffer."
+  :type '(choice (const :tag "Yes" t)
+                 (const :tag "No" nil)
+                 (const :tag "Ask" ask))
+  :group 'elpy)
+
 (defcustom elpy-rpc-backend nil
   "Your preferred backend.
 
@@ -937,13 +945,25 @@ buffers are not available anymore."
          (kill-buffer buffer)))
      elpy-rpc-pool-table)))
 
+(defun elpy-rpc-open-dedicated ()
+  (interactive)
+  (setq elpy-rpc-buffer nil)
+  (let ((elpy-rpc-project-specific t))
+    (elpy-rpc-ensure-open)))
+
 (defun elpy-rpc-pool-open (key name command &rest args)
   "Return either a process buffer associated to KEY from the
 elpy-rpc-pool-table cache or start a new one."
   (let ((cached (gethash key elpy-rpc-pool-table)))
     (if (elpy-rpc-live-p cached)
         cached
-      (let ((buffer (apply 'elpy-rpc-open name command args)))
+      (let ((buffer
+             (if (or (null key)
+                     (case elpy-rpc-project-specific
+                       (ask (y-or-n-p "Make elpy-rpc process project specific? "))
+                       (t   t)))
+                 (apply 'elpy-rpc-open name command args)
+               (apply 'elpy-rpc-pool-open nil name command args))))
         (puthash key buffer elpy-rpc-pool-table)))))
 
 (defun elpy-rpc-open (name program &rest program-args)
