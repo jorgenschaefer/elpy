@@ -63,6 +63,17 @@
   :type 'string
   :group 'elpy)
 
+(defcustom elpy-rpc-project-specific nil
+  "When to start a project specific elpy-rpc process.
+
+nil - Never (default).
+ask - Ask on the first request by a buffer of a new project.
+t   - Always."
+  :type '(choice (const :tag "Never" nil)
+                 (const :tag "Ask" ask)
+                 (const :tag "Always" t))
+  :group 'elpy)
+
 (defcustom elpy-rpc-backend nil
   "Your preferred backend.
 
@@ -854,7 +865,18 @@ See `elpy-rpc-call'.")
 (make-variable-buffer-local 'elpy-rpc-buffer-p)
 
 (defvar elpy-rpc-buffer nil
-  "The global elpy-rpc buffer.")
+  "The buffer-local elpy-rpc buffer.")
+(make-variable-buffer-local 'elpy-rpc-buffer)
+
+(defvar elpy-rpc-pool-table (make-hash-table :test 'equal)
+  "Global hash table, which holds all associations between
+project-root and elpy-rpc process buffers.")
+
+(defun elpy-rpc-live-p (buffer)
+  "Return non-nil when BUFFER is a live elpy-rpc process."
+  (and buffer
+       (get-buffer-process buffer)
+       (process-live-p (get-buffer-process buffer))))
 
 (defun elpy-rpc (method-name &rest params)
   "Run an elpy-rpc method on the elpy-rpc process."
@@ -863,16 +885,14 @@ See `elpy-rpc-call'.")
     (apply 'elpy-rpc-call method-name params)))
 
 (defun elpy-rpc-ensure-open ()
-  "Ensure that the global elpy-rpc subprocess is active."
-  (when (not (and elpy-rpc-buffer
-                  (get-buffer-process elpy-rpc-buffer)
-                  (process-live-p (get-buffer-process elpy-rpc-buffer))))
+  "Ensure that the elpy-rpc subprocess is active."
+  (unless (elpy-rpc-live-p elpy-rpc-buffer)
     (when elpy-rpc-buffer
       (kill-buffer elpy-rpc-buffer))
     (condition-case err
         (setq elpy-rpc-buffer
-              (elpy-rpc-open "*elpy-rpc*"
-                             elpy-rpc-python-command "-m" "elpy.__main__"))
+              (elpy-rpc-pool-open (elpy-project-root) "*elpy-rpc*"
+                                  elpy-rpc-python-command "-m" "elpy.__main__"))
       (error
        (elpy-installation-instructions
         (format "Could not start the Python subprocess: %s"
@@ -908,6 +928,60 @@ Actually, just closes the elpy-rpc buffer"
   (when elpy-rpc-buffer
     (kill-buffer elpy-rpc-buffer)
     (setq elpy-rpc-buffer nil)))
+
+(defun elpy-rpc-pool-gc ()
+  "Kill elpy-rpc processes and buffers, whose associated python
+buffers are not available anymore."
+  (interactive)
+  (let (processes)
+    (dolist (buffer (buffer-list))
+      (with-current-buffer buffer
+        (when elpy-mode
+          (add-to-list 'processes elpy-rpc-buffer))))
+    (maphash
+     (lambda (project-root buffer)
+       (unless (memq buffer processes)
+         (remhash project-root elpy-rpc-pool-table)
+         (when (elpy-rpc-live-p buffer)
+           (kill-process (get-buffer-process buffer)))
+         (kill-buffer buffer)))
+     elpy-rpc-pool-table)))
+
+(defun elpy-rpc-open-project-specific ()
+  "Start a project specific elpy-rpc process and associate it
+with the current project."
+  (interactive)
+  (let ((this-project-root (elpy-project-root)))
+    (remhash this-project-root elpy-rpc-pool-table)
+    (dolist (buffer (buffer-list))
+      (with-current-buffer buffer
+        (when (and elpy-mode
+                   (equal this-project-root (elpy-project-root)))
+          (setq elpy-rpc-buffer nil)))))
+  (let ((elpy-rpc-project-specific t))
+    (elpy-rpc-ensure-open)))
+
+(defun elpy-rpc-pool-open (project-root name command &rest program-args)
+  "Return a process buffer associated to the PROJECT-ROOT from
+the elpy-rpc-pool-table cache.
+
+Depending on the value of the elpy-rpc-project-specific variable
+start a project specific process, ask whether to start a project
+specific one or just use/start a global one.
+
+The parameters NAME, COMMAND and PROGRAM-ARGS are passed through
+to the elpy-rpc-open function when necessary."
+  (let ((cached (gethash project-root elpy-rpc-pool-table)))
+    (if (elpy-rpc-live-p cached)
+        cached
+      (let ((buffer
+             (if (or (null project-root)
+                     (case elpy-rpc-project-specific
+                       (ask (y-or-n-p "Start a project specific elpy-rpc process? "))
+                       (t   t)))
+                 (apply 'elpy-rpc-open name command program-args)
+               (apply 'elpy-rpc-pool-open nil name command program-args))))
+        (puthash project-root buffer elpy-rpc-pool-table)))))
 
 (defun elpy-rpc-open (name program &rest program-args)
   "Start a new elpy-rpc subprocess.
