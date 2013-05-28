@@ -872,7 +872,7 @@ See `elpy-rpc-call'.")
     (condition-case err
         (setq elpy-rpc-buffer
               (elpy-rpc-open "*elpy-rpc*"
-                             elpy-rpc-python-command "-m" "elpy.__main__"))
+                             elpy-rpc-python-command "-W" "ignore" "-m" "elpy.__main__"))
       (error
        (elpy-installation-instructions
         (format "Could not start the Python subprocess: %s"
