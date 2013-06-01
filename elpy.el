@@ -64,14 +64,8 @@
   :group 'elpy)
 
 (defcustom elpy-rpc-project-specific nil
-  "When to start a project specific elpy-rpc process.
-
-nil - Never (default).
-ask - Ask on the first request by a buffer of a new project.
-t   - Always."
-  :type '(choice (const :tag "Never" nil)
-                 (const :tag "Ask" ask)
-                 (const :tag "Always" t))
+  "Whether Elpy should use a separate process for each project."
+  :type 'boolean
   :group 'elpy)
 
 (defcustom elpy-rpc-backend nil
@@ -968,22 +962,18 @@ with the current project."
 the elpy-rpc-pool-table cache.
 
 Depending on the value of the elpy-rpc-project-specific variable
-start a project specific process, ask whether to start a project
-specific one or just use/start a global one.
+start a project specific process or just use/start a global one.
 
 The parameters NAME, COMMAND and PROGRAM-ARGS are passed through
 to the elpy-rpc-open function when necessary."
+  (when (not elpy-rpc-project-specific)
+    (setq project-root nil))
   (let ((cached (gethash project-root elpy-rpc-pool-table)))
     (if (elpy-rpc-live-p cached)
         cached
-      (let ((buffer
-             (if (or (null project-root)
-                     (case elpy-rpc-project-specific
-                       (ask (y-or-n-p "Start a project specific elpy-rpc process? "))
-                       (t   t)))
-                 (apply 'elpy-rpc-open name command program-args)
-               (apply 'elpy-rpc-pool-open nil name command program-args))))
-        (puthash project-root buffer elpy-rpc-pool-table)))))
+      (puthash project-root
+               (apply 'elpy-rpc-open name command program-args)
+               elpy-rpc-pool-table))))
 
 (defun elpy-rpc-open (name program &rest program-args)
   "Start a new elpy-rpc subprocess.
