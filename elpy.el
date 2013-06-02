@@ -38,6 +38,7 @@
 
 (require 'auto-complete-config)
 (require 'elpy-refactor)
+(require 'etags)
 (require 'find-file-in-project)
 (require 'flymake)
 (require 'highlight-indentation)
@@ -535,6 +536,7 @@ screen."
 
 (defun elpy-goto-location (filename offset)
   "Show FILENAME at OFFSET to the user."
+  (ring-insert find-tag-marker-ring (point-marker))
   (let ((buffer (find-file filename)))
     (with-current-buffer buffer
       (with-selected-window (get-buffer-window buffer)
