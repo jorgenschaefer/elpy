@@ -1147,7 +1147,10 @@ error if the backend is not supported."
   (elpy-rpc "set_backend" backend))
 
 (defun elpy-set-backend (backend)
-  "Set the backend used by elpy."
+  "Interactively change the backend used by elpy.
+
+To set the preferred backend in your .emacs, use the
+`elpy-rpc-backend' variable."
   (interactive
    (list (completing-read
           (format "Switch elpy backend (currently %s): "
