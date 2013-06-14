@@ -503,6 +503,17 @@ execution of code. With prefix argument, this code is executed."
                                 (region-end))
     (python-shell-send-buffer arg)))
 
+(defun elpy-doctest-buffer (&optional arg)
+  "Send the active buffer to the Python shell and run any doctests.
+
+With the prefix argument it will run the doctest in verbose mode"
+  (interactive "P")
+  (python-shell-send-buffer)
+  (python-shell-send-string "import doctest")
+  (if arg
+      (python-shell-send-string "doctest.testmod(verbose=True)")
+    (python-shell-send-string "doctest.testmod(verbose=False)")))
+
 (defun elpy-check ()
   "Run `python-check-command' on the current buffer's file."
   (interactive)
