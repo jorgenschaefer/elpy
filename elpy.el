@@ -433,17 +433,22 @@ current directory unless SKIP-CURRENT-DIRECTORY is non-nil."
   (interactive "DNew project root: ")
   (setq elpy-project-root new-root))
 
-(defun elpy-use-ipython ()
-  "Set defaults to use IPython instead of the standard interpreter."
-  (interactive)
+(defun elpy-use-ipython (&optional ipython)
+  "Set defaults to use IPython instead of the standard interpreter.
+
+With prefix arg, prompt for the command to use."
+  (interactive (list (when current-prefix-arg
+                       (read-file-name "IPython command: "))))
+  (when (not ipython)
+    (setq ipython "ipython"))
   (if (boundp 'python-python-command)
       ;; Emacs 24 until 24.3
-      (setq python-python-command "ipython")
+      (setq python-python-command ipython)
     ;; Emacs 24.3 and onwards.
 
     ;; This is from the python.el commentary.
     ;; Settings for IPython 0.11:
-    (setq python-shell-interpreter "ipython"
+    (setq python-shell-interpreter ipython
           python-shell-interpreter-args ""
           python-shell-prompt-regexp "In \\[[0-9]+\\]: "
           python-shell-prompt-output-regexp "Out\\[[0-9]+\\]: "
@@ -454,14 +459,19 @@ current directory unless SKIP-CURRENT-DIRECTORY is non-nil."
           python-shell-completion-string-code
           "';'.join(get_ipython().Completer.all_completions('''%s'''))\n")))
 
-(defun elpy-use-cpython ()
-  "Set defaults to use the standard interpreter instead of IPython."
-  (interactive)
+(defun elpy-use-cpython (&optional cpython)
+  "Set defaults to use the standard interpreter instead of IPython.
+
+With prefix arg, prompt for the command to use."
+  (interactive (list (when current-prefix-arg
+                       (read-file-name "Python command: "))))
+  (when (not cpython)
+    (setq cpython "python"))
   (if (boundp 'python-python-command)
       ;; Emacs 24 until 24.3
-      (setq python-python-command "python")
+      (setq python-python-command cpython)
     ;; Emacs 24.3 and onwards.
-    (setq python-shell-interpreter "python"
+    (setq python-shell-interpreter cpython
           python-shell-interpreter-args "-i"
           python-shell-prompt-regexp ">>> "
           python-shell-prompt-output-regexp ""
