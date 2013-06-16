@@ -346,7 +346,10 @@ using (defalias 'elpy-initialize-variables 'identity)"
                yas-trigger-key)))
     (setq yas-trigger-key "C-c C-i")
     (when (fboundp 'yas--trigger-key-reload)
-      (yas--trigger-key-reload old))))
+      (yas--trigger-key-reload old)))
+
+  ;; Now load yasnippets.
+  (yas-reload-all))
 
 (defun elpy-initialize-local-variables ()
   "Initialize local variables in python-mode.
