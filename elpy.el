@@ -348,6 +348,11 @@ using (defalias 'elpy-initialize-variables 'identity)"
     (when (fboundp 'yas--trigger-key-reload)
       (yas--trigger-key-reload old)))
 
+  ;; We provide some YASnippet snippets. Add them.
+  (add-to-list 'yas-snippet-dirs
+               (concat (file-name-directory (locate-library "elpy"))
+                       "snippets/"))
+
   ;; Now load yasnippets.
   (yas-reload-all))
 
