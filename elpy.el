@@ -512,6 +512,28 @@ time. Honestly."
     (setcdr (assq mode minor-mode-alist)
             (list ""))))
 
+(defvar elpy-buffer-args 'not-initialized
+  "An argument list to set in the Python shell before executing __main__")
+(make-variable-buffer-local 'elpy-buffer-args)
+
+(defun elpy-set-buffer-args (&optional args_string)
+  (interactive (list
+		(ido-completing-read
+		 "Args:"
+		 'nil 'nil 'nil
+		 (concat (buffer-file-name) " "))))
+  (setq elpy-buffer-args (split-string args_string)))
+
+(defun elpy-send-buffer-args(args)
+  "Set sys.argv[] on the remote python shell"
+  (let ((argv (format
+	       "sys.argv=[ %s ]"
+	       (mapconcat
+		'(lambda (x) (format "'%s'" x))
+		args ","))))
+    (python-shell-send-string
+     (concat "import sys; " argv))))
+
 (defun elpy-shell-send-region-or-buffer (&optional arg)
   "Send the active region or the buffer to the Python shell.
 
@@ -525,6 +547,8 @@ execution of code. With prefix argument, this code is executed."
   (if (region-active-p)
       (python-shell-send-region (region-beginning)
                                 (region-end))
+    (when (and arg (listp elpy-buffer-args))
+      (elpy-send-buffer-args elpy-buffer-args))
     (python-shell-send-buffer arg)))
 
 (defun elpy-check ()
