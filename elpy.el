@@ -392,27 +392,7 @@ You can set the variable `elpy-project-root' in, for example,
       (make-directory elpy-project-root t)))
   elpy-project-root)
 
-(defun elpy-project-find-root ()
-  "Find an appropriate project root for the current buffer.
-
-If no root directory is found, nil is returned."
-  (or ;; (getenv "PROJECT_HOME")
-      (locate-dominating-file default-directory
-                              'elpy-project-root-p)
-      (elpy-project-find-library-root t)
-      (read-directory-name "Project root: "
-                           nil nil t)))
-
-(defun elpy-project-root-p (dir)
-  "Return true iff the given directory is a project root."
-  (or (file-exists-p (format "%s/.git" dir))
-      (file-exists-p (format "%s/.hg" dir))
-      (file-exists-p (format "%s/.ropeproject" dir))
-      (file-exists-p (format "%s/setup.py" dir))
-      (and (file-exists-p (format "%s/.svn" dir))
-           (not (file-exists-p (format "%s/../.svn" dir))))))
-
-(defun elpy-project-find-library-root (&optional skip-current-directory)
+(defun elpy-project-find-root (&optional skip-current-directory)
   "Find the first directory in the tree not containing an __init__.py
 
 If there is no __init__.py in the current directory, return the
@@ -423,7 +403,10 @@ current directory unless SKIP-CURRENT-DIRECTORY is non-nil."
                             (lambda (dir)
                               (not (file-exists-p
                                     (format "%s/__init__.py" dir))))))
-   ((not skip-current-directory)
+   ;; Don't return the user's home. That's never a good project root.
+   ((and (not skip-current-directory)
+         (not (equal (directory-file-name (expand-file-name default-directory))
+                     (directory-file-name (expand-file-name "~")))))
     default-directory)
    (t
     nil)))
@@ -1259,7 +1242,7 @@ description."
 ;;; nose
 
 (eval-after-load "nose"
-  '(defalias 'nose-find-project-root 'elpy-project-find-library-root))
+  '(defalias 'nose-find-project-root 'elpy-project-find-root))
 
 
 ;;;;;;;;;;;;;
