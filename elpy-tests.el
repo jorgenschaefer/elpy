@@ -198,28 +198,6 @@ project root of an empty directory."
     (should (looking-at "import foo"))))
 
 (ert-deftest test-elpy-project-find-root ()
-  "elpy-project-find-root should find the project root with some heuristics."
-  ;; Should find directory marker
-  (dolist (maindir '(".git" ".hg" ".ropeproject" "setup.py"))
-    (elpy-test-with-temp-dir project-root
-      (make-directory (concat project-root "/" maindir))
-      (let ((default-directory (concat project-root "/foo/bar/baz")))
-        (make-directory default-directory t)
-        (should (equal (expand-file-name (elpy-project-find-root))
-                       (expand-file-name (concat project-root "/")))))))
-
-  ;; SVN is different
-  (elpy-test-with-temp-dir project-root
-    (let ((default-directory (concat project-root "/foo/bar/baz")))
-      (make-directory default-directory t)
-      (make-directory (concat project-root "/.svn"))
-      (make-directory (concat project-root "/foo/.svn"))
-      (make-directory (concat project-root "/foo/bar/.svn"))
-      (make-directory (concat project-root "/foo/bar/baz/.svn"))
-      (should (equal (expand-file-name (elpy-project-find-root))
-                     (expand-file-name (concat project-root "/")))))))
-
-(ert-deftest test-elpy-project-find-library-root ()
   "Should find the first directory without __init__.py"
   (elpy-test-with-temp-dir library-root
     (let ((default-directory (concat library-root "/foo/bar/baz")))
@@ -230,15 +208,15 @@ project root of an empty directory."
         (with-temp-buffer
           (write-region (point-min) (point-max)
                         file)))
-      (should (equal (expand-file-name (elpy-project-find-library-root))
+      (should (equal (expand-file-name (elpy-project-find-root))
                      (expand-file-name (concat library-root "/"))))))
 
   (elpy-test-with-temp-dir library-root
     (let ((default-directory (concat library-root "/foo/bar/baz")))
       (make-directory default-directory t)
-      (should (equal (elpy-project-find-library-root)
+      (should (equal (elpy-project-find-root)
                      default-directory))
-      (should (equal (elpy-project-find-library-root t)
+      (should (equal (elpy-project-find-root t)
                      nil)))))
 
 (ert-deftest test-elpy-rpc-echo ()
