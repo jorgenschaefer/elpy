@@ -146,12 +146,14 @@ configure those modes yourself, pass t here."
   (interactive)
   (when (< emacs-major-version 24)
     (error "Elpy requires Emacs 24 or newer"))
-  (when (string-match "/python-mode\\.el\\'"
-                      (find-lisp-object-file-name 'python-mode
-                                                  'symbol-function))
-    (error (concat "You are using python-mode.el. "
-                   "Elpy only works with python.el from "
-                   "Emacs 24 and above")))
+  (let ((filename (find-lisp-object-file-name 'python-mode
+                                              'symbol-function)))
+    (when (and filename
+               (string-match "/python-mode\\.el\\'"
+                             filename))
+      (error (concat "You are using python-mode.el. "
+                     "Elpy only works with python.el from "
+                     "Emacs 24 and above"))))
   (add-hook 'python-mode-hook 'elpy-mode)
   (when (not skip-initialize-variables)
     (elpy-initialize-variables)))
