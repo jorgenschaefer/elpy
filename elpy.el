@@ -110,6 +110,7 @@ native - Do not use any backend, use native Python methods only."
     ;; (define-key map (kbd "C-c <")   'python-indent-shift-left)
     ;; (define-key map (kbd "C-c >")   'python-indent-shift-right)
     (define-key map (kbd "C-c C-c") 'elpy-shell-send-region-or-buffer)
+    (define-key map (kbd "C-c C-z") 'elpy-shell-switch-to-shell)
     (define-key map (kbd "C-c C-d") 'elpy-doc)
     (define-key map (kbd "C-c C-f") 'find-file-in-project)
     ;; (define-key map (kbd "C-c C-i") 'yasnippet-expand)
@@ -512,7 +513,22 @@ execution of code. With prefix argument, this code is executed."
   (if (region-active-p)
       (python-shell-send-region (region-beginning)
                                 (region-end))
-    (python-shell-send-buffer arg)))
+    (python-shell-send-buffer arg))
+  (elpy-shell-switch-to-shell))
+
+(defun elpy-shell-switch-to-shell ()
+  "Switch to inferior Python process buffer."
+  (interactive)
+  (pop-to-buffer (process-buffer (elpy-shell-get-or-create-process)) t))
+
+(defun elpy-shell-get-or-create-process ()
+  "Get or create an inferior Python process for current buffer and return it."
+  (let* ((bufname (format "*%s*" (python-shell-get-process-name nil)))
+         (proc (get-buffer-process bufname)))
+    (if proc
+        proc
+      (run-python (python-shell-parse-command))
+      (get-buffer-process bufname))))
 
 (defun elpy-check ()
   "Run `python-check-command' on the current buffer's file."
