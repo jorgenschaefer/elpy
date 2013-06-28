@@ -72,6 +72,8 @@
 (defcustom elpy-rpc-backend nil
   "Your preferred backend.
 
+Either nil, or a string.
+
 nil    - Select a backend automatically.
 rope   - Use the Rope refactoring library. This will create
          .ropeproject directories in your project roots.
@@ -906,6 +908,9 @@ project-root and elpy-rpc process buffers.")
                 (cadr err))
         t)
        (error (cadr err))))
+    (when (and elpy-rpc-backend
+               (not (stringp elpy-rpc-backend)))
+      (error "`elpy-rpc-backend' should be nil or a string."))
     (cond
      ;; User requested a backend that's not installed
      (elpy-rpc-backend
