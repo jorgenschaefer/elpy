@@ -510,6 +510,8 @@ Without prefix argument, this will escape the Python idiom of
 if __name__ == '__main__' to be false to avoid accidental
 execution of code. With prefix argument, this code is executed."
   (interactive "P")
+  ;; Ensure process exists
+  (elpy-shell-get-or-create-process)
   (if (region-active-p)
       (python-shell-send-region (region-beginning)
                                 (region-end))
@@ -1048,7 +1050,7 @@ subsequent calls to `elpy-rpc-call'."
 Like `generate-new-buffer', but will also consider an old buffer
 with no active process."
   (let* ((buf (get-buffer name))
-         ;; (g-b-p nil) => nil
+        ;; (g-b-p nil) => nil
          (proc (get-buffer-process buf)))
     ;; When there is a buffer named like that, but it has no process,
     ;; or the process is not alive, kill it.
