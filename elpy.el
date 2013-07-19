@@ -1017,7 +1017,7 @@ arguments.
 This function returns the buffer created to communicate with
 elpy-rpc. This buffer needs to be the current buffer for
 subsequent calls to `elpy-rpc-call'."
-  (let* ((buffer (generate-new-buffer name))
+  (let* ((buffer (elpy-generate-rpc-buffer name))
          ;; Leaving process-connection-type non-nil can truncate
          ;; communication
          (proc (let ((process-connection-type nil)
@@ -1041,6 +1041,22 @@ subsequent calls to `elpy-rpc-call'."
           (insert line "\n")
           (set-marker (process-mark proc) (point))
           (error "Unknown output from Python elpy-rpc")))))))
+
+(defun elpy-generate-rpc-buffer (name)
+  "Return an elpy RPC buffer of name NAME.
+
+Like `generate-new-buffer', but will also consider an old buffer
+with no active process."
+  (let* ((buf (get-buffer name))
+         ;; (g-b-p nil) => nil
+         (proc (get-buffer-process buf)))
+    ;; When there is a buffer named like that, but it has no process,
+    ;; or the process is not alive, kill it.
+    (when (and buf
+               (or (not proc)
+                   (not (process-live-p proc))))
+      (kill-buffer buf)))
+  (generate-new-buffer name))
 
 (defun elpy-rpc-call (method &rest params)
   "Call the METHOD with PARAMS on the current RPC server.
