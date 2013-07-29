@@ -529,8 +529,15 @@ execution of code. With prefix argument, this code is executed."
          (proc (get-buffer-process bufname)))
     (if proc
         proc
-      (run-python (python-shell-parse-command))
-      (get-buffer-process bufname))))
+      (run-python
+       (if (get-buffer-process bufname)
+	   (get-buffer-process bufname)
+	 "")
+       (python-shell-parse-command)
+       )
+      )
+    )
+)
 
 (defun elpy-check ()
   "Run `python-check-command' on the current buffer's file."
