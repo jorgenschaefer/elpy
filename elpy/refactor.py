@@ -156,7 +156,9 @@ class Refactor(object):
         if not ROPE_AVAILABLE:
             return False
         data = self.resource.read()
-        if len(data) > offset and not data[offset].isalnum():
+        if offset >= len(data):
+            return False
+        if data[offset] != '_' and not data[offset].isalnum():
             return False
         word = worder.get_name_at(self.resource, offset)
         if word:

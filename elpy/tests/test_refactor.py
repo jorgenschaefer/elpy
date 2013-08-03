@@ -96,6 +96,25 @@ class TestGetChanges(RefactorTestCase):
 
 
 @unittest.skipIf(not refactor.ROPE_AVAILABLE, "Requires Rope")
+class TestIsOnSymbol(RefactorTestCase):
+    def test_should_find_symbol(self):
+        filename, offset = self.create_file("test.py", "__B_|_AR = 100")
+        r = refactor.Refactor(self.project_root, filename)
+        self.assertTrue(r._is_on_symbol(offset))
+
+    # Issue #111
+    def test_should_find_symbol_with_underscores(self):
+        filename, offset = self.create_file("test.py", "_|___BAR = 100")
+        r = refactor.Refactor(self.project_root, filename)
+        self.assertTrue(r._is_on_symbol(offset))
+
+    def test_should_not_find_weird_places(self):
+        filename, offset = self.create_file("test.py", "hello = _|_ 1 + 1")
+        r = refactor.Refactor(self.project_root, filename)
+        self.assertFalse(r._is_on_symbol(offset))
+
+
+@unittest.skipIf(not refactor.ROPE_AVAILABLE, "Requires Rope")
 class TestFromsToImports(RefactorTestCase):
     def test_should_refactor(self):
         filename, offset = self.create_file(
