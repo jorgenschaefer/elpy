@@ -11,7 +11,7 @@ if not os.path.exists("README.txt"):
 
 try:
     setup(name="elpy",
-          version=elpy.__version__ + ".1",
+          version=elpy.__version__,
           description="Backend for the elpy Emacs mode",
           author="Jorgen Schaefer",
           author_email="forcer@forcix.cx",
