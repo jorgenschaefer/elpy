@@ -76,7 +76,8 @@ class RopeBackend(NativeBackend):
             return None
         project = self.projects.get(project_root)
         if project is None:
-            project = self.projectlib.Project(project_root)
+            project = self.projectlib.Project(project_root,
+                                              ropefolder=None)
             self.projects[project_root] = project
         last_validation = self.last_validation.get(project_root, 0.0)
         now = time.time()

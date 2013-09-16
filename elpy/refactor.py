@@ -97,7 +97,7 @@ class Refactor(object):
     def __init__(self, project_root, filename):
         self.project_root = project_root
         if ROPE_AVAILABLE:
-            self.project = Project(project_root)
+            self.project = Project(project_root, ropefolder=None)
             self.resource = path_to_resource(self.project, filename)
         else:
             self.project = None
