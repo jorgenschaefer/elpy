@@ -325,8 +325,12 @@ class TestGetDocstring(RopeBackendTestCase):
                                                    filename,
                                                    source,
                                                    offset)
-        self.assertEqual(docstring,
-                         'Thread.join(self, timeout=None):\n\n')
+
+        def first_line(s):
+            return s[:s.index("\n")]
+
+        self.assertEqual(first_line(docstring),
+                         'Thread.join(self, timeout=None):')
 
     def test_should_return_none_for_bad_identifier(self):
         source, offset = source_and_offset(
