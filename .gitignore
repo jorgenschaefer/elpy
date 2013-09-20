@@ -4,3 +4,5 @@
 *.elc
 MANIFEST
 dist/
+build/
+elpy.egg-info/
