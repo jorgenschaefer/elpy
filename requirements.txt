@@ -1,0 +1,8 @@
+coverage==3.6
+jedi==0.5b5
+mock==1.0.1
+nose==1.2.1
+rope==0.9.4
+virtualenv==1.10.1
+wheel==0.22.0
+wsgiref==0.1.2
