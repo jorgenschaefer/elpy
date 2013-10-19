@@ -38,6 +38,7 @@ Evaluate this in your ``*scratch*`` buffer:
 
 .. code-block:: lisp
 
+  (require 'package)
   (add-to-list 'package-archives
                '("marmalade" . "http://marmalade-repo.org/packages/"))
 
