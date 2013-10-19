@@ -93,6 +93,12 @@ native - Do not use any backend, use native Python methods only."
   "Minor modes enabled when `elpy-mode' is enabled."
   :group 'elpy)
 
+(defcustom elpy-rgrep-ignored-directories '(".tox" "build" "dist")
+  "Directories ignored by `elpy-rgrep-symbol'.
+
+These are prepended to `grep-find-ignored-directories'."
+  :group 'elpy)
+
 (defcustom elpy-mode-hook nil
   "Hook run when `elpy-mode' is enabled."
   :group 'elpy)
@@ -645,9 +651,11 @@ With a prefix argument, prompt for a string to search for."
       (or (thing-at-point 'symbol)
           (read-from-minibuffer "Search for symbol: "))))))
   (grep-compute-defaults)
-  (rgrep (format "\\b%s\\b" symbol)
-         "*.py"
-         (elpy-project-root))
+  (let ((grep-find-ignored-directories (append elpy-rgrep-ignored-directories
+                                               grep-find-ignored-directories)))
+    (rgrep (format "\\b%s\\b" symbol)
+           "*.py"
+           (elpy-project-root)))
   (with-current-buffer next-error-last-buffer
     (let ((inhibit-read-only t))
       (save-excursion
