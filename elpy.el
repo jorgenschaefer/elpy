@@ -540,19 +540,31 @@ execution of code. With prefix argument, this code is executed."
       (run-python (python-shell-parse-command))
       (get-buffer-process bufname))))
 
-(defun elpy-check ()
-  "Run `python-check-command' on the current buffer's file."
-  (interactive)
+(defun elpy-check (&optional whole-project-p)
+  "Run `python-check-command' on the current buffer's file,
+
+or the project root if WHOLE-PROJECT-P is non-nil (interactively,
+with a prefix argument)."
+  (interactive "P")
   (when (not (buffer-file-name))
     (error "Can't check a buffer without a file."))
   (save-some-buffers (not compilation-ask-about-save) nil)
   (let ((process-environment (python-shell-calculate-process-environment))
-        (exec-path (python-shell-calculate-exec-path)))
+        (exec-path (python-shell-calculate-exec-path))
+        (file-name-or-directory (expand-file-name
+                                 (if whole-project-p
+                                     (elpy-project-root)
+                                   (buffer-file-name))))
+        (extra-args (if whole-project-p
+                        " --exclude=.svn,CVS,.bzr,.hg,.git,.tox,build,dist"
+                      "")))
     (compilation-start (concat python-check-command
                                " "
-                               (shell-quote-argument (buffer-file-name)))
-                       nil (lambda (mode-name)
-                             "*Python Check*"))))
+                               (shell-quote-argument file-name-or-directory)
+                               extra-args)
+                       nil
+                       (lambda (mode-name)
+                         "*Python Check*"))))
 
 (defun elpy-show-defun ()
   "Show the current class and method, in case they are not on
