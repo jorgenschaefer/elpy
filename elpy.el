@@ -521,10 +521,35 @@ execution of code. With prefix argument, this code is executed."
   ;; Ensure process exists
   (elpy-shell-get-or-create-process)
   (if (region-active-p)
-      (python-shell-send-region (region-beginning)
-                                (region-end))
+      (python-shell-send-string (elpy--region-without-indentation
+                                 (region-beginning) (region-end))
+                                nil t)
     (python-shell-send-buffer arg))
   (elpy-shell-switch-to-shell))
+
+(defun elpy--region-without-indentation (beg end)
+  "Return the current region as a string, but without indentation."
+  (let ((region (buffer-substring beg end))
+        (indent-level nil))
+    (catch 'return
+      (with-temp-buffer
+        (insert region)
+        (goto-char (point-min))
+        (while (< (point) (point-max))
+          (cond
+           ((and (not indent-level)
+                 (not (looking-at "[ \t]*$")))
+            (setq indent-level (current-indentation)))
+           ((and indent-level
+                 (not (looking-at "[ \t]*$"))
+                 (< (current-indentation)
+                    indent-level))
+            (error "Can't adjust indentation, consecutive lines indented less than starting line")))
+          (forward-line))
+        (indent-rigidly (point-min)
+                        (point-max)
+                        (- indent-level))
+        (buffer-string)))))
 
 (defun elpy-shell-switch-to-shell ()
   "Switch to inferior Python process buffer."
