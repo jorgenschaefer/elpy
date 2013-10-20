@@ -49,7 +49,6 @@ class NativeBackend(object):
         except (ImportError, pydoc.ErrorDuringImport):
             return None
 
-
     def rpc_get_completions(self, project_root, filename, source, offset):
         """Get completions for symbol at the offset.
 
