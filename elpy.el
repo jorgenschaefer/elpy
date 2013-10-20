@@ -1191,7 +1191,7 @@ Returns the result, blocking until this arrived."
                                end-time)
                   (not (or result-arrived
                            error-occured)))
-        (accept-process-output)))
+        (accept-process-output nil elpy-rpc--timeout 10)))
     (cond
      (error-occured
       (error error-string))
