@@ -291,11 +291,12 @@ Backwards compatibility issues, see #124."
 
 (ert-deftest test-elpy-rpc-echo ()
  "Test that the backend communication works at all."
- (with-temp-buffer
-   (setq elpy-mode t)
-   (dolist (args '(("foo" nil 1 2 3)))
-     (should (equal args
-                    (apply #'elpy-rpc "echo" (list args)))))))
+ (let ((elpy-rpc--timeout 30))
+   (with-temp-buffer
+     (setq elpy-mode t)
+     (dolist (args '(("foo" nil 1 2 3)))
+       (should (equal args
+                      (apply #'elpy-rpc "echo" (list args))))))))
 
 (ert-deftest test-elpy--region-without-indentation ()
   "Test the function."

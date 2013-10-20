@@ -940,6 +940,12 @@ Used to associate responses to callbacks.")
 This maps call IDs to functions.")
 (make-variable-buffer-local 'elpy-rpc--backend-callbacks)
 
+(defvar elpy-rpc--timeout 1
+  "Number of seconds to wait for a response.
+
+You can dynamically bind this to a higher value if you want to
+wait longer.")
+
 (defun elpy-rpc--process-buffer-p (buffer)
   "Return non-nil when BUFFER is an elpy-rpc buffer."
   (buffer-local-value 'elpy-rpc--buffer-p buffer))
@@ -1180,7 +1186,7 @@ Returns the result, blocking until this arrived."
                       (setq error-string err
                             error-occured t)))
     (let ((end-time (time-add (current-time)
-                              (seconds-to-time 1))))
+                              (seconds-to-time elpy-rpc--timeout))))
       (while (and (time-less-p (current-time)
                                end-time)
                   (not (or result-arrived
