@@ -3,6 +3,7 @@
 *.pyc
 *.elc
 MANIFEST
+.cask/
 dist/
 build/
 .tox/
