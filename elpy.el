@@ -47,7 +47,7 @@
 (require 'nose)
 (require 'python)
 (require 'thingatpt)
-;; (require 'virtualenv)
+(require 'virtualenv)
 (require 'yasnippet)
 
 
