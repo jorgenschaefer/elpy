@@ -5,4 +5,5 @@
 MANIFEST
 dist/
 build/
+.tox/
 elpy.egg-info/
