@@ -19,7 +19,9 @@ before_install:
       sudo apt-get install -qq
           emacs24 emacs24-el emacs24-common-non-dfsg ;
     fi
-install:
+  - curl -fsSkL https://raw.github.com/rejeep/cask.el/master/go | python
+  - export PATH="$HOME/.cask/bin:$PATH"
+  - cask
   - pip install jedi --use-mirrors
   - if [[ "$TRAVIS_PYTHON_VERSION" == 2.6 ]] ; then
       pip install unittest2 --use-mirrors ;
@@ -31,4 +33,5 @@ install:
       pip install rope_py3k --use-mirrors ;
     fi
 script:
-  - ./test-travis.sh
+  - nosetests
+  - PYTHONPATH="`pwd`" cask exec ert-runner

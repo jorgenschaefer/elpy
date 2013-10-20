@@ -132,14 +132,14 @@ These are prepended to `grep-find-ignored-directories'."
     (define-key map (kbd "C-c C-w") 'elpy-doc-websearch)
     ;; (define-key map (kbd "C-c C-z") 'python-shell-switch-to-shell)
 
-    (define-key map (kbd "<C-down>") 'elpy-forward-definition)
-    (define-key map (kbd "<C-up>")  'elpy-backward-definition)
+    (define-key map (kbd "<C-down>") 'elpy-nav-forward-definition)
+    (define-key map (kbd "<C-up>")  'elpy-nav-backward-definition)
     ;; (define-key map (kbd "M-,")     'iedit-mode
     (define-key map (kbd "M-.")     'elpy-goto-definition)
     (define-key map (kbd "M-a")     'elpy-nav-backward-statement)
     (define-key map (kbd "M-e")     'elpy-nav-forward-statement)
-    (define-key map (kbd "M-n")     'elpy-forward-definition)
-    (define-key map (kbd "M-p")     'elpy-backward-definition)
+    (define-key map (kbd "M-n")     'elpy-nav-forward-definition)
+    (define-key map (kbd "M-p")     'elpy-nav-backward-definition)
 
     map)
   "Key map for the Emacs Lisp Python Environment.")
@@ -250,7 +250,7 @@ explain how to install the elpy module."
         (insert "\n")
         (elpy-installation-command "jedi")
         (insert "\n")
-        (insert "If you are using virtualenvs, you can use "
+        (insert "If you are using virtualenvs, you can use the "
                 "M-x virtualenv-workon command to switch to a virtualenv "
                 "of your choice. Afterwards, running the command "
                 "M-x elpy-rpc-restart will use the packages in "
@@ -383,7 +383,7 @@ You can set the variable `elpy-project-root' in, for example,
     ;; prompt, it's set to "no project root".
     (setq elpy-project-root nil)
     (setq elpy-project-root
-          (or (elpy-project-find-root)
+          (or (elpy-project--find-root)
               (read-directory-name "Project root: "
                                    default-directory)))
     (when (and (stringp elpy-project-root)
@@ -392,7 +392,7 @@ You can set the variable `elpy-project-root' in, for example,
       (make-directory elpy-project-root t)))
   elpy-project-root)
 
-(defun elpy-project-find-root (&optional skip-current-directory)
+(defun elpy-project--find-root (&optional skip-current-directory)
   "Find the first directory in the tree not containing an __init__.py
 
 If there is no __init__.py in the current directory, return the
@@ -626,7 +626,7 @@ beginning of the previous one if already at the beginning."
     (when (= old (point))
       (python-nav-backward-statement))))
 
-(defun elpy-forward-definition ()
+(defun elpy-nav-forward-definition ()
   "Move forward to the next definition (class or function)."
   (interactive)
   (if (save-excursion
@@ -635,7 +635,7 @@ beginning of the previous one if already at the beginning."
       (goto-char (match-beginning 1))
     (goto-char (point-max))))
 
-(defun elpy-backward-definition ()
+(defun elpy-nav-backward-definition ()
   "Move backward to the previous definition (class or function)."
   (interactive)
   (if (save-excursion
@@ -741,7 +741,7 @@ arguments,  the interface simply asks for a string."
                                    'elpy-doc-history))
             (t
              (elpy-ido-recursive-completing-read "Pydoc: "
-                                                 'elpy-pydoc-completions
+                                                 'elpy-pydoc--completions
                                                  "."
                                                  t
                                                  initial
@@ -770,7 +770,7 @@ arguments,  the interface simply asks for a string."
                              t t))))
       (message "No documentation available."))))
 
-(defun elpy-pydoc-completions (rcr-prefix)
+(defun elpy-pydoc--completions (rcr-prefix)
   "Return a list of modules available in pydoc starting with RCR-PREFIX."
   (sort (if (or (not rcr-prefix)
                 (equal rcr-prefix ""))
@@ -1383,7 +1383,7 @@ description."
 ;;; nose
 
 (eval-after-load "nose"
-  '(defalias 'nose-find-project-root 'elpy-project-find-root))
+  '(defalias 'nose-find-project-root 'elpy-project--find-root))
 
 
 ;;;;;;;;;;;;;
@@ -1557,8 +1557,6 @@ which we're looking."
      ((and (= on-or-off 0)
            highlight-indent-active)
       (highlight-indentation)))))
-
-
 
 (provide 'elpy)
 ;;; elpy.el ends here
