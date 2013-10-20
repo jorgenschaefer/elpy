@@ -1065,26 +1065,27 @@ creating one if necessary."
   (with-current-buffer (process-buffer process)
     (goto-char (point-max))
     (insert output)
-    (goto-char (point-min))
-    (when (search-forward "\n")
-      (goto-char (point-min))
-      ;; This is some seriously awkward way of only catching errors in
-      ;; the json-read call. And using catch/throw is even more awkward.
-      (let (json did-read-json)
-        (condition-case err
-            (setq json (let ((json-array-type 'list))
-                         (json-read))
-                  did-read-json t)
-          (error
-           (goto-char (point-min))
-           (cond
-            ((looking-at "elpy-rpc ready\n")
-             (replace-match ""))
-            (t
-             (elpy-rpc--handle-unexpected-line)))))
-        (when did-read-json
-          (delete-region (point-min) (1+ (point)))
-          (elpy-rpc--handle-json json))))))
+    (catch 'return
+      (while (progn
+               (goto-char (point-min))
+               (search-forward "\n" nil t))
+        (goto-char (point-min))
+        (let (json did-read-json)
+          (condition-case err
+              (setq json (let ((json-array-type 'list))
+                           (json-read))
+                    did-read-json t)
+            (error
+             (goto-char (point-min))
+             (cond
+              ((looking-at "elpy-rpc ready\n")
+               (replace-match ""))
+              (t
+               (elpy-rpc--handle-unexpected-line)
+               (throw 'return nil)))))
+          (when did-read-json
+            (delete-region (point-min) (1+ (point)))
+            (elpy-rpc--handle-json json)))))))
 
 (defun elpy-rpc--handle-json (json)
   "Handle a single JSON object from the RPC backend."
