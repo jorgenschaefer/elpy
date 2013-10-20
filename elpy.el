@@ -1481,6 +1481,11 @@ This uses `elpy--ac-cache'."
 (when (not (fboundp 'python-nav-backward-statement))
   (defalias 'python-nav-backward-statement 'backward-sexp))
 
+(when (not (fboundp 'python-shell-get-process-name))
+  (defun python-shell-get-process-name (dedicated)
+    "Compatibility function for older Emacsen."
+    "Python"))
+
 ;; Emacs 24.2 made `locate-dominating-file' accept a predicate instead
 ;; of a string. Simply overwrite the current one, it's
 ;; backwards-compatible. The code below is taken from Emacs 24.3.

@@ -276,6 +276,19 @@ project root of an empty directory."
       (should (equal (elpy-project-find-root t)
                      nil)))))
 
+(ert-deftest test-elpy-refactor-mode ()
+  "Test that we can run `elpy-refactor-mode' at all."
+  (with-temp-buffer
+    (elpy-refactor-mode)))
+
+(ert-deftest test-elpy-shell-get-or-create-process ()
+  "Test that we can run `elpy-shell-get-or-create-process' at all.
+
+Backwards compatibility issues, see #124."
+  (let ((proc (elpy-shell-get-or-create-process)))
+    (and (processp proc)
+         (process-live-p proc))))
+
 (ert-deftest test-elpy-rpc-echo ()
  "Test that the backend communication works at all."
  (with-temp-buffer
@@ -283,11 +296,6 @@ project root of an empty directory."
    (dolist (args '(("foo" nil 1 2 3)))
      (should (equal args
                     (apply #'elpy-rpc "echo" (list args)))))))
-
-(ert-deftest test-elpy-refactor-mode ()
-  "Test that we can run `elpy-refactor-mode' at all."
-  (with-temp-buffer
-    (elpy-refactor-mode)))
 
 (ert-deftest test-elpy--region-without-indentation ()
   "Test the function."
