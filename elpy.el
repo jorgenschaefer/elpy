@@ -1456,7 +1456,7 @@ This uses `elpy--ac-cache'."
   (let ((old-env virtualenv-workon-session))
     ad-do-it
     (when (and virtualenv-workon-starts-python
-               elpy-rpc-buffer
+               (elpy-rpc--get-rpc-buffer)
                (not (equal old-env virtualenv-workon-session))
                (y-or-n-p "Virtualenv changed, restart Elpy-RPC? "))
       (elpy-rpc-restart))))
@@ -1464,7 +1464,7 @@ This uses `elpy--ac-cache'."
 (defadvice virtualenv-deactivate (after ad-elpy-virtualenv-deactivate activate)
   "Restart the elpy-rpc backend on virtualenv change."
   (when (and virtualenv-workon-starts-python
-             elpy-rpc-buffer
+             (elpy-rpc--get-rpc-buffer)
              (y-or-n-p "Virtualenv deactivated, restart Elpy-RPC? "))
     (elpy-rpc-restart)))
 
