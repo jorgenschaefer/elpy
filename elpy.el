@@ -379,17 +379,7 @@ This should be run from `python-mode-hook'."
 You can set the variable `elpy-project-root' in, for example,
 .dir-locals.el to configure this."
   (when (eq elpy-project-root 'not-initialized)
-    ;; Set it to nil so when the user runs C-g on the project root
-    ;; prompt, it's set to "no project root".
-    (setq elpy-project-root nil)
-    (setq elpy-project-root
-          (or (elpy-project--find-root)
-              (read-directory-name "Project root: "
-                                   default-directory)))
-    (when (and (stringp elpy-project-root)
-               (not (file-directory-p elpy-project-root))
-               (y-or-n-p "Directory does not exist, create? "))
-      (make-directory elpy-project-root t)))
+    (setq elpy-project-root (elpy-project--find-root)))
   elpy-project-root)
 
 (defun elpy-project--find-root (&optional skip-current-directory)
