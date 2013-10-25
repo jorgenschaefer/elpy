@@ -11,7 +11,7 @@ Feature: Show Defun
     """
     And I go to word "pass"
     And I press "C-c C-q"
-    Then I should see the message "foo()"
+    Then I should see message "foo()"
 
   Scenario: Show the current class and method
     Given I have the following Python file:
@@ -22,7 +22,7 @@ Feature: Show Defun
     """
     And I go to word "pass"
     And I press "C-c C-q"
-    Then I should see the message "Foo.bar()"
+    Then I should see message "Foo.bar()"
 
   Scenario: Show nested methods
     Given I have the following Python file:
@@ -35,4 +35,4 @@ Feature: Show Defun
     """
     And I go to word "return"
     And I press "C-c C-q"
-    Then I should see the message "Foo.bar.baz()"
+    Then I should see message "Foo.bar.baz()"

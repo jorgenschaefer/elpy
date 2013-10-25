@@ -26,6 +26,11 @@
       (apply (car cleanup) (cdr cleanup))))
   (setq elpy-feature--cleanups nil))
 
+(defun kill-buffer-no-questions (buf)
+  (let ((kill-buffer-query-functions nil))
+    (kill-buffer buf)))
+
+
 (Setup
  ;; Before anything has run
  )

@@ -9,14 +9,18 @@
     (let ((tmpdir (make-temp-file "elpy-test-" t)))
       (find-file (format "%s/test.py" tmpdir))
       (add-cleanup 'delete-directory tmpdir t)
-      (add-cleanup 'kill-buffer (current-buffer)))
+      (add-cleanup 'kill-buffer-no-questions (current-buffer)))
     (insert arg)
     (goto-char (point-min))))
 
-(Then "^I should see the message \"\\([^\"]*\\)\"$"
-  (lambda (arg)
-    (When "I switch to buffer \"*Messages*\"")
-    (Then (format "I should see \"%s\"" arg))))
+(Given "^I have an empty Python file$"
+  (lambda ()
+    (elpy-enable)
+    (auto-save-mode 0)
+    (let ((tmpdir (make-temp-file "elpy-test-" t)))
+      (find-file (format "%s/test.py" tmpdir))
+      (add-cleanup 'delete-directory tmpdir t)
+      (add-cleanup 'kill-buffer-no-questions (current-buffer)))))
 
 (Then "^the cursor should be at end of buffer$"
   (lambda ()
@@ -32,5 +36,11 @@
   (lambda ()
     (assert (memq 'elpy-mode python-mode-hook)
             nil
-            "Expected `elpy-mode' in `python-mode-hook'")
-    ))
+            "Expected `elpy-mode' in `python-mode-hook'")))
+
+(Then "^the project root should be \"\\([^\"]*\\)\"$"
+  (lambda (arg)
+    (assert (equal arg elpy-project-root)
+            nil
+            "Expected the project root to be '%s', but was '%s'"
+            arg elpy-project-root)))
