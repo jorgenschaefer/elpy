@@ -42,16 +42,14 @@
   (let (rpc-buf prg-buf)
     (with-temp-buffer
       (setq rpc-buf (current-buffer)
-            elpy-rpc--buffer-p t
-
-            )
+            elpy-rpc--buffer-p t)
       (with-temp-buffer
         (setq prg-buf (current-buffer))
         ))))
 
-(ert-deftest test-elpy-rpc-echo ()
+(ert-deftest elpy-rpc-echo ()
  "Test that the backend communication works at all."
- (let ((elpy-rpc--timeout 30))
+ (let ((elpy-rpc--timeout 10))
    (with-temp-buffer
      (setq elpy-mode t)
      (dolist (args '(("foo" nil 1 2 3)))

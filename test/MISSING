@@ -1,17 +1,5 @@
 The following functions need testing still:
 
-elpy-installation-test.el:
-- elpy-installation-command
-
-elpy-mode-test.el:
-- elpy-clean-modeline
-  - (format-mode-line mode-line-format)
-
-elpy-project-test:
-- elpy-project-root
-- elpy-project--find-root
-- elpy-set-project-root
-
 elpy-shell-test.el:
 - elpy-use-ipython
 - elpy-use-cpython

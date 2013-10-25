@@ -32,7 +32,7 @@
     (elpy-disable)
     (should (eq python-mode-hook nil))))
 
-(ert-deftest test-elpy-project-find-root ()
+(ert-deftest test-elpy-project--find-root ()
   "Should find the first directory without __init__.py"
   (with-temp-dir library-root
     (let ((default-directory (concat library-root "/foo/bar/baz")))
@@ -43,15 +43,15 @@
         (with-temp-buffer
           (write-region (point-min) (point-max)
                         file)))
-      (should (equal (expand-file-name (elpy-project-find-root))
+      (should (equal (expand-file-name (elpy-project--find-root))
                      (expand-file-name (concat library-root "/"))))))
 
-  (elpy-test-with-temp-dir library-root
+  (with-temp-dir library-root
     (let ((default-directory (concat library-root "/foo/bar/baz")))
       (make-directory default-directory t)
-      (should (equal (elpy-project-find-root)
+      (should (equal (elpy-project--find-root)
                      default-directory))
-      (should (equal (elpy-project-find-root t)
+      (should (equal (elpy-project--find-root t)
                      nil)))))
 
 (ert-deftest elpy-mode-should-fail-outside-of-python-mode ()
@@ -64,12 +64,14 @@
     ;; Without file name
     (with-temp-buffer
       (python-mode)
-      (elpy-mode 1)
+      (let ((elpy-default-minor-modes nil))
+        (elpy-mode 1))
       (should (equal ffip-project-root nil)))
     ;; With file name
     (with-temp-buffer
       (python-mode)
-      (let ((buffer-file-name "/opt/root/mumble.py"))
+      (let ((buffer-file-name "/opt/root/mumble.py")
+            (elpy-default-minor-modes nil))
         (elpy-mode 1))
       (should (equal ffip-project-root "/opt/root")))))
 
@@ -88,3 +90,12 @@
       (with-temp-buffer
         (python-mode)
         (elpy-mode 1)))))
+
+(ert-deftest elpy-clean-modeline-should-clean-modeline ()
+  (with-temp-buffer
+    (elpy-clean-modeline)
+    (dolist ((mode-display minor-mode-alist))
+      (when (memq (car mode-display)
+                  '(elpy-mode yas-minor-mode auto-complete-mode flymake-mode))
+        (should (equal (cdr mode-display)
+                       ""))))))
