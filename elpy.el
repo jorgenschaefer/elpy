@@ -46,6 +46,7 @@
 (require 'json)
 (require 'nose)
 (require 'python)
+(require 'grep)
 (require 'thingatpt)
 (require 'virtualenv)
 (require 'yasnippet)
@@ -364,9 +365,10 @@ This should be run from `python-mode-hook'."
   (setq forward-sexp-function nil)
   ;; Enable warning faces for flake8 output.
   (when (string-match "flake8" python-check-command)
-    (set (make-local-variable 'flymake-warning-re) "^W[0-9]")
-    (set (make-local-variable 'flymake-warning-predicate) "^W[0-9]"))
-  )
+    ;; COMPAT: Obsolete variable as of 24.4
+    (if (boundp 'flymake-warning-predicate)
+        (set (make-local-variable 'flymake-warning-predicate) "^W[0-9]")
+      (set (make-local-variable 'flymake-warning-re) "^W[0-9]"))))
 
 (defvar elpy-project-root 'not-initialized
   "The root of the project the current buffer is in.")
