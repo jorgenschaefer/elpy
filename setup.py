@@ -12,7 +12,7 @@ setup(
     url="https://github.com/jorgenschaefer/elpy",
     license="GPL",
     author="Jorgen Schaefer",
-    author_email="forcer@forcix.cx",
+    author_email="contact@jorgenschaefer.de",
     packages=find_packages(),
     include_package_data=True,
     classifiers=[

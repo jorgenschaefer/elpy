@@ -1,8 +1,8 @@
 ;;; elpy-refactor.el --- Refactoring mode for Elpy
 
-;; Copyright (C) 2013  Jorgen Schaefer <forcer@forcix.cx>
+;; Copyright (C) 2013  Jorgen Schaefer
 
-;; Author: Jorgen Schaefer <forcer@forcix.cx>
+;; Author: Jorgen Schaefer <contact@jorgenschaefer.de>
 ;; URL: https://github.com/jorgenschaefer/elpy
 
 ;; This program is free software; you can redistribute it and/or

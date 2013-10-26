@@ -1,8 +1,8 @@
 ;;; elpy.el --- Emacs Lisp Python Environment -*- lexical-binding: t -*-
 
-;; Copyright (C) 2012, 2013  Jorgen Schaefer <forcer@forcix.cx>
+;; Copyright (C) 2012, 2013  Jorgen Schaefer
 
-;; Author: Jorgen Schaefer <forcer@forcix.cx>
+;; Author: Jorgen Schaefer <contact@jorgenschaefer.de>
 ;; URL: https://github.com/jorgenschaefer/elpy
 ;; Version: 1.1
 
