@@ -5,10 +5,10 @@ all: test
 test: unit-test ecukes
 
 unit-test:
-	cask exec ert-runner
+	cask exec ert-runner --quiet
 
 ecukes:
-	cask exec ecukes --script
+	cask exec ecukes --script --quiet
 
 test-all: tox
 
