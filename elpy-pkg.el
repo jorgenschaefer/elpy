@@ -1,4 +1,4 @@
-(define-package "elpy" "$VERSION"
+(define-package "elpy" "devel"
                 "Emacs Python Development Environment"
                 '((auto-complete "1.4")
                   (find-file-in-project "3.2")

@@ -5,6 +5,8 @@ handles backend selection and passes methods on to the selected
 backend.
 
 """
+import elpy
+
 from elpy.utils.pydocutils import get_pydoc_completions
 from elpy.rpc import JSONRPCServer, Fault
 
@@ -48,6 +50,10 @@ class ElpyRPCServer(JSONRPCServer):
         if method is None:
             raise Fault("Unknown method {0}".format(method_name))
         return method(*args)
+
+    def rpc_version(self):
+        """Return the version of the elpy RPC backend."""
+        return elpy.__version__
 
     def rpc_echo(self, *args):
         """Return the arguments.

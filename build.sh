@@ -14,11 +14,14 @@ BUILDDIR="dist/elpy-$VERSION"
 rm -rf "$BUILDDIR"
 mkdir -p "$BUILDDIR"
 
-install -m 644 elpy.el elpy-refactor.el LICENSE "$BUILDDIR/"
+install -m 644 elpy-refactor.el LICENSE "$BUILDDIR/"
+cat elpy.el \
+| sed -e 's/(defconst elpy-version "devel"/(defconst elpy-version "'"$VERSION"'"/' \
+> "$BUILDDIR/elpy.el"
 install -m 644 README.rst "$BUILDDIR/README"
 cp -r snippets "$BUILDDIR/"
-cat elpy-pkg.el.in \
-| sed -e "s/\\\$VERSION/$VERSION/g" \
+cat elpy-pkg.el \
+| sed -e 's/"devel"/"'"$VERSION"'"/g' \
 > "$BUILDDIR/elpy-pkg.el"
 
 tar -C "dist/" -c "elpy-$VERSION" > "dist/elpy-$VERSION.tar"

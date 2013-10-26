@@ -3,6 +3,7 @@
 import unittest
 import mock
 
+import elpy
 from elpy import server
 
 
@@ -59,6 +60,13 @@ class TestHandle(TestServer):
         self.assertEqual(srv.handle("does_exist", (1, 2, 3)),
                          "It works")
         srv.backend.rpc_does_exist.assert_called_with(1, 2, 3)
+
+
+class TestRPCVersion(TestServer):
+    def test_should_return_current_version(self):
+        srv = server.ElpyRPCServer()
+        self.assertEqual(srv.rpc_version(),
+                         elpy.__version__)
 
 
 class TestRPCEcho(TestServer):

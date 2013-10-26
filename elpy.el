@@ -104,6 +104,29 @@ These are prepended to `grep-find-ignored-directories'."
   "Hook run when `elpy-mode' is enabled."
   :group 'elpy)
 
+(defconst elpy-version "devel"
+  "The version of the Elpy lisp code.")
+
+(defun elpy-version ()
+  "Echo the version of Elpy."
+  (interactive)
+  (let ((version elpy-version)
+        (rpc-version (when elpy-rpc--buffer
+                       (or (ignore-errors
+                             (elpy-rpc "version" nil))
+                           "1.1"))))
+    (if (equal version "devel")
+        (setq version "development version")
+      (setq version (format "version %s" version)))
+    (when rpc-version
+      (if (equal rpc-version "devel")
+          (setq rpc-version "development version")
+        (setq rpc-version (format "version %s" rpc-version))))
+    (if rpc-version
+        (message "Elpy %s using the Python backend %s"
+               version rpc-version)
+      (message "Elpy %s" version))))
+
 (defvar elpy-mode-map
   (let ((map (make-sparse-keymap)))
     ;; Alphabetical order to make it easier to find free C-c C-X
@@ -1072,13 +1095,31 @@ creating one if necessary."
              (goto-char (point-min))
              (cond
               ((looking-at "elpy-rpc ready\n")
-               (replace-match ""))
+               (replace-match "")
+               (elpy-rpc--backend-version "1.1"))
+              ((looking-at "elpy-rpc ready (\\([^ ]*\\))\n")
+               (let ((rpc-version (match-string 1)))
+                 (replace-match "")
+                 (elpy-rpc--backend-version rpc-version)))
               (t
                (elpy-rpc--handle-unexpected-line)
                (throw 'return nil)))))
           (when did-read-json
             (delete-region (point-min) (1+ (point)))
             (elpy-rpc--handle-json json)))))))
+
+(defun elpy-rpc--backend-version (rpc-version)
+  "Check that we are using the right version."
+  (when (not (equal rpc-version elpy-version))
+    (with-help-window "*Elpy Version Mismatch*"
+      (with-current-buffer "*Elpy Version Mismatch*"
+        (insert
+         "You are not using the same version of Elpy in Emacs Lisp\n"
+         "compared to Python. This can cause random problems. Please\n"
+         "do make sure to use compatible versions.\n"
+         "\n"
+         "Elpy Emacs Lisp version: " elpy-version "\n"
+         "Elpy Python version....: " rpc-version "\n")))))
 
 (defun elpy-rpc--handle-json (json)
   "Handle a single JSON object from the RPC backend."
