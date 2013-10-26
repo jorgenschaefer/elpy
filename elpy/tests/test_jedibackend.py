@@ -107,6 +107,16 @@ class TestGetDefinition(JediBackendTestCase):
                                             source,
                                             offset))
 
+    def test_should_return_none_if_not_found(self):
+        source, offset = source_and_offset(
+            "fo_|_o()\n")
+        filename = self.project_file("test.py", source)
+        self.assertIsNone(
+            self.backend.rpc_get_definition(self.project_root,
+                                            filename,
+                                            source,
+                                            offset))
+
     def test_should_return_definition_location_different_file(self):
         source1 = ("def test_function(a, b):\n"
                    "    return a + b\n")
