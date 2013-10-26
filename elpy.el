@@ -764,8 +764,8 @@ arguments,  the interface simply asks for a string."
   "Return a list of modules available in pydoc starting with RCR-PREFIX."
   (sort (if (or (not rcr-prefix)
                 (equal rcr-prefix ""))
-            (elpy-rpc "get_pydoc_completions")
-          (elpy-rpc "get_pydoc_completions" rcr-prefix))
+            (elpy-rpc "get_pydoc_completions" nil)
+          (elpy-rpc "get_pydoc_completions" (list rcr-prefix)))
         (lambda (a b)
           (if (and (string-prefix-p "_" b)
                    (not (string-prefix-p "_" a)))

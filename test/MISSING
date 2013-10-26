@@ -38,7 +38,6 @@ elpy-rpc-test.el:
 elpy-doc-test.el:
 - elpy-doc-websearch
 - elpy-doc
-- elpy-pydoc--completions
 - elpy-ido--rcr-selected
 - elpy-ido--rcr-setup-keymap
 - elpy-ido-rcr-complete
