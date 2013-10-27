@@ -1,0 +1,29 @@
+To release elpy:
+
+$ tox
+
+Make sure nothing breaks.
+
+$ git checkout release
+$ git merge master
+
+Adjust __version__ in elpy/__init__.py.
+
+Adjust defconst elpy-version and the Version: header in elpy.el.
+
+Adjust package line in Cask.
+
+$ git commit -a -m "Set version to X.Y"
+$ git tag -a vX.Y -m "Tagged version X.Y"
+
+$ ./build.sh
+
+This creates dist/elpy-X.Y.tar for Marmalade
+
+$ python setup.py bdist_wheel sdist
+
+Recheck all is well, then
+
+$ python setup.py bdist_wheel sdist upload
+
+$ git push --tags
