@@ -119,6 +119,18 @@ class TestGetCompletions(RopeBackendTestCase):
                                 self.project_root, filename, source,
                                 offset)
 
+    def test_should_fail_for_bad_indentation(self):
+        source, offset = source_and_offset(
+            "def foo():\n"
+            "       print 23_|_\n"
+            "      print 17\n")
+        filename = self.project_file("test.py", source)
+        with self.assertRaises(rpc.Fault):
+            self.backend.rpc_get_completions(self.project_root,
+                                             filename,
+                                             source,
+                                             offset)
+
     def test_should_complete_top_level_modules_for_import(self):
         source, offset = source_and_offset("import multi_|_")
         filename = self.project_file("test.py", source)
@@ -308,6 +320,18 @@ class TestGetCalltip(RopeBackendTestCase):
             "  def b(self):\n"
             "  pass\n")
 
+        filename = self.project_file("test.py", source)
+        calltip = self.backend.rpc_get_calltip(self.project_root,
+                                               filename,
+                                               source,
+                                               offset)
+        self.assertIsNone(calltip)
+
+    def test_should_return_none_for_bad_indentation(self):
+        source, offset = source_and_offset(
+            "def foo():\n"
+            "       _|_print 23\n"
+            "      print 17\n")
         filename = self.project_file("test.py", source)
         calltip = self.backend.rpc_get_calltip(self.project_root,
                                                filename,

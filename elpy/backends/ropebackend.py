@@ -133,6 +133,9 @@ class RopeBackend(NativeBackend):
                                              "s" if ("," in linedesc)
                                              else "",
                                              linedesc)))
+        except IndentationError:
+            raise rpc.Fault(code=101,
+                            message="Indentation error")
         starting_offset = self.codeassist.starting_offset(source, offset)
         prefixlen = offset - starting_offset
         return [[proposal.name[prefixlen:], proposal.get_doc()]
@@ -159,7 +162,7 @@ class RopeBackend(NativeBackend):
             return self.codeassist.get_calltip(project, source, offset,
                                                resource, MAXFIXES,
                                                remove_self=True)
-        except self.ModuleSyntaxError:
+        except (self.ModuleSyntaxError, IndentationError):
             return None
         except (self.BadIdentifierError, IndexError):
             # IndexError seems to be a bug in Rope. I don't know what
