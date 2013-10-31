@@ -1,13 +1,13 @@
-.PHONY: all test unit-test ecukes test-all tox clean cask
+.PHONY: all test unit-tests system-tests test-all tox clean cask
 
 all: test
 
-test: unit-test ecukes
+test: unit-tests system-tests
 
-unit-test:
+unit-tests:
 	cask exec ert-runner --quiet
 
-ecukes:
+system-tests:
 	cask exec ecukes --script --quiet
 
 test-all: tox
@@ -25,3 +25,18 @@ clean:
 	find * -name '*.pyc' -exec rm {} +
 	find * -name '*.elc' -exec rm {} +
 	find -name __pycache__ -exec rmdir {} +
+
+
+VERSION=$(shell sed -ne 's/^;; Version: \(.*\)/\1/p' elpy.el)
+BUILDDIR="dist/elpy-$(VERSION)"
+
+marmalade:
+	test -d $(BUILDDIR) && rm -rf $(BUILDDIR) || true
+	mkdir -p $(BUILDDIR)
+
+	install -m 644 elpy.el elpy-refactor.el elpy-pkg.el LICENSE $(BUILDDIR)
+	install -m 644 README.rst $(BUILDDIR)/README
+	cp -r snippets $(BUILDDIR)/
+
+	tar -C "dist/" -c elpy-$(VERSION) > dist/elpy-$(VERSION).tar
+	rm -rf $(BUILDDIR)

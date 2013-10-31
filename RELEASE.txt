@@ -4,21 +4,21 @@ $ tox
 
 Make sure nothing breaks.
 
+$ bumpversion minor
+
+MELPA release:
+
 $ git checkout release
 $ git merge master
+$ git checkout master
 
-Adjust __version__ in elpy/__init__.py.
+Marmalade release:
 
-Adjust defconst elpy-version and the Version: header in elpy.el.
+$ make marmalade
 
-Adjust package line in Cask.
+This creates dist/elpy-X.Y.tar
 
-$ git commit -a -m "Set version to X.Y"
-$ git tag -a vX.Y -m "Tagged version X.Y"
-
-$ ./build.sh
-
-This creates dist/elpy-X.Y.tar for Marmalade
+PyPI release:
 
 $ python setup.py bdist_wheel sdist
 
@@ -26,4 +26,10 @@ Recheck all is well, then
 
 $ python setup.py bdist_wheel sdist upload
 
+Github:
+
 $ git push --tags
+
+$ bumpversion patch --no-tag --new-version X.Y.50
+
+The .50 means "development".
