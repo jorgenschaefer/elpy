@@ -4,7 +4,7 @@
 
 ;; Author: Jorgen Schaefer <contact@jorgenschaefer.de>
 ;; URL: https://github.com/jorgenschaefer/elpy
-;; Version: 1.2.0
+;; Version: 1.2.50
 
 ;; This program is free software; you can redistribute it and/or
 ;; modify it under the terms of the GNU General Public License
@@ -104,7 +104,7 @@ These are prepended to `grep-find-ignored-directories'."
   "Hook run when `elpy-mode' is enabled."
   :group 'elpy)
 
-(defconst elpy-version "1.2.0"
+(defconst elpy-version "1.2.50"
   "The version of the Elpy lisp code.")
 
 (defun elpy-version ()
