@@ -1,13 +1,13 @@
-.PHONY: all test unit-tests system-tests test-all tox clean cask
+.PHONY: all test unit-tests functional-tests test-all tox clean cask
 
 all: test
 
-test: unit-tests system-tests
+test: unit-tests functional-tests
 
 unit-tests:
 	cask exec ert-runner --quiet
 
-system-tests:
+functional-tests:
 	cask exec ecukes --script --quiet
 
 test-all: tox
