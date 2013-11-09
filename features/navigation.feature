@@ -9,7 +9,7 @@ Feature: Navigation
     baz = quux
     foo = bar(2, 3, fnord(4))
     """
-    And I press "M-e"
+    When I press "M-e"
     Then the cursor should be after "quux"
 
   Scenario: Forward complex statement
@@ -18,7 +18,7 @@ Feature: Navigation
     foo = bar(2, 3, fnord(4))
     baz = quux
     """
-    And I press "M-e"
+    When I press "M-e"
     Then the cursor should be after "fnord(4))"
 
   @no24_1 @no24_2
