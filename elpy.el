@@ -1522,6 +1522,14 @@ This uses `elpy--ac-cache'."
   (defun python-shell-parse-command ()
     "Compatibility function for older Emacsen."
     python-python-command))
+(when (not (fboundp 'python-shell-calculate-process-environment))
+  (defun python-shell-calculate-process-environment ()
+    "Compatibility function for older Emacsen."
+    process-environment))
+(when (not (fboundp 'python-shell-calculate-exec-path))
+  (defun python-shell-calculate-exec-path ()
+    "Compatibility function for older Emacsen."
+    exec-path))
 
 ;; Emacs 24.2 made `locate-dominating-file' accept a predicate instead
 ;; of a string. Simply overwrite the current one, it's
