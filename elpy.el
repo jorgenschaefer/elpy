@@ -991,6 +991,11 @@ creating one if necessary."
                               elpy-rpc-python-command)))
     elpy-rpc--buffer)))
 
+(defun elpy-rpc--get-rpc-process ()
+  "Return the RPC process associated with the current buffer,
+creating one if necessary."
+  (get-buffer-process (elpy-rpc--get-rpc-buffer)))
+
 (defun elpy-rpc--find-buffer (project-root python-command)
   "Return an existing RPC buffer for this project root and command."
   (let ((result nil))
@@ -1225,7 +1230,8 @@ Returns the result, blocking until this arrived."
                                end-time)
                   (not (or result-arrived
                            error-occured)))
-        (accept-process-output nil elpy-rpc--timeout 10)))
+        (accept-process-output (elpy-rpc--get-rpc-process)
+                               elpy-rpc--timeout)))
     (cond
      (error-occured
       (error error-string))
