@@ -32,28 +32,6 @@
     (elpy-disable)
     (should (eq python-mode-hook nil))))
 
-(ert-deftest test-elpy-project--find-root ()
-  "Should find the first directory without __init__.py"
-  (with-temp-dir library-root
-    (let ((default-directory (concat library-root "/foo/bar/baz")))
-      (make-directory default-directory t)
-      (dolist (file (list (concat library-root "/foo/__init__.py")
-                          (concat library-root "/foo/bar/__init__.py")
-                          (concat library-root "/foo/bar/baz/__init__.py")))
-        (with-temp-buffer
-          (write-region (point-min) (point-max)
-                        file)))
-      (should (equal (expand-file-name (elpy-project--find-root))
-                     (expand-file-name (concat library-root "/"))))))
-
-  (with-temp-dir library-root
-    (let ((default-directory (concat library-root "/foo/bar/baz")))
-      (make-directory default-directory t)
-      (should (equal (elpy-project--find-root)
-                     default-directory))
-      (should (equal (elpy-project--find-root t)
-                     nil)))))
-
 (ert-deftest elpy-mode-should-fail-outside-of-python-mode ()
   (with-temp-buffer
     (should-error (elpy-mode 1))))
