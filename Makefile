@@ -22,9 +22,9 @@ cask:
 	EMACS=emacs-24.3 cask
 
 clean:
-	find * -name '*.pyc' -exec rm {} +
-	find * -name '*.elc' -exec rm {} +
-	find -name __pycache__ -exec rmdir {} +
+	find ./* -name '*.pyc' -delete
+	find ./* -name '*.elc' -delete
+	find ./* -name __pycache__ -delete
 
 
 VERSION=$(shell sed -ne 's/^;; Version: \(.*\)/\1/p' elpy.el)
