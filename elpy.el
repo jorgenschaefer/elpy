@@ -1253,10 +1253,9 @@ result and return that."
 (defun elpy-rpc-restart ()
   "Restart the current RPC process."
   (interactive)
-  (when (elpy-rpc--live-p elpy-rpc--buffer)
-    (kill-buffer elpy-rpc--buffer)
-    (setq elpy-rpc--buffer nil))
-  (elpy-rpc--get-rpc-buffer))
+  (dolist (b (buffer-list))
+    (when (buffer-local-value 'elpy-rpc--buffer-p b)
+      (kill-buffer b))))
 
 (defun elpy-rpc-get-completions (&optional success error)
   "Call the find_completions API function.
