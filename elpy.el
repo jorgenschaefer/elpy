@@ -65,6 +65,13 @@
   :type 'string
   :group 'elpy)
 
+(defcustom elpy-show-installation-instructions t
+  "Whether Elpy should display installation instructions in a
+help buffer.  If nil, displays a message in the echo area
+instead."
+  :type 'boolean
+  :group 'elpy)
+
 (defcustom elpy-rpc-project-specific nil
   "Whether Elpy should use a separate process for each project."
   :type 'boolean
@@ -239,47 +246,49 @@ MESSAGE is shown as the first paragraph.
 
 If SHOW-ELPY-MODULE is non-nil, the help buffer will first
 explain how to install the elpy module."
-  (with-help-window "*Elpy Installation*"
-    (with-current-buffer "*Elpy Installation*"
-      (let ((inhibit-read-only t))
-        (erase-buffer)
-        (insert "Elpy Installation Instructions\n")
-        (insert "\n")
-        (insert message)
-        (when (not (bolp))
-          (insert "\n"))
-        (insert "\n")
-        (when show-elpy-module
-          (insert "Elpy requires the Python module \"elpy\". The module "
-                  "is available from pypi, so you can install it using "
-                  "the following command:\n")
-          (insert "\n")
-          (elpy-installation-command "elpy")
-          (insert "\n"))
-        (insert "To find possible completions, Elpy uses one of two "
-                "Python modules. Either \"rope\" or \"jedi\". To use "
-                "Elpy to its fullest potential, you should install "
-                "either one of them. Which one is a matter of taste. "
-                "You can try both and even switch at runtime using "
-                "M-x elpy-set-backend.\n")
-        (insert "\n")
-        (insert "Elpy also uses the Rope module for refactoring options, "
-                "so you likely want to install it even if you use jedi "
-                "for completion.\n")
-        (insert "\n")
-        (if (string-match "Python 3" (shell-command-to-string
-                                      "python --version"))
-            (elpy-installation-command "rope_py3k")
-          (elpy-installation-command "rope"))
-        (insert "\n")
-        (elpy-installation-command "jedi")
-        (insert "\n")
-        (insert "If you are using virtualenvs, you can use the "
-                "M-x virtualenv-workon command to switch to a virtualenv "
-                "of your choice. Afterwards, running the command "
-                "M-x elpy-rpc-restart will use the packages in "
-                "that virtualenv.")
-        (fill-region (point-min) (point-max))))))
+  (if elpy-show-installation-instructions
+      (with-help-window "*Elpy Installation*"
+        (with-current-buffer "*Elpy Installation*"
+          (let ((inhibit-read-only t))
+            (erase-buffer)
+            (insert "Elpy Installation Instructions\n")
+            (insert "\n")
+            (insert message)
+            (when (not (bolp))
+              (insert "\n"))
+            (insert "\n")
+            (when show-elpy-module
+              (insert "Elpy requires the Python module \"elpy\". The module "
+                      "is available from pypi, so you can install it using "
+                      "the following command:\n")
+              (insert "\n")
+              (elpy-installation-command "elpy")
+              (insert "\n"))
+            (insert "To find possible completions, Elpy uses one of two "
+                    "Python modules. Either \"rope\" or \"jedi\". To use "
+                    "Elpy to its fullest potential, you should install "
+                    "either one of them. Which one is a matter of taste. "
+                    "You can try both and even switch at runtime using "
+                    "M-x elpy-set-backend.\n")
+            (insert "\n")
+            (insert "Elpy also uses the Rope module for refactoring options, "
+                    "so you likely want to install it even if you use jedi "
+                    "for completion.\n")
+            (insert "\n")
+            (if (string-match "Python 3" (shell-command-to-string
+                                          "python --version"))
+                (elpy-installation-command "rope_py3k")
+              (elpy-installation-command "rope"))
+            (insert "\n")
+            (elpy-installation-command "jedi")
+            (insert "\n")
+            (insert "If you are using virtualenvs, you can use the "
+                    "M-x virtualenv-workon command to switch to a virtualenv "
+                    "of your choice. Afterwards, running the command "
+                    "M-x elpy-rpc-restart will use the packages in "
+                    "that virtualenv.")
+            (fill-region (point-min) (point-max)))))
+    (message "%s" (substitute-command-keys "You don't have elpy properly installed.  Set `elpy-show-installation-instructions' to t to see the help buffer."))))
 
 (defun elpy-installation-command (python-module)
   "Insert an installation command description for PYTHON-MODULE."
