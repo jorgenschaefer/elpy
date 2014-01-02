@@ -1436,7 +1436,7 @@ description."
 
 (defun elpy-flymake-show-error ()
   "Show the flymake error message at point."
-  (let* ((lineno (flymake-current-line-no))
+  (let* ((lineno (line-number-at-pos))
          (err-info (car (flymake-find-err-info flymake-err-info
                                                lineno)))
          (text (mapconcat #'flymake-ler-text
