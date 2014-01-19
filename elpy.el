@@ -1401,7 +1401,10 @@ error if the backend is not supported."
   (when (not (file-remote-p buffer-file-name))
     (let* ((temp-file (flymake-init-create-temp-buffer-copy
                        'flymake-create-temp-inplace)))
-      (list python-check-command (list temp-file)))))
+      (list python-check-command
+            (list temp-file)
+            ;; Run flake8 from / to avoid import problems (#169)
+            "/"))))
 
 (defun elpy-flymake-forward-error ()
   "Move forward to the next Flymake error and show a
