@@ -18,12 +18,6 @@ class TestInit(NativeBackendTestCase):
 
 
 class TestNoOpMethods(NativeBackendTestCase):
-    def test_should_have_rpc_before_save(self):
-        self.backend.rpc_before_save(None, None)
-
-    def test_should_have_rpc_after_save(self):
-        self.backend.rpc_after_save(None, None)
-
     def test_should_have_rpc_get_definition(self):
         self.assertIsNone(self.backend.rpc_get_definition(None, None,
                                                           None, None))

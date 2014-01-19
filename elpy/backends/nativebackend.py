@@ -27,14 +27,6 @@ class NativeBackend(object):
     def __init__(self):
         self.name = "native"
 
-    def rpc_before_save(self, project_root, filename):
-        """Method called from before-save-hook"""
-        pass
-
-    def rpc_after_save(self, project_root, filename):
-        """Method called from after-save-hook"""
-        pass
-
     def rpc_get_pydoc_documentation(self, symbol):
         """Get the Pydoc documentation for the given symbol.
 

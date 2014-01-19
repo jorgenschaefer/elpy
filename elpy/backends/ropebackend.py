@@ -30,7 +30,6 @@ class RopeBackend(NativeBackend):
     def __init__(self):
         super(RopeBackend, self).__init__()
         self.name = "rope"
-        self.before_save_data = {}
         self.projects = {}
         self.last_validation = {}
 
@@ -93,26 +92,6 @@ class RopeBackend(NativeBackend):
                                                   'file')
         else:
             return None
-
-    def rpc_before_save(self, project_root, filename):
-        if filename is None:
-            return
-        try:
-            self.before_save_data[project_root] = (
-                filename, open(filename).read())
-        except IOError:
-            pass
-
-    def rpc_after_save(self, project_root, filename):
-        project = self.get_project(project_root)
-        old_filename, old_contents = self.before_save_data.get(
-            project_root, (None, None))
-        if old_filename is not None:
-            if old_filename == filename:
-                self.libutils.report_change(project,
-                                            filename,
-                                            old_contents)
-            del self.before_save_data[project_root]
 
     def rpc_get_completions(self, project_root, filename, source, offset):
         project = self.get_project(project_root)

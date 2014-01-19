@@ -14,15 +14,6 @@ class RopeBackendTestCase(BackendTestCase):
         super(RopeBackendTestCase, self).setUp()
         self.backend = ropebackend.RopeBackend()
 
-    def project_file(self, relname, contents):
-        filename = super(RopeBackendTestCase, self).project_file(relname,
-                                                                 "")
-        self.backend.rpc_before_save(self.project_root, filename)
-        filename = super(RopeBackendTestCase, self).project_file(relname,
-                                                                 contents)
-        self.backend.rpc_after_save(self.project_root, filename)
-        return filename
-
 
 class TestInit(RopeBackendTestCase):
     def test_should_have_rope_as_name(self):
@@ -45,17 +36,6 @@ class TestGetProject(RopeBackendTestCase):
     def test_should_return_none_for_inexisting_directory(self):
         self.assertIsNone(self.backend.get_project(self.project_root +
                                                    "/doesnotexist/"))
-
-
-class TestBeforeAfterSave(RopeBackendTestCase):
-    def test_should_not_fail_on_inexisting_file(self):
-        filename = self.project_root + "/doesnotexist"
-        self.backend.rpc_before_save(self.project_root, filename)
-        self.backend.rpc_after_save(self.project_root, filename)
-
-    def test_should_not_fail_if_file_is_none(self):
-        self.backend.rpc_before_save(self.project_root, None)
-        self.backend.rpc_after_save(self.project_root, None)
 
 
 class TestGetCompletions(RopeBackendTestCase):
