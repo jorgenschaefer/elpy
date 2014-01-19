@@ -371,10 +371,15 @@ using (defalias 'elpy-initialize-variables 'identity)"
       (yas--trigger-key-reload old)))
 
   ;; We provide some YASnippet snippets. Add them.
-  (add-to-list
-   'yas-snippet-dirs
-   (concat (file-name-directory (locate-library "elpy")) "snippets/")
-   t)
+
+  ;; yas-snippet-dirs can be a string for a single directory. Make
+  ;; sure it's a list in that case so we can add our own entry.
+  (when (not (listp yas-snippet-dirs))
+    (setq yas-snippet-dirs (list yas-snippet-dirs)))
+  (add-to-list 'yas-snippet-dirs
+               (concat (file-name-directory (locate-library "elpy"))
+                       "snippets/")
+               t)
 
   ;; Now load yasnippets.
   (yas-reload-all))
