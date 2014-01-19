@@ -1257,6 +1257,18 @@ result and return that."
     (when (buffer-local-value 'elpy-rpc--buffer-p b)
       (kill-buffer b))))
 
+(defun elpy-rpc-traceback ()
+  "Print the last traceback from the backend."
+  (interactive)
+  (let ((traceback (elpy-rpc "get_traceback" nil)))
+    (with-current-buffer (get-buffer-create "*Elpy Traceback*")
+      (with-help-window "*Elpy Traceback*"
+        (let ((inhibit-read-only t))
+          (erase-buffer)
+          (if traceback
+              (insert traceback)
+            (insert "No traceback")))))))
+
 (defun elpy-rpc-get-completions (&optional success error)
   "Call the find_completions API function.
 
