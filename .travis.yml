@@ -4,23 +4,17 @@ python:
   - 2.7
   - 3.3
 env:
-  - EMACS=emacs24
-  - EMACS=emacs-snapshot
+  - EVM_EMACS=emacs-24.1-bin
+  - EVM_EMACS=emacs-24.2-bin
+  - EVM_EMACS=emacs-24.3-bin
+  # - EVM_EMACS=emacs-git-snapshot
 install:
-  - if [ "$EMACS" = 'emacs-snapshot' ] ; then
-      sudo add-apt-repository -y ppa:cassou/emacs &&
-      sudo apt-get update -qq &&
-      sudo apt-get install -qq
-          emacs-snapshot-el emacs-snapshot-gtk emacs-snapshot ;
-    fi
-  - if [ "$EMACS" = 'emacs24' ] ; then
-      sudo add-apt-repository -y ppa:cassou/emacs &&
-      sudo apt-get update -qq &&
-      sudo apt-get install -qq
-          emacs24 emacs24-el emacs24-common-non-dfsg ;
-    fi
-  - curl -fsSkL https://raw.github.com/rejeep/cask.el/master/go | python
-  - export PATH="$HOME/.cask/bin:$PATH"
+  - sudo mkdir /usr/local/evm
+  - sudo chown $(id -u):$(id -g) /usr/local/evm
+  - curl -fsSkL https://raw.github.com/rejeep/evm/master/go | bash
+  - curl -fsSkL https://raw.github.com/cask/cask/master/go | python
+  - export PATH="$HOME/.evm/bin:$HOME/.cask/bin:$PATH"
+  - evm install $EVM_EMACS --use
   - cask
   - pip install jedi --use-mirrors
   - if [[ "$TRAVIS_PYTHON_VERSION" == 2.6 ]] ; then
