@@ -1433,19 +1433,21 @@ description."
 
 This will call Python in the background and initialize
 `elpy--ac-cache' when it returns."
-  (elpy-rpc-get-completions
-   (lambda (result)
-     (setq elpy--ac-cache nil)
-     (dolist (completion result)
-       (let ((name (car completion))
-             (doc (cadr completion)))
-         (when (not (string-prefix-p "_" name))
-           (push (cons (concat ac-prefix name)
-                       doc)
-                 elpy--ac-cache))))
-     (ac-start))
-   (lambda (err)
-     (message "Can't get completions: %s" err))))
+  (when (not (eq (python-syntax-context-type)
+                 'comment))
+    (elpy-rpc-get-completions
+     (lambda (result)
+       (setq elpy--ac-cache nil)
+       (dolist (completion result)
+         (let ((name (car completion))
+               (doc (cadr completion)))
+           (when (not (string-prefix-p "_" name))
+             (push (cons (concat ac-prefix name)
+                         doc)
+                   elpy--ac-cache))))
+       (ac-start))
+     (lambda (err)
+       (message "Can't get completions: %s" err)))))
 
 (defun elpy--ac-candidates ()
   "Return a list of possible expansions at points.
