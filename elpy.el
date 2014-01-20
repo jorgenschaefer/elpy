@@ -1493,7 +1493,12 @@ This uses `elpy--ac-cache'."
 
 (defun elpy--ac-document (name)
   "Return the documentation for the symbol NAME."
-  (assoc-default name elpy--ac-cache))
+  ;; popup.el silently chokes on empty strings and thus fails to properly
+  ;; create/destory a quick help popup, leaving blank lines behind
+  (let ((doc (assoc-default name elpy--ac-cache)))
+    (if (> (length doc) 0)
+        doc
+      nil)))
 
 (ac-define-source elpy
   '((init       . elpy--ac-init)
