@@ -1032,15 +1032,16 @@ creating one if necessary."
   (when (and elpy-rpc-backend
              (not (stringp elpy-rpc-backend)))
     (error "`elpy-rpc-backend' should be nil or a string."))
-  (with-current-buffer (generate-new-buffer "*elpy-rpc*")
-    (setq elpy-rpc--buffer-p t
-          elpy-rpc--backend-project-root project-root
-          elpy-rpc--backend-python-command python-command
-          default-directory project-root)
+  (let ((new-elpy-rpc-buffer (generate-new-buffer "*elpy-rpc*")))
+    (with-current-buffer new-elpy-rpc-buffer
+      (setq elpy-rpc--buffer-p t
+            elpy-rpc--backend-project-root project-root
+            elpy-rpc--backend-python-command python-command
+            default-directory project-root))
     (let ((proc (condition-case err
                     (let ((process-connection-type nil))
                       (start-process "elpy-rpc"
-                                     (current-buffer)
+                                     new-elpy-rpc-buffer
                                      python-command
                                      "-W" "ignore"
                                      "-m" "elpy.__main__"))
@@ -1079,7 +1080,7 @@ creating one if necessary."
                     "Python library. If you are happy with the native "
                     "backend, please add the following to your .emacs:"
                     "\n\n(setq elpy-rpc-backend \"native\")")))))))
-    (current-buffer)))
+    new-elpy-rpc-buffer))
 
 (defun elpy-rpc--sentinel (process event)
   "The sentinel for the RPC process."
