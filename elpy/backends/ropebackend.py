@@ -115,6 +115,9 @@ class RopeBackend(NativeBackend):
         except IndentationError:
             raise rpc.Fault(code=101,
                             message="Indentation error")
+        except IndexError as e:
+            # Bug in Rope, see #186
+            return []
         starting_offset = self.codeassist.starting_offset(source, offset)
         prefixlen = offset - starting_offset
         return [[proposal.name[prefixlen:], proposal.get_doc()]

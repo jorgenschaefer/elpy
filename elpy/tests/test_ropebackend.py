@@ -145,6 +145,18 @@ class TestGetCompletions(RopeBackendTestCase):
         self.assertNotEqual(sorted(name for (name, doc) in completions),
                             sorted(["igParser"]))
 
+    def test_should_not_fail_for_short_module(self):
+        # This throws an error in Rope which elpy hopefully catches.
+        # See #186
+        source, offset = source_and_offset("from .. import foo_|_")
+        filename = self.project_file("test.py", source)
+        completions = self.backend.rpc_get_completions(self.project_root,
+                                                       filename,
+                                                       source,
+                                                       offset)
+        # This is strictly speaking superfluous. Just avoid an error.
+        self.assertIsNotNone(completions)
+
 
 class TestGetDefinition(RopeBackendTestCase):
     def test_should_return_location_in_same_file(self):
