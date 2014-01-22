@@ -7,6 +7,6 @@
                   (idomenu "0.1")
                   (iedit "0.97")
                   (nose "0.1.1")
-                  (virtualenv "1.2")
+                  (pyvenv "1.0")
                   (yasnippet "0.8.0"))
                 )

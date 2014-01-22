@@ -48,7 +48,7 @@
 (require 'python)
 (require 'grep)
 (require 'thingatpt)
-(require 'virtualenv)
+(require 'pyvenv)
 (require 'yasnippet)
 
 
@@ -209,7 +209,7 @@ configure those modes yourself, pass t here."
   "Minor mode in Python buffers for the Emacs Lisp Python Environment.
 
 This mode fully supports virtualenvs. Once you switch a
-virtualenv using \\[virtualenv-workon], you can use
+virtualenv using \\[pyvenv-workon], you can use
 \\[elpy-rpc-restart] to make the elpy Python process use your
 virtualenv.
 
@@ -283,7 +283,7 @@ explain how to install the elpy module."
             (elpy-installation-command "jedi")
             (insert "\n")
             (insert "If you are using virtualenvs, you can use the "
-                    "M-x virtualenv-workon command to switch to a virtualenv "
+                    "M-x pyvenv-workon command to switch to a virtualenv "
                     "of your choice. Afterwards, running the command "
                     "M-x elpy-rpc-restart will use the packages in "
                     "that virtualenv.")
@@ -293,7 +293,7 @@ explain how to install the elpy module."
 (defun elpy-installation-command (python-module)
   "Insert an installation command description for PYTHON-MODULE."
   (let* ((do-user-install (not (or (getenv "VIRTUAL_ENV")
-                                   virtualenv-workon-session)))
+                                   pyvenv-virtual-env)))
          (user-option (if do-user-install
                           "--user "
                         ""))

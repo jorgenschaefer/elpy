@@ -1,4 +1,5 @@
 (source gnu)
+(source marmalade)
 (source melpa)
 
 (package "elpy" "1.2.50" "Emacs Python Development Environment")
@@ -10,7 +11,7 @@
 (depends-on "idomenu" "0.1")
 (depends-on "iedit" "0.97")
 (depends-on "nose" "0.1.1")
-(depends-on "virtualenv" "1.2")
+(depends-on "pyvenv" "1.0")
 (depends-on "yasnippet" "0.8.0")
 
 (development
