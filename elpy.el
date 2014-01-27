@@ -537,8 +537,7 @@ execution of code. With prefix argument, this code is executed."
   (elpy-shell-get-or-create-process)
   (if (region-active-p)
       (python-shell-send-string (elpy--region-without-indentation
-                                 (region-beginning) (region-end))
-                                nil t)
+                                 (region-beginning) (region-end)))
     (python-shell-send-buffer arg))
   (elpy-shell-switch-to-shell))
 
