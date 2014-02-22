@@ -1052,11 +1052,12 @@ creating one if necessary."
             default-directory project-root))
     (let ((proc (condition-case err
                     (let ((process-connection-type nil))
-                      (start-process "elpy-rpc"
-                                     new-elpy-rpc-buffer
-                                     python-command
-                                     "-W" "ignore"
-                                     "-m" "elpy.__main__"))
+                      (let ((default-directory project-root))
+                        (start-process "elpy-rpc"
+                                       new-elpy-rpc-buffer
+                                       python-command
+                                       "-W" "ignore"
+                                       "-m" "elpy.__main__")))
                   (error
                    (elpy-installation-instructions
                     (format "Could not start the Python subprocess: %s"
