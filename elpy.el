@@ -167,6 +167,7 @@ These are prepended to `grep-find-ignored-directories'."
     (define-key map (kbd "<C-up>")  'elpy-nav-backward-definition)
     ;; (define-key map (kbd "M-,")     'iedit-mode
     (define-key map (kbd "M-.")     'elpy-goto-definition)
+    (define-key map (kbd "M-,")     'elpy-goto-previous-definition)
     (define-key map (kbd "M-a")     'elpy-nav-backward-statement)
     (define-key map (kbd "M-e")     'elpy-nav-forward-statement)
     (define-key map (kbd "M-n")     'elpy-nav-forward-definition)
@@ -622,9 +623,22 @@ screen."
         (elpy-goto-location (car location) (cadr location))
       (error "No definition found"))))
 
-(defun elpy-goto-location (filename offset)
-  "Show FILENAME at OFFSET to the user."
-  (ring-insert find-tag-marker-ring (point-marker))
+(defun elpy-goto-previous-definition ()
+  "Go to the previous definition at which you called \\[elpy-goto-definition], if any."
+  (interactive)
+  (if (ring-empty-p find-tag-marker-ring)
+      (error "No definition found")
+    (let ((last-marker (ring-remove find-tag-marker-ring 0)))
+      (ring-insert-at-beginning find-tag-marker-ring last-marker)
+      (elpy-goto-location (buffer-file-name (marker-buffer last-marker))
+                          (1- (marker-position last-marker))
+                          t))))
+
+(defun elpy-goto-location (filename offset &optional skip-mark)
+  "Show FILENAME at OFFSET to the user.
+If SKIP-MARK is non-nil then don't leave a mark before going to location."
+  (if (null skip-mark)
+      (ring-insert find-tag-marker-ring (point-marker)))
   (let ((buffer (find-file filename)))
     (with-current-buffer buffer
       (with-selected-window (get-buffer-window buffer)
