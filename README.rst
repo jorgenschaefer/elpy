@@ -40,7 +40,7 @@ Evaluate this in your ``*scratch*`` buffer:
 
   (require 'package)
   (add-to-list 'package-archives
-               '("marmalade" . "http://marmalade-repo.org/packages/"))
+               '("elpy" . "http://jorgenschaefer.github.io/packages/"))
 
 
 Then run ``M-x package-refresh-contents`` to load the contents of the
