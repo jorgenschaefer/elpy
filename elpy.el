@@ -50,7 +50,7 @@
 (require 'thingatpt)
 (require 'pyvenv)
 (require 'yasnippet)
-
+(require 'cl)
 
 ;;;;;;;;;;;;;;;
 ;;; Elpy itself
@@ -105,6 +105,14 @@ native - Do not use any backend, use native Python methods only."
   "Directories ignored by `elpy-rgrep-symbol'.
 
 These are prepended to `grep-find-ignored-directories'."
+  :group 'elpy)
+
+(defcustom elpy-project-root-predicates '(elpy-project--root-is-projectile-root
+                                          elpy-project--root-is-first-non-package)
+  "Functions used to look up the project root file.
+
+These functions take a start directory to search in and the first
+one that returns non-nil sets the project dir."
   :group 'elpy)
 
 (defcustom elpy-mode-hook nil
@@ -428,16 +436,21 @@ You can set the variable `elpy-project-root' in, for example,
   elpy-project-root)
 
 (defun elpy-project--find-root ()
-  "Find the first directory in the tree not containing an __init__.py
+  "Applies project root finders until one returns non-null. Uses
+the current buffer's default directory otherwise."
+  (or
+   (some (lambda (f) (condition-case nil (funcall f) (error nil))) elpy-project-root-predicates)
+   default-directory))
 
-If there is no __init__.py in the current directory, return the
-current directory."
+(defun elpy-project--root-is-projectile-root ()
+  (if (symbolp 'projectile-project-root) (projectile-project-root)))
+
+(defun elpy-project--root-is-first-non-package ()
   (if (file-exists-p (format "%s/__init__.py" default-directory))
       (locate-dominating-file default-directory
                               (lambda (dir)
                                 (not (file-exists-p
-                                      (format "%s/__init__.py" dir)))))
-    default-directory))
+                                      (format "%s/__init__.py" dir)))))))
 
 (defun elpy-set-project-root (new-root)
   "Set the Elpy project root to NEW-ROOT."
@@ -1039,11 +1052,12 @@ creating one if necessary."
             default-directory project-root))
     (let ((proc (condition-case err
                     (let ((process-connection-type nil))
-                      (start-process "elpy-rpc"
-                                     new-elpy-rpc-buffer
-                                     python-command
-                                     "-W" "ignore"
-                                     "-m" "elpy.__main__"))
+                      (let ((default-directory project-root))
+                        (start-process "elpy-rpc"
+                                       new-elpy-rpc-buffer
+                                       python-command
+                                       "-W" "ignore"
+                                       "-m" "elpy.__main__")))
                   (error
                    (elpy-installation-instructions
                     (format "Could not start the Python subprocess: %s"
