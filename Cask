@@ -1,5 +1,5 @@
 (source gnu)
-(source marmalade)
+(source "elpy" "http://jorgenschaefer.github.io/packages/")
 (source melpa)
 
 (package "elpy" "1.3.50" "Emacs Python Development Environment")
