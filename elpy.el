@@ -326,8 +326,8 @@ using (defalias 'elpy-initialize-variables 'identity)"
   (add-hook 'python-mode-hook 'elpy-initialize-local-variables)
 
   ;; Flymake support using flake8, including warning faces.
-  (when (or (executable-find "flake8")
-            (not (executable-find python-check-command)))
+  (when (and (executable-find "flake8")
+             (not (executable-find python-check-command)))
     (setq python-check-command "flake8"))
 
   ;; `flymake-no-changes-timeout': The original value of 0.5 is too
