@@ -432,12 +432,17 @@ You can set the variable `elpy-project-root' in, for example,
 
 If there is no __init__.py in the current directory, return the
 current directory."
-  (if (file-exists-p (format "%s/__init__.py" default-directory))
-      (locate-dominating-file default-directory
-                              (lambda (dir)
-                                (not (file-exists-p
-                                      (format "%s/__init__.py" dir)))))
-    default-directory))
+  (cond
+   ((and (functionp 'projectile-project-root)
+         (projectile-project-root))
+    (projectile-project-root))
+   ((file-exists-p (format "%s/__init__.py" default-directory))
+    (locate-dominating-file default-directory
+                            (lambda (dir)
+                              (not (file-exists-p
+                                    (format "%s/__init__.py" dir))))))
+   (t
+    default-directory)))
 
 (defun elpy-set-project-root (new-root)
   "Set the Elpy project root to NEW-ROOT."
