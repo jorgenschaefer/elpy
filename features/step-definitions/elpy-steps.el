@@ -44,3 +44,8 @@
             nil
             "Expected the project root to be '%s', but was '%s'"
             arg elpy-project-root)))
+
+(When "^I wait for process output$"
+  (lambda ()
+    (sit-for 0.1)
+    (accept-process-output nil 1)))

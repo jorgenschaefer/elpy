@@ -534,9 +534,10 @@ time. Honestly."
 If there is an active region, send that. Otherwise, send the
 whole buffer.
 
-Without prefix argument, this will escape the Python idiom of
-if __name__ == '__main__' to be false to avoid accidental
-execution of code. With prefix argument, this code is executed."
+In Emacs 24.3 and later, without prefix argument, this will
+escape the Python idiom of if __name__ == '__main__' to be false
+to avoid accidental execution of code. With prefix argument, this
+code is executed."
   (interactive "P")
   ;; Ensure process exists
   (elpy-shell-get-or-create-process)
@@ -1525,10 +1526,11 @@ This uses `elpy--ac-cache'."
 ;;; Backwards compatibility
 
 ;; Functions for Emacs 24 before 24.3
-(when (not (fboundp 'python-shell-send-region))
-  (defalias 'python-shell-send-region 'python-send-region))
+(when (not (fboundp 'python-shell-send-string))
+  (defalias 'python-shell-send-string 'python-send-string))
 (when (not (fboundp 'python-shell-send-buffer))
-  (defalias 'python-shell-send-buffer 'python-send-buffer))
+  (defun python-shell-send-buffer (&optional arg)
+    (python-send-buffer)))
 (when (not (fboundp 'python-info-current-defun))
   (defalias 'python-info-current-defun 'python-current-defun))
 (when (not (fboundp 'python-nav-end-of-statement))
