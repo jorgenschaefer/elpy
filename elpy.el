@@ -60,7 +60,9 @@
   :prefix "elpy-"
   :group 'languages)
 
-(defcustom elpy-rpc-python-command "python"
+(defcustom elpy-rpc-python-command (if (eq window-system 'w32)
+                                       "pythonw"
+                                     "python")
   "The command to be used for the RPC backend."
   :type 'string
   :group 'elpy)
