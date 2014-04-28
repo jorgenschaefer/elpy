@@ -74,6 +74,6 @@
     (elpy-clean-modeline)
     (dolist ((mode-display minor-mode-alist))
       (when (memq (car mode-display)
-                  '(elpy-mode yas-minor-mode auto-complete-mode flymake-mode))
+                  '(elpy-mode yas/minor-mode auto-complete-mode flymake-mode))
         (should (equal (cdr mode-display)
                        ""))))))
