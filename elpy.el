@@ -98,7 +98,7 @@ native - Do not use any backend, use native Python methods only."
 (defcustom elpy-default-minor-modes '(eldoc-mode
                                       flymake-mode
                                       highlight-indentation-mode
-                                      yas-minor-mode
+                                      yas/minor-mode
                                       auto-complete-mode)
   "Minor modes enabled when `elpy-mode' is enabled."
   :group 'elpy)
@@ -525,7 +525,7 @@ It's not necessary to see (Python Elpy yas AC ElDoc) all the
 time. Honestly."
   (interactive)
   (setq eldoc-minor-mode-string nil)
-  (dolist (mode '(elpy-mode yas-minor-mode auto-complete-mode
+  (dolist (mode '(elpy-mode yas/minor-mode auto-complete-mode
                             flymake-mode))
     (setcdr (assq mode minor-mode-alist)
             (list ""))))
