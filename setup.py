@@ -24,4 +24,5 @@ setup(
         "Topic :: Text Editors :: Emacs",
     ],
     install_requires=["flake8>=2.0"],
+    test_suite="elpy"
 )
