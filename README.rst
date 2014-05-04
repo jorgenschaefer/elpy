@@ -55,3 +55,12 @@ Finally, add the following to your ``.emacs``:
   (elpy-enable)
 
 Done.
+
+License
+=======
+
+This project is free software: You can redistribute it and/or modify
+it under the terms of the `GNU General Public License`__, either
+version 3 of the License, or (at your option) any later version.
+
+.. __: LICENSE
