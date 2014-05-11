@@ -36,6 +36,10 @@
   "The old window configuration. Will be restored after commit.")
 (make-variable-buffer-local 'elpy-refactor-window-configuration)
 
+(make-obsolete
+ 'elpy-refactor
+ "Refactoring has been unstable and flakey, support will be dropped in the future."
+ "elpy 1.5.0")
 (defun elpy-refactor ()
   "Run the Elpy refactoring interface for Python code."
   (interactive)

@@ -1,6 +1,6 @@
 ;;; elpy.el --- Emacs Lisp Python Environment -*- lexical-binding: t -*-
 
-;; Copyright (C) 2012, 2013  Jorgen Schaefer
+;; Copyright (C) 2012-2014  Jorgen Schaefer
 
 ;; Author: Jorgen Schaefer <contact@jorgenschaefer.de>
 ;; URL: https://github.com/jorgenschaefer/elpy
@@ -387,8 +387,8 @@ current directory."
   (interactive "DNew project root: ")
   (setq elpy-project-root new-root))
 
-;;;;;;;;;;;;;;;;;;;
-;;; IPython support
+;;;;;;;;;;;;;;;;;;;;;
+;;; Interactive Shell
 
 (defun elpy-use-ipython (&optional ipython)
   "Set defaults to use IPython instead of the standard interpreter.
@@ -457,8 +457,6 @@ else:
           python-shell-completion-string-code
           "';'.join(__COMPLETER_all_completions('''%s'''))\n")))
 
-
-
 (defun elpy-shell-send-region-or-buffer (&optional arg)
   "Send the active region or the buffer to the Python shell.
 
@@ -516,6 +514,9 @@ code is executed."
       (run-python (python-shell-parse-command))
       (get-buffer-process bufname))))
 
+;;;;;;;;;;;;;;;;;
+;;; Syntax Checks
+
 (defun elpy-check (&optional whole-project-p)
   "Run `python-check-command' on the current buffer's file,
 
@@ -542,14 +543,8 @@ with a prefix argument)."
                        (lambda (mode-name)
                          "*Python Check*"))))
 
-(defun elpy-show-defun ()
-  "Show the current class and method, in case they are not on
-screen."
-  (interactive)
-  (let ((function (python-info-current-defun)))
-    (if function
-        (message "%s()" function)
-      (message "Not in a function"))))
+;;;;;;;;;;;;;;
+;;; Navigation
 
 (defun elpy-goto-definition ()
   "Go to the definition of the symbol at point, if found."
@@ -608,49 +603,8 @@ beginning of the previous one if already at the beginning."
       (goto-char (match-beginning 1))
     (goto-char (point-min))))
 
-(defun elpy-occur-definitions ()
-  "Display an occur buffer of all definitions in the current buffer.
-
-Also, switch to that buffer."
-  (interactive)
-  (let ((list-matching-lines-face nil))
-    (occur "^ *\\(def\\|class\\) "))
-  (let ((window (get-buffer-window "*Occur*")))
-    (if window
-        (select-window window)
-      (switch-to-buffer "*Occur*"))))
-
-(defun elpy-rgrep-symbol (symbol)
-  "Search for SYMBOL in the current project.
-
-SYMBOL defaults to the symbol at point, or the current region if
-active.
-
-With a prefix argument, prompt for a string to search for."
-  (interactive
-   (list
-    (cond
-     (current-prefix-arg
-      (read-from-minibuffer "Search for symbol: "))
-     ((use-region-p)
-      (buffer-substring-no-properties (region-beginning)
-                                      (region-end)))
-     (t
-      (or (thing-at-point 'symbol)
-          (read-from-minibuffer "Search for symbol: "))))))
-  (grep-compute-defaults)
-  (let ((grep-find-ignored-directories (append elpy-rgrep-ignored-directories
-                                               grep-find-ignored-directories)))
-    (rgrep (format "\\b%s\\b" symbol)
-           "*.py"
-           (elpy-project-root)))
-  (with-current-buffer next-error-last-buffer
-    (let ((inhibit-read-only t))
-      (save-excursion
-        (goto-char (point-min))
-        (when (re-search-forward "^find .*" nil t)
-          (replace-match (format "\\1\nSearching for symbol %s\n"
-                                 symbol)))))))
+;;;;;;;;;
+;;; Tests
 
 (defun elpy-test (&optional arg)
   "Run nosetests on the current project.
@@ -665,13 +619,16 @@ With two prefix args, only the current module is run."
    ((>= arg  4) (nosetests-one))
    (t           (nosetests-all))))
 
-
 ;;;;;;;;;;;;;;;;;
 ;;; Documentation
 
 (defvar elpy-doc-history nil
   "History for the `elpy-doc' command.")
 
+(make-obsolete
+ 'elpy-doc-websearch
+ "The direct websearch command will be dropped in a future release."
+ "elpy 1.5.0")
 (defun elpy-doc-websearch (what)
   "Search the Python web documentation for the string WHAT."
   (interactive
@@ -747,9 +704,7 @@ arguments,  the interface simply asks for a string."
             (string< (downcase a)
                      (downcase b))))))
 
-
-;;;;;;;;;;;;
-;;; elpy-ido
+;; elpy-ido
 
 ;; This is a wrapper around ido-completing-read, which does not
 ;; provide for recursive reads by default.
@@ -867,6 +822,61 @@ For REQUIRE-MATCH, INITIAL-INPUT, HIST and DEF, see
         (setq initial-input nil
               def nil)))))
 
+;;;;;;;;;;;;;;;;;
+;;; Misc features
+
+(defun elpy-show-defun ()
+  "Show the current class and method, in case they are not on
+screen."
+  (interactive)
+  (let ((function (python-info-current-defun)))
+    (if function
+        (message "%s()" function)
+      (message "Not in a function"))))
+
+(defun elpy-occur-definitions ()
+  "Display an occur buffer of all definitions in the current buffer.
+
+Also, switch to that buffer."
+  (interactive)
+  (let ((list-matching-lines-face nil))
+    (occur "^ *\\(def\\|class\\) "))
+  (let ((window (get-buffer-window "*Occur*")))
+    (if window
+        (select-window window)
+      (switch-to-buffer "*Occur*"))))
+
+(defun elpy-rgrep-symbol (symbol)
+  "Search for SYMBOL in the current project.
+
+SYMBOL defaults to the symbol at point, or the current region if
+active.
+
+With a prefix argument, prompt for a string to search for."
+  (interactive
+   (list
+    (cond
+     (current-prefix-arg
+      (read-from-minibuffer "Search for symbol: "))
+     ((use-region-p)
+      (buffer-substring-no-properties (region-beginning)
+                                      (region-end)))
+     (t
+      (or (thing-at-point 'symbol)
+          (read-from-minibuffer "Search for symbol: "))))))
+  (grep-compute-defaults)
+  (let ((grep-find-ignored-directories (append elpy-rgrep-ignored-directories
+                                               grep-find-ignored-directories)))
+    (rgrep (format "\\b%s\\b" symbol)
+           "*.py"
+           (elpy-project-root)))
+  (with-current-buffer next-error-last-buffer
+    (let ((inhibit-read-only t))
+      (save-excursion
+        (goto-char (point-min))
+        (when (re-search-forward "^find .*" nil t)
+          (replace-match (format "\\1\nSearching for symbol %s\n"
+                                 symbol)))))))
 
 ;;;;;;;;;;;;;;;;;;;;;
 ;;; elpy-rpc backends
