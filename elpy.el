@@ -36,7 +36,6 @@
 
 ;;; Code:
 
-(require 'auto-complete-config)
 (require 'elpy-refactor)
 (require 'etags)
 (require 'find-file-in-project)
@@ -99,7 +98,7 @@ native - Do not use any backend, use native Python methods only."
                                       flymake-mode
                                       highlight-indentation-mode
                                       yas-minor-mode
-                                      auto-complete-mode)
+                                      company-mode)
   "Minor modes enabled when `elpy-mode' is enabled."
   :group 'elpy)
 
@@ -143,7 +142,6 @@ These are prepended to `grep-find-ignored-directories'."
 
     ;; (define-key map (kbd "<backspace>") 'python-indent-dedent-line-backspace)
     ;; (define-key map (kbd "<backtab>")   'python-indent-dedent-line)
-    ;; (define-key map (kbd "<tab>")       'ac-trigger-key)
 
     ;; (define-key map (kbd "C-M-x")   'python-shell-send-defun)
     ;; (define-key map (kbd "C-c <")   'python-indent-shift-left)
@@ -228,17 +226,12 @@ more structured list.
       (set (make-local-variable 'ffip-project-root) (elpy-project-root)))
     (set (make-local-variable 'eldoc-documentation-function)
          'elpy-eldoc-documentation)
-    (add-to-list 'ac-sources 'ac-source-elpy)
-    (add-to-list 'ac-sources 'ac-source-elpy-dot)
     ;; Enable modes, hence the 1.
     (run-hook-with-args 'elpy-default-minor-modes 1))
    (t
     (kill-local-variable 'ffip-project-root)
     (kill-local-variable 'eldoc-documentation-function)
-    (setq ac-sources
-          (delq 'ac-source-elpy
-                (delq 'ac-source-elpy-dot
-                      ac-sources))))))
+    )))
 
 (defun elpy-installation-instructions (message &optional show-elpy-module)
   "Display a window with installation instructions for the Python
@@ -345,32 +338,6 @@ using (defalias 'elpy-initialize-variables 'identity)"
   ;; mostly annoying.
   (setq flymake-start-syntax-check-on-newline nil)
 
-  ;; `ac-trigger-key': TAB is a great trigger key. We also need to
-  ;; tell auto-complete about the new trigger key. This is a bad
-  ;; interface to set the trigger key. Don't do this. Just let the
-  ;; user set the key in the keymap. Stop second-guessing the user, or
-  ;; Emacs.
-  (setq ac-trigger-key "TAB")
-  (when (fboundp 'ac-set-trigger-key)
-    (ac-set-trigger-key ac-trigger-key))
-
-  ;; `ac-auto-show-menu': Short timeout because the menu is great.
-  (setq ac-auto-show-menu 0.4)
-
-  ;; `ac-quick-help-delay': I'd like to show the menu right with the
-  ;; completions, but this value should be greater than
-  ;; `ac-auto-show-menu' to show help for the first entry as well.
-  (setq ac-quick-help-delay 0.5)
-
-  ;; Fix some key bindings in ac completions. Using RET when a
-  ;; completion is offered is not usually intended to complete (use
-  ;; TAB for that), but done while typing and the inputer is considere
-  ;; complete, with the intent to simply leave it as is and go to the
-  ;; next line. Much like space will not complete, but leave it as is
-  ;; and insert a space.
-  (define-key ac-completing-map (kbd "RET") nil)
-  (define-key ac-completing-map (kbd "<return>") nil)
-
   ;; `yas-trigger-key': TAB, as is the default, conflicts with the
   ;; autocompletion. We also need to tell yasnippet about the new
   ;; binding. This is a bad interface to set the trigger key. Stop
@@ -402,12 +369,24 @@ This should be run from `python-mode-hook'."
   ;; Set `forward-sexp-function' to nil in python-mode. See
   ;; http://debbugs.gnu.org/db/13/13642.html
   (setq forward-sexp-function nil)
+
   ;; Enable warning faces for flake8 output.
   (when (string-match "flake8" python-check-command)
     ;; COMPAT: Obsolete variable as of 24.4
     (if (boundp 'flymake-warning-predicate)
         (set (make-local-variable 'flymake-warning-predicate) "^W[0-9]")
-      (set (make-local-variable 'flymake-warning-re) "^W[0-9]"))))
+      (set (make-local-variable 'flymake-warning-re) "^W[0-9]")))
+
+  ;; We want immediate completions from company.
+  (set (make-local-variable 'company-idle-delay)
+       t)
+  ;; And annotations should be right-aligned
+  (set (make-local-variable 'company-tooltip-align-annotations)
+       t)
+  ;; Add our own backend
+  (set (make-local-variable 'company-backends)
+       (cons'elpy-company-backend company-backends))
+  )
 
 (defvar elpy-project-root nil
   "The root of the project the current buffer is in.")
@@ -525,7 +504,7 @@ It's not necessary to see (Python Elpy yas AC ElDoc) all the
 time. Honestly."
   (interactive)
   (setq eldoc-minor-mode-string nil)
-  (dolist (mode '(elpy-mode yas-minor-mode auto-complete-mode
+  (dolist (mode '(elpy-mode yas-minor-mode company-mode
                             flymake-mode))
     (setcdr (assq mode minor-mode-alist)
             (list ""))))
@@ -1459,69 +1438,67 @@ description."
 ;; No added configuration needed. Nice mode. :o)
 
 
-;;;;;;;;;;;;;;;;;
-;;; Auto-Complete
+;;;;;;;;;;;;;;;;
+;;; company-mode
 
-(defvar elpy--ac-cache nil
-  "List of current expansions and docstrings.")
+(defvar elpy-company-candidate-cache nil
+  "Buffer-local cache for candidate information.")
+(make-variable-buffer-local 'elpy-company-candidate-cache)
 
-(defun elpy--ac-init ()
-  "Initialize a completion.
-
-This will call Python in the background and initialize
-`elpy--ac-cache' when it returns."
-  (when (not (eq (python-syntax-context-type)
-                 'comment))
-    (elpy-rpc-get-completions
-     (lambda (result)
-       (setq elpy--ac-cache nil)
-       (dolist (completion result)
-         (let ((name (car completion))
-               (doc (cadr completion)))
-           (when (not (string-prefix-p "_" name))
-             (push (cons (concat ac-prefix name)
-                         doc)
-                   elpy--ac-cache))))
-       (ac-start))
-     (lambda (err)
-       (message "Can't get completions: %s" err)))))
-
-(defun elpy--ac-candidates ()
-  "Return a list of possible expansions at points.
-
-This uses `elpy--ac-cache'."
-  (mapcar (lambda (info)
-            (popup-make-item
-             (car info)
-             :symbol "p"
-             :summary (when (and (cdr info)
-                                 (not (equal (cdr info) "")))
-                        "->")))
-          elpy--ac-cache))
-
-(defun elpy--ac-document (name)
-  "Return the documentation for the symbol NAME."
-  (let ((doc (assoc-default name elpy--ac-cache)))
-    ;; popup.el has a bug when the docstring is the empty string. See
-    ;; elpy tickets #182 and #154 as well as pull request #183 for
-    ;; details.
-    (if (equal doc "")
-        nil
-      doc)))
-
-(ac-define-source elpy
-  '((init       . elpy--ac-init)
-    (candidates . elpy--ac-candidates)
-    (document   . elpy--ac-document)
-    (symbol     . "p")))
-
-(ac-define-source elpy-dot
-  '((init       . elpy--ac-init)
-    (candidates . elpy--ac-candidates)
-    (document   . elpy--ac-document)
-    (symbol     . "p")
-    (prefix     . c-dot)
-    (requires   . 0)))
+(defun elpy-company-backend (command &optional arg &rest ignored)
+  "A company-mode backend for Elpy."
+  (cond
+   ;; init => Called once per buffer
+   ;; prefix => return the prefix at point
+   ((eq command 'prefix)
+    (company-grab-symbol-cons "\\." 1))
+   ;; candidates <prefix> => return candidates for this prefix
+   ((eq command 'candidates)
+    (cons :async
+          (let ((prefix (or (company-grab-symbol)
+                            ""))
+                (buffer (current-buffer)))
+            (lambda (callback)
+              (elpy-rpc-get-completions
+               (lambda (result)
+                 (when (not (equal buffer (current-buffer)))
+                   (error "Company candidates: Bad buffer"))
+                 (if company-elpy-cache
+                     (clrhash company-elpy-cache)
+                   (setq company-elpy-cache (make-hash-table :test #'equal)))
+                 (funcall callback
+                          (mapcar
+                           (lambda (completion)
+                             (let ((name (concat prefix
+                                                 (car completion)))
+                                   (doc (cadr completion)))
+                               (puthash name doc company-elpy-cache)
+                               name))
+                           result))))))))
+   ;; sorted => t if the list is already sorted
+   ;; - We could sort it ourselves according to "how likely it is".
+   ;;   Does a backend do that?
+   ;; duplicates => t if there could be duplicates
+   ;; no-cache <prefix> => t if company shouldn't cache results
+   ;; meta <candidate> => short docstring for minibuffer
+   ((eq command 'meta)
+    (let ((doc (gethash arg company-elpy-cache)))
+      (when (and doc
+                 (string-match "^\\(?:\\s-\\|\n\\)*\\(.*\\)$" doc))
+        (match-string 1 doc))))
+   ;; annotation <candidate> => short docstring for completion buffer
+   ((eq command 'annotation)
+    "p")
+   ;; doc-buffer <candidate> => put doc buffer in `company-doc-buffer'
+   ((eq command 'doc-buffer)
+    (let ((doc (gethash arg company-elpy-cache)))
+      (when doc
+        (company-doc-buffer doc))))
+   ;; location <candidate> => (buffer . point) or (file . line-number)
+   ;; match <candidate> => for non-prefix based backends
+   ;; require-match => user may not enter non-match ... meh?
+   ;; post-completion <candidate> => after insertion, for snippets
+   ))
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;
