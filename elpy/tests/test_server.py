@@ -1,6 +1,8 @@
 """Tests for the elpy.server module"""
 
+import sys
 import unittest
+
 import mock
 
 import elpy
@@ -44,6 +46,33 @@ class TestInit(TestServer):
         self.JediBackend.return_value = None
         srv = server.ElpyRPCServer()
         self.assertEqual(srv.rpc_get_backend(), "native")
+
+
+class TestConfig(TestServer):
+    def test_should_return_python_version(self):
+        srv = server.ElpyRPCServer()
+        python_version = ("{v.major}.{v.minor}.{v.micro}"
+                          .format(v=sys.version_info))
+
+        config = srv.config()
+
+        self.assertEqual(config['python_version'], python_version)
+
+    def test_should_return_elpy_version(self):
+        srv = server.ElpyRPCServer()
+        elpy_version = elpy.__version__
+
+        config = srv.config()
+
+        self.assertEqual(config['elpy_version'], elpy_version)
+
+    def test_should_return_available_backends(self):
+        srv = server.ElpyRPCServer()
+        backends = srv.rpc_get_available_backends()
+
+        config = srv.config()
+
+        self.assertEqual(config['available_backends'], backends)
 
 
 class TestHandle(TestServer):

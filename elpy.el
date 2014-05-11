@@ -34,6 +34,24 @@
 
 ;; https://github.com/jorgenschaefer/elpy/wiki
 
+;;; Writing Elpy Modules:
+
+;; A module is a function which is called with one or more arguments.
+;; This first argument is the command specifier symbol, which can be
+;; one of the following:
+
+;; global-init:
+;; - Called once, when Elpy is enabled using `elpy-enable'.
+
+;; global-stop:
+;; - Called once, when Elpy is disabled using `elpy-disable'.
+
+;; buffer-init:
+;; - Called in a buffer when elpy-mode is enabled.
+
+;; buffer-stop:
+;; - Called in a buffer when elpy-mode is disabled.
+
 ;;; Code:
 
 (require 'elpy-refactor)
@@ -57,31 +75,29 @@
 (defcustom elpy-rpc-python-command (if (eq window-system 'w32)
                                        "pythonw"
                                      "python")
-  "The command to be used for the RPC backend."
-  :type 'string
-  :group 'elpy)
+  "The Python interpreter for the RPC backend.
 
-(defcustom elpy-show-installation-instructions t
-  "Whether Elpy should display installation instructions in a
-help buffer.  If nil, displays a message in the echo area
-instead."
-  :type 'boolean
+This should be the same interpreter the project will be run with,
+and not an interactive shell like ipython."
+  :type '(choice (const :tag "python" "python")
+                 (const :tag "python2" "python2")
+                 (const :tag "python3" "python3")
+                 (const :tag "pythonw (Python on Windows)" "pythonw")
+                 (string :tag "Other"))
   :group 'elpy)
 
 (defcustom elpy-rpc-backend nil
   "Your preferred backend.
 
-Either nil, or a string.
-
-nil    - Select a backend automatically.
-rope   - Use the Rope refactoring library. This will create
-         .ropeproject directories in your project roots.
-jedi   - Use the Jedi completion library.
-native - Do not use any backend, use native Python methods only."
-  :type '(choice (const "rope")
-                 (const "jedi")
-                 (const "native")
-                 (const nil))
+Elpy can use different backends for code introspection. These
+need to be installed separately using pip or other mechanisms to
+make them available to Python. If you prefer not to do this, you
+can use the native backend, which is very limited but does not
+have any external requirements."
+  :type '(choice (const :tag "Rope" "rope")
+                 (const :tag "Jedi" "jedi")
+                 (const :tag "Native" "native")
+                 (const :tag "Automatic" nil))
   :group 'elpy)
 
 (defcustom elpy-modules '(elpy-module-sane-defaults
@@ -91,33 +107,36 @@ native - Do not use any backend, use native Python methods only."
                           elpy-module-flymake
                           elpy-module-highlight-indentation
                           elpy-module-yasnippet)
-  "The modules Elpy will use.
+  "Which Elpy modules to use.
 
-Each module is a function which is called with one or more
-arguments. This first argument is the command specifier symbol.
-It can be one of the following:
-
-global-init:
-- Called once, when Elpy is enabled using `elpy-enable'.
-
-global-stop:
-- Called once, when Elpy is disabled using `elpy-disable'.
-
-buffer-init:
-- Called in a buffer when elpy-mode is enabled.
-
-buffer-stop:
-- Called in a buffer when elpy-mode is disabled."
+Elpy can use a number of modules for additional features, which
+can be inidividually enabled or disabled."
+  :type '(set (const :tag "Inline code completion (company-mode)"
+                     elpy-module-company)
+              (const :tag "Show function signatures (ElDoc)"
+                     elpy-module-eldoc)
+              (const :tag "Highlight syntax errors (Flymake)"
+                     elpy-module-flymake)
+              (const :tag "Display indentation markers (highlight-indentation)"
+                     elpy-module-highlight-indentation)
+              (const :tag "Expand code snippets (YASnippet)"
+                     elpy-module-yasnippet)
+              (const :tag "Find files in a project (ffip)"
+                     elpy-module-find-file-in-project)
+              (const :tag "Configure some sane defaults for Emacs"
+                     elpy-module-sane-defaults))
   :group 'elpy)
 
 (defcustom elpy-rgrep-ignored-directories '(".tox" "build" "dist")
   "Directories ignored by `elpy-rgrep-symbol'.
 
 These are prepended to `grep-find-ignored-directories'."
+  :type '(repeat string)
   :group 'elpy)
 
 (defcustom elpy-mode-hook nil
   "Hook run when `elpy-mode' is enabled."
+  :type 'hook
   :group 'elpy)
 
 (defconst elpy-version "1.4.50"
@@ -234,61 +253,226 @@ more structured list.
    (t
     (elpy-modules-run 'buffer-stop))))
 
-(defun elpy-installation-instructions (message &optional show-elpy-module)
-  "Display a window with installation instructions for the Python
-side of elpy.
+;;;;;;;;;;;;;;;;;;;;;;
+;;; Elpy Config Buffer
 
-MESSAGE is shown as the first paragraph.
+(defun elpy-config-error (&optional fmt &rest args)
+  "Note a configuration problem.
 
-If SHOW-ELPY-MODULE is non-nil, the help buffer will first
-explain how to install the elpy module."
-  (if elpy-show-installation-instructions
-      (with-help-window "*Elpy Installation*"
-        (with-current-buffer "*Elpy Installation*"
-          (let ((inhibit-read-only t))
-            (erase-buffer)
-            (insert "Elpy Installation Instructions\n")
-            (insert "\n")
-            (insert message)
-            (when (not (bolp))
-              (insert "\n"))
-            (insert "\n")
-            (when show-elpy-module
-              (insert "Elpy requires the Python module \"elpy\". The module "
-                      "is available from pypi, so you can install it using "
-                      "the following command:\n")
-              (insert "\n")
-              (elpy-installation-command "elpy")
-              (insert "\n"))
-            (insert "To find possible completions, Elpy uses one of two "
-                    "Python modules. Either \"rope\" or \"jedi\". To use "
-                    "Elpy to its fullest potential, you should install "
-                    "either one of them. Which one is a matter of taste. "
-                    "You can try both and even switch at runtime using "
-                    "M-x elpy-set-backend.\n")
-            (insert "\n")
-            (insert "Elpy also uses the Rope module for refactoring options, "
-                    "so you likely want to install it even if you use jedi "
-                    "for completion.\n")
-            (insert "\n")
-            (if (string-match "Python 3" (shell-command-to-string
-                                          "python --version"))
-                (elpy-installation-command "rope_py3k")
-              (elpy-installation-command "rope"))
-            (insert "\n")
-            (elpy-installation-command "jedi")
-            (insert "\n")
-            (insert "If you are using virtualenvs, you can use the "
-                    "M-x pyvenv-workon command to switch to a virtualenv "
-                    "of your choice. Afterwards, running the command "
-                    "M-x elpy-rpc-restart will use the packages in "
-                    "that virtualenv.")
-            (fill-region (point-min) (point-max)))))
-    (message "%s" (substitute-command-keys "You don't have elpy properly installed.  Set `elpy-show-installation-instructions' to t to see the help buffer."))))
+This will show a message in the minibuffer that tells the user to
+use \\[elpy-config]."
+  (let ((msg (if fmt
+                 (apply #'format fmt args)
+               "Elpy is not properly configured")))
+    (error "%s; use M-x elpy-config to configure it" msg)))
 
-(defun elpy-installation-command (python-module)
-  "Insert an installation command description for PYTHON-MODULE."
-  (let* ((do-user-install (not (or (getenv "VIRTUAL_ENV")
+;;;###autoload
+(defun elpy-config ()
+  "Configure Elpy.
+
+This function will pop up a configuration buffer, which is mostly
+a customize buffer, but has some more options."
+  (interactive)
+  (let ((buf (custom-get-fresh-buffer "*Elpy Test*"))
+        (custom-search-field nil))
+    (pop-to-buffer buf)
+    ;; Configuration problems
+    (elpy-config--insert-configuration-problems)
+
+    ;; From `custom-group-value-create':
+
+    ;; Draw a horizontal line (this works for both graphical
+    ;; and text displays):
+    (let ((p (point)))
+      (insert "\n")
+      (put-text-property p (1+ p) 'face '(:underline t))
+      (overlay-put (make-overlay p (1+ p))
+                   'before-string
+                   (propertize "\n" 'face '(:underline t)
+                               'display '(space :align-to 999))))
+
+    ;; Show elpy customize options
+    (custom-buffer-create-internal
+     '((elpy custom-group)))
+
+    ;; And provide some customize groups with more options
+    (let ((inhibit-read-only t))
+      (goto-char (point-max))
+      (insert "There are other customize groups you might find interesting:\n"
+              "\n"))
+    (custom-buffer-create-internal
+     '((python custom-group)
+       ;; Nothing useful there
+       ;; (pyvenv custom-group)
+       (company custom-group)
+       (eldoc custom-group)
+       (flymake custom-group)
+       (yasnippet custom-group)
+       ))))
+
+(defun elpy-config--insert-configuration-problems ()
+  "Insert help text and widgets for configuration problems."
+  (insert (propertize "Elpy Configuration" 'face 'bold)
+          "\n\n")
+  (let* ((config (elpy-config--get-config))
+         (venv (getenv "VIRTUAL_ENV"))
+         (executable (executable-find elpy-rpc-python-command))
+         (err (cdr (assq 'error config)))
+         (output (cdr (assq 'output config)))
+         (python-version (cdr (assq 'python_version config)))
+         (elpy-python-version (cdr (assq 'elpy_version config)))
+         (backends (cdr (assq 'available_backends config))))
+    (setq backends '("native"))
+    (insert "Virtualenv: " (if venv
+                               (format "%s (%s)"
+                                       (file-name-nondirectory venv)
+                                       venv)
+                             "None")
+            "\n")
+    (insert "Python....: " (cond
+                            ((and executable python-version)
+                             (format "%s (%s)" python-version executable))
+                            (executable
+                             executable)
+                            (python-version
+                             (format "%s (%s)"
+                                     python-version
+                                     elpy-rpc-python-command))
+                            (t
+                             (format "Not found (%s)"
+                                     elpy-rpc-python-command)))
+            "\n")
+    (when executable
+      (insert "Elpy......: " (or elpy-python-version
+                                 "Not found")
+              "\n")
+      (when elpy-python-version
+        (insert "Backends..: " (if backends
+                                   (mapconcat #'(lambda (x) x)
+                                              backends
+                                              ", ")
+                                 "None")
+                "\n")))
+    (insert "\n")
+
+    (cond
+     ;; Python not found
+     ((equal err "executable_not_found")
+      (elpy-config--insert
+       "Elpy can not find the configured Python interpreter. Please make "
+       "sure that the variable `elpy-rpc-python-command' points to a "
+       "command in your PATH. You can change the variable below.\n"))
+     ;; Python can't find the elpy module
+     ((equal err "no_module_named_elpy")
+      (elpy-config--insert
+       "The Python interpreter could not find the elpy module. "
+       "Make sure the module is installed"
+       (if venv
+           " in the current virtualenv.\n"
+         ".\n")
+       "\n")
+      (widget-create 'elpy-config--pip-button "elpy")
+      (insert "\n"))
+     ;; Otherwise unparseable output.
+     ((equal err "unexpected_output")
+      (elpy-config--insert
+       "There was an unexpected problem starting the RPC process. Please "
+       "check the following output to see if this makes sense to you. "
+       "To me, it doesn't.\n"
+       "\n"
+       output "\n"
+       "\n"))
+     ;; Random error. Shouldn't happen.
+     (err
+      (elpy-config--insert
+       "There was an unexpected problem starting the RPC process. Please "
+       "submit a bug report with the following information. "
+       "\n"
+       (format "%S" err) "\n"
+       "\n"))
+     ;; Requested backend unavailable
+     ((and elpy-rpc-backend
+           (not (member elpy-rpc-backend backends)))
+      (elpy-config--insert
+       "You requested Elpy to use the backend " elpy-rpc-backend ", "
+       "but the Python interpreter could not load that module. Make "
+       "sure the module is installed, or change the value of "
+       "`elpy-rpc-backend' below to one of the available backends.\n"
+       "\n")
+      (widget-create 'elpy-config--pip-button elpy-rpc-backend)
+      (insert "\n"))
+     ;; Only native backend available, but requested automatic choice
+     ((and (not elpy-rpc-backend)
+           (member "native" backends)
+           (not (member "rope" backends))
+           (not (member "jedi" backends)))
+      (elpy-config--insert
+       "You did not specify a preference for an RPC backend, but there "
+       "is only the native backend available. The native backend has "
+       "seriously limited capabilities. If you really want to use the "
+       "native backend, please change the value of `elpy-rpc-backend' "
+       "below to make this explicit. Alternatively, you can install the "
+       "module for one of the supported backends.\n"
+       "\n")
+      (widget-create 'elpy-config--pip-button "rope")
+      (insert "\n")
+      (widget-create 'elpy-config--pip-button "jedi")
+      (insert "\n"))
+     ;; Bad backend version
+     ((not (equal elpy-python-version elpy-version))
+      (elpy-config--insert
+       "The Elpy backend is version " elpy-python-version " while "
+       "the Emacs package is " elpy-version ". This is incompatible. "
+       (if (version< elpy-python-version elpy-version)
+           "Please upgrade the Python module."
+         "Please upgrade the Emacs Lisp package.")
+       "\n")))))
+
+(defun elpy-config--get-config ()
+  "Return the configuration from `elpy-rpc-python-command'."
+  (with-temp-buffer
+    (let ((return-value (ignore-errors
+                          (call-process elpy-rpc-python-command
+                                        nil
+                                        (current-buffer)
+                                        nil
+                                        "-m" "elpy.__main__"
+                                        "config"))))
+      (if (not return-value)
+          '((error . "executable_not_found"))
+        (goto-char (point-min))
+        (condition-case err
+            (let ((json-array-type 'list))
+              (json-read))
+          (error
+           (goto-char (point-min))
+           (if (re-search-forward "No module named elpy" nil t)
+               '((error . "no_module_named_elpy"))
+             `((error . "unexpected_output")
+               (output . ,(buffer-string))))))))))
+
+(defun elpy-config--insert (&rest messages)
+  "Insert a bunch of text and then fill it."
+  (let ((start (point)))
+    (mapc (lambda (obj)
+            (if (stringp obj)
+                (insert obj)
+              (insert (format "%s" obj))))
+          messages)
+    (fill-region start (point))))
+
+(define-widget 'elpy-config--pip-button 'item
+  "A button that runs pip (or an alternative)."
+  :button-prefix "["
+  :button-suffix "]"
+  :format "%[run%] %v"
+  :value-create 'elpy-config--pip-button-value-create
+  :action 'elpy-config--pip-button-action)
+
+(defun elpy-config--pip-button-value-create (widget)
+  "The :value-create option for the pip button widget."
+  (let* ((python-module (widget-get widget :value))
+         (do-user-install (not (or (getenv "VIRTUAL_ENV")
                                    pyvenv-virtual-env)))
          (user-option (if do-user-install
                           "--user "
@@ -299,17 +483,13 @@ explain how to install the elpy module."
                    ((executable-find "easy_install")
                     (format "easy_install %s%s" user-option python-module))
                    (t
-                    nil))))
-    (if (not command)
-        (insert "... hm. It appears you have neither pip nor easy_install "
-                "available. You might want to get the python-pip or "
-                "or python-setuptools package.\n")
-      (insert-text-button "[run]"
-                          'action (lambda (button)
-                                    (async-shell-command
-                                     (button-get button 'command)))
-                          'command command)
-      (insert " " command "\n"))))
+                    (error "Neither easy_install nor pip found")))))
+    (widget-put widget :command command)
+    (insert command)))
+
+(defun elpy-config--pip-button-action (widget &optional event)
+  "The :action option for the pip button widget."
+  (async-shell-command (widget-get widget :command)))
 
 ;;;;;;;;;;;;;;;;
 ;;; Elpy modules
@@ -982,11 +1162,8 @@ creating one if necessary."
                                      "-W" "ignore"
                                      "-m" "elpy.__main__"))
                   (error
-                   (elpy-installation-instructions
-                    (format "Could not start the Python subprocess: %s"
-                            (cadr err))
-                    t)
-                   (error (cadr err))))))
+                   (elpy-config-error
+                    "Elpy can't start Python (%S)" err)))))
       (set-process-query-on-exit-flag proc nil)
       (set-process-sentinel proc #'elpy-rpc--sentinel)
       (set-process-filter proc #'elpy-rpc--filter))
@@ -999,23 +1176,14 @@ creating one if necessary."
          ;; Requested backend successfully set
          t)
        (lambda (err)
-         (elpy-installation-instructions
-          (format (concat "The %s backend is unavailable. "
-                          "Please install appropriate Python library,\n"
-                          "or change the value of `elpy-rpc-backend'")
-                  elpy-rpc-backend)))))
+         (elpy-config-error))))
      ;; User did not specify a backend, make sure we are not using the
      ;; native one.
      (t
       (elpy-rpc-get-backend
        (lambda (current-backend)
          (when (equal current-backend "native")
-           (elpy-installation-instructions
-            (concat "Only the basic native backend is available. "
-                    "You might want to install an appropriate "
-                    "Python library. If you are happy with the native "
-                    "backend, please add the following to your .emacs:"
-                    "\n\n(setq elpy-rpc-backend \"native\")")))))))
+           (elpy-config-error))))))
     new-elpy-rpc-buffer))
 
 (defun elpy-rpc--sentinel (process event)
@@ -1105,9 +1273,7 @@ This is usually an error or backtrace."
                           (match-string 1))))
     (cond
      ((member missing-module '("elpy" "rope" "jedi"))
-      (elpy-installation-instructions
-       (format "The %s Python module was not found." missing-module)
-       (equal missing-module "elpy")))
+      (elpy-config-error))
      (missing-module
       (with-help-window "*Elpy Error*"
         (with-current-buffer "*Elpy Error*"

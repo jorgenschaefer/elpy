@@ -5,6 +5,8 @@ handles backend selection and passes methods on to the selected
 backend.
 
 """
+import sys
+
 import elpy
 
 from elpy.utils.pydocutils import get_pydoc_completions
@@ -41,6 +43,14 @@ class ElpyRPCServer(JSONRPCServer):
             if backend is not None:
                 self.backend = backend
                 break
+
+    def config(self):
+        config = {}
+        config["python_version"] = ("{v.major}.{v.minor}.{v.micro}"
+                                    .format(v=sys.version_info))
+        config["elpy_version"] = elpy.__version__
+        config["available_backends"] = self.rpc_get_available_backends()
+        return config
 
     def handle(self, method_name, args):
         """Call the RPC method method_name with the specified args.
