@@ -38,9 +38,6 @@
 
 (require 'elpy-refactor)
 (require 'etags)
-(require 'find-file-in-project)
-(require 'flymake)
-(require 'highlight-indentation)
 (require 'idomenu)
 (require 'json)
 (require 'nose)
@@ -48,8 +45,6 @@
 (require 'grep)
 (require 'thingatpt)
 (require 'pyvenv)
-(require 'yasnippet)
-
 
 ;;;;;;;;;;;;;;;
 ;;; Elpy itself
@@ -1332,6 +1327,8 @@ error if the backend is not supported."
 (defun elpy-module-find-file-in-project (command &rest args)
   "Module to enable finding files in the current project."
   (pcase command
+    (`global-init
+     (require 'find-file-in-project))
     (`buffer-init
      (when buffer-file-name
        (set (make-local-variable 'ffip-project-root)
@@ -1342,11 +1339,15 @@ error if the backend is not supported."
 ;;;;;;;;;;;;;;;;;;;
 ;;; Module: Company
 
-(defun elpy-module-comany (command &rest args)
+(defun elpy-module-company (command &rest args)
   "Module to support company-mode completions."
   (pcase command
-    (`buffer-init
+    (`global-init
+     (require 'company)
      (elpy-remove-modeline-lighter 'company-mode)
+     (define-key company-active-map (kbd "C-d")
+       'company-show-doc-buffer))
+    (`buffer-init
      ;; We want immediate completions from company.
      (set (make-local-variable 'company-idle-delay)
           t)
@@ -1355,8 +1356,10 @@ error if the backend is not supported."
           t)
      ;; Add our own backend
      (set (make-local-variable 'company-backends)
-          (cons'elpy-company-backend company-backends)))
+          (cons'elpy-company-backend company-backends))
+     (company-mode 1))
     (`buffer-stop
+     (company-mode -1)
      (kill-local-variable 'company-idle-delay)
      (kill-local-variable 'company-tooltip-align-annotations)
      (kill-local-variable 'company-backends))))
@@ -1430,8 +1433,10 @@ error if the backend is not supported."
      (setq eldoc-mode-line-string ""))
     (`buffer-init
      (set (make-local-variable 'eldoc-documentation-function)
-          'elpy-eldoc-documentation))
+          'elpy-eldoc-documentation)
+     (eldoc-mode 1))
     (`buffer-stop
+     (eldoc-mode -1)
      (kill-local-variable 'eldoc-documentation-function))))
 
 (defun elpy-eldoc-documentation ()
@@ -1472,6 +1477,7 @@ error if the backend is not supported."
   "Enable Flymake support for Python."
   (pcase command
     (`global-init
+     (require 'flymake)
      (elpy-remove-modeline-lighter 'flymake-mode)
      ;; Flymake support using flake8, including warning faces.
      (when (and (executable-find "flake8")
@@ -1504,8 +1510,11 @@ error if the backend is not supported."
 
      ;; Add our initializer function
      (add-to-list 'flymake-allowed-file-name-masks
-                  '("\\.py\\'" elpy-flymake-python-init)))
+                  '("\\.py\\'" elpy-flymake-python-init))
+
+     (flymake-mode 1))
     (`buffer-stop
+     (flymake-mode -1)
      (kill-local-variable 'flymake-no-changes-timeout)
      (kill-local-variable 'flymake-start-syntax-check-on-newline)
      ;; COMPAT: Obsolete variable as of 24.4
@@ -1547,6 +1556,19 @@ description."
                           ", ")))
     (message "%s" text)))
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; Module: Highlight Indentation
+
+(defun elpy-module-highlight-indentation (command &rest args)
+  "Module to highlight indentation in Python files."
+  (pcase command
+    (`global-init
+     (require 'highlight-indentation))
+    (`buffer-init
+     (highlight-indentation-mode 1))
+    (`buffer-stop
+     (highlight-indentation-mode -1))))
+
 ;;;;;;;;;;;;;;;;;;;;;
 ;;; Module: Yasnippet
 
@@ -1554,7 +1576,9 @@ description."
   "Module to enable YASnippet snippets."
   (pcase command
     (`global-init
+     (require 'yasnippet)
      (elpy-remove-modeline-lighter 'yas-minor-mode)
+
      ;; We provide some YASnippet snippets. Add them.
 
      ;; yas-snippet-dirs can be a string for a single directory. Make
