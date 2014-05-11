@@ -94,12 +94,30 @@ native - Do not use any backend, use native Python methods only."
                  (const nil))
   :group 'elpy)
 
-(defcustom elpy-default-minor-modes '(eldoc-mode
-                                      flymake-mode
-                                      highlight-indentation-mode
-                                      yas-minor-mode
-                                      company-mode)
-  "Minor modes enabled when `elpy-mode' is enabled."
+(defcustom elpy-modules '(elpy-module-sane-defaults
+                          elpy-module-find-file-in-project
+                          elpy-module-company
+                          elpy-module-eldoc
+                          elpy-module-flymake
+                          elpy-module-highlight-indentation
+                          elpy-module-yasnippet)
+  "The modules Elpy will use.
+
+Each module is a function which is called with one or more
+arguments. This first argument is the command specifier symbol.
+It can be one of the following:
+
+global-init:
+- Called once, when Elpy is enabled using `elpy-enable'.
+
+global-stop:
+- Called once, when Elpy is disabled using `elpy-disable'.
+
+buffer-init:
+- Called in a buffer when elpy-mode is enabled.
+
+buffer-stop:
+- Called in a buffer when elpy-mode is disabled."
   :group 'elpy)
 
 (defcustom elpy-rgrep-ignored-directories '(".tox" "build" "dist")
@@ -176,13 +194,12 @@ These are prepended to `grep-find-ignored-directories'."
   "Key map for the Emacs Lisp Python Environment.")
 
 ;;;###autoload
-(defun elpy-enable (&optional skip-initialize-variables)
+(defun elpy-enable (&optional skip-initialize-modules)
   "Enable Elpy in all future Python buffers.
 
-When SKIP-INITIALIZE-VARIABLES is non-nil, this will NOT call
-`elpy-initialize-variables' to configure various modes in a way
-that the Elpy author considers sensible. If you'd rather
-configure those modes yourself, pass t here."
+When SKIP-INITIALIZE-MODULES is non-nil, this will NOT globally
+initialize the modules in `elpy-modules'. This can result in
+weird behavior, use at your own risk."
   (interactive)
   (when (< emacs-major-version 24)
     (error "Elpy requires Emacs 24 or newer"))
@@ -195,14 +212,15 @@ configure those modes yourself, pass t here."
                      "Elpy only works with python.el from "
                      "Emacs 24 and above"))))
   (add-hook 'python-mode-hook 'elpy-mode)
-  (when (not skip-initialize-variables)
-    (elpy-initialize-variables)))
+  (when (not skip-initialize-modules)
+    (elpy-modules-run 'global-init)))
 
 ;;;###autoload
 (defun elpy-disable ()
   "Disable Elpy in all future Python buffers."
   (interactive)
-  (remove-hook 'python-mode-hook 'elpy-mode))
+  (remove-hook 'python-mode-hook 'elpy-mode)
+  (elpy-modules-run 'global-stop))
 
 ;;;###autoload
 (define-minor-mode elpy-mode
@@ -222,16 +240,9 @@ more structured list.
     (error "Elpy only works with `python-mode'"))
   (cond
    (elpy-mode
-    (when buffer-file-name
-      (set (make-local-variable 'ffip-project-root) (elpy-project-root)))
-    (set (make-local-variable 'eldoc-documentation-function)
-         'elpy-eldoc-documentation)
-    ;; Enable modes, hence the 1.
-    (run-hook-with-args 'elpy-default-minor-modes 1))
+    (elpy-modules-run 'buffer-init))
    (t
-    (kill-local-variable 'ffip-project-root)
-    (kill-local-variable 'eldoc-documentation-function)
-    )))
+    (elpy-modules-run 'buffer-stop))))
 
 (defun elpy-installation-instructions (message &optional show-elpy-module)
   "Display a window with installation instructions for the Python
@@ -310,83 +321,29 @@ explain how to install the elpy module."
                           'command command)
       (insert " " command "\n"))))
 
-(defun elpy-initialize-variables ()
-  "This sets some variables in other modes we like to set.
+;;;;;;;;;;;;;;;;
+;;; Elpy modules
 
-If you want to configure your own keys, do so after this function
-is called (usually from `elpy-enable'), or override this function
-using (defalias 'elpy-initialize-variables 'identity)"
-  ;; Local variables in `python-mode'. This is not removed when Elpy
-  ;; is disabled, which can cause some confusion.
-  (add-hook 'python-mode-hook 'elpy-initialize-local-variables)
+(defun elpy-modules-run (command &rest args)
+  "Run COMMAND with ARGS for all modules in `elpy-modules'."
+  (dolist (module elpy-modules)
+    (apply module command args)))
 
-  ;; Flymake support using flake8, including warning faces.
-  (when (and (executable-find "flake8")
-             (not (executable-find python-check-command)))
-    (setq python-check-command "flake8"))
+(defun elpy-remove-modeline-lighter (mode-name)
+  "Remove the lighterfor MODE-NAME.
 
-  ;; `flymake-no-changes-timeout': The original value of 0.5 is too
-  ;; short for Python code, as that will result in the current line to
-  ;; be highlighted most of the time, and that's annoying. This value
-  ;; might be on the long side, but at least it does not, in general,
-  ;; interfere with normal interaction.
-  (setq flymake-no-changes-timeout 60)
+It's not necessary to see (Python Elpy yas company ElDoc) all the
+time. Honestly."
+  (interactive)
+  (cond
+   ((eq mode-name 'eldoc-minor-mode)
+    (setq eldoc-minor-mode-string nil))
+   (t
+    (setcdr (assq mode-name minor-mode-alist)
+            (list "")))))
 
-  ;; `flymake-start-syntax-check-on-newline': This should be nil for
-  ;; Python, as;; most lines with a colon at the end will mean the next
-  ;; line is always highlighted as error, which is not helpful and
-  ;; mostly annoying.
-  (setq flymake-start-syntax-check-on-newline nil)
-
-  ;; `yas-trigger-key': TAB, as is the default, conflicts with the
-  ;; autocompletion. We also need to tell yasnippet about the new
-  ;; binding. This is a bad interface to set the trigger key. Stop
-  ;; doing this.
-  (let ((old (when (boundp 'yas-trigger-key)
-               yas-trigger-key)))
-    (setq yas-trigger-key "C-c C-i")
-    (when (fboundp 'yas--trigger-key-reload)
-      (yas--trigger-key-reload old)))
-
-  ;; We provide some YASnippet snippets. Add them.
-
-  ;; yas-snippet-dirs can be a string for a single directory. Make
-  ;; sure it's a list in that case so we can add our own entry.
-  (when (not (listp yas-snippet-dirs))
-    (setq yas-snippet-dirs (list yas-snippet-dirs)))
-  (add-to-list 'yas-snippet-dirs
-               (concat (file-name-directory (locate-library "elpy"))
-                       "snippets/")
-               t)
-
-  ;; Now load yasnippets.
-  (yas-reload-all))
-
-(defun elpy-initialize-local-variables ()
-  "Initialize local variables in python-mode.
-
-This should be run from `python-mode-hook'."
-  ;; Set `forward-sexp-function' to nil in python-mode. See
-  ;; http://debbugs.gnu.org/db/13/13642.html
-  (setq forward-sexp-function nil)
-
-  ;; Enable warning faces for flake8 output.
-  (when (string-match "flake8" python-check-command)
-    ;; COMPAT: Obsolete variable as of 24.4
-    (if (boundp 'flymake-warning-predicate)
-        (set (make-local-variable 'flymake-warning-predicate) "^W[0-9]")
-      (set (make-local-variable 'flymake-warning-re) "^W[0-9]")))
-
-  ;; We want immediate completions from company.
-  (set (make-local-variable 'company-idle-delay)
-       t)
-  ;; And annotations should be right-aligned
-  (set (make-local-variable 'company-tooltip-align-annotations)
-       t)
-  ;; Add our own backend
-  (set (make-local-variable 'company-backends)
-       (cons'elpy-company-backend company-backends))
-  )
+;;;;;;;;;;;;;;;;
+;;; Project root
 
 (defvar elpy-project-root nil
   "The root of the project the current buffer is in.")
@@ -429,6 +386,9 @@ current directory."
   "Set the Elpy project root to NEW-ROOT."
   (interactive "DNew project root: ")
   (setq elpy-project-root new-root))
+
+;;;;;;;;;;;;;;;;;;;
+;;; IPython support
 
 (defun elpy-use-ipython (&optional ipython)
   "Set defaults to use IPython instead of the standard interpreter.
@@ -497,17 +457,7 @@ else:
           python-shell-completion-string-code
           "';'.join(__COMPLETER_all_completions('''%s'''))\n")))
 
-(defun elpy-clean-modeline ()
-  "Clean up the mode line by removing some lighters.
 
-It's not necessary to see (Python Elpy yas AC ElDoc) all the
-time. Honestly."
-  (interactive)
-  (setq eldoc-minor-mode-string nil)
-  (dolist (mode '(elpy-mode yas-minor-mode company-mode
-                            flymake-mode))
-    (setcdr (assq mode minor-mode-alist)
-            (list ""))))
 
 (defun elpy-shell-send-region-or-buffer (&optional arg)
   "Send the active region or the buffer to the Python shell.
@@ -1354,92 +1304,52 @@ error if the backend is not supported."
 
 (defalias 'elpy-set-backend 'elpy-rpc-set-backend)
 
+;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; Module: Sane Defaults
 
-;;;;;;;;;
-;;; Eldoc
+(defun elpy-module-sane-defaults (command &rest args)
+  (pcase command
+    (`buffer-init
+     ;; Set `forward-sexp-function' to nil in python-mode. See
+     ;; http://debbugs.gnu.org/db/13/13642.html
+     (set (make-local-variable 'forward-sexp-function) nil))
+    (`buffer-stop
+     (kill-local-variable 'forward-sexp-function))))
 
-(defun elpy-eldoc-documentation ()
-  "Return a call tip for the python call at point."
-  (elpy-rpc-get-calltip
-   (lambda (calltip)
-     (eldoc-message
-      (when calltip
-        (with-temp-buffer
-          ;; multiprocessing.queues.Queue.cancel_join_thread(self)
-          (insert calltip)
-          (goto-char (point-min))
-          ;; First, remove the whole path up to the second-to-last dot. We
-          ;; retain the class just to make it nicer.
-          (while (search-forward "." nil t)
-            nil)
-          (when (search-backward "." nil t 2)
-            (delete-region (point-min) (1+ (point))))
-          ;; Then remove the occurrence of "self", that's not passed by
-          ;; the user.
-          (when (re-search-forward "(self\\(, \\)?" nil t)
-            (replace-match "("))
-          (goto-char (point-min))
-          ;; Lastly, we'd like to highlight the argument are on.
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; Module: Find File in Project
 
-          ;; This is tricky with keyword vs. positions arguments, and
-          ;; possibly quite complex argument values.
+(defun elpy-module-find-file-in-project (command &rest args)
+  "Module to enable finding files in the current project."
+  (pcase command
+    (`buffer-init
+     (when buffer-file-name
+       (set (make-local-variable 'ffip-project-root)
+            (elpy-project-root))))
+    (`buffer-stop
+     (kill-local-variable 'ffip-project-root))))
 
-          ;; Hence, we don't do anything for now.
-          (buffer-string))))))
-  ;; Return the last message until we're done
-  eldoc-last-message)
+;;;;;;;;;;;;;;;;;;;
+;;; Module: Company
 
-
-;;;;;;;;;;;
-;;; Flymake
-
-(eval-after-load "flymake"
-  '(add-to-list 'flymake-allowed-file-name-masks
-                '("\\.py\\'" elpy-flymake-python-init)))
-
-(defun elpy-flymake-python-init ()
-  ;; Make sure it's not a remote buffer as flymake would not work
-  (when (not (file-remote-p buffer-file-name))
-    (let* ((temp-file (flymake-init-create-temp-buffer-copy
-                       'flymake-create-temp-inplace)))
-      (list python-check-command
-            (list temp-file)
-            ;; Run flake8 from / to avoid import problems (#169)
-            "/"))))
-
-(defun elpy-flymake-forward-error ()
-  "Move forward to the next Flymake error and show a
-description."
-  (interactive)
-  (flymake-goto-next-error)
-  (elpy-flymake-show-error))
-
-(defun elpy-flymake-backward-error ()
-  "Move backward to the previous Flymake error and show a
-description."
-  (interactive)
-  (flymake-goto-prev-error)
-  (elpy-flymake-show-error))
-
-(defun elpy-flymake-show-error ()
-  "Show the flymake error message at point."
-  (let* ((lineno (line-number-at-pos))
-         (err-info (car (flymake-find-err-info flymake-err-info
-                                               lineno)))
-         (text (mapconcat #'flymake-ler-text
-                          err-info
-                          ", ")))
-    (message "%s" text)))
-
-
-;;;;;;;;;;;;;
-;;; Yasnippet
-
-;; No added configuration needed. Nice mode. :o)
-
-
-;;;;;;;;;;;;;;;;
-;;; company-mode
+(defun elpy-module-comany (command &rest args)
+  "Module to support company-mode completions."
+  (pcase command
+    (`buffer-init
+     (elpy-remove-modeline-lighter 'company-mode)
+     ;; We want immediate completions from company.
+     (set (make-local-variable 'company-idle-delay)
+          t)
+     ;; And annotations should be right-aligned
+     (set (make-local-variable 'company-tooltip-align-annotations)
+          t)
+     ;; Add our own backend
+     (set (make-local-variable 'company-backends)
+          (cons'elpy-company-backend company-backends)))
+    (`buffer-stop
+     (kill-local-variable 'company-idle-delay)
+     (kill-local-variable 'company-tooltip-align-annotations)
+     (kill-local-variable 'company-backends))))
 
 (defvar elpy-company-candidate-cache nil
   "Buffer-local cache for candidate information.")
@@ -1500,6 +1410,169 @@ description."
    ;; post-completion <candidate> => after insertion, for snippets
    ))
 
+;;;;;;;;;;;;;;;;;
+;;; Module: ElDoc
+
+(defun elpy-module-eldoc (command &rest args)
+  "Module to support ElDoc for Python files."
+  (pcase command
+    (`global-init
+     (setq eldoc-mode-line-string ""))
+    (`buffer-init
+     (set (make-local-variable 'eldoc-documentation-function)
+          'elpy-eldoc-documentation))
+    (`buffer-stop
+     (kill-local-variable 'eldoc-documentation-function))))
+
+(defun elpy-eldoc-documentation ()
+  "Return a call tip for the python call at point."
+  (elpy-rpc-get-calltip
+   (lambda (calltip)
+     (eldoc-message
+      (when calltip
+        (with-temp-buffer
+          ;; multiprocessing.queues.Queue.cancel_join_thread(self)
+          (insert calltip)
+          (goto-char (point-min))
+          ;; First, remove the whole path up to the second-to-last dot. We
+          ;; retain the class just to make it nicer.
+          (while (search-forward "." nil t)
+            nil)
+          (when (search-backward "." nil t 2)
+            (delete-region (point-min) (1+ (point))))
+          ;; Then remove the occurrence of "self", that's not passed by
+          ;; the user.
+          (when (re-search-forward "(self\\(, \\)?" nil t)
+            (replace-match "("))
+          (goto-char (point-min))
+          ;; Lastly, we'd like to highlight the argument are on.
+
+          ;; This is tricky with keyword vs. positions arguments, and
+          ;; possibly quite complex argument values.
+
+          ;; Hence, we don't do anything for now.
+          (buffer-string))))))
+  ;; Return the last message until we're done
+  eldoc-last-message)
+
+;;;;;;;;;;;;;;;;;;;
+;;; Module: Flymake
+
+(defun elpy-module-flymake (command &rest args)
+  "Enable Flymake support for Python."
+  (pcase command
+    (`global-init
+     (elpy-remove-modeline-lighter 'flymake-mode)
+     ;; Flymake support using flake8, including warning faces.
+     (when (and (executable-find "flake8")
+                (not (executable-find python-check-command)))
+       (setq python-check-command "flake8")))
+    (`buffer-init
+     (require 'flymake)
+
+     ;; `flymake-no-changes-timeout': The original value of 0.5 is too
+     ;; short for Python code, as that will result in the current line
+     ;; to be highlighted most of the time, and that's annoying. This
+     ;; value might be on the long side, but at least it does not, in
+     ;; general, interfere with normal interaction.
+     (set (make-local-variable 'flymake-no-changes-timeout)
+          60)
+
+     ;; `flymake-start-syntax-check-on-newline': This should be nil for
+     ;; Python, as;; most lines with a colon at the end will mean the
+     ;; next line is always highlighted as error, which is not helpful
+     ;; and mostly annoying.
+     (set (make-local-variable 'flymake-start-syntax-check-on-newline)
+          nil)
+
+     ;; Enable warning faces for flake8 output.
+     (when (string-match "flake8" python-check-command)
+       ;; COMPAT: Obsolete variable as of 24.4
+              (if (boundp 'flymake-warning-predicate)
+           (set (make-local-variable 'flymake-warning-predicate) "^W[0-9]")
+         (set (make-local-variable 'flymake-warning-re) "^W[0-9]")))
+
+     ;; Add our initializer function
+     (add-to-list 'flymake-allowed-file-name-masks
+                  '("\\.py\\'" elpy-flymake-python-init)))
+    (`buffer-stop
+     (kill-local-variable 'flymake-no-changes-timeout)
+     (kill-local-variable 'flymake-start-syntax-check-on-newline)
+     ;; COMPAT: Obsolete variable as of 24.4
+     (if (boundp 'flymake-warning-predicate)
+         (kill-local-variable 'flymake-warning-predicate)
+       (kill-local-variable 'flymake-warning-re)))))
+
+(defun elpy-flymake-python-init ()
+  ;; Make sure it's not a remote buffer as flymake would not work
+  (when (not (file-remote-p buffer-file-name))
+    (let* ((temp-file (flymake-init-create-temp-buffer-copy
+                       'flymake-create-temp-inplace)))
+      (list python-check-command
+            (list temp-file)
+            ;; Run flake8 from / to avoid import problems (#169)
+            "/"))))
+
+(defun elpy-flymake-forward-error ()
+  "Move forward to the next Flymake error and show a
+description."
+  (interactive)
+  (flymake-goto-next-error)
+  (elpy-flymake-show-error))
+
+(defun elpy-flymake-backward-error ()
+  "Move backward to the previous Flymake error and show a
+description."
+  (interactive)
+  (flymake-goto-prev-error)
+  (elpy-flymake-show-error))
+
+(defun elpy-flymake-show-error ()
+  "Show the flymake error message at point."
+  (let* ((lineno (line-number-at-pos))
+         (err-info (car (flymake-find-err-info flymake-err-info
+                                               lineno)))
+         (text (mapconcat #'flymake-ler-text
+                          err-info
+                          ", ")))
+    (message "%s" text)))
+
+;;;;;;;;;;;;;;;;;;;;;
+;;; Module: Yasnippet
+
+(defun elpy-module-yasnippet (command &rest args)
+  "Module to enable YASnippet snippets."
+  (pcase command
+    (`global-init
+     (elpy-remove-modeline-lighter 'yas-minor-mode)
+     ;; We provide some YASnippet snippets. Add them.
+
+     ;; yas-snippet-dirs can be a string for a single directory. Make
+     ;; sure it's a list in that case so we can add our own entry.
+     (when (not (listp yas-snippet-dirs))
+       (setq yas-snippet-dirs (list yas-snippet-dirs)))
+     (add-to-list 'yas-snippet-dirs
+                  (concat (file-name-directory (locate-library "elpy"))
+                          "snippets/")
+                  t)
+
+     ;; Now load yasnippets.
+     (yas-reload-all)
+
+     ;; `yas-trigger-key': TAB, as is the default, conflicts with the
+     ;; autocompletion. We also need to tell yasnippet about the new
+     ;; binding. This is a bad interface to set the trigger key. Stop
+     ;; doing this.
+     (let ((old (when (boundp 'yas-trigger-key)
+                  yas-trigger-key)))
+       (setq yas-trigger-key "C-c C-i")
+       (when (fboundp 'yas--trigger-key-reload)
+         (yas--trigger-key-reload old))))
+    (`global-stop
+     (setq yas-snippet-dirs
+           (delete (concat (file-name-directory (locate-library "elpy"))
+                           "snippets/")
+                   yas-snippet-dirs)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Backwards compatibility
