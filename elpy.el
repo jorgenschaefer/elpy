@@ -68,11 +68,6 @@ instead."
   :type 'boolean
   :group 'elpy)
 
-(defcustom elpy-rpc-project-specific nil
-  "Whether Elpy should use a separate process for each project."
-  :type 'boolean
-  :group 'elpy)
-
 (defcustom elpy-rpc-backend nil
   "Your preferred backend.
 
