@@ -402,6 +402,8 @@ This should be run from `python-mode-hook'."
   ;; Set `forward-sexp-function' to nil in python-mode. See
   ;; http://debbugs.gnu.org/db/13/13642.html
   (setq forward-sexp-function nil)
+  ;; Python's PEP8 for example recommends two spaces
+  (set (make-local-variable 'comment-inline-offset) 2)
   ;; Enable warning faces for flake8 output.
   (when (string-match "flake8" python-check-command)
     ;; COMPAT: Obsolete variable as of 24.4
