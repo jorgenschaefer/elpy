@@ -322,7 +322,6 @@ a customize buffer, but has some more options."
          (python-version (cdr (assq 'python_version config)))
          (elpy-python-version (cdr (assq 'elpy_version config)))
          (backends (cdr (assq 'available_backends config))))
-    (setq backends '("native"))
     (insert "Virtualenv: " (if venv
                                (format "%s (%s)"
                                        (file-name-nondirectory venv)
