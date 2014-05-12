@@ -58,8 +58,7 @@ class JediBackend(NativeBackend):
             # cases. See issue #76.
             if (
                     locations and
-                    locations[0].module_path and
-                    not os.path.exists(locations[0].module_path)
+                    locations[0].module_path is None
             ):
                 locations = script.goto()
         finally:
@@ -69,9 +68,10 @@ class JediBackend(NativeBackend):
         else:
             loc = locations[-1]
             try:
-                with open(loc.module_path) as f:
-                    offset = linecol_to_pos(f.read(),
-                                            *loc.start_pos)
+                if loc.module_path:
+                    with open(loc.module_path) as f:
+                        offset = linecol_to_pos(f.read(),
+                                                *loc.start_pos)
             except IOError:
                 return None
             return (loc.module_path, offset)

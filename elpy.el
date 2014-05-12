@@ -1541,14 +1541,10 @@ error if the backend is not supported."
    ;; candidates <prefix> => return candidates for this prefix
    ((eq command 'candidates)
     (cons :async
-          (let ((prefix (or (company-grab-symbol)
-                            ""))
-                (buffer (current-buffer)))
+          (let ((prefix arg))
             (lambda (callback)
               (elpy-rpc-get-completions
                (lambda (result)
-                 (when (not (equal buffer (current-buffer)))
-                   (error "Company candidates: Bad buffer"))
                  (if elpy-company-candidate-cache
                      (clrhash elpy-company-candidate-cache)
                    (setq elpy-company-candidate-cache

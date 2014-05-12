@@ -1,8 +1,7 @@
 (define-package "elpy" "1.4.50"
                 "Emacs Python Development Environment"
-                '((auto-complete "1.4")
+                '((company "0.8.0")
                   (find-file-in-project "3.2")
-                  (fuzzy "0.1") ;; For auto-complete
                   (highlight-indentation "0.5.0")
                   (idomenu "0.1")
                   (iedit "0.97")
