@@ -1478,9 +1478,12 @@ error if the backend is not supported."
     (`buffer-init
      ;; Set `forward-sexp-function' to nil in python-mode. See
      ;; http://debbugs.gnu.org/db/13/13642.html
-     (set (make-local-variable 'forward-sexp-function) nil))
+     (set (make-local-variable 'forward-sexp-function) nil)
+     ;; PEP8 recommends two spaces in front of inline comments.
+     (set (make-local-variable 'comment-inline-offset) 2))
     (`buffer-stop
-     (kill-local-variable 'forward-sexp-function))))
+     (kill-local-variable 'forward-sexp-function)
+     (kill-local-variable 'comment-inline-offset))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Module: Find File in Project
