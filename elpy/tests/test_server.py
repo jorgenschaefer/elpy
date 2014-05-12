@@ -51,7 +51,7 @@ class TestInit(TestServer):
 class TestConfig(TestServer):
     def test_should_return_python_version(self):
         srv = server.ElpyRPCServer()
-        python_version = ("{v.major}.{v.minor}.{v.micro}"
+        python_version = ("{v[0]}.{v[1]}.{v[2]}"
                           .format(v=sys.version_info))
 
         config = srv.config()
