@@ -1550,16 +1550,17 @@ error if the backend is not supported."
                (lambda (result)
                  (when (not (equal buffer (current-buffer)))
                    (error "Company candidates: Bad buffer"))
-                 (if company-elpy-cache
-                     (clrhash company-elpy-cache)
-                   (setq company-elpy-cache (make-hash-table :test #'equal)))
+                 (if elpy-company-candidate-cache
+                     (clrhash elpy-company-candidate-cache)
+                   (setq elpy-company-candidate-cache
+                         (make-hash-table :test #'equal)))
                  (funcall callback
                           (mapcar
                            (lambda (completion)
                              (let ((name (concat prefix
                                                  (car completion)))
                                    (doc (cadr completion)))
-                               (puthash name doc company-elpy-cache)
+                               (puthash name doc elpy-company-candidate-cache)
                                name))
                            result))))))))
    ;; sorted => t if the list is already sorted
@@ -1569,7 +1570,7 @@ error if the backend is not supported."
    ;; no-cache <prefix> => t if company shouldn't cache results
    ;; meta <candidate> => short docstring for minibuffer
    ((eq command 'meta)
-    (let ((doc (gethash arg company-elpy-cache)))
+    (let ((doc (gethash arg elpy-company-candidate-cache)))
       (when (and doc
                  (string-match "^\\(?:\\s-\\|\n\\)*\\(.*\\)$" doc))
         (match-string 1 doc))))
@@ -1578,7 +1579,7 @@ error if the backend is not supported."
     "p")
    ;; doc-buffer <candidate> => put doc buffer in `company-doc-buffer'
    ((eq command 'doc-buffer)
-    (let ((doc (gethash arg company-elpy-cache)))
+    (let ((doc (gethash arg elpy-company-candidate-cache)))
       (when doc
         (company-doc-buffer doc))))
    ;; location <candidate> => (buffer . point) or (file . line-number)
