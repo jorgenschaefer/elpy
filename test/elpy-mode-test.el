@@ -30,7 +30,10 @@
 
 (ert-deftest elpy-mode-should-initialize-ffip-project-root ()
   (mocker-let ((elpy-project-root ()
-                                  ((:output "/opt/root"))))
+                                  ((:output "/opt/root")))
+               (flymake-mode (start)
+                             ((:input '(1)
+                               :output nil))))
     ;; Without file name
     (with-temp-buffer
       (python-mode)
