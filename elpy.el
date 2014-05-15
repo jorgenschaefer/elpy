@@ -646,11 +646,21 @@ code is executed."
   (interactive "P")
   ;; Ensure process exists
   (elpy-shell-get-or-create-process)
-  (if (region-active-p)
-      (python-shell-send-string (elpy--region-without-indentation
-                                 (region-beginning) (region-end)))
-    (python-shell-send-buffer arg))
-  (elpy-shell-switch-to-shell))
+  (let ((if-main-regex "^if +__name__ +== +[\"']__main__[\"'] *:")
+        (has-if-main nil))
+    (if (region-active-p)
+        (let ((region (elpy--region-without-indentation
+                       (region-beginning) (region-end))))
+          (setq has-if-main (string-match if-main-regex region))
+          (python-shell-send-string region))
+      (save-excursion
+        (goto-char (point-min))
+        (setq has-if-main (re-search-forward if-main-regex nil t)))
+      (python-shell-send-buffer arg))
+    (elpy-shell-switch-to-shell)
+    (when has-if-main
+      (message (concat "Removed if __main__ == '__main__' construct, "
+                       "use a prefix argument to evaluate.")))))
 
 (defun elpy--region-without-indentation (beg end)
   "Return the current region as a string, but without indentation."

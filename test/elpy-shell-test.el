@@ -39,3 +39,19 @@ Backwards compatibility issues, see #124."
             "meh\n")
     (should-error (elpy--region-without-indentation (point-min)
                                                     (point-max)))))
+
+(ert-deftest test-elpy-shell-send-region-or-buffer ()
+  "Test the function."
+  (with-temp-buffer
+    (python-mode)
+    (elpy-mode)
+    (insert "def foo():\n"
+            "  pass\n"
+            "\n"
+            "if __name__ == '__main__':\n"
+            "  print 'Argh'\n")
+    (elpy-shell-send-region-or-buffer)
+    (with-current-buffer ert-runner-output-buffer
+      (save-excursion
+        (goto-char (point-min))
+        (should (re-search-forward "Removed if __main__" nil t))))))
