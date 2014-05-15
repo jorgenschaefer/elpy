@@ -185,7 +185,6 @@ These are prepended to `grep-find-ignored-directories'."
     (define-key map (kbd "C-c C-z") 'elpy-shell-switch-to-shell)
     (define-key map (kbd "C-c C-d") 'elpy-doc)
     (define-key map (kbd "C-c C-f") 'find-file-in-project)
-    ;; (define-key map (kbd "C-c C-i") 'yasnippet-expand)
     (define-key map (kbd "C-c C-j") 'idomenu)
     (define-key map (kbd "C-c C-n") 'elpy-flymake-forward-error)
     (define-key map (kbd "C-c C-o") 'elpy-occur-definitions)
@@ -1760,22 +1759,16 @@ description."
                   t)
 
      ;; Now load yasnippets.
-     (yas-reload-all)
-
-     ;; `yas-trigger-key': TAB, as is the default, conflicts with the
-     ;; autocompletion. We also need to tell yasnippet about the new
-     ;; binding. This is a bad interface to set the trigger key. Stop
-     ;; doing this.
-     (let ((old (when (boundp 'yas-trigger-key)
-                  yas-trigger-key)))
-       (setq yas-trigger-key "C-c C-i")
-       (when (fboundp 'yas--trigger-key-reload)
-         (yas--trigger-key-reload old))))
+     (yas-reload-all))
     (`global-stop
      (setq yas-snippet-dirs
            (delete (concat (file-name-directory (locate-library "elpy"))
                            "snippets/")
-                   yas-snippet-dirs)))))
+                   yas-snippet-dirs)))
+    (`buffer-init
+     (yas-minor-mode 1))
+    (`buffer-stop
+     (yas-minor-mode -1))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Backwards compatibility
