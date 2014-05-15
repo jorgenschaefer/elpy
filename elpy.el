@@ -197,6 +197,9 @@ These are prepended to `grep-find-ignored-directories'."
     (define-key map (kbd "C-c C-w") 'elpy-doc-websearch)
     ;; (define-key map (kbd "C-c C-z") 'python-shell-switch-to-shell)
 
+    (define-key map (kbd "<S-return>") 'elpy-open-and-indent-line-below)
+    (define-key map (kbd "<C-S-return>") 'elpy-open-and-indent-line-above)
+
     (define-key map (kbd "<C-down>") 'elpy-nav-forward-definition)
     (define-key map (kbd "<C-up>")  'elpy-nav-backward-definition)
     ;; (define-key map (kbd "M-,")     'iedit-mode
@@ -789,8 +792,22 @@ beginning of the previous one if already at the beginning."
       (goto-char (match-beginning 1))
     (goto-char (point-min))))
 
-;;;;;;;;;
-;;; Tests
+(defun elpy-open-and-indent-line-below ()
+  "Open a line below the current one, move there, and indent."
+  (interactive)
+  (move-end-of-line 1)
+  (newline-and-indent))
+
+(defun elpy-open-and-indent-line-above ()
+  "Open a line above the current one, move there, and indent."
+  (interactive)
+  (move-beginning-of-line 1)
+  (save-excursion
+    (insert "\n"))
+  (indent-according-to-mode))
+
+;;;;;;;;;;;;;;;;
+;;; Test running
 
 (defun elpy-test (&optional arg)
   "Run nosetests on the current project.
