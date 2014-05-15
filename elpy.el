@@ -1599,7 +1599,7 @@ error if the backend is not supported."
   "Module to support ElDoc for Python files."
   (pcase command
     (`global-init
-     (setq eldoc-mode-line-string ""))
+     (setq eldoc-minor-mode-string nil))
     (`buffer-init
      (set (make-local-variable 'eldoc-documentation-function)
           'elpy-eldoc-documentation)
