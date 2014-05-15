@@ -1545,7 +1545,8 @@ error if the backend is not supported."
    ;; init => Called once per buffer
    ;; prefix => return the prefix at point
    ((eq command 'prefix)
-    (company-grab-symbol-cons "\\." 1))
+    (when (not (company-in-string-or-comment))
+      (company-grab-symbol-cons "\\." 1)))
    ;; candidates <prefix> => return candidates for this prefix
    ((eq command 'candidates)
     (cons :async
