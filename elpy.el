@@ -1303,7 +1303,8 @@ creating one if necessary."
             elpy-rpc--backend-python-command python-command
             default-directory project-root))
     (let ((proc (condition-case err
-                    (let ((process-connection-type nil))
+                    (let ((process-connection-type nil)
+                          (default-directory "/"))
                       (start-process "elpy-rpc"
                                      new-elpy-rpc-buffer
                                      python-command
