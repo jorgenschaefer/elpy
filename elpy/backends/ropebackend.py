@@ -105,13 +105,13 @@ class RopeBackend(NativeBackend):
                                  re.MULTILINE)
             linenos = [int(x) for x in linenos]
             linedesc = ", ".join(str(x) for x in sorted(set(linenos)))
-            raise rpc.Fault(code=101,
-                            message=("Too many syntax errors in file {0} "
-                                     "(line{1} {2})"
-                                     .format(e.filename,
-                                             "s" if ("," in linedesc)
-                                             else "",
-                                             linedesc)))
+            raise rpc.Warning(code=101,
+                              message=("Too many syntax errors in file {0} "
+                                       "(line{1} {2})"
+                                       .format(e.filename,
+                                               "s" if ("," in linedesc)
+                                               else "",
+                                               linedesc)))
         except IndentationError:
             raise rpc.Fault(code=101,
                             message="Indentation error")

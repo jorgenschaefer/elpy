@@ -118,9 +118,11 @@ class TestHandleRequest(TestJSONRPCServer):
         self.write(json.dumps(dict(method='foo',
                                    id=23)))
         self.rpc.handle_request()
-        self.assertEqual(json.loads(self.read()),
-                         dict(id=23,
-                              error="Unknown method foo"))
+        result = json.loads(self.read())
+
+        self.assertEqual(result["id"], 23)
+        self.assertEqual(result["error"]["message"],
+                         "Unknown method foo")
 
     def test_should_return_error_for_exception_in_method(self):
         def test_method():
@@ -129,10 +131,28 @@ class TestHandleRequest(TestJSONRPCServer):
         self.write(json.dumps(dict(method='foo',
                                    id=23)))
         self.rpc.rpc_foo = test_method
+
         self.rpc.handle_request()
-        self.assertEqual(json.loads(self.read()),
-                         dict(id=23,
-                              error="An error was raised"))
+        result = json.loads(self.read())
+
+        self.assertEqual(result["id"], 23)
+        self.assertEqual(result["error"]["message"], "An error was raised")
+        self.assertIn("traceback", result["error"])
+
+    def test_should_not_include_traceback_for_warnings(self):
+        def test_method():
+            raise rpc.Warning("This is a warning")
+
+        self.write(json.dumps(dict(method="foo",
+                                   id=23)))
+        self.rpc.rpc_foo = test_method
+
+        self.rpc.handle_request()
+        result = json.loads(self.read())
+
+        self.assertEqual(result["id"], 23)
+        self.assertEqual(result["error"]["message"], "This is a warning")
+        self.assertNotIn("traceback", result["error"])
 
     def test_should_store_error_for_exception_in_method(self):
         def test_method():
@@ -142,9 +162,6 @@ class TestHandleRequest(TestJSONRPCServer):
         self.rpc.rpc_foo = test_method
         self.assertIsNone(self.rpc.last_traceback)
         self.rpc.handle_request()
-        self.assertEqual(json.loads(self.read()),
-                         dict(id=23,
-                              error="An error was raised"))
         self.assertIsNotNone(self.rpc.last_traceback)
 
     def test_should_call_handle_for_unknown_method(self):

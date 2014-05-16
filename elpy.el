@@ -284,152 +284,113 @@ This function will pop up a configuration buffer, which is mostly
 a customize buffer, but has some more options."
   (interactive)
   (let ((buf (custom-get-fresh-buffer "*Elpy Test*"))
+        (config (elpy-config--get-config))
         (custom-search-field nil))
-    (pop-to-buffer buf)
-    ;; Configuration problems
-    (elpy-config--insert-configuration-problems)
+    (with-current-buffer buf
+      (elpy-insert--header "Elpy Configuration")
+      ;; Configuration problems
+      (elpy-config--insert-configuration-problems config)
 
-    ;; From `custom-group-value-create':
+      ;; From `custom-group-value-create':
 
-    ;; Draw a horizontal line (this works for both graphical
-    ;; and text displays):
-    (let ((p (point)))
-      (insert "\n")
-      (put-text-property p (1+ p) 'face '(:underline t))
-      (overlay-put (make-overlay p (1+ p))
-                   'before-string
-                   (propertize "\n" 'face '(:underline t)
-                               'display '(space :align-to 999))))
+      ;; Draw a horizontal line (this works for both graphical
+      ;; and text displays):
+      (let ((p (point)))
+        (insert "\n")
+        (put-text-property p (1+ p) 'face '(:underline t))
+        (overlay-put (make-overlay p (1+ p))
+                     'before-string
+                     (propertize "\n" 'face '(:underline t)
+                                 'display '(space :align-to 999))))
 
-    ;; Show elpy customize options
-    (custom-buffer-create-internal
-     '((elpy custom-group)))
+      ;; Show elpy customize options
+      (custom-buffer-create-internal
+       '((elpy custom-group)))
 
-    ;; And provide some customize groups with more options
-    (let ((inhibit-read-only t))
-      (goto-char (point-max))
-      (insert "There are other customize groups you might find interesting:\n"
-              "\n"))
-    (custom-buffer-create-internal
-     '((python custom-group)
-       ;; Nothing useful there
-       ;; (pyvenv custom-group)
-       (company custom-group)
-       (eldoc custom-group)
-       (flymake custom-group)
-       (yasnippet custom-group)
-       ))))
+      ;; And provide some customize groups with more options
+      (let ((inhibit-read-only t))
+        (goto-char (point-max))
+        (insert
+         "There are other customize groups you might find interesting:\n"
+         "\n"))
+      (custom-buffer-create-internal
+       '((python custom-group)
+         ;; Nothing useful there
+         ;; (pyvenv custom-group)
+         (company custom-group)
+         (eldoc custom-group)
+         (flymake custom-group)
+         (yasnippet custom-group)
+         )))
+    (pop-to-buffer buf)))
 
-(defun elpy-config--insert-configuration-problems ()
+(defun elpy-config--insert-configuration-problems (config)
   "Insert help text and widgets for configuration problems."
-  (insert (propertize "Elpy Configuration" 'face 'bold)
-          "\n\n")
-  (let* ((config (elpy-config--get-config))
-         (venv (getenv "VIRTUAL_ENV"))
-         (executable (executable-find elpy-rpc-python-command))
-         (err (cdr (assq 'error config)))
-         (output (cdr (assq 'output config)))
-         (python-version (cdr (assq 'python_version config)))
-         (elpy-python-version (cdr (assq 'elpy_version config)))
-         (backends (cdr (assq 'available_backends config))))
-    (insert "Virtualenv: " (if venv
-                               (format "%s (%s)"
-                                       (file-name-nondirectory venv)
-                                       venv)
-                             "None")
-            "\n")
-    (insert "Python....: " (cond
-                            ((and executable python-version)
-                             (format "%s (%s)" python-version executable))
-                            (executable
-                             executable)
-                            (python-version
-                             (format "%s (%s)"
-                                     python-version
-                                     elpy-rpc-python-command))
-                            (t
-                             (format "Not found (%s)"
-                                     elpy-rpc-python-command)))
-            "\n")
-    (when executable
-      (insert "Elpy......: " (or elpy-python-version
-                                 "Not found")
-              "\n")
-      (when elpy-python-version
-        (insert "Backends..: " (if backends
-                                   (mapconcat #'(lambda (x) x)
-                                              backends
-                                              ", ")
-                                 "None")
-                "\n")))
+  (when (not config)
+    (setq config (elpy-config--get-config)))
+  (elpy-config--insert-configuration-table config)
+  (insert "\n")
+  (cond
+   ;; Python not found
+   ((not (gethash "python_rpc_executable" config))
+    (elpy-insert--para
+     "Elpy can not find the configured Python interpreter. Please make "
+     "sure that the variable `elpy-rpc-python-command' points to a "
+     "command in your PATH. You can change the variable below.\n"))
+   ;; Python can't find the elpy module
+   ((not (gethash "elpy_version" config))
+    (elpy-insert--para
+     "The Python interpreter could not find the elpy module. "
+     "Make sure the module is installed"
+     (if (getenv "virtual_env" config)
+         " in the current virtualenv.\n"
+       ".\n"))
     (insert "\n")
-
-    (cond
-     ;; Python not found
-     ((equal err "executable_not_found")
-      (elpy-config--insert
-       "Elpy can not find the configured Python interpreter. Please make "
-       "sure that the variable `elpy-rpc-python-command' points to a "
-       "command in your PATH. You can change the variable below.\n"))
-     ;; Python can't find the elpy module
-     ((equal err "no_module_named_elpy")
-      (elpy-config--insert
-       "The Python interpreter could not find the elpy module. "
-       "Make sure the module is installed"
-       (if venv
-           " in the current virtualenv.\n"
-         ".\n")
-       "\n")
-      (widget-create 'elpy-config--pip-button "elpy")
-      (insert "\n"))
-     ;; Otherwise unparseable output.
-     ((equal err "unexpected_output")
-      (elpy-config--insert
-       "There was an unexpected problem starting the RPC process. Please "
-       "check the following output to see if this makes sense to you. "
-       "To me, it doesn't.\n"
-       "\n"
-       output "\n"
-       "\n"))
-     ;; Random error. Shouldn't happen.
-     (err
-      (elpy-config--insert
-       "There was an unexpected problem starting the RPC process. Please "
-       "submit a bug report with the following information. "
-       "\n"
-       (format "%S" err) "\n"
-       "\n"))
-     ;; Requested backend unavailable
-     ((and elpy-rpc-backend
-           (not (member elpy-rpc-backend backends)))
-      (elpy-config--insert
-       "You requested Elpy to use the backend " elpy-rpc-backend ", "
-       "but the Python interpreter could not load that module. Make "
-       "sure the module is installed, or change the value of "
-       "`elpy-rpc-backend' below to one of the available backends.\n"
-       "\n")
-      (widget-create 'elpy-config--pip-button elpy-rpc-backend)
-      (insert "\n"))
-     ;; Only native backend available, but requested automatic choice
-     ((and (not elpy-rpc-backend)
-           (member "native" backends)
-           (not (member "rope" backends))
-           (not (member "jedi" backends)))
-      (elpy-config--insert
-       "You did not specify a preference for an RPC backend, but there "
-       "is only the native backend available. The native backend has "
-       "seriously limited capabilities. If you really want to use the "
-       "native backend, please change the value of `elpy-rpc-backend' "
-       "below to make this explicit. Alternatively, you can install the "
-       "module for one of the supported backends.\n"
-       "\n")
-      (widget-create 'elpy-config--pip-button "rope")
-      (insert "\n")
-      (widget-create 'elpy-config--pip-button "jedi")
-      (insert "\n"))
-     ;; Bad backend version
-     ((not (equal elpy-python-version elpy-version))
-      (elpy-config--insert
+    (widget-create 'elpy-insert--pip-button "elpy")
+    (insert "\n"))
+   ;; Otherwise unparseable output.
+   ((gethash "error_output" config)
+    (elpy-insert--para
+     "There was an unexpected problem starting the RPC process. Please "
+     "check the following output to see if this makes sense to you. "
+     "To me, it doesn't.\n")
+    (insert "\n"
+            (gethash "error_output" config) "\n"
+            "\n"))
+   ;; Requested backend unavailable
+   ((or (and (equal elpy-rpc-backend "rope")
+             (not (gethash "rope_version" config)))
+        (and (equal elpy-rpc-backend "jedi")
+             (not (gethash "jedi_version" config))))
+    (elpy-insert--para
+     "You requested Elpy to use the backend " elpy-rpc-backend ", "
+     "but the Python interpreter could not load that module. Make "
+     "sure the module is installed, or change the value of "
+     "`elpy-rpc-backend' below to one of the available backends.\n")
+    (insert "\n")
+    (widget-create 'elpy-insert--pip-button elpy-rpc-backend)
+    (insert "\n"))
+   ;; Only native backend available, but requested automatic choice
+   ((and (not elpy-rpc-backend)
+         (not (gethash "rope_version" config))
+         (not (gethash "jedi_version" config)))
+    (elpy-insert--para
+     "You did not specify a preference for an RPC backend, but there "
+     "is only the native backend available. The native backend has "
+     "seriously limited capabilities. If you really want to use the "
+     "native backend, please change the value of `elpy-rpc-backend' "
+     "below to make this explicit. Alternatively, you can install the "
+     "module for one of the supported backends.\n")
+    (insert "\n")
+    (widget-create 'elpy-insert--pip-button "rope")
+    (insert "\n")
+    (widget-create 'elpy-insert--pip-button "jedi")
+    (insert "\n"))
+   ;; Bad backend version
+   ((not (equal (gethash "elpy_version" config)
+                elpy-version))
+    (let ((elpy-python-version (gethash "elpy_version" config)))
+      (elpy-insert--para
        "The Elpy backend is version " elpy-python-version " while "
        "the Emacs package is " elpy-version ". This is incompatible. "
        (if (version< elpy-python-version elpy-version)
@@ -437,30 +398,175 @@ a customize buffer, but has some more options."
          "Please upgrade the Emacs Lisp package.")
        "\n")))))
 
-(defun elpy-config--get-config ()
-  "Return the configuration from `elpy-rpc-python-command'."
-  (with-temp-buffer
-    (let ((return-value (ignore-errors
-                          (call-process elpy-rpc-python-command
-                                        nil
-                                        (current-buffer)
-                                        nil
-                                        "-m" "elpy.__main__"
-                                        "config"))))
-      (if (not return-value)
-          '((error . "executable_not_found"))
-        (goto-char (point-min))
-        (condition-case err
-            (let ((json-array-type 'list))
-              (json-read))
-          (error
-           (goto-char (point-min))
-           (if (re-search-forward "No module named elpy" nil t)
-               '((error . "no_module_named_elpy"))
-             `((error . "unexpected_output")
-               (output . ,(buffer-string))))))))))
+(defvar elpy-config--get-config "import json
+import sys
+config = {}
+config['python_version'] = ('{major}.{minor}.{micro}'
+                            .format(major=sys.version_info[0],
+                                    minor=sys.version_info[1],
+                                    micro=sys.version_info[2]))
 
-(defun elpy-config--insert (&rest messages)
+try:
+    import elpy
+    config['elpy_version'] = elpy.__version__
+except:
+    config['elpy_version'] = None
+
+try:
+    import jedi
+    config['jedi_version'] = jedi.__version__
+except:
+    config['jedi_version'] = None
+
+try:
+    import rope
+    config['rope_version'] = rope.VERSION
+except:
+    config['rope_version'] = None
+
+
+json.dump(config, sys.stdout)
+")
+
+(defun elpy-config--get-config ()
+  "Return the configuration from `elpy-rpc-python-command'.
+
+This returns a hash table with the following keys (all strings):
+
+emacs_version
+python_rpc
+python_rpc_executable
+python_interactive
+python_interactive_executable
+python_version (RPC)
+elpy_version
+jedi_version
+rope_version
+virtual_env
+virtual_env_short"
+  (with-temp-buffer
+    (let ((config (make-hash-table :test #'equal)))
+      (puthash "emacs_version" emacs-version config)
+      (puthash "python_rpc" elpy-rpc-python-command config)
+      (puthash "python_rpc_executable"
+               (executable-find elpy-rpc-python-command)
+               config)
+      (let ((interactive-python (if (boundp 'python-python-command)
+                                    python-python-command
+                                  python-shell-interpreter)))
+        (puthash "python_interactive"
+                 interactive-python
+                 config)
+        (puthash "python_interactive_executable"
+                 (executable-find interactive-python)
+                 config))
+      (let ((venv (getenv "VIRTUAL_ENV")))
+        (puthash "virtual_env" venv config)
+        (puthash "virtual_env_short" (file-name-nondirectory venv) config))
+      (let ((return-value (ignore-errors
+                            (call-process elpy-rpc-python-command
+                                          nil
+                                          (current-buffer)
+                                          nil
+                                          "-c"
+                                          elpy-config--get-config))))
+        (when return-value
+          (let ((data (ignore-errors
+                        (let ((json-array-type 'list))
+                          (goto-char (point-min))
+                          (json-read)))))
+            (if (not data)
+                (puthash "error_output" (buffer-string) config)
+              (dolist (pair data)
+                (puthash (symbol-name (car pair)) (cdr pair) config))))))
+      config)))
+
+(defun elpy-config--insert-configuration-table (&optional config)
+  "Insert a table describing the current Elpy config."
+  (when (not config)
+    (setq config (elpy-config--get-config)))
+  (let ((emacs-version (gethash "emacs_version" config))
+        (python-version (gethash "python_version" config))
+        (python-rpc (gethash "python_rpc" config))
+        (python-rpc-executable (gethash "python_rpc_executable" config))
+        (python-interactive (gethash "python_interactive" config))
+        (python-interactive-executable (gethash "python_interactive_executable"
+                                                config))
+        (elpy-python-version (gethash "elpy_version" config))
+        (jedi-version (gethash "jedi_version" config))
+        (rope-version (gethash "rope_version" config))
+        (virtual-env (gethash "virtual_env" config))
+        (virtual-env-short (gethash "virtual_env_short" config))
+        table maxwidth)
+    (setq table
+          `(("Virtualenv" . ,(if (gethash "virtual_env" config)
+                                 (format "%s (%s)"
+                                         virtual-env-short
+                                         virtual-env)
+                               "None"))
+            ("RPC Python" . ,(cond
+                              (python-version
+                               (format "%s (%s)"
+                                       python-version
+                                       python-rpc-executable))
+                              (python-rpc-executable
+                               python-rpc-executable)
+                              (python-rpc
+                               (format "%s (not found)" python-rpc))
+                              (t
+                               (format "Not configured"))))
+            ("Interactive Python" . ,(cond
+                                      (python-interactive-executable
+                                       (format "%s (%s)"
+                                               python-interactive
+                                               python-interactive-executable))
+                                      (python-interactive
+                                       (format "%s (not found)"
+                                               python-interactive))
+                                      (t
+                                       "Not configured")))
+            ("Emacs" . ,emacs-version)
+            ("Elpy" . ,(cond
+                        ((and elpy-python-version elpy-version
+                              (equal elpy-python-version elpy-version))
+                         elpy-version)
+                        (elpy-python-version
+                         (format "%s (Python), %s (Emacs Lisp)"
+                                 elpy-python-version
+                                 elpy-version))
+                        (t
+                         (format "Not found (Python), %s (Emacs Lisp)"
+                                 elpy-version))))
+            ("Jedi" . ,(if jedi-version
+                           jedi-version
+                         "Not found"))
+            ("Rope" . ,(if rope-version
+                           rope-version
+                         "Not found"))))
+    (setq maxwidth 0)
+    (dolist (row table)
+      (when (> (length (car row))
+               maxwidth)
+        (setq maxwidth (length (car row)))))
+    (dolist (row table)
+      (insert (car row)
+              (make-string (- maxwidth (length (car row)))
+                           ?.)
+              ": "
+              (cdr row)
+              "\n"))))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; Elpy Formatted Insertion
+
+(defmacro elpy-insert--popup (buffer-name &rest body)
+  "Pop up a help buffer named BUFFER-NAME and execute BODY in it."
+  (declare (indent 1))
+  `(with-help-window ,buffer-name
+     (with-current-buffer standard-output
+       ,@body)))
+
+(defun elpy-insert--para (&rest messages)
   "Insert a bunch of text and then fill it."
   (let ((start (point)))
     (mapc (lambda (obj)
@@ -470,7 +576,16 @@ a customize buffer, but has some more options."
           messages)
     (fill-region start (point))))
 
-(define-widget 'elpy-config--pip-button 'item
+(defun elpy-insert--header (&rest text)
+  "Insert TEXT has a header for a buffer."
+  (insert (propertize (mapconcat #'(lambda (x) x)
+                                 text
+                                 "")
+                      'face 'header-line)
+          "\n"
+          "\n"))
+
+(define-widget 'elpy-insert--pip-button 'item
   "A button that runs pip (or an alternative)."
   :button-prefix "["
   :button-suffix "]"
@@ -1252,11 +1367,11 @@ creating one if necessary."
              (cond
               ((looking-at "elpy-rpc ready\n")
                (replace-match "")
-               (elpy-rpc--backend-version "1.1"))
+               (elpy-rpc--check-backend-version "1.1"))
               ((looking-at "elpy-rpc ready (\\([^ ]*\\))\n")
                (let ((rpc-version (match-string 1)))
                  (replace-match "")
-                 (elpy-rpc--backend-version rpc-version)))
+                 (elpy-rpc--check-backend-version rpc-version)))
               (t
                (elpy-rpc--handle-unexpected-line)
                (throw 'return nil)))))
@@ -1264,23 +1379,23 @@ creating one if necessary."
             (delete-region (point-min) (1+ (point)))
             (elpy-rpc--handle-json json)))))))
 
-(defun elpy-rpc--backend-version (rpc-version)
+(defun elpy-rpc--check-backend-version (rpc-version)
   "Check that we are using the right version."
   (when (not (equal rpc-version elpy-version))
-    (with-help-window "*Elpy Version Mismatch*"
-      (with-current-buffer "*Elpy Version Mismatch*"
-        (insert
-         "You are not using the same version of Elpy in Emacs Lisp\n"
-         "compared to Python. This can cause random problems. Please\n"
-         "do make sure to use compatible versions.\n"
-         "\n"
-         "Elpy Emacs Lisp version: " elpy-version "\n"
-         "Elpy Python version....: " rpc-version "\n")))))
+    (elpy-insert--popup "*Elpy Version Mismatch*"
+      (elpy-insert--para
+       "You are not using the same version of Elpy in Emacs Lisp"
+       "compared to Python. This can cause random problems. Please"
+       "do make sure to use compatible versions.\n")
+      (insert
+       "\n"
+       "Elpy Emacs Lisp version: " elpy-version "\n"
+       "Elpy Python version....: " rpc-version "\n"))))
 
 (defun elpy-rpc--handle-json (json)
   "Handle a single JSON object from the RPC backend."
   (let ((call-id (cdr (assq 'id json)))
-        (error-string (cdr (assq 'error json)))
+        (error-object (cdr (assq 'error json)))
         (result (cdr (assq 'result json)))
         success-callback error-callback)
     (let ((callbacks (gethash call-id elpy-rpc--backend-callbacks)))
@@ -1291,11 +1406,42 @@ creating one if necessary."
             orig-buf (nth 2 callbacks))
       (remhash call-id elpy-rpc--backend-callbacks)
       (with-current-buffer orig-buf
-        (if error-string
-            (if error-callback
-                (funcall error-callback error-string)
-              (error "Error from RPC: %S" error-string))
-          (funcall success-callback result))))))
+        (cond
+         ((and error-object error-callback)
+          (funcall error-callback error-object))
+         (error-object
+          (elpy-rpc--default-error-callback error-object))
+         (t
+          (funcall success-callback result)))))))
+
+(defun elpy-rpc--default-error-callback (error-object)
+  "Display an error from the RPC backend."
+  (let ((cls-name (cdr (assq 'name error-object)))
+        (text (cdr (assq 'message error-object)))
+        (traceback (cdr (assq 'traceback error-object)))
+        (config (elpy-config--get-config)))
+    (if (not traceback)
+        (message "Elpy warning: %s" text)
+      (elpy-insert--popup "*Elpy Error*"
+        (elpy-insert--header "Elpy Error")
+        (elpy-insert--para
+         "The backend encountered an unexpected error. This indicates "
+         "a bug in Elpy. Please open a bug report with the data below "
+         "in the Elpy bug tracker:")
+        (insert "\n"
+                "\n")
+        (insert-button
+         "https://github.com/jorgenschaefer/elpy/issues/new"
+         'action (lambda (button)
+                   (browse-url (button-get button 'url)))
+         'url "https://github.com/jorgenschaefer/elpy/issues/new")
+        (insert "\n"
+                "\n")
+        (elpy-insert--header "Configuration")
+        (elpy-config--insert-configuration-table config)
+        (insert "\n")
+        (elpy-insert--header "Traceback")
+        (insert traceback)))))
 
 (defun elpy-rpc--handle-unexpected-line ()
   "Handle an unexpected line from the backend.
@@ -1304,34 +1450,18 @@ This is usually an error or backtrace."
   (let ((missing-module (when (re-search-forward "No module named \\(.*\\)"
                                                  nil t)
                           (match-string 1))))
-    (cond
-     ((member missing-module '("elpy" "rope" "jedi"))
-      (elpy-config-error))
-     (missing-module
-      (with-help-window "*Elpy Error*"
-        (with-current-buffer "*Elpy Error*"
-          (view-mode 1)
-          (let ((inhibit-read-only t))
-            (erase-buffer)
-            (insert "There was an error initializing the Elpy backend,\n"
-                    "as the " missing-module " Python module was not found.\n"
-                    "\n"
-                    "Please install this module to use elpy.\n"))
-          (pop-to-buffer (current-buffer)))))
-     (t
+    (if (equal missing-module "elpy")
+        (elpy-config-error "Elpy module not found")
       (let ((data (buffer-string)))
-        (with-help-window "*Elpy Error*"
-          (with-current-buffer "*Elpy Error*"
-            (view-mode 1)
-            (let ((inhibit-read-only t))
-              (erase-buffer)
-              (insert "There was an error in the Elpy backend.\n"
-                      "The following lines were received from Python, and "
-                      "might help identifying\n"
-                      "the problem.\n"
-                      "\n"
-                      data))
-            (pop-to-buffer (current-buffer)))))))))
+        (elpy-insert--popup "*Elpy Error*"
+          (elpy-insert--header "Error initializing Elpy")
+          (elpy-insert--para
+           "There was an error when trying to start the backend. "
+           "Elpy can not work until this problem is solved. "
+           "The following lines were received from Python, and might "
+           "help identifying the problem.\n")
+          (insert "\n"
+                  data))))))
 
 (defun elpy-rpc--call (method-name params success &optional error)
   "Call METHOD-NAME with PARAMS in the current RPC backend.
@@ -1366,13 +1496,13 @@ Returns the result, blocking until this arrived."
   (let ((result-arrived nil)
         (error-occured nil)
         (result-value nil)
-        (error-string nil))
+        (error-object nil))
     (elpy-rpc--call method-name params
                     (lambda (result)
                       (setq result-value result
                             result-arrived t))
                     (lambda (err)
-                      (setq error-string err
+                      (setq error-object err
                             error-occured t)))
     (let ((end-time (time-add (current-time)
                               (seconds-to-time elpy-rpc--timeout))))
@@ -1384,7 +1514,7 @@ Returns the result, blocking until this arrived."
                                elpy-rpc--timeout)))
     (cond
      (error-occured
-      (error error-string))
+      (error (format "%S" error-object)))
      (result-arrived
       result-value)
      (t

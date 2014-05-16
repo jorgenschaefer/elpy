@@ -44,19 +44,6 @@ class ElpyRPCServer(JSONRPCServer):
                 self.backend = backend
                 break
 
-    def config(self):
-        config = {}
-        major = sys.version_info[0]
-        minor = sys.version_info[1]
-        micro = sys.version_info[2]
-        config["python_version"] = ("{major}.{minor}.{micro}"
-                                    .format(major=major,
-                                            minor=minor,
-                                            micro=micro))
-        config["elpy_version"] = elpy.__version__
-        config["available_backends"] = self.rpc_get_available_backends()
-        return config
-
     def handle(self, method_name, args):
         """Call the RPC method method_name with the specified args.
 

@@ -104,10 +104,14 @@ class JSONRPCServer(object):
             if request_id is not None:
                 self.write_json(result=result,
                                 id=request_id)
-        except Exception as e:
-            self.write_json(error=str(e),
+        except Warning as e:
+            self.write_json(error={"message": str(e)},
                             id=request_id)
+        except Exception as e:
             self.last_traceback = traceback.format_exc()
+            self.write_json(error={"message": str(e),
+                                   "traceback": self.last_traceback},
+                            id=request_id)
 
     def handle(self, method_name, args):
         """Handle the call to method_name.
@@ -134,3 +138,11 @@ class Fault(Exception):
         super(Fault, self).__init__(message)
         self.code = code
         self.data = data
+
+
+class Warning(Fault):
+    """A warning.
+
+    This does not include a traceback in the error result.
+    """
+    pass

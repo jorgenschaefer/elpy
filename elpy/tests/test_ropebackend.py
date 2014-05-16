@@ -94,7 +94,7 @@ class TestGetCompletions(RopeBackendTestCase):
         filename = self.project_file("test.py", source)
         message = re.escape("Too many syntax errors in file test.py "
                             "(lines 4, 8, 11, 14, 17, 20)")
-        self.assertRaisesRegexp(rpc.Fault, message,
+        self.assertRaisesRegexp(rpc.Warning, message,
                                 self.backend.rpc_get_completions,
                                 self.project_root, filename, source,
                                 offset)
