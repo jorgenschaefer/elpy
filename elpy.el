@@ -660,7 +660,7 @@ code is executed."
         (goto-char (point-min))
         (setq has-if-main (re-search-forward if-main-regex nil t)))
       (python-shell-send-buffer arg))
-    (elpy-shell-switch-to-shell)
+    (display-buffer (process-buffer (elpy-shell-get-or-create-process)))
     (when has-if-main
       (message (concat "Removed if __main__ == '__main__' construct, "
                        "use a prefix argument to evaluate.")))))
