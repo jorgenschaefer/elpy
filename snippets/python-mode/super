@@ -1,7 +1,8 @@
 # -*- mode: snippet -*-
-# name: super
+# name: super() call
 # key: super
-# expand-env: ((class (lambda () (let ((info (python-info-current-defun))) (if info (car (split-string info "\\.")) "class")))) (method (lambda () (let ((info (python-info-current-defun))) (if info (cadr (split-string info "\\.")) "method")))) (object (lambda () (if (and (python-nav-beginning-of-defun) (re-search-forward "(\\([^),=]*\\)" nil t)) (match-string-no-properties 1) "self"))))
+# group: Class
+# contributor: Jorgen Schaefer <contact@jorgenschaefer.de>
 # --
-super(`(funcall class)`, `(funcall object)`).`(funcall method)`($1)
-        $0
+super`(elpy-snippet-super-form)`(${1:`(elpy-snippet-super-arguments)`})
+$0

@@ -1,10 +1,9 @@
 # -*- mode: snippet -*-
 # name: __enter__
-# key: __enter__
-# expand-env: ((yas-indent-line nil))
+# key: ent
+# group: dunder methods
 # --
-__enter__(self):
-        $1
+def __enter__(self):
+    $0
 
-    def __exit__(self, exc_type, exc_value, traceback):
-        $2
+    return self

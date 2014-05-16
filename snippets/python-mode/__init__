@@ -1,0 +1,11 @@
+# -*- mode: snippet -*-
+# name: __init__ with assignment
+# key: init
+# group: Definitions
+# contributor: Jorgen Schaefer <contact@jorgenschaefer.de>
+# --
+def __init__(self${1:, args}):
+    """$2
+
+    """
+    ${1:$(elpy-snippet-init-assignments text)}
