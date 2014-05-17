@@ -397,28 +397,3 @@ class TestUseFunction(RefactorTestCase):
                          "    return temp * c\n"
                          "\n"
                          "g = add_and_multiply(1, 2, 3)\n")
-
-
-import elpy.utils.autoimport
-
-
-@unittest.skipIf(not refactor.ROPE_AVAILABLE, "Requires Rope")
-class TestAddMissingImports(RefactorTestCase):
-    @mock.patch.object(elpy.utils.autoimport, 'get_changes')
-    def test_should_call_autoimport_get_changes(self, get_changes):
-        filename, offset = self.create_file("foo.py")
-        ref = refactor.Refactor(self.project_root, filename)
-        ref.refactor_add_missing_imports()
-        get_changes.assert_called_with(filename)
-
-    @mock.patch.object(elpy.utils.autoimport, 'get_changes')
-    def test_should_work_without_rope(self, get_changes):
-        filename, offset = self.create_file("foo.py")
-        try:
-            old_rope_available = refactor.ROPE_AVAILABLE
-            refactor.ROPE_AVAILABLE = False
-            ref = refactor.Refactor(self.project_root, filename)
-        finally:
-            refactor.ROPE_AVAILABLE = old_rope_available
-        ref.refactor_add_missing_imports()
-        get_changes.assert_called_with(filename)

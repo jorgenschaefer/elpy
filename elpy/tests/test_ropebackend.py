@@ -40,17 +40,17 @@ class TestGetProject(RopeBackendTestCase):
 
 class TestGetCompletions(RopeBackendTestCase):
     def test_should_return_completions(self):
-        source, offset = source_and_offset("import multiprocessing\n"
-                                           "multiprocessing.P_|_")
+        source, offset = source_and_offset("import json\n"
+                                           "json.J_|_")
         filename = self.project_file("test.py", source)
         completions = self.backend.rpc_get_completions(self.project_root,
                                                        filename,
                                                        source,
                                                        offset)
         self.assertEqual(sorted(name for (name, doc) in completions),
-                         sorted(["ool", "rocess", "ipe", "rocessError"]))
-        self.assertIn("Returns a process pool object",
-                      dict(completions)['ool'])
+                         sorted(["SONDecoder", "SONEncoder"]))
+        self.assertIn("Simple JSON",
+                      dict(completions)['SONDecoder'])
 
     def test_should_not_fail_on_inexisting_file(self):
         filename = self.project_root + "/doesnotexist.py"

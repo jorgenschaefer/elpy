@@ -66,8 +66,6 @@ try:
 except ImportError:
     ROPE_AVAILABLE = False
 
-from elpy.utils import autoimport
-
 
 def options(description, **kwargs):
     """Decorator to set some options on a method."""
@@ -225,10 +223,6 @@ class Refactor(object):
         refactor = ImportOrganizer(self.project)
         changes = refactor.organize_imports(self.resource)
         return translate_changes(changes)
-
-    @options("Add missing imports", category="Imports")
-    def refactor_add_missing_imports(self):
-        return autoimport.get_changes(self.resource.real_path)
 
     @options("Convert the current module into a package", category="Module",
              available=ROPE_AVAILABLE)
