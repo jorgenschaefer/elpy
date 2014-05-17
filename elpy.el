@@ -80,6 +80,20 @@
   :prefix "elpy-"
   :group 'languages)
 
+(defcustom elpy-enable nil
+  "Whether to enable Elpy globally.
+
+This variable is meant to be set from the customization
+interface. Setting it from lisp directly has no effect, use the
+`elpy-enable' function instead."
+  :type 'boolean
+  :set (lambda (sym var)
+         (if var
+             (elpy-enable)
+           (when (fboundp 'elpy-disable)
+             (elpy-disable))))
+  :group 'elpy)
+
 (defcustom elpy-rpc-python-command (if (eq window-system 'w32)
                                        "pythonw"
                                      "python")
@@ -142,33 +156,11 @@ These are prepended to `grep-find-ignored-directories'."
   :type '(repeat string)
   :group 'elpy)
 
-(defcustom elpy-mode-hook nil
-  "Hook run when `elpy-mode' is enabled."
-  :type 'hook
-  :group 'elpy)
-
 (defconst elpy-version "1.4.50"
   "The version of the Elpy lisp code.")
 
-(defun elpy-version ()
-  "Echo the version of Elpy."
-  (interactive)
-  (let ((version elpy-version)
-        (rpc-version (when elpy-rpc--buffer
-                       (or (ignore-errors
-                             (elpy-rpc "version" nil))
-                           "1.1"))))
-    (if (equal version "devel")
-        (setq version "development version")
-      (setq version (format "version %s" version)))
-    (when rpc-version
-      (if (equal rpc-version "devel")
-          (setq rpc-version "development version")
-        (setq rpc-version (format "version %s" rpc-version))))
-    (if rpc-version
-        (message "Elpy %s using the Python backend %s"
-               version rpc-version)
-      (message "Elpy %s" version))))
+(defvar elpy-mode-hook nil
+  "Hook run when `elpy-mode' is enabled.")
 
 (defvar elpy-mode-map
   (let ((map (make-sparse-keymap)))
@@ -231,6 +223,7 @@ weird behavior, use at your own risk."
                      "Elpy only works with python.el from "
                      "Emacs 24 and above"))))
   (add-hook 'python-mode-hook 'elpy-mode)
+  (setq elpy-enable t)
   (when (not skip-initialize-modules)
     (elpy-modules-run 'global-init)))
 
@@ -239,6 +232,7 @@ weird behavior, use at your own risk."
   "Disable Elpy in all future Python buffers."
   (interactive)
   (remove-hook 'python-mode-hook 'elpy-mode)
+  (setq elpy-enable nil)
   (elpy-modules-run 'global-stop))
 
 ;;;###autoload
