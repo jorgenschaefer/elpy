@@ -154,16 +154,6 @@ class TestHandleRequest(TestJSONRPCServer):
         self.assertEqual(result["error"]["message"], "This is a warning")
         self.assertNotIn("traceback", result["error"])
 
-    def test_should_store_error_for_exception_in_method(self):
-        def test_method():
-            raise ValueError("An error was raised")
-        self.write(json.dumps(dict(method='foo',
-                                   id=23)))
-        self.rpc.rpc_foo = test_method
-        self.assertIsNone(self.rpc.last_traceback)
-        self.rpc.handle_request()
-        self.assertIsNotNone(self.rpc.last_traceback)
-
     def test_should_call_handle_for_unknown_method(self):
         def test_handle(method_name, args):
             return "It works"

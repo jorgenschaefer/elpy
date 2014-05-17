@@ -78,14 +78,6 @@ class TestRPCEcho(TestServer):
                          ("hello", "world"))
 
 
-class TestRPCGetTraceback(TestServer):
-    def test_should_return_traceback(self):
-        srv = server.ElpyRPCServer()
-        srv.last_traceback = "foo"
-        self.assertEqual(srv.rpc_get_traceback(),
-                         "foo")
-
-
 class TestRPCGetSetBackend(TestServer):
     def test_should_fail_on_inexisting_backend(self):
         srv = server.ElpyRPCServer()

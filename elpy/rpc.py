@@ -55,7 +55,6 @@ class JSONRPCServer(object):
             self.stdout = sys.stdout
         else:
             self.stdout = stdout
-        self.last_traceback = None
 
     def read_json(self):
         """Read a single line and decode it as JSON.
@@ -108,9 +107,8 @@ class JSONRPCServer(object):
             self.write_json(error={"message": str(e)},
                             id=request_id)
         except Exception as e:
-            self.last_traceback = traceback.format_exc()
             self.write_json(error={"message": str(e),
-                                   "traceback": self.last_traceback},
+                                   "traceback": traceback.format_exc()},
                             id=request_id)
 
     def handle(self, method_name, args):

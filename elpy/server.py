@@ -66,10 +66,6 @@ class ElpyRPCServer(JSONRPCServer):
         """
         return args
 
-    def rpc_get_traceback(self):
-        """Return the last error traceback, if any."""
-        return self.last_traceback
-
     def rpc_set_backend(self, backend_name):
         """Set the current backend to backend_name.
 
