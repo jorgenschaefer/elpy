@@ -39,11 +39,11 @@ class JediBackend(NativeBackend):
         sys.path.append(project_root)
         try:
             script = self.jedi.Script(source, line, column, filename,
-                                      source_encoding='utf-8')
-            proposals = script.complete()
+                                      encoding='utf-8')
+            proposals = script.completions()
         finally:
             sys.path.pop()
-        return [[proposal.complete, proposal.doc]
+        return [[proposal.complete, proposal.docstring()]
                 for proposal in proposals]
 
     def rpc_get_definition(self, project_root, filename, source, offset):
@@ -51,16 +51,16 @@ class JediBackend(NativeBackend):
         sys.path.append(project_root)
         try:
             script = self.jedi.Script(source, line, column, filename,
-                                      source_encoding='utf-8')
-            locations = script.get_definition()
-            # get_definition() can return silly stuff like __builtin__
+                                      encoding='utf-8')
+            locations = script.goto_definitions()
+            # goto_definitions() can return silly stuff like __builtin__
             # for int variables, so we fall back on goto() in those
             # cases. See issue #76.
             if (
                     locations and
                     locations[0].module_path is None
             ):
-                locations = script.goto()
+                locations = script.goto_assignments()
         finally:
             sys.path.pop()
         if not locations:
@@ -71,7 +71,8 @@ class JediBackend(NativeBackend):
                 if loc.module_path:
                     with open(loc.module_path) as f:
                         offset = linecol_to_pos(f.read(),
-                                                *loc.start_pos)
+                                                loc.line,
+                                                loc.column)
             except IOError:
                 return None
             return (loc.module_path, offset)
@@ -81,14 +82,18 @@ class JediBackend(NativeBackend):
         sys.path.append(project_root)
         try:
             script = self.jedi.Script(source, line, column, filename,
-                                      source_encoding='utf-8')
-            call = script.get_in_function_call()
+                                      encoding='utf-8')
+            call = script.call_signatures()
+            if call:
+                call = call[0]
+            else:
+                call = None
         finally:
             sys.path.pop()
         if call is None:
             return None
-        return "{0}({1})".format(call.call_name,
-                                 ", ".join(param.get_code().strip()
+        return "{0}({1})".format(call.name,
+                                 ", ".join(param.description.strip()
                                            for param in call.params))
 
     def rpc_get_docstring(self, project_root, filename, source, offset):

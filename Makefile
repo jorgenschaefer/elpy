@@ -24,6 +24,12 @@ ert:
 ecukes:
 	cask exec ecukes --script --quiet
 
+tox:
+	tox
+
+test-warnings:
+	python -Qwarnall -tt -W error -m unittest discover elpy
+
 test-all: test-warnings tox
 
 clean:
