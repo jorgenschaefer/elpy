@@ -194,12 +194,14 @@ These are prepended to `grep-find-ignored-directories'."
 
     (define-key map (kbd "<C-down>") 'elpy-nav-forward-definition)
     (define-key map (kbd "<C-up>")  'elpy-nav-backward-definition)
+
     ;; (define-key map (kbd "M-,")     'iedit-mode
     (define-key map (kbd "M-.")     'elpy-goto-definition)
     (define-key map (kbd "M-a")     'elpy-nav-backward-statement)
     (define-key map (kbd "M-e")     'elpy-nav-forward-statement)
     (define-key map (kbd "M-n")     'elpy-nav-forward-definition)
     (define-key map (kbd "M-p")     'elpy-nav-backward-definition)
+    (define-key map (kbd "M-TAB")   'elpy-company-backend)
 
     map)
   "Key map for the Emacs Lisp Python Environment.")
@@ -1690,6 +1692,21 @@ error if the backend is not supported."
   "Buffer-local cache for candidate information.")
 (make-variable-buffer-local 'elpy-company-candidate-cache)
 
+(defun elpy-company--cache-completions (prefix result)
+  "Store RESULT in the candidate cache and return candidates."
+  (if elpy-company-candidate-cache
+      (clrhash elpy-company-candidate-cache)
+    (setq elpy-company-candidate-cache
+          (make-hash-table :test #'equal)))
+  (mapcar (lambda (completion)
+            (let ((name (concat prefix
+                                (car completion)))
+                  (doc (cadr completion)))
+              (puthash name doc
+                       elpy-company-candidate-cache)
+              name))
+          result))
+
 (defun elpy-company-backend (command &optional arg &rest ignored)
   "A company-mode backend for Elpy."
   (interactive (list 'interactive))
@@ -1701,29 +1718,22 @@ error if the backend is not supported."
     (`prefix
      (when (and elpy-mode
                 (not (company-in-string-or-comment)))
-       (let ((prefix (company-grab-symbol-cons "\\." 1)))
-         (when (not (equal prefix ""))
-           prefix))))
+       (company-grab-symbol-cons "\\." 1)))
     ;; candidates <prefix> => return candidates for this prefix
     (`candidates
      (cons :async
-           (let ((prefix arg))
-             (lambda (callback)
-               (elpy-rpc-get-completions
-                (lambda (result)
-                  (if elpy-company-candidate-cache
-                      (clrhash elpy-company-candidate-cache)
-                    (setq elpy-company-candidate-cache
-                          (make-hash-table :test #'equal)))
-                  (funcall callback
-                           (mapcar
-                            (lambda (completion)
-                              (let ((name (concat prefix
-                                                  (car completion)))
-                                    (doc (cadr completion)))
-                                (puthash name doc elpy-company-candidate-cache)
-                                name))
-                            result))))))))
+           (lambda (callback)
+             (elpy-rpc-get-completions
+              (lambda (result)
+                (funcall
+                 callback
+                 (if result
+                     (elpy-company--cache-completions arg result)
+                   ;; Nothing from elpy, try dabbrev-code
+                   (let* ((company-backend 'company-dabbrev-code))
+                     (company--process-candidates
+                      (company-dabbrev-code
+                       'candidates arg))))))))))
     ;; sorted => t if the list is already sorted
     ;; - We could sort it ourselves according to "how likely it is".
     ;;   Does a backend do that?
