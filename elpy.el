@@ -181,7 +181,6 @@ These are prepended to `grep-find-ignored-directories'."
     (define-key map (kbd "C-c C-n") 'elpy-flymake-forward-error)
     (define-key map (kbd "C-c C-o") 'elpy-occur-definitions)
     (define-key map (kbd "C-c C-p") 'elpy-flymake-backward-error)
-    (define-key map (kbd "C-c C-q") 'elpy-show-defun)
     (define-key map (kbd "C-c C-r") 'elpy-refactor)
     (define-key map (kbd "C-c C-s") 'elpy-rgrep-symbol)
     (define-key map (kbd "C-c C-t") 'elpy-test)
@@ -1139,15 +1138,6 @@ For REQUIRE-MATCH, INITIAL-INPUT, HIST and DEF, see
 ;;;;;;;;;;;;;;;;;
 ;;; Misc features
 
-(defun elpy-show-defun ()
-  "Show the current class and method, in case they are not on
-screen."
-  (interactive)
-  (let ((function (python-info-current-defun)))
-    (if function
-        (message "%s()" function)
-      (message "Not in a function"))))
-
 (defun elpy-occur-definitions ()
   "Display an occur buffer of all definitions in the current buffer.
 
@@ -1768,7 +1758,9 @@ error if the backend is not supported."
   (elpy-rpc-get-calltip
    (lambda (calltip)
      (eldoc-message
-      (when calltip
+      (if (not calltip)
+          (let ((current-defun (python-info-current-defun)))
+            (format "In: %s()" current-defun))
         (with-temp-buffer
           ;; multiprocessing.queues.Queue.cancel_join_thread(self)
           (insert calltip)
