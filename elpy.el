@@ -1698,56 +1698,62 @@ error if the backend is not supported."
 
 (defun elpy-company-backend (command &optional arg &rest ignored)
   "A company-mode backend for Elpy."
-  (cond
-   ;; init => Called once per buffer
-   ;; prefix => return the prefix at point
-   ((eq command 'prefix)
-    (when (not (company-in-string-or-comment))
-      (company-grab-symbol-cons "\\." 1)))
-   ;; candidates <prefix> => return candidates for this prefix
-   ((eq command 'candidates)
-    (cons :async
-          (let ((prefix arg))
-            (lambda (callback)
-              (elpy-rpc-get-completions
-               (lambda (result)
-                 (if elpy-company-candidate-cache
-                     (clrhash elpy-company-candidate-cache)
-                   (setq elpy-company-candidate-cache
-                         (make-hash-table :test #'equal)))
-                 (funcall callback
-                          (mapcar
-                           (lambda (completion)
-                             (let ((name (concat prefix
-                                                 (car completion)))
-                                   (doc (cadr completion)))
-                               (puthash name doc elpy-company-candidate-cache)
-                               name))
-                           result))))))))
-   ;; sorted => t if the list is already sorted
-   ;; - We could sort it ourselves according to "how likely it is".
-   ;;   Does a backend do that?
-   ;; duplicates => t if there could be duplicates
-   ;; no-cache <prefix> => t if company shouldn't cache results
-   ;; meta <candidate> => short docstring for minibuffer
-   ((eq command 'meta)
-    (let ((doc (gethash arg elpy-company-candidate-cache)))
-      (when (and doc
-                 (string-match "^\\(?:\\s-\\|\n\\)*\\(.*\\)$" doc))
-        (match-string 1 doc))))
-   ;; annotation <candidate> => short docstring for completion buffer
-   ((eq command 'annotation)
-    "p")
-   ;; doc-buffer <candidate> => put doc buffer in `company-doc-buffer'
-   ((eq command 'doc-buffer)
-    (let ((doc (gethash arg elpy-company-candidate-cache)))
-      (when doc
-        (company-doc-buffer doc))))
-   ;; location <candidate> => (buffer . point) or (file . line-number)
-   ;; match <candidate> => for non-prefix based backends
-   ;; require-match => user may not enter non-match ... meh?
-   ;; post-completion <candidate> => after insertion, for snippets
-   ))
+  (interactive (list 'interactive))
+  (pcase command
+    (`interactive
+     (company-begin-backend 'elpy-company-backend))
+    ;; init => Called once per buffer
+    ;; prefix => return the prefix at point
+    (`prefix
+     (when (and elpy-mode
+                (not (company-in-string-or-comment)))
+       (let ((prefix (company-grab-symbol-cons "\\." 1)))
+         (when (not (equal prefix ""))
+           prefix))))
+    ;; candidates <prefix> => return candidates for this prefix
+    (`candidates
+     (cons :async
+           (let ((prefix arg))
+             (lambda (callback)
+               (elpy-rpc-get-completions
+                (lambda (result)
+                  (if elpy-company-candidate-cache
+                      (clrhash elpy-company-candidate-cache)
+                    (setq elpy-company-candidate-cache
+                          (make-hash-table :test #'equal)))
+                  (funcall callback
+                           (mapcar
+                            (lambda (completion)
+                              (let ((name (concat prefix
+                                                  (car completion)))
+                                    (doc (cadr completion)))
+                                (puthash name doc elpy-company-candidate-cache)
+                                name))
+                            result))))))))
+    ;; sorted => t if the list is already sorted
+    ;; - We could sort it ourselves according to "how likely it is".
+    ;;   Does a backend do that?
+    ;; duplicates => t if there could be duplicates
+    ;; no-cache <prefix> => t if company shouldn't cache results
+    ;; meta <candidate> => short docstring for minibuffer
+    (`meta
+     (let ((doc (gethash arg elpy-company-candidate-cache)))
+       (when (and doc
+                  (string-match "^\\(?:\\s-\\|\n\\)*\\(.*\\)$" doc))
+         (match-string 1 doc))))
+    ;; annotation <candidate> => short docstring for completion buffer
+    (`annotation
+     "p")
+    ;; doc-buffer <candidate> => put doc buffer in `company-doc-buffer'
+    (`doc-buffer
+     (let ((doc (gethash arg elpy-company-candidate-cache)))
+       (when doc
+         (company-doc-buffer doc))))
+    ;; location <candidate> => (buffer . point) or (file . line-number)
+    ;; match <candidate> => for non-prefix based backends
+    ;; require-match => user may not enter non-match ... meh?
+    ;; post-completion <candidate> => after insertion, for snippets
+    ))
 
 ;;;;;;;;;;;;;;;;;
 ;;; Module: ElDoc
