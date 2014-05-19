@@ -196,8 +196,6 @@ These are prepended to `grep-find-ignored-directories'."
 
     ;; (define-key map (kbd "M-,")     'iedit-mode
     (define-key map (kbd "M-.")     'elpy-goto-definition)
-    (define-key map (kbd "M-a")     'elpy-nav-backward-statement)
-    (define-key map (kbd "M-e")     'elpy-nav-forward-statement)
     (define-key map (kbd "M-n")     'elpy-nav-forward-definition)
     (define-key map (kbd "M-p")     'elpy-nav-backward-definition)
     (define-key map (kbd "M-TAB")   'elpy-company-backend)
@@ -861,29 +859,6 @@ with a prefix argument)."
       (with-selected-window (get-buffer-window buffer)
         (goto-char (1+ offset))))))
 
-(defun elpy-nav-forward-statement ()
-  "Move forward one statement.
-
-This will go to the end of the current statement, or the end of
-the next one if already at the end."
-  (interactive)
-  (let ((old (point)))
-    (python-nav-end-of-statement)
-    (when (= old (point))
-      (python-nav-forward-statement)
-      (python-nav-end-of-statement))))
-
-(defun elpy-nav-backward-statement ()
-  "Move backward one statement.
-
-This will go to the beginning of the current statement, or the
-beginning of the previous one if already at the beginning."
-  (interactive)
-  (let ((old (point)))
-    (python-nav-beginning-of-statement)
-    (when (= old (point))
-      (python-nav-backward-statement))))
-
 (defun elpy-nav-forward-definition ()
   "Move forward to the next definition (class or function)."
   (interactive)
@@ -987,7 +962,7 @@ arguments,  the interface simply asks for a string."
                    ;; multiprocessing.Queue(quxqux_|_)
                    (ignore-errors
                      (save-excursion
-                       (elpy-nav-backward-statement)
+                       (python-nav-backward-statement)
                        (with-syntax-table python-dotty-syntax-table
                          (forward-symbol 1)
                          (backward-char 1))
@@ -1929,13 +1904,6 @@ description."
     (python-send-buffer)))
 (when (not (fboundp 'python-info-current-defun))
   (defalias 'python-info-current-defun 'python-current-defun))
-(when (not (fboundp 'python-nav-end-of-statement))
-  (defalias 'python-nav-end-of-statement 'python-end-of-statement))
-(when (not (fboundp 'python-nav-beginning-of-statement))
-  (require 'thingatpt)
-  (defalias 'python-nav-beginning-of-statement 'beginning-of-sexp))
-(when (not (fboundp 'python-nav-forward-statement))
-  (defalias 'python-nav-forward-statement 'forward-sexp))
 (when (not (fboundp 'python-nav-backward-statement))
   (defalias 'python-nav-backward-statement 'backward-sexp))
 
