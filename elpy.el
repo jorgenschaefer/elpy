@@ -149,10 +149,9 @@ can be inidividually enabled or disabled."
                      elpy-module-sane-defaults))
   :group 'elpy)
 
-(defcustom elpy-rgrep-ignored-directories '(".tox" "build" "dist")
-  "Directories ignored by `elpy-rgrep-symbol'.
-
-These are prepended to `grep-find-ignored-directories'."
+(defcustom elpy-project-ignored-directories '(".tox" "build" "dist" ".git"
+                                              ".svn" "CVS" ".bzr" ".hg")
+  "Directories ignored by functions working on the whole project."
   :type '(repeat string)
   :group 'elpy)
 
@@ -830,7 +829,10 @@ with a prefix argument)."
                                      (elpy-project-root)
                                    (buffer-file-name))))
         (extra-args (if whole-project-p
-                        " --exclude=.svn,CVS,.bzr,.hg,.git,.tox,build,dist"
+                        (concat " --exclude="
+                                (mapconcat #'identity
+                                           elpy-project-ignored-directories
+                                           ","))
                       "")))
     (compilation-start (concat python-check-command
                                " "
@@ -1144,7 +1146,7 @@ With a prefix argument, prompt for a string to search for."
       (or (thing-at-point 'symbol)
           (read-from-minibuffer "Search for symbol: "))))))
   (grep-compute-defaults)
-  (let ((grep-find-ignored-directories (append elpy-rgrep-ignored-directories
+  (let ((grep-find-ignored-directories (append elpy-project-ignored-directories
                                                grep-find-ignored-directories)))
     (rgrep (format "\\b%s\\b" symbol)
            "*.py"
