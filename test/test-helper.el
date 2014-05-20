@@ -16,9 +16,9 @@ Run BODY with that binding."
          (progn ,@body)
        (ignore-errors
          (delete-directory ,name t)))))
-(put 'with-temp-dir 'lisp-indent-function 1)
 
 (defmacro with-elpy-file (tmpdir name &rest body)
+  (declare (indent 2))
   (let ((buffer (make-symbol "file")))
     `(with-temp-dir ,tmpdir
        (let ((,buffer (find-file (format "%s/%s" ,tmpdir ,name))))
@@ -29,4 +29,98 @@ Run BODY with that binding."
                ,@body)
            (let ((kill-buffer-query-functions nil))
              (kill-buffer ,buffer)))))))
-(put 'with-elpy-file 'lisp-indent-function 2)
+
+(defmacro save-buffer-excursion (&rest body)
+  (declare (indent 0))
+  (let ((old-process-list (make-symbol "old-process-list"))
+        (old-buffer-list (make-symbol "old-buffer-list")))
+    `(let ((,old-process-list (process-list))
+           (,old-buffer-list (buffer-list)))
+       (unwind-protect
+           (progn ,@body)
+         (dolist (proc (process-list))
+           (when (not (member proc ,old-process-list))
+             (kill-process proc)))
+         (let ((kill-buffer-query-functions nil))
+           (dolist (buf (buffer-list))
+             (when (not (member buf ,old-buffer-list))
+               (kill-buffer buf))))))))
+
+(eval-when-compile
+  (defun elpy-testcase-transform-spec (speclist body)
+    (if (null speclist)
+        `(progn ,@body)
+      (let ((spec (car speclist)))
+        (pcase (car spec)
+          (:project
+           (let ((symbol (cadr spec))
+                 (filespec (cddr spec)))
+             `(with-temp-dir ,symbol
+                (elpy-testcase-create-files ,symbol
+                                            ',filespec)
+                ,(elpy-testcase-transform-spec (cdr speclist)
+                                               body))))
+          (t
+           (error "Bad environment specifier %s" (car spec))))))))
+
+(defmacro elpy-testcase (spec &rest body)
+  "Initialize Emacs using SPEC, then run BODY in the environment.
+
+This will try as best as possible to create a clean start
+environment for the test.
+
+SPEC is a list of environment specifiers. Each specifier is
+itself a list where the car indicates the type of environment.
+
+\(:project symbol files ...)
+
+  Create a temporary directory and bind the name to SYMBOL.
+  Create FILES under that directory. FILES is a list of file
+  names, possibly including directory names."
+  `(save-buffer-excursion
+     (with-temp-buffer
+       ,(elpy-testcase-transform-spec spec body))
+     (when (and (boundp 'elpy-enable)
+                elpy-enable)
+       (elpy-disable))))
+
+(defun elpy-testcase-create-files (basedir filespec)
+  "In BASEDIR, create files according to FILESPEC.
+
+FILESPEC is a list of two-element lists, where the first element
+is a file name relative to BASEDIR and the second the contents
+for that file."
+  (dolist (spec filespec)
+    (let* ((filename (if (stringp spec)
+                         spec
+                       (car spec)))
+           (contents (if (stringp spec)
+                         ""
+                       (cadr spec)))
+           (fullname (format "%s/%s" basedir filename))
+           (dirname (file-name-directory fullname)))
+      (when (not (file-directory-p dirname))
+        (make-directory dirname t))
+      (write-region contents nil fullname))))
+
+(defun elpy/mark-region (beg end)
+  (transient-mark-mode 1)
+  (set-mark beg)
+  (goto-char end))
+
+(defun elpy/wait-for-output (output &optional max-wait)
+  (when (not max-wait)
+    (setq max-wait 10))
+  (let ((end (time-add (current-time)
+                       (seconds-to-time max-wait))))
+    (while (and (time-less-p (current-time)
+                             end)
+                (save-excursion
+                  (goto-char (point-min))
+                  (not (re-search-forward output nil t))))
+      (accept-process-output (get-buffer-process (current-buffer))
+                             1))))
+
+(defun insert-source (&rest lines)
+  (dolist (line lines)
+    (insert line "\n")))

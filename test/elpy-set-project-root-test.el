@@ -1,0 +1,5 @@
+(ert-deftest elpy-set-project-root-should-set-project-root ()
+  (elpy-testcase ()
+    (let ((elpy-project-root "old-root"))
+      (elpy-set-project-root "new-root")
+      (should (equal elpy-project-root "new-root")))))

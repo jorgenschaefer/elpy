@@ -1,0 +1,6 @@
+(ert-deftest elpy-shell-switch-to-shell-should-switch-to-shell-buffer ()
+  (elpy-testcase ()
+    (python-mode)
+    (elpy-mode 1)
+    (elpy-shell-switch-to-shell)
+    (should (eq major-mode 'inferior-python-mode))))

@@ -80,6 +80,7 @@
   :prefix "elpy-"
   :group 'languages)
 
+;;;###autoload
 (defcustom elpy-enable nil
   "Whether to enable Elpy globally.
 
@@ -230,8 +231,11 @@ weird behavior, use at your own risk."
   "Disable Elpy in all future Python buffers."
   (interactive)
   (remove-hook 'python-mode-hook 'elpy-mode)
-  (setq elpy-enable nil)
-  (elpy-modules-run 'global-stop))
+  ;; For some reason, the defcustom might not be loaded yet? Huh?
+  (when (and (boundp 'elpy-enable)
+             elpy-enable)
+    (elpy-modules-run 'global-stop))
+  (setq elpy-enable nil))
 
 ;;;###autoload
 (define-minor-mode elpy-mode
@@ -316,7 +320,7 @@ a customize buffer, but has some more options."
          )))
     (pop-to-buffer buf)))
 
-(defun elpy-config--insert-configuration-problems (config)
+(defun elpy-config--insert-configuration-problems (&optional config)
   "Insert help text and widgets for configuration problems."
   (when (not config)
     (setq config (elpy-config--get-config)))
@@ -616,7 +620,7 @@ virtual_env_short"
     (apply module command args)))
 
 (defun elpy-remove-modeline-lighter (mode-name)
-  "Remove the lighterfor MODE-NAME.
+  "Remove the lighter for MODE-NAME.
 
 It's not necessary to see (Python Elpy yas company ElDoc) all the
 time. Honestly."
@@ -642,13 +646,7 @@ time. Honestly."
 You can set the variable `elpy-project-root' in, for example,
 .dir-locals.el to configure this."
   (when (not elpy-project-root)
-    (setq elpy-project-root (elpy-project--find-root))
-    (when (equal (directory-file-name (expand-file-name default-directory))
-                 (directory-file-name (expand-file-name "~")))
-      (display-warning 'elpy
-                       (concat "Project root set to your home directory; "
-                               "this can slow down operation considerably")
-                       :warning)))
+    (setq elpy-project-root (elpy-project--find-root)))
   elpy-project-root)
 
 (defun elpy-project--find-root ()
@@ -774,9 +772,10 @@ code is executed."
 
 (defun elpy--region-without-indentation (beg end)
   "Return the current region as a string, but without indentation."
-  (let ((region (buffer-substring beg end))
-        (indent-level nil))
-    (catch 'return
+  (if (= beg end)
+      ""
+    (let ((region (buffer-substring beg end))
+          (indent-level nil))
       (with-temp-buffer
         (insert region)
         (goto-char (point-min))
@@ -903,6 +902,8 @@ With no prefix arg, all tests are run.
 With one prefix arg, only the current test is run.
 With two prefix args, only the current module is run."
   (interactive "p")
+  (when (not arg)
+    (setq arg 1))
   (save-some-buffers)
   (cond
    ((>= arg 16) (nosetests-module))

@@ -1,0 +1,13 @@
+(ert-deftest elpy-config-error-should-fail-with-default-message ()
+  (elpy-testcase ()
+    (let ((desc (should-error (elpy-config-error)
+                              :type 'error)))
+      (should (string-match "Elpy is not properly configure" (cadr desc)))
+      (should (string-match "M-x elpy-config" (cadr desc))))))
+
+(ert-deftest elpy-config-error-should-fail-with-custom-message ()
+  (elpy-testcase ()
+    (let ((desc (should-error (elpy-config-error "foobar")
+                              :type 'error)))
+      (should (string-match "foobar" (cadr desc)))
+      (should (string-match "M-x elpy-config" (cadr desc))))))

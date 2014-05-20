@@ -16,5 +16,4 @@
 
 (development
  (depends-on "ert-runner")
- (depends-on "ecukes")
  (depends-on "mocker"))

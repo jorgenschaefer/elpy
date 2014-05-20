@@ -1,4 +1,8 @@
-.PHONY: cask cask-update cask-test ert ecukes tox test-warnings test-all clean
+.PHONY: test update cask cask-update elisp-test elisp-test-all python-test python-test-all test-all clean
+
+test: python-test elisp-test
+
+update: cask cask-update
 
 cask:
 	cask
@@ -12,23 +16,20 @@ cask-update:
 	EMACS=emacs-24.2 cask update
 	EMACS=emacs-24.3 cask update
 
-cask-test:
+elisp-test:
+	cask exec ert-runner --quiet
+
+elisp-test-all:
 	cask exec ert-runner --quiet
 	EMACS=emacs-24.1 cask exec ert-runner --quiet
 	EMACS=emacs-24.2 cask exec ert-runner --quiet
 	EMACS=emacs-24.3 cask exec ert-runner --quiet
 
-ert:
-	cask exec ert-runner --quiet
-
-ecukes:
-	cask exec ecukes --script --quiet
-
-tox:
-	tox
-
-test-warnings:
+python-test:
 	python -Qwarnall -tt -W error -m unittest discover elpy
+
+python-test-all:
+	tox
 
 test-all: test-warnings tox
 
