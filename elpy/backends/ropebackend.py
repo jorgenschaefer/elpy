@@ -100,21 +100,12 @@ class RopeBackend(NativeBackend):
             proposals = self.codeassist.code_assist(project, source, offset,
                                                     resource,
                                                     maxfixes=MAXFIXES)
-        except self.ModuleSyntaxError as e:
-            linenos = re.findall("^  \\* line ([0-9]*):", str(e),
-                                 re.MULTILINE)
-            linenos = [int(x) for x in linenos]
-            linedesc = ", ".join(str(x) for x in sorted(set(linenos)))
-            raise rpc.Warning(code=101,
-                              message=("Too many syntax errors in file {0} "
-                                       "(line{1} {2})"
-                                       .format(e.filename,
-                                               "s" if ("," in linedesc)
-                                               else "",
-                                               linedesc)))
+        except self.ModuleSyntaxError:
+            # Rope can't parse this file
+            return []
         except IndentationError:
-            raise rpc.Fault(code=101,
-                            message="Indentation error")
+            # Rope can't parse this file
+            return []
         except IndexError as e:
             # Bug in Rope, see #186
             return []
