@@ -1735,7 +1735,8 @@ error if the backend is not supported."
      (eldoc-message
       (if (not calltip)
           (let ((current-defun (python-info-current-defun)))
-            (format "In: %s()" current-defun))
+            (when current-defun
+              (format "In: %s()" current-defun)))
         (with-temp-buffer
           ;; multiprocessing.queues.Queue.cancel_join_thread(self)
           (insert calltip)
