@@ -279,7 +279,7 @@ use \\[elpy-config]."
 This function will pop up a configuration buffer, which is mostly
 a customize buffer, but has some more options."
   (interactive)
-  (let ((buf (custom-get-fresh-buffer "*Elpy Test*"))
+  (let ((buf (custom-get-fresh-buffer "*Elpy Config*"))
         (config (elpy-config--get-config))
         (custom-search-field nil))
     (with-current-buffer buf
@@ -287,38 +287,77 @@ a customize buffer, but has some more options."
       ;; Configuration problems
       (elpy-config--insert-configuration-problems config)
 
-      ;; From `custom-group-value-create':
+      (elpy-insert--header "Options")
 
-      ;; Draw a horizontal line (this works for both graphical
-      ;; and text displays):
-      (let ((p (point)))
-        (insert "\n")
-        (put-text-property p (1+ p) 'face '(:underline t))
-        (overlay-put (make-overlay p (1+ p))
-                     'before-string
-                     (propertize "\n" 'face '(:underline t)
-                                 'display '(space :align-to 999))))
+      (let ((custom-buffer-style 'tree))
+        (Custom-mode)
+        (elpy-config--insert-help)
+        (widget-create 'custom-group
+                       :custom-last t
+                       :custom-state 'hidden
+                       :tag "Elpy"
+                       :value 'elpy)
+        (widget-create 'custom-group
+                       :custom-last t
+                       :custom-state 'hidden
+                       :tag "Python"
+                       :value 'python)
+        (widget-create 'custom-group
+                       :custom-last t
+                       :custom-state 'hidden
+                       :tag "Completion (Company)"
+                       :value 'company)
+        (widget-create 'custom-group
+                       :custom-last t
+                       :custom-state 'hidden
+                       :tag "Call Signatures (ElDoc)"
+                       :value 'eldoc)
+        (widget-create 'custom-group
+                       :custom-last t
+                       :custom-state 'hidden
+                       :tag "Inline Errors (Flymake)"
+                       :value 'flymake)
+        (widget-create 'custom-group
+                       :custom-last t
+                       :custom-state 'hidden
+                       :tag "Snippets (YASnippet)"
+                       :value 'yasnippet)
+        (widget-setup)
+        (goto-char (point-min))))
+    (pop-to-buffer-same-window buf)))
 
-      ;; Show elpy customize options
-      (custom-buffer-create-internal
-       '((elpy custom-group)))
+(defun elpy-config--insert-help ()
+  (let ((start (point)))
+    ;; Help display from `customize-browse'
+    (widget-insert (format "\
+%s buttons; type RET or click mouse-1
+on a button to invoke its action.
+Invoke [+] to expand a group, and [-] to collapse an expanded group.\n"
+                           (if custom-raised-buttons
+                               "`Raised' text indicates"
+                             "Square brackets indicate")))
+    (if custom-browse-only-groups
+        (widget-insert "\
+Invoke the [Group] button below to edit that item in another window.\n\n")
+      (widget-insert "Invoke the ")
+      (widget-create 'item
+                     :format "%t"
+                     :tag "[Group]"
+                     :tag-glyph "folder")
+      (widget-insert ", ")
+      (widget-create 'item
+                     :format "%t"
+                     :tag "[Face]"
+                     :tag-glyph "face")
+      (widget-insert ", and ")
+      (widget-create 'item
+                     :format "%t"
+                     :tag "[Option]"
+                     :tag-glyph "option")
+      (widget-insert " buttons below to edit that
+item in another window.\n\n")
 
-      ;; And provide some customize groups with more options
-      (let ((inhibit-read-only t))
-        (goto-char (point-max))
-        (insert
-         "There are other customize groups you might find interesting:\n"
-         "\n"))
-      (custom-buffer-create-internal
-       '((python custom-group)
-         ;; Nothing useful there
-         ;; (pyvenv custom-group)
-         (company custom-group)
-         (eldoc custom-group)
-         (flymake custom-group)
-         (yasnippet custom-group)
-         )))
-    (pop-to-buffer buf)))
+      (fill-region start (point)))))
 
 (defun elpy-config--insert-configuration-problems (&optional config)
   "Insert help text and widgets for configuration problems."
