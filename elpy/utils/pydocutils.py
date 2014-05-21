@@ -20,32 +20,44 @@ if not compat.PYTHON3:  # Python 2 old style classes
     PYDOC_TYPES = tuple(list(PYDOC_TYPES) + [types.ClassType])
 
 
-def get_pydoc_completions(modulename=None):
+def get_pydoc_completions(modulename):
     """Get possible completions for modulename for pydoc.
 
     Returns a list of possible values to be passed to pydoc.
 
     """
     modulename = compat.ensure_not_unicode(modulename)
-    modules = get_modules(modulename)
-    if modulename is None:
-        return modules
-    if modules is None:
-        modules = []
+    modulename = modulename.rstrip(".")
+    if modulename == "":
+        return sorted(get_modules())
+    candidates = get_completions(modulename)
+    if candidates:
+        return sorted(candidates)
+    needle = modulename
+    if "." in needle:
+        modulename, part = needle.rsplit(".", 1)
+        candidates = get_completions(modulename)
+    else:
+        candidates = get_modules()
+    return sorted(candidate for candidate in candidates
+                  if candidate.startswith(needle))
+
+
+def get_completions(modulename):
+    modules = set("{}.{}".format(modulename, module)
+                  for module in get_modules(modulename))
+
     try:
         module, name = resolve(modulename)
-    except:
-        return None
-
+    except ImportError:
+        return modules
     if isinstance(module, CONTAINER_TYPES):
-        modules.extend(name for name in dir(module)
+        modules.update("{}.{}".format(modulename, name)
+                       for name in dir(module)
                        if not name.startswith("_") and
                        isinstance(getattr(module, name),
                                   PYDOC_TYPES))
-    if modules:
-        return modules
-    else:
-        return None
+    return modules
 
 
 def get_modules(modulename=None):
@@ -64,11 +76,11 @@ def get_modules(modulename=None):
     try:
         module = safeimport(modulename)
     except ErrorDuringImport:
-        return None
+        return []
     if module is None:
-        return None
+        return []
     if hasattr(module, "__path__"):
         return [modname for (importer, modname, ispkg)
                 in iter_modules(module.__path__)
                 if not modname.startswith("_")]
-    return None
+    return []
