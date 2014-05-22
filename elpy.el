@@ -1371,7 +1371,7 @@ Returns the result, blocking until this arrived."
                                elpy-rpc--timeout)))
     (cond
      (error-occured
-      (error (format "%S" error-object)))
+      (elpy-rpc--default-error-callback error-object))
      (result-arrived
       result-value)
      (t
