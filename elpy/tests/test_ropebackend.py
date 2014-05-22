@@ -152,6 +152,15 @@ class TestGetCompletions(RopeBackendTestCase):
         # This is strictly speaking superfluous. Just avoid an error.
         self.assertIsNotNone(completions)
 
+    def test_should_complete_sys(self):
+        source, offset = source_and_offset("import sys\nsys._|_")
+        filename = self.project_file("test.py", source)
+        completions = self.backend.rpc_get_completions(self.project_root,
+                                                       filename,
+                                                       source,
+                                                       offset)
+        self.assertIn('path', [symbol for (symbol, doc) in completions])
+
 
 class TestGetDefinition(RopeBackendTestCase):
     def test_should_return_location_in_same_file(self):
