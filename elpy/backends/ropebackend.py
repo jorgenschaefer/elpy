@@ -75,8 +75,27 @@ class RopeBackend(NativeBackend):
             return None
         project = self.projects.get(project_root)
         if project is None:
+            prefs = dict(ignored_resources=['*.pyc', '*~', '.ropeproject',
+                                            '.hg', '.svn', '_svn', '.git'],
+                         python_files=['*.py'],
+                         save_objectdb=False,
+                         compress_objectdb=False,
+                         automatic_soa=True,
+                         soa_followed_calls=0,
+                         perform_doa=True,
+                         validate_objectdb=True,
+                         max_history_items=32,
+                         save_history=False,
+                         compress_history=False,
+                         indent_size=4,
+                         extension_modules=[],
+                         import_dynload_stdmods=True,
+                         ignore_syntax_errors=False,
+                         ignore_bad_imports=False)
             project = self.projectlib.Project(project_root,
-                                              ropefolder=None)
+                                              ropefolder=None,
+                                              **prefs)
+
             self.projects[project_root] = project
         last_validation = self.last_validation.get(project_root, 0.0)
         now = time.time()
