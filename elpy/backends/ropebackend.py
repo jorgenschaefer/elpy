@@ -100,6 +100,7 @@ class RopeBackend(NativeBackend):
             proposals = self.codeassist.code_assist(project, source, offset,
                                                     resource,
                                                     maxfixes=MAXFIXES)
+            starting_offset = self.codeassist.starting_offset(source, offset)
         except self.ModuleSyntaxError:
             # Rope can't parse this file
             return []
@@ -109,7 +110,6 @@ class RopeBackend(NativeBackend):
         except IndexError as e:
             # Bug in Rope, see #186
             return []
-        starting_offset = self.codeassist.starting_offset(source, offset)
         prefixlen = offset - starting_offset
         return [[proposal.name[prefixlen:], proposal.get_doc()]
                 for proposal in proposals]
@@ -120,8 +120,14 @@ class RopeBackend(NativeBackend):
         # The find_definition call fails on an empty strings
         if source == '':
             return None
-        location = self.findit.find_definition(project, source, offset,
-                                               resource, MAXFIXES)
+
+        try:
+            location = self.findit.find_definition(project, source, offset,
+                                                   resource, MAXFIXES)
+        except (self.ModuleSyntaxError, IndentationError):
+            # Rope can't parse this file
+            return None
+
         if location is None:
             return None
         else:
@@ -136,6 +142,7 @@ class RopeBackend(NativeBackend):
                                                resource, MAXFIXES,
                                                remove_self=True)
         except (self.ModuleSyntaxError, IndentationError):
+            # Rope can't parse this file
             return None
         except (self.BadIdentifierError, IndexError):
             # IndexError seems to be a bug in Rope. I don't know what
@@ -148,6 +155,9 @@ class RopeBackend(NativeBackend):
         try:
             docstring = self.codeassist.get_doc(project, source, offset,
                                                 resource, MAXFIXES)
+        except (self.ModuleSyntaxError, IndentationError):
+            # Rope can't parse this file
+            docstring = None
         except (self.BadIdentifierError, IndexError):
             docstring = None
         if docstring is None:

@@ -65,7 +65,7 @@ class TestGetCompletions(RopeBackendTestCase):
                                          "",
                                          0)
 
-    def test_should_fail_for_module_syntax_errors(self):
+    def test_should_not_fail_for_module_syntax_errors(self):
         source, offset = source_and_offset(
             "class Foo(object):\n"
             "  def bar(self):\n"
@@ -92,24 +92,19 @@ class TestGetCompletions(RopeBackendTestCase):
         )
 
         filename = self.project_file("test.py", source)
-        message = re.escape("Too many syntax errors in file test.py "
-                            "(lines 4, 8, 11, 14, 17, 20)")
-        self.assertRaisesRegexp(rpc.Warning, message,
-                                self.backend.rpc_get_completions,
-                                self.project_root, filename, source,
-                                offset)
+        self.assertEquals([],
+                          self.backend.rpc_get_completions
+                          (self.project_root, filename, source, offset))
 
-    def test_should_fail_for_bad_indentation(self):
+    def test_should_not_fail_for_bad_indentation(self):
         source, offset = source_and_offset(
             "def foo():\n"
             "       print 23_|_\n"
             "      print 17\n")
         filename = self.project_file("test.py", source)
-        with self.assertRaises(rpc.Fault):
-            self.backend.rpc_get_completions(self.project_root,
-                                             filename,
-                                             source,
-                                             offset)
+        self.assertEquals([],
+                          self.backend.rpc_get_completions
+                          (self.project_root, filename, source, offset))
 
     def test_should_complete_top_level_modules_for_import(self):
         source, offset = source_and_offset("import multi_|_")
