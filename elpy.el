@@ -459,7 +459,10 @@ except:
 
 try:
     import jedi
-    config['jedi_version'] = '.'.join(str(x) for x in jedi.__version__)
+    if isinstance(jedi.__version__, tuple):
+        config['jedi_version'] = '.'.join(str(x) for x in jedi.__version__)
+    else:
+        config['jedi_version'] = jedi.__version__
 except:
     config['jedi_version'] = None
 
