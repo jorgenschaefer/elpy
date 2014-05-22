@@ -64,6 +64,8 @@ class JediBackend(NativeBackend):
                 locations = script.goto()
         finally:
             sys.path.pop()
+        locations = [location for location in locations
+                     if location.module_path]
         if not locations:
             return None
         else:

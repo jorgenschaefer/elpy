@@ -159,17 +159,6 @@ class TestGetDefinition(JediBackendTestCase):
                                         None,
                                         "open", 0)
 
-    def test_should_find_variable_definition(self):
-        source, offset = source_and_offset("SOME_VALUE = 1\n"
-                                           "\n"
-                                           "variable = _|_SOME_VALUE\n")
-        filename = self.project_file("test.py", source)
-        self.assertEqual(self.backend.rpc_get_definition(self.project_root,
-                                                         filename,
-                                                         source,
-                                                         offset),
-                         (filename, 0))
-
 
 class TestGetCalltip(JediBackendTestCase):
     def test_should_return_calltip(self):
