@@ -1,0 +1,16 @@
+(ert-deftest elpy-rpc--register-callback-should-fail-in-bad-buffer ()
+  (elpy-testcase ()
+    (should-error (elpy-rpc--register-callback 0 'success 'error 'buffer))))
+
+(ert-deftest elpy-rpc--register-callback-should-initialize-callbacks ()
+  (elpy-testcase ()
+    (setq elpy-rpc--buffer-p t)
+    (elpy-rpc--register-callback 0 'success 'error 'buffer)
+    (should (hash-table-p elpy-rpc--backend-callbacks))))
+
+(ert-deftest elpy-rpc--register-callback-should-add-values ()
+  (elpy-testcase ()
+    (setq elpy-rpc--buffer-p t)
+    (elpy-rpc--register-callback 0 'success 'error 'buffer)
+    (should (equal (gethash 0 elpy-rpc--backend-callbacks)
+                   '(success error buffer)))))

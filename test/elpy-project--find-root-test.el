@@ -1,8 +1,6 @@
 (ert-deftest elpy-project--find-root-should-use-projectile-root ()
   (elpy-testcase ()
-    (mocker-let ((projectile-project-root
-                  ()
-                  ((:output "/project/root"))))
+    (mletf* ((projectile-project-root () "/project/root"))
       (should (f-equal? (elpy-project--find-root)
                         "/project/root")))))
 

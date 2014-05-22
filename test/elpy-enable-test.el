@@ -5,10 +5,11 @@
 
 (ert-deftest elpy-enable-should-fail-with-wrong-python-mode ()
   (elpy-testcase ()
-    (mocker-let ((find-lisp-object-file-name
-                  (object type)
-                  ((:input '(python-mode symbol-function)
-                           :output "/some/path/python-mode.el"))))
+    (mletf* ((find-lisp-object-file-name
+              (object type)
+              (pcase (list object type)
+                (`(python-mode symbol-function)
+                 "/some/path/python-mode.el"))))
       (should-error (elpy-enable)))))
 
 (ert-deftest elpy-enable-should-add-elpy-to-python-mode ()
@@ -25,16 +26,24 @@
 
 (ert-deftest elpy-enable-should-run-global-init ()
   (elpy-testcase ()
-    (mocker-let ((elpy-modules-run
-                  (command &rest args)
-                  ((:input '(global-init)))))
-      (elpy-enable))))
+    (mletf* ((global-init-called nil)
+             (elpy-modules-run
+              (command &rest args)
+              (pcase command
+                (`global-init (setq global-init-called t)))))
+
+      (elpy-enable)
+
+      (should global-init-called))))
 
 (ert-deftest elpy-enable-should-skip-global-init-with-argument ()
   (elpy-testcase ()
-    (mocker-let ((elpy-modules-run
-                  (command &rest args)
-                  ((:input '(global-init)
-                           :min-occur 0
-                           :max-occur 0))))
-      (elpy-enable t))))
+    (mletf* ((global-init-called nil)
+             (elpy-modules-run
+              (command &rest args)
+              (pcase command
+                (`global-init (setq global-init-called t)))))
+
+      (elpy-enable t)
+
+      (should-not global-init-called))))

@@ -509,8 +509,9 @@ virtual_env_short"
                  (executable-find interactive-python)
                  config))
       (let ((venv (getenv "VIRTUAL_ENV")))
-        (puthash "virtual_env" venv config)
-        (puthash "virtual_env_short" (file-name-nondirectory venv) config))
+        (when venv
+          (puthash "virtual_env" venv config)
+          (puthash "virtual_env_short" (file-name-nondirectory venv) config)))
       (let ((return-value (ignore-errors
                             (call-process elpy-rpc-python-command
                                           nil
@@ -1098,80 +1099,153 @@ This maps call IDs to functions.")
 You can dynamically bind this to a higher value if you want to
 wait longer.")
 
-(defun elpy-rpc--process-buffer-p (buffer)
-  "Return non-nil when BUFFER is an elpy-rpc buffer."
-  (buffer-local-value 'elpy-rpc--buffer-p buffer))
+(defun elpy-rpc (method params &optional success error)
+  "Call METHOD with PARAMS in the backend.
 
-(defun elpy-rpc--live-p (buffer)
-  "Return non-nil when BUFFER is a live elpy-rpc process."
-  (and buffer
-       (get-buffer-process buffer)
-       (process-live-p (get-buffer-process buffer))))
+If SUCCESS and optionally ERROR is given, return immediately and
+call those when a result is available. Otherwise, wait for a
+result and return that."
+  (when (not error)
+    (setq error #'elpy-rpc--default-error-callback))
+  (if success
+      (elpy-rpc--call method params success error)
+    (elpy-rpc--call-blocking method params)))
+
+(defun elpy-rpc--call-blocking (method-name params)
+  "Call METHOD-NAME with PARAMS in the current RPC backend.
+
+Returns the result, blocking until this arrived."
+  (let ((result-arrived nil)
+        (error-occured nil)
+        (result-value nil)
+        (error-object nil)
+        (end-time (time-add (current-time)
+                            (seconds-to-time elpy-rpc--timeout)))
+        (process (get-buffer-process (elpy-rpc--get-rpc-buffer))))
+    (elpy-rpc--call method-name params
+                    (lambda (result)
+                      (setq result-value result
+                            result-arrived t))
+                    (lambda (err)
+                      (setq error-object err
+                            error-occured t)))
+    (while (and (time-less-p (current-time)
+                             end-time)
+                (not (or result-arrived
+                         error-occured)))
+      (accept-process-output process elpy-rpc--timeout))
+    (cond
+     (error-occured
+      (elpy-rpc--default-error-callback error-object))
+     (result-arrived
+      result-value)
+     (t
+      (error "Timeout during RPC call %s from backend"
+             method-name)))))
+
+(defun elpy-rpc--call (method-name params success error)
+  "Call METHOD-NAME with PARAMS in the current RPC backend.
+
+Returns immediately. When a result is available, SUCCESS will be
+called with that value as its sole argument. If an error occurs,
+ERROR is called, if set."
+  (let ((orig-buf (current-buffer)))
+    (with-current-buffer (elpy-rpc--get-rpc-buffer)
+      (setq elpy-rpc--call-id (1+ elpy-rpc--call-id))
+      (elpy-rpc--register-callback elpy-rpc--call-id
+                                   success
+                                   error
+                                   orig-buf)
+      (process-send-string
+       (get-buffer-process (current-buffer))
+       (concat (json-encode `((id . ,elpy-rpc--call-id)
+                              (method . ,method-name)
+                              (params . ,params)))
+               "\n")))))
+
+(defun elpy-rpc--register-callback (call-id success error buffer)
+  "Register for SUCCESS and ERROR to be called when CALL-ID returns.
+
+Must be called in an elpy-rpc buffer."
+  (assert elpy-rpc--buffer-p)
+  (when (not elpy-rpc--backend-callbacks)
+    (setq elpy-rpc--backend-callbacks (make-hash-table :test #'equal)))
+  (puthash call-id (list success error buffer) elpy-rpc--backend-callbacks))
 
 (defun elpy-rpc--get-rpc-buffer ()
   "Return the RPC buffer associated with the current buffer,
 creating one if necessary."
-  (cond
-   (elpy-rpc--buffer-p
-    (current-buffer))
-   ((not elpy-mode)
-    (error "Not an Elpy buffer"))
-   ((elpy-rpc--live-p elpy-rpc--buffer)
-    elpy-rpc--buffer)
-   (t
-    (when elpy-rpc--buffer
-      (kill-buffer elpy-rpc--buffer))
+  (when (not (elpy-rpc--process-buffer-p elpy-rpc--buffer))
     (setq elpy-rpc--buffer
           (or (elpy-rpc--find-buffer (elpy-project-root)
                                      elpy-rpc-python-command)
               (elpy-rpc--open (elpy-project-root)
-                              elpy-rpc-python-command)))
-    elpy-rpc--buffer)))
+                              elpy-rpc-python-command))))
+  elpy-rpc--buffer)
 
-(defun elpy-rpc--get-rpc-process ()
-  "Return the RPC process associated with the current buffer,
-creating one if necessary."
-  (get-buffer-process (elpy-rpc--get-rpc-buffer)))
+(defun elpy-rpc--process-buffer-p (buffer)
+  "Return non-nil when BUFFER is a live elpy-rpc process buffer.
+
+If BUFFER is a buffer for an elpy-rpc process, but the process
+died, this will kill the process and buffer."
+  (cond
+   ((or (not buffer)
+        (not (buffer-live-p buffer)))
+    nil)
+   ((not (buffer-local-value 'elpy-rpc--buffer-p buffer))
+    nil)
+   ((and (get-buffer-process buffer)
+         (process-live-p (get-buffer-process buffer)))
+    t)
+   (t
+    (ignore-errors
+      (kill-process (get-buffer-process buffer)))
+    (ignore-errors
+      (kill-buffer buffer))
+    nil)))
 
 (defun elpy-rpc--find-buffer (project-root python-command)
   "Return an existing RPC buffer for this project root and command."
-  (let ((result nil))
+  (catch 'return
     (dolist (buf (buffer-list))
-      (when (elpy-rpc--process-buffer-p buf)
-        (if (not (elpy-rpc--live-p buf))
-            (kill-buffer buf)
-          (with-current-buffer buf
-            (when (and (equal elpy-rpc--backend-project-root
-                              project-root)
-                       (equal elpy-rpc--backend-python-command
-                              python-command))
-              (when result
-                (kill-buffer result))
-              (setq result buf))))))
-    result))
+      (when (and (elpy-rpc--process-buffer-p buf)
+                 (equal (buffer-local-value 'elpy-rpc--backend-project-root
+                                            buf)
+                        project-root)
+                 (equal (buffer-local-value 'elpy-rpc--backend-python-command
+                                            buf)
+                        python-command))
+        (throw 'return buf)))
+    nil))
 
 (defun elpy-rpc--open (project-root python-command)
   "Start a new RPC process and return the associated buffer."
+  ;; Prevent configuration errors
   (when (and elpy-rpc-backend
              (not (stringp elpy-rpc-backend)))
     (error "`elpy-rpc-backend' should be nil or a string."))
-  (let ((new-elpy-rpc-buffer (generate-new-buffer "*elpy-rpc*")))
+  (let* ((name (format "*elpy-rpc [project:%s python:%s]*"
+                                      project-root
+                                      python-command))
+         (new-elpy-rpc-buffer (generate-new-buffer name))
+         (proc nil))
     (with-current-buffer new-elpy-rpc-buffer
       (setq elpy-rpc--buffer-p t
+            elpy-rpc--buffer (current-buffer)
             elpy-rpc--backend-project-root project-root
             elpy-rpc--backend-python-command python-command
-            default-directory project-root))
-    (let ((proc (condition-case err
-                    (let ((process-connection-type nil)
-                          (default-directory "/"))
-                      (start-process "elpy-rpc"
-                                     new-elpy-rpc-buffer
-                                     python-command
-                                     "-W" "ignore"
-                                     "-m" "elpy.__main__"))
-                  (error
-                   (elpy-config-error
-                    "Elpy can't start Python (%S)" err)))))
+            default-directory "/"
+            proc (condition-case err
+                     (let ((process-connection-type nil))
+                       (start-process name
+                                      (current-buffer)
+                                      python-command
+                                      "-W" "ignore"
+                                      "-m" "elpy.__main__"))
+                   (error
+                    (elpy-config-error
+                     "Elpy can't start Python (%s: %s)"
+                     (car err) (cadr err)))))
       (set-process-query-on-exit-flag proc nil)
       (set-process-sentinel proc #'elpy-rpc--sentinel)
       (set-process-filter proc #'elpy-rpc--filter))
@@ -1184,65 +1258,76 @@ creating one if necessary."
          ;; Requested backend successfully set
          t)
        (lambda (err)
-         (elpy-config-error))))
+         (elpy-config-error "Requested backend %s not available"
+                            elpy-rpc-backend))))
      ;; User did not specify a backend, make sure we are not using the
      ;; native one.
      (t
       (elpy-rpc-get-backend
        (lambda (current-backend)
          (when (equal current-backend "native")
-           (elpy-config-error))))))
+           (elpy-config-error "Only native backend found"))))))
     new-elpy-rpc-buffer))
 
 (defun elpy-rpc--sentinel (process event)
-  "The sentinel for the RPC process."
-  (when event
-    ;; Process sentinels are only ever called when the process
-    ;; finishes.
-    (when elpy-rpc--backend-callbacks
-      (maphash (lambda (call-id callbacks)
-                 (ignore-errors
-                   (funcall (nth 1 callbacks)
-                            (substring event 0 -1))))
-               elpy-rpc--backend-callbacks)
-      (setq elpy-rpc--backend-callbacks nil))))
+  "The sentinel for the RPC process.
+
+As process sentinels are only ever called when the process
+terminates, this will call the error handler of all registered
+RPC calls with the event."
+  (let ((buffer (process-buffer process)))
+    (when (and buffer
+               (buffer-live-p buffer))
+      (with-current-buffer buffer
+        (when elpy-rpc--backend-callbacks
+          (maphash (lambda (call-id callbacks)
+                     (ignore-errors
+                       (with-current-buffer (nth 2 callbacks)
+                           (funcall (nth 1 callbacks)
+                                    (substring event 0 -1)))))
+                   elpy-rpc--backend-callbacks)
+          (setq elpy-rpc--backend-callbacks nil))))))
 
 (defun elpy-rpc--filter (process output)
   "The filter for the RPC process."
-  (with-current-buffer (process-buffer process)
-    (goto-char (point-max))
-    (insert output)
-    (catch 'return
-      (while (progn
-               (goto-char (point-min))
-               (search-forward "\n" nil t))
-        (goto-char (point-min))
-        (let (json did-read-json)
-          (condition-case err
-              (setq json (let ((json-array-type 'list))
-                           (json-read))
-                    did-read-json t)
-            (error
-             (goto-char (point-min))
-             (cond
-              ((looking-at "elpy-rpc ready\n")
-               (replace-match "")
-               (elpy-rpc--check-backend-version "1.1"))
-              ((looking-at "elpy-rpc ready (\\([^ ]*\\))\n")
-               (let ((rpc-version (match-string 1)))
-                 (replace-match "")
-                 (elpy-rpc--check-backend-version rpc-version)))
-              (t
-               (elpy-rpc--handle-unexpected-line)
-               (throw 'return nil)))))
-          (when did-read-json
-            (delete-region (point-min) (1+ (point)))
-            (elpy-rpc--handle-json json)))))))
+  (let ((buffer (process-buffer process)))
+    (when (and buffer
+               (buffer-live-p buffer))
+      (with-current-buffer (process-buffer process)
+        (goto-char (point-max))
+        (insert output)
+        (catch 'return
+          (while (progn
+                   (goto-char (point-min))
+                   (search-forward "\n" nil t))
+            (goto-char (point-min))
+            (let (json did-read-json)
+              (condition-case err
+                  (setq json (let ((json-array-type 'list))
+                               (json-read))
+                        did-read-json t)
+                (error
+                 (goto-char (point-min))
+                 (cond
+                  ((looking-at "elpy-rpc ready\n")
+                   (replace-match "")
+                   (elpy-rpc--check-backend-version "1.1"))
+                  ((looking-at "elpy-rpc ready (\\([^ ]*\\))\n")
+                   (let ((rpc-version (match-string 1)))
+                     (replace-match "")
+                     (elpy-rpc--check-backend-version rpc-version)))
+                  (t
+                   (elpy-rpc--handle-unexpected-line)
+                   (throw 'return nil)))))
+              (when did-read-json
+                (delete-region (point-min) (1+ (point)))
+                (elpy-rpc--handle-json json)))))))))
 
 (defun elpy-rpc--check-backend-version (rpc-version)
   "Check that we are using the right version."
   (when (not (equal rpc-version elpy-version))
     (elpy-insert--popup "*Elpy Version Mismatch*"
+      (elpy-insert--header "Elpy Version Mismatch")
       (elpy-insert--para
        "You are not using the same version of Elpy in Emacs Lisp"
        "compared to Python. This can cause random problems. Please"
@@ -1251,6 +1336,27 @@ creating one if necessary."
        "\n"
        "Elpy Emacs Lisp version: " elpy-version "\n"
        "Elpy Python version....: " rpc-version "\n"))))
+
+(defun elpy-rpc--handle-unexpected-line ()
+  "Handle an unexpected line from the backend.
+
+This is usually an error or backtrace."
+  (goto-char (point-min))
+  (let ((missing-module (when (re-search-forward "No module named \\(.*\\)"
+                                                 nil t)
+                          (match-string 1))))
+    (if (equal missing-module "elpy")
+        (elpy-config-error "Elpy module not found")
+      (let ((data (buffer-string)))
+        (elpy-insert--popup "*Elpy Error*"
+          (elpy-insert--header "Error initializing Elpy")
+          (elpy-insert--para
+           "There was an error when trying to start the backend. "
+           "Elpy can not work until this problem is solved. "
+           "The following lines were received from Python, and might "
+           "help identifying the problem.\n")
+          (insert "\n"
+                  data))))))
 
 (defun elpy-rpc--handle-json (json)
   "Handle a single JSON object from the RPC backend."
@@ -1266,13 +1372,9 @@ creating one if necessary."
             orig-buf (nth 2 callbacks))
       (remhash call-id elpy-rpc--backend-callbacks)
       (with-current-buffer orig-buf
-        (cond
-         ((and error-object error-callback)
-          (funcall error-callback error-object))
-         (error-object
-          (elpy-rpc--default-error-callback error-object))
-         (t
-          (funcall success-callback result)))))))
+        (if error-object
+            (funcall error-callback error-object)
+          (funcall success-callback result))))))
 
 (defun elpy-rpc--default-error-callback (error-object)
   "Display an error from the RPC backend."
@@ -1303,99 +1405,42 @@ creating one if necessary."
         (elpy-insert--header "Traceback")
         (insert traceback)))))
 
-(defun elpy-rpc--handle-unexpected-line ()
-  "Handle an unexpected line from the backend.
-
-This is usually an error or backtrace."
-  (let ((missing-module (when (re-search-forward "No module named \\(.*\\)"
-                                                 nil t)
-                          (match-string 1))))
-    (if (equal missing-module "elpy")
-        (elpy-config-error "Elpy module not found")
-      (let ((data (buffer-string)))
-        (elpy-insert--popup "*Elpy Error*"
-          (elpy-insert--header "Error initializing Elpy")
-          (elpy-insert--para
-           "There was an error when trying to start the backend. "
-           "Elpy can not work until this problem is solved. "
-           "The following lines were received from Python, and might "
-           "help identifying the problem.\n")
-          (insert "\n"
-                  data))))))
-
-(defun elpy-rpc--call (method-name params success &optional error)
-  "Call METHOD-NAME with PARAMS in the current RPC backend.
-
-Returns immediately. When a result is available, SUCCESS will be
-called with that value as its sole argument. If an error occurs,
-ERROR is called, if set."
-  (let ((orig-buf (current-buffer)))
-    (with-current-buffer (elpy-rpc--get-rpc-buffer)
-      (setq elpy-rpc--call-id (1+ elpy-rpc--call-id))
-      (elpy-rpc--register-callback elpy-rpc--call-id success error orig-buf)
-      (process-send-string
-       (get-buffer-process (current-buffer))
-       (concat (json-encode `((id . ,elpy-rpc--call-id)
-                              (method . ,method-name)
-                              (params . ,params)))
-               "\n")))))
-
-(defun elpy-rpc--register-callback (call-id success error buffer)
-  "Register for SUCCESS and ERROR to be called when CALL-ID returns.
-
-Must be called in an elpy-rpc buffer."
-  (assert elpy-rpc--buffer-p)
-  (when (not elpy-rpc--backend-callbacks)
-    (setq elpy-rpc--backend-callbacks (make-hash-table :test #'equal)))
-  (puthash call-id (list success error buffer) elpy-rpc--backend-callbacks))
-
-(defun elpy-rpc--call-blocking (method-name params)
-  "Call METHOD-NAME with PARAMS in the current RPC backend.
-
-Returns the result, blocking until this arrived."
-  (let ((result-arrived nil)
-        (error-occured nil)
-        (result-value nil)
-        (error-object nil))
-    (elpy-rpc--call method-name params
-                    (lambda (result)
-                      (setq result-value result
-                            result-arrived t))
-                    (lambda (err)
-                      (setq error-object err
-                            error-occured t)))
-    (let ((end-time (time-add (current-time)
-                              (seconds-to-time elpy-rpc--timeout))))
-      (while (and (time-less-p (current-time)
-                               end-time)
-                  (not (or result-arrived
-                           error-occured)))
-        (accept-process-output (elpy-rpc--get-rpc-process)
-                               elpy-rpc--timeout)))
-    (cond
-     (error-occured
-      (elpy-rpc--default-error-callback error-object))
-     (result-arrived
-      result-value)
-     (t
-      (error "Timeout in RPC call from backend")))))
-
-(defun elpy-rpc (method params &optional success error)
-  "Call METHOD with PARAMS in the backend.
-
-If SUCCESS and optionally ERROR is given, return immediately and
-call those when a result is available. Otherwise, wait for a
-result and return that."
-  (if success
-      (elpy-rpc--call method params success error)
-    (elpy-rpc--call-blocking method params)))
+;; RPC API functions
 
 (defun elpy-rpc-restart ()
-  "Restart the current RPC process."
+  "Restart all RPC processes."
   (interactive)
-  (dolist (b (buffer-list))
-    (when (buffer-local-value 'elpy-rpc--buffer-p b)
-      (kill-buffer b))))
+  (dolist (buffer (buffer-list))
+    (when (elpy-rpc--process-buffer-p buffer)
+      (ignore-errors
+        (kill-process (get-buffer-process buffer)))
+      (ignore-errors
+        (kill-buffer buffer)))))
+
+(defun elpy-rpc-get-available-backends (&optional success  error)
+  "Call the get_available_backends API function.
+
+Returns a list of names of available backends, depending on which
+Python libraries are installed."
+  (elpy-rpc "get_available_backends" nil success error))
+
+(defun elpy-rpc-get-backend (&optional success error)
+  "Call the get_backend API function.
+
+Returns the name of the backend currently in use."
+  (elpy-rpc "get_backend" nil success error))
+
+(defun elpy-rpc-get-calltip (&optional success error)
+  "Call the get_calltip API function.
+
+Returns a calltip string for the function call at point."
+  (elpy-rpc "get_calltip"
+            (list (expand-file-name (elpy-project-root))
+                  buffer-file-name
+                  (buffer-string)
+                  (- (point)
+                     (point-min)))
+            success error))
 
 (defun elpy-rpc-get-completions (&optional success error)
   "Call the find_completions API function.
@@ -1410,11 +1455,11 @@ point."
                      (point-min)))
             success error))
 
-(defun elpy-rpc-get-calltip (&optional success error)
-  "Call the get_calltip API function.
+(defun elpy-rpc-get-definition (&optional success error)
+  "Call the find_definition API function.
 
-Returns a calltip string for the function call at point."
-  (elpy-rpc "get_calltip"
+Returns nil or a list of (filename, point)."
+  (elpy-rpc "get_definition"
             (list (expand-file-name (elpy-project-root))
                   buffer-file-name
                   (buffer-string)
@@ -1434,42 +1479,17 @@ Returns a possible multi-line docstring for the symbol at point."
                      (point-min)))
             success error))
 
+(defun elpy-rpc-get-pydoc-completions (prefix &optional success error)
+  "Return a list of modules available in pydoc starting with PREFIX."
+  (elpy-rpc "get_pydoc_completions" (list prefix)
+            success error))
+
 (defun elpy-rpc-get-pydoc-documentation (symbol &optional success error)
   "Get the Pydoc documentation for SYMBOL.
 
 Returns a possible multi-line docstring."
     (elpy-rpc "get_pydoc_documentation" (list symbol)
               success error))
-
-(defun elpy-rpc-get-pydoc-completions (prefix &optional success error)
-  "Return a list of modules available in pydoc starting with PREFIX."
-  (elpy-rpc "get_pydoc_completions" (list prefix)
-            success error))
-
-(defun elpy-rpc-get-definition (&optional success error)
-  "Call the find_definition API function.
-
-Returns nil or a list of (filename, point)."
-  (elpy-rpc "get_definition"
-            (list (expand-file-name (elpy-project-root))
-                  buffer-file-name
-                  (buffer-string)
-                  (- (point)
-                     (point-min)))
-            success error))
-
-(defun elpy-rpc-get-backend (&optional success error)
-  "Call the get_backend API function.
-
-Returns the name of the backend currently in use."
-  (elpy-rpc "get_backend" nil success error))
-
-(defun elpy-rpc-get-available-backends (&optional success  error)
-  "Call the get_available_backends API function.
-
-Returns a list of names of available backends, depending on which
-Python libraries are installed."
-  (elpy-rpc "get_available_backends" nil success error))
 
 (defun elpy-rpc-set-backend (backend &optional success error)
   "Call the set_backend API function.

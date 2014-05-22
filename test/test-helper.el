@@ -4,7 +4,22 @@
   (add-to-list 'process-environment (format "PYTHONPATH=%s" elpy-dir)))
 (require 'elpy)
 
-(require 'mocker)
+(defmacro mletf* (bindings &rest body)
+  "Liket `cl-letf*', just with a slightly more concise function syntax.
+
+\(mletf* ((var 5)
+         (fun (arg) (* arg 2)))
+  (fun var))
+=> 10"
+  (declare (indent 1))
+  `(cl-letf* ,(mapcar (lambda (binding)
+                        (if (cddr binding)
+                            `((symbol-function ',(car binding))
+                              (lambda ,(cadr binding)
+                                ,@(cddr binding)))
+                          binding))
+                      bindings)
+     ,@body))
 
 (defmacro with-temp-dir (name &rest body)
   "Create a temporary directory and bind the symbol NAME to the path.
@@ -16,19 +31,6 @@ Run BODY with that binding."
          (progn ,@body)
        (ignore-errors
          (delete-directory ,name t)))))
-
-(defmacro with-elpy-file (tmpdir name &rest body)
-  (declare (indent 2))
-  (let ((buffer (make-symbol "file")))
-    `(with-temp-dir ,tmpdir
-       (let ((,buffer (find-file (format "%s/%s" ,tmpdir ,name))))
-         (unwind-protect
-             (with-current-buffer ,buffer
-               (python-mode)
-               (elpy-mode 1)
-               ,@body)
-           (let ((kill-buffer-query-functions nil))
-             (kill-buffer ,buffer)))))))
 
 (defmacro save-buffer-excursion (&rest body)
   (declare (indent 0))
@@ -46,22 +48,21 @@ Run BODY with that binding."
              (when (not (member buf ,old-buffer-list))
                (kill-buffer buf))))))))
 
-(eval-when-compile
-  (defun elpy-testcase-transform-spec (speclist body)
-    (if (null speclist)
-        `(progn ,@body)
-      (let ((spec (car speclist)))
-        (pcase (car spec)
-          (:project
-           (let ((symbol (cadr spec))
-                 (filespec (cddr spec)))
-             `(with-temp-dir ,symbol
-                (elpy-testcase-create-files ,symbol
-                                            ',filespec)
-                ,(elpy-testcase-transform-spec (cdr speclist)
-                                               body))))
-          (t
-           (error "Bad environment specifier %s" (car spec))))))))
+(defun elpy-testcase-transform-spec (speclist body)
+  (if (null speclist)
+      `(progn ,@body)
+    (let ((spec (car speclist)))
+      (pcase (car spec)
+        (:project
+         (let ((symbol (cadr spec))
+               (filespec (cddr spec)))
+           `(with-temp-dir ,symbol
+                           (elpy-testcase-create-files ,symbol
+                                                       ',filespec)
+                           ,(elpy-testcase-transform-spec (cdr speclist)
+                                                          body))))
+        (t
+         (error "Bad environment specifier %s" (car spec)))))))
 
 (defmacro elpy-testcase (spec &rest body)
   "Initialize Emacs using SPEC, then run BODY in the environment.
@@ -77,6 +78,7 @@ itself a list where the car indicates the type of environment.
   Create a temporary directory and bind the name to SYMBOL.
   Create FILES under that directory. FILES is a list of file
   names, possibly including directory names."
+  (declare (indent 1))
   `(save-buffer-excursion
      (with-temp-buffer
        ,(elpy-testcase-transform-spec spec body))

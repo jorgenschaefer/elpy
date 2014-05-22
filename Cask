@@ -15,5 +15,4 @@
 (depends-on "yasnippet" "0.8.0")
 
 (development
- (depends-on "ert-runner")
- (depends-on "mocker"))
+ (depends-on "ert-runner"))

@@ -18,13 +18,16 @@
 
 (ert-deftest elpy-disable-should-global-stop ()
   (elpy-testcase ()
-    (mocker-let ((elpy-modules-run
-                  (command &rest args)
-                  ((:input '(global-init))
-                   (:input '(global-stop)))))
+    (mletf* ((global-stop-called nil)
+             (elpy-modules-run
+              (command &rest args)
+              (pcase command
+                (`global-stop (setq global-stop-called t)))))
       (elpy-enable)
 
-      (elpy-disable))))
+      (elpy-disable)
+
+      (should global-stop-called))))
 
 ;;; AAA so it's run first... argh.
 (ert-deftest AAA-elpy-disable-should-work-without-prior-enable ()

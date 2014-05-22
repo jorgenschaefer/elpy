@@ -1,0 +1,10 @@
+(ert-deftest elpy-rpc--check-backend-version-should-noop-for-same-version ()
+  (elpy-testcase ()
+    (elpy-rpc--check-backend-version elpy-version)
+    (should-not (get-buffer "*Elpy Version Mismatch*"))))
+
+(ert-deftest elpy-rpc--check-backend-version-should-pop-up-for-bad-version ()
+  (elpy-testcase ()
+    (elpy-rpc--check-backend-version "23.5.17.42.9.3")
+    (with-current-buffer (get-buffer "*Elpy Version Mismatch*")
+      (search-forward "23.5.17.42.9.3"))))

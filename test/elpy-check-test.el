@@ -5,26 +5,17 @@
 (ert-deftest elpy-check-should-call-save-some-buffers ()
   (elpy-testcase ((:project project-root "test.py"))
     (find-file (f-join project-root "test.py"))
-    (mocker-let ((save-some-buffers
-                  (arg pred)
-                  ((:input '(nil nil)))))
-      (elpy-check))))
-
-(ert-deftest elpy-check-should-call-save-some-buffers ()
-  (elpy-testcase ((:project project-root "test.py"))
-    (find-file (f-join project-root "test.py"))
-    (mocker-let ((save-some-buffers
-                  (arg pred)
-                  ((:input '(nil nil)))))
+    (mletf* ((save-some-buffers-called nil)
+             (save-some-buffers (arg pred)
+                                (setq save-some-buffers-called t)))
       (elpy-check))))
 
 (ert-deftest elpy-check-should-call-compilation-start-for-single-file ()
   (elpy-testcase ((:project project-root "test.py"))
     (find-file (f-join project-root "test.py"))
-    (cl-letf* ((command nil)
-               ((symbol-function 'compilation-start)
-                (lambda (command-arg mode name-function)
-                  (setq command command-arg))))
+    (mletf* ((command nil)
+             (compilation-start (command-arg mode name-function)
+                                (setq command command-arg)))
       (elpy-check)
       (should (equal command (format "%s %s"
                                      python-check-command
@@ -33,11 +24,10 @@
 (ert-deftest elpy-check-should-pass-extra-args-for-project-check ()
   (elpy-testcase ((:project project-root "test.py"))
     (find-file (f-join project-root "test.py"))
-    (cl-letf* ((command nil)
-               (elpy-project-ignored-directories '("foo" "bar"))
-               ((symbol-function 'compilation-start)
-                (lambda (command-arg mode name-function)
-                  (setq command command-arg))))
+    (mletf* ((command nil)
+             (elpy-project-ignored-directories '("foo" "bar"))
+             (compilation-start (command-arg mode name-function)
+                                (setq command command-arg)))
       (elpy-check t)
       (should (equal command (format "%s %s --exclude=foo,bar"
                                      python-check-command
