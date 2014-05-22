@@ -1597,7 +1597,8 @@ error if the backend is not supported."
     ;; no-cache <prefix> => t if company shouldn't cache results
     ;; meta <candidate> => short docstring for minibuffer
     (`meta
-     (let ((doc (gethash arg elpy-company-candidate-cache)))
+     (let ((doc (when elpy-company-candidate-cache
+                  (gethash arg elpy-company-candidate-cache))))
        (when (and doc
                   (string-match "^\\(?:\\s-\\|\n\\)*\\(.*\\)$" doc))
          (match-string 1 doc))))
@@ -1606,7 +1607,8 @@ error if the backend is not supported."
      "p")
     ;; doc-buffer <candidate> => put doc buffer in `company-doc-buffer'
     (`doc-buffer
-     (let ((doc (gethash arg elpy-company-candidate-cache)))
+     (let ((doc (when elpy-company-candidate-cache
+                  (gethash arg elpy-company-candidate-cache))))
        (when doc
          (company-doc-buffer doc))))
     ;; location <candidate> => (buffer . point) or (file . line-number)
