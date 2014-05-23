@@ -62,6 +62,7 @@
     (list 'progn (list 'defvar var val docstring)
           (list 'make-variable-buffer-local (list 'quote var)))))
 
+(require 'cus-edit)
 (require 'elpy-refactor)
 (require 'etags)
 (require 'idomenu)
@@ -79,21 +80,6 @@
   "The Emacs Lisp Python Environment."
   :prefix "elpy-"
   :group 'languages)
-
-;;;###autoload
-(defcustom elpy-enable nil
-  "Whether to enable Elpy globally.
-
-This variable is meant to be set from the customization
-interface. Setting it from lisp directly has no effect, use the
-`elpy-enable' function instead."
-  :type 'boolean
-  :set (lambda (sym var)
-         (if var
-             (elpy-enable)
-           (when (fboundp 'elpy-disable)
-             (elpy-disable))))
-  :group 'elpy)
 
 (defcustom elpy-rpc-python-command (if (eq window-system 'w32)
                                        "pythonw"
@@ -203,15 +189,13 @@ can be inidividually enabled or disabled."
   "Key map for the Emacs Lisp Python Environment.")
 
 ;;;###autoload
-(defun elpy-enable (&optional skip-initialize-modules)
-  "Enable Elpy in all future Python buffers.
-
-When SKIP-INITIALIZE-MODULES is non-nil, this will NOT globally
-initialize the modules in `elpy-modules'. This can result in
-weird behavior, use at your own risk."
+(defun elpy-enable (&optional ignored)
+  "Enable Elpy in all future Python buffers."
   (interactive)
   (when (< emacs-major-version 24)
     (error "Elpy requires Emacs 24 or newer"))
+  (when ignored
+    (warn "The argument to `elpy-enable' is deprecated, customize `elpy-modules' instead"))
   (let ((filename (find-lisp-object-file-name 'python-mode
                                               'symbol-function)))
     (when (and filename
@@ -221,20 +205,13 @@ weird behavior, use at your own risk."
                      "Elpy only works with python.el from "
                      "Emacs 24 and above"))))
   (add-hook 'python-mode-hook 'elpy-mode)
-  (setq elpy-enable t)
-  (when (not skip-initialize-modules)
-    (elpy-modules-run 'global-init)))
+  (elpy-modules-run 'global-init))
 
-;;;###autoload
 (defun elpy-disable ()
   "Disable Elpy in all future Python buffers."
   (interactive)
   (remove-hook 'python-mode-hook 'elpy-mode)
-  ;; For some reason, the defcustom might not be loaded yet? Huh?
-  (when (and (boundp 'elpy-enable)
-             elpy-enable)
-    (elpy-modules-run 'global-stop))
-  (setq elpy-enable nil))
+  (elpy-modules-run 'global-stop))
 
 ;;;###autoload
 (define-minor-mode elpy-mode
