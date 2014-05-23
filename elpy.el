@@ -36,6 +36,14 @@
 
 ;;; Code:
 
+;; Bad hack. nose.el from MELPA uses defvar-local, which breaks with
+;; older Emacsen. Of course, users use MELPA, so elpy gets blamed.
+(when (not (fboundp 'defvar-local))
+  (defmacro defvar-local (var val &optional docstring)
+    "Compatibility declaration, backported from Emacs 24.4."
+    (list 'progn (list 'defvar var val docstring)
+          (list 'make-variable-buffer-local (list 'quote var)))))
+
 (require 'auto-complete-config)
 (require 'elpy-refactor)
 (require 'etags)
