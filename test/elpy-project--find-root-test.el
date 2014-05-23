@@ -1,5 +1,7 @@
 (ert-deftest elpy-project--find-root-should-use-projectile-root ()
   (elpy-testcase ()
+    (when (not (fboundp 'projectile-project-root))
+      (fset 'projectile-project-root (lambda () nil)))
     (mletf* ((projectile-project-root () "/project/root"))
       (should (f-equal? (elpy-project--find-root)
                         "/project/root")))))

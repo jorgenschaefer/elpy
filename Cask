@@ -15,4 +15,6 @@
 (depends-on "yasnippet" "0.8.0")
 
 (development
+ (depends-on "dash")
+ (depends-on "f")
  (depends-on "ert-runner"))

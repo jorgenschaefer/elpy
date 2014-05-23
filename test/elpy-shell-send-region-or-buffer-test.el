@@ -2,7 +2,7 @@
   (elpy-testcase ()
     (python-mode)
     (elpy-mode)
-    (insert "print 'Whole buffer sent'\n")
+    (insert "print('Whole buffer sent')\n")
     (elpy-shell-send-region-or-buffer)
     (should (string-match "Whole buffer sent"
                           (with-current-buffer "*Python*"
@@ -13,8 +13,8 @@
   (elpy-testcase ()
     (python-mode)
     (elpy-mode)
-    (insert "print 'Whole buffer sent'\n"
-            "print 'Only region sent'\n")
+    (insert "print('Whole buffer sent')\n"
+            "print('Only region sent')\n")
     (goto-char (point-min))
     (forward-line 1)
     (elpy/mark-region (line-beginning-position)
@@ -30,7 +30,7 @@
   (elpy-testcase ()
     (python-mode)
     (elpy-mode)
-    (insert "print 'Yay'\n")
+    (insert "print('Yay')\n")
     (elpy-shell-send-region-or-buffer)
     (should (get-buffer-window "*Python*"))
     (should (not (equal (current-buffer)
@@ -44,7 +44,7 @@
             "  pass\n"
             "\n"
             "if __name__ == '__main__':\n"
-            "  print 'Argh'\n")
+            "  print('Argh')\n")
     (elpy-shell-send-region-or-buffer)
     (string-match "Removed if __main__"
                   (if (fboundp 'shut-up-current-output)

@@ -44,7 +44,7 @@ def get_pydoc_completions(modulename):
 
 
 def get_completions(modulename):
-    modules = set("{}.{}".format(modulename, module)
+    modules = set("{0}.{1}".format(modulename, module)
                   for module in get_modules(modulename))
 
     try:
@@ -52,7 +52,7 @@ def get_completions(modulename):
     except ImportError:
         return modules
     if isinstance(module, CONTAINER_TYPES):
-        modules.update("{}.{}".format(modulename, name)
+        modules.update("{0}.{1}".format(modulename, name)
                        for name in dir(module)
                        if not name.startswith("_") and
                        isinstance(getattr(module, name),

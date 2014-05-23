@@ -1556,7 +1556,7 @@ error if the backend is not supported."
           t)
      ;; Add our own backend
      (set (make-local-variable 'company-backends)
-          (cons'elpy-company-backend company-backends))
+          (cons 'elpy-company-backend company-backends))
      (company-mode 1))
     (`buffer-stop
      (company-mode -1)
@@ -1657,6 +1657,7 @@ error if the backend is not supported."
   "Return a call tip for the python call at point."
   (elpy-rpc-get-calltip
    (lambda (calltip)
+     (message "Calltip: %S" calltip)
      (eldoc-message
       (if (not calltip)
           (let ((current-defun (python-info-current-defun)))
@@ -1699,10 +1700,12 @@ error if the backend is not supported."
      ;; Flymake support using flake8, including warning faces.
      (when (and (executable-find "flake8")
                 (not (executable-find python-check-command)))
-       (setq python-check-command "flake8")))
-    (`buffer-init
-     (require 'flymake)
+       (setq python-check-command "flake8"))
 
+     ;; Add our initializer function
+     (add-to-list 'flymake-allowed-file-name-masks
+                  '("\\.py\\'" elpy-flymake-python-init)))
+    (`buffer-init
      ;; `flymake-no-changes-timeout': The original value of 0.5 is too
      ;; short for Python code, as that will result in the current line
      ;; to be highlighted most of the time, and that's annoying. This
@@ -1719,15 +1722,10 @@ error if the backend is not supported."
           nil)
 
      ;; Enable warning faces for flake8 output.
-     (when (string-match "flake8" python-check-command)
-       ;; COMPAT: Obsolete variable as of 24.4
-              (if (boundp 'flymake-warning-predicate)
-           (set (make-local-variable 'flymake-warning-predicate) "^W[0-9]")
-         (set (make-local-variable 'flymake-warning-re) "^W[0-9]")))
-
-     ;; Add our initializer function
-     (add-to-list 'flymake-allowed-file-name-masks
-                  '("\\.py\\'" elpy-flymake-python-init))
+     ;; COMPAT: Obsolete variable as of 24.4
+     (if (boundp 'flymake-warning-predicate)
+         (set (make-local-variable 'flymake-warning-predicate) "^W[0-9]")
+       (set (make-local-variable 'flymake-warning-re) "^W[0-9]"))
 
      (flymake-mode 1))
     (`buffer-stop
@@ -1903,10 +1901,10 @@ which we're looking."
 (when (not (fboundp 'highlight-indentation-mode))
   (defun highlight-indentation-mode (on-or-off)
     (cond
-     ((and (= on-or-off 1)
+     ((and (> on-or-off 0)
            (not highlight-indent-active))
       (highlight-indentation))
-     ((and (= on-or-off 0)
+     ((and (<= on-or-off 0)
            highlight-indent-active)
       (highlight-indentation)))))
 

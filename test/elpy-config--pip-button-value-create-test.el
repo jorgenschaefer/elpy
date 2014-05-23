@@ -11,9 +11,9 @@
   (elpy-testcase ()
     (mletf* ((executable-find
               (command)
-              (pcase command
-                ("pip" t)
-                ("easy_install" t)))
+              (cond
+                ((equal command "pip") t)
+                ((equal command "easy_install") t)))
              (widget (widget-create 'elpy-insert--pip-button "test-module")))
       (should (string-match "pip" (widget-get widget :command)))
       (should (string-match "pip" (buffer-string))))))
@@ -22,9 +22,9 @@
   (elpy-testcase ()
     (mletf* ((executable-find
               (command)
-              (pcase command
-                ("pip" nil)
-                ("easy_install" t)))
+              (cond
+                ((equal command "pip") nil)
+                ((equal command "easy_install") t)))
              (widget (widget-create 'elpy-insert--pip-button "test-module")))
       (should (string-match "easy_install" (widget-get widget :command)))
       (should (string-match "easy_install" (buffer-string))))))
