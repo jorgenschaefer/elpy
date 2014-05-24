@@ -12,9 +12,9 @@ $ git checkout release
 $ git merge master
 $ git checkout master
 
-Marmalade release:
+Elpy ELPA release:
 
-$ make marmalade
+$ make tar
 
 This creates dist/elpy-X.Y.tar
 

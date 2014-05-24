@@ -51,3 +51,19 @@
       (with-current-buffer (elpy-rpc--open "/tmp" "python")
         (should (equal requested-backend
                        "test-backend"))))))
+
+(ert-deftest elpy-rpc--open-should-change-pythonpath ()
+  (elpy-testcase ()
+    (mletf* ((elpy-rpc--environment () "test-environment")
+             (environment nil)
+             (start-process (name buffer command &rest args)
+                            (setq environment process-environment))
+             (elpy-rpc-set-backend (backend &rest ignored) nil)
+             (elpy-rpc-get-backend (&rest ignored) nil)
+             (set-process-query-on-exit-flag (proc flag) nil)
+             (set-process-sentinel (proc fun) nil)
+             (set-process-filter (proc fun) nil))
+
+      (elpy-rpc--open "/tmp" "python")
+
+      (should (equal environment "test-environment")))))

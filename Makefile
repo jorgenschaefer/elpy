@@ -41,8 +41,17 @@ python-coverage:
 
 test-all: test-warnings tox
 
+VERSION=$(shell sed -ne 's/^;; Version: \(.*\)/\1/p' elpy.el)
+
+tar: clean
+	mkdir -p build/elpy-${VERSION} dist/
+	cp -r elpy.el elpy-refactor.el elpy-pkg.el LICENSE README.rst \
+	      snippets/ elpy/ build/elpy-${VERSION}/
+	rm -rf build/elpy-${VERSION}/elpy/tests/
+	tar -C build -c elpy-${VERSION} > dist/elpy-${VERSION}.tar
+
 clean:
 	find ./* -name '*.pyc' -delete
 	find ./* -name '*.elc' -delete
 	find ./* -name __pycache__ -delete
-	rm .coverage
+	rm -rf .coverage build/ dist/ elpy.egg-info/

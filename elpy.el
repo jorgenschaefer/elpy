@@ -118,6 +118,20 @@ can be inidividually enabled or disabled."
   :type '(repeat string)
   :group 'elpy)
 
+(defcustom elpy-rpc-backend nil
+  "Your preferred backend.
+
+Elpy can use different backends for code introspection. These
+need to be installed separately using pip or other mechanisms to
+make them available to Python. If you prefer not to do this, you
+can use the native backend, which is very limited but does not
+have any external requirements."
+  :type '(choice (const :tag "Rope" "rope")
+                 (const :tag "Jedi" "jedi")
+                 (const :tag "Native" "native")
+                 (const :tag "Automatic" nil))
+  :group 'elpy)
+
 (defcustom elpy-rpc-python-command (if (eq window-system 'w32)
                                        "pythonw"
                                      "python")
@@ -132,18 +146,13 @@ and not an interactive shell like ipython."
                  (string :tag "Other"))
   :group 'elpy)
 
-(defcustom elpy-rpc-backend nil
-  "Your preferred backend.
+(defcustom elpy-rpc-pythonpath (file-name-directory (locate-library "elpy"))
+  "A directory to add to the PYTHONPATH for the RPC process.
 
-Elpy can use different backends for code introspection. These
-need to be installed separately using pip or other mechanisms to
-make them available to Python. If you prefer not to do this, you
-can use the native backend, which is very limited but does not
-have any external requirements."
-  :type '(choice (const :tag "Rope" "rope")
-                 (const :tag "Jedi" "jedi")
-                 (const :tag "Native" "native")
-                 (const :tag "Automatic" nil))
+This should be a directory where the elpy module can be found. If
+this is nil, it's assumed elpy can be found in the standard path.
+Usually, there is no need to change this."
+  :type 'directory
   :group 'elpy)
 
 (defcustom elpy-test-runner 'elpy-test-discover-runner
@@ -532,12 +541,14 @@ virtual_env_short"
           (puthash "virtual_env" venv config)
           (puthash "virtual_env_short" (file-name-nondirectory venv) config)))
       (let ((return-value (ignore-errors
-                            (call-process elpy-rpc-python-command
-                                          nil
-                                          (current-buffer)
-                                          nil
-                                          "-c"
-                                          elpy-config--get-config))))
+                            (let ((process-environment
+                                   (elpy-rpc--environment)))
+                              (call-process elpy-rpc-python-command
+                                            nil
+                                            (current-buffer)
+                                            nil
+                                            "-c"
+                                            elpy-config--get-config)))))
         (when return-value
           (let ((data (ignore-errors
                         (let ((json-array-type 'list))
@@ -1368,7 +1379,8 @@ died, this will kill the process and buffer."
             elpy-rpc--backend-python-command python-command
             default-directory "/"
             proc (condition-case err
-                     (let ((process-connection-type nil))
+                     (let ((process-connection-type nil)
+                           (process-environment (elpy-rpc--environment)))
                        (start-process name
                                       (current-buffer)
                                       python-command
@@ -1536,6 +1548,21 @@ This is usually an error or backtrace."
         (insert "\n")
         (elpy-insert--header "Traceback")
         (insert traceback)))))
+
+(defun elpy-rpc--environment ()
+  "Return a `process-environment' for the RPC process.
+
+This includes `elpy-rpc-pythonpath' in the PYTHONPATH, if set."
+  (if (or (not elpy-rpc-pythonpath)
+          (not (file-exists-p (format "%s/elpy/__init__.py"
+                                      elpy-rpc-pythonpath))))
+      process-environment
+    (let* ((old-pythonpath (getenv "PYTHONPATH"))
+           (new-pythonpath (if old-pythonpath
+                               (concat elpy-rpc-pythonpath ":" old-pythonpath)
+                             elpy-rpc-pythonpath)))
+      (cons (concat "PYTHONPATH=" new-pythonpath)
+            process-environment))))
 
 ;; RPC API functions
 
