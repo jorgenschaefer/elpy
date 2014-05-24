@@ -219,6 +219,9 @@ have any external requirements."
       (error (concat "You are using python-mode.el. "
                      "Elpy only works with python.el from "
                      "Emacs 24 and above"))))
+  (when (not elpy-modules-initialized-p)
+    (elpy-modules-run 'global-init)
+    (setq elpy-modules-initialized-p t))
   (add-hook 'python-mode-hook 'elpy-mode))
 
 (defun elpy-disable ()
