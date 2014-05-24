@@ -52,22 +52,26 @@
 ;; buffer-stop:
 ;; - Called in a buffer when elpy-mode is disabled.
 
-;;; Code:
+;;; Writing test runners:
 
-;; Bad hack. nose.el from MELPA uses defvar-local, which breaks with
-;; older Emacsen. Of course, users use MELPA, so elpy gets blamed.
-(when (not (fboundp 'defvar-local))
-  (defmacro defvar-local (var val &optional docstring)
-    "Compatibility declaration, backported from Emacs 24.4."
-    (list 'progn (list 'defvar var val docstring)
-          (list 'make-variable-buffer-local (list 'quote var)))))
+;; A test runner is a function that receives four arguments, described
+;; in the docstring of `elpy-test-at-point'. If only the first
+;; argument is given, the test runner should find tests under this
+;; directory and run them. If the others are given, the test runner
+;; should run the specified test only, or as few as it can.
+
+;; Test runners should use an interactive spec of (interactive
+;; (elpy-test-at-point)) so they can be called directly by the user.
+;; For their main work, they can simply call `elpy-test-run'. See the
+;; `elpy-test-discover-runner' for an example.
+
+;;; Code:
 
 (require 'cus-edit)
 (require 'elpy-refactor)
 (require 'etags)
 (require 'idomenu)
 (require 'json)
-(require 'nose)
 (require 'python)
 (require 'grep)
 (require 'thingatpt)
@@ -80,34 +84,6 @@
   "The Emacs Lisp Python Environment."
   :prefix "elpy-"
   :group 'languages)
-
-(defcustom elpy-rpc-python-command (if (eq window-system 'w32)
-                                       "pythonw"
-                                     "python")
-  "The Python interpreter for the RPC backend.
-
-This should be the same interpreter the project will be run with,
-and not an interactive shell like ipython."
-  :type '(choice (const :tag "python" "python")
-                 (const :tag "python2" "python2")
-                 (const :tag "python3" "python3")
-                 (const :tag "pythonw (Python on Windows)" "pythonw")
-                 (string :tag "Other"))
-  :group 'elpy)
-
-(defcustom elpy-rpc-backend nil
-  "Your preferred backend.
-
-Elpy can use different backends for code introspection. These
-need to be installed separately using pip or other mechanisms to
-make them available to Python. If you prefer not to do this, you
-can use the native backend, which is very limited but does not
-have any external requirements."
-  :type '(choice (const :tag "Rope" "rope")
-                 (const :tag "Jedi" "jedi")
-                 (const :tag "Native" "native")
-                 (const :tag "Automatic" nil))
-  :group 'elpy)
 
 (defcustom elpy-modules '(elpy-module-sane-defaults
                           elpy-module-find-file-in-project
@@ -140,6 +116,42 @@ can be inidividually enabled or disabled."
                                               ".svn" "CVS" ".bzr" ".hg")
   "Directories ignored by functions working on the whole project."
   :type '(repeat string)
+  :group 'elpy)
+
+(defcustom elpy-rpc-python-command (if (eq window-system 'w32)
+                                       "pythonw"
+                                     "python")
+  "The Python interpreter for the RPC backend.
+
+This should be the same interpreter the project will be run with,
+and not an interactive shell like ipython."
+  :type '(choice (const :tag "python" "python")
+                 (const :tag "python2" "python2")
+                 (const :tag "python3" "python3")
+                 (const :tag "pythonw (Python on Windows)" "pythonw")
+                 (string :tag "Other"))
+  :group 'elpy)
+
+(defcustom elpy-rpc-backend nil
+  "Your preferred backend.
+
+Elpy can use different backends for code introspection. These
+need to be installed separately using pip or other mechanisms to
+make them available to Python. If you prefer not to do this, you
+can use the native backend, which is very limited but does not
+have any external requirements."
+  :type '(choice (const :tag "Rope" "rope")
+                 (const :tag "Jedi" "jedi")
+                 (const :tag "Native" "native")
+                 (const :tag "Automatic" nil))
+  :group 'elpy)
+
+(defcustom elpy-test-runner 'elpy-test-discover-runner
+  "The test runner to use to run tests."
+  :type '(choice (const :tag "Unittest Discover" elpy-test-discover-runner)
+                 (const :tag "Django Discover" elpy-test-django-runner)
+                 (const :tag "Nose" elpy-test-nose-runner)
+                 (const :tag "py.test" elpy-test-pytest-runner))
   :group 'elpy)
 
 (defconst elpy-version "1.4.50"
@@ -927,20 +939,123 @@ with a prefix argument)."
 ;;;;;;;;;;;;;;;;
 ;;; Test running
 
-(defun elpy-test (&optional arg)
-  "Run nosetests on the current project.
+(defun elpy-test (&optional test-whole-project)
+  "Run tests on the current test, or the whole project.
 
-With no prefix arg, all tests are run.
-With one prefix arg, only the current test is run.
-With two prefix args, only the current module is run."
-  (interactive "p")
-  (when (not arg)
-    (setq arg 1))
-  (save-some-buffers)
-  (cond
-   ((>= arg 16) (nosetests-module))
-   ((>= arg  4) (nosetests-one))
-   (t           (nosetests-all))))
+If there is a test at point, run that test. If not, or if a
+prefix is given, run all tests in the current project."
+  (interactive "P")
+  (let ((current-test (elpy-test-at-point)))
+    (if test-whole-project
+        ;; With prefix arg, test the whole project.
+        (funcall elpy-test-runner
+                 (car current-test)
+                 nil nil nil)
+      ;; Else, run only this test
+      (apply elpy-test-runner current-test))))
+
+(defun elpy-test-at-point ()
+  "Return a list specifying the test at point, if any.
+
+This is used as the interactive
+
+This list has four elements.
+
+- Top level directory:
+  All test files should be importable from here.
+- Test file:
+  The current file name.
+- Test module:
+  The module name, relative to the top level directory.
+- Test name:
+  The full name of the current test within the module, for
+  example TestClass.test_method
+
+If there is no test at point, test name is nil.
+If the current buffer is not visiting a file, only the top level
+directory is not nil."
+  (if (not buffer-file-name)
+      (progn
+        (save-some-buffers)
+        (list (elpy-project-root) nil nil nil))
+    (let* ((top (elpy-project-root))
+           (file buffer-file-name)
+           (module (elpy-test--module-name top file))
+           (test (python-info-current-defun)))
+      (if (and test (string-match "test" test))
+          (progn
+            (save-buffer)
+            (list top file module test))
+        (save-some-buffers)
+        (list top nil nil nil)))))
+
+(defun elpy-test--module-name (top-level module-file)
+  "Return the module name relative to TOP-LEVEL for MODULE-FILE.
+
+For example, for a top level of /project/root/ and a module file
+of /project/root/package/module.py, this would return
+\"package.module\"."
+  (let* ((relative-name (file-relative-name module-file top-level))
+         (no-extension (replace-regexp-in-string "\\.py\\'" "" relative-name))
+         (no-init (replace-regexp-in-string "/__init__\\'" "" no-extension))
+         (dotted (replace-regexp-in-string "/" "." no-init)))
+    (if (string-match "^\\." dotted)
+        (concat "." (replace-regexp-in-string (regexp-quote "...") "." dotted))
+      dotted)))
+
+(defun elpy-test-run (working-directory command &rest args)
+  "Run COMMAND with ARGS in WORKING-DIRECTORY as a test command."
+  (let ((default-directory working-directory))
+    (compile (mapconcat #'shell-quote-argument
+                        (cons command args)
+                        " "))))
+
+(defun elpy-test-discover-runner (top file module test)
+  "Test the project using the python unittest discover runner.
+
+This requires Python 2.7 or later."
+  (interactive (elpy-test-at-point))
+  (if test
+      (elpy-test-run top
+                     "python" "-m" "unittest" (format "%s.%s" module test))
+    (elpy-test-run top
+                   "python" "-m" "unittest" "discover")))
+
+(defun elpy-test-django-runner (top file module test)
+  "Test the project using the Django discover runner.
+
+This requires Django 1.6 or the django-discover-runner package."
+  (interactive (elpy-test-at-point))
+  (if test
+      (elpy-test-run top
+                     "django-admin.py" "test" (format "%s.%s" module test))
+    (elpy-test-run top
+                   "django-admin.py" "test")))
+
+(defun elpy-test-nose-runner (top file module test)
+  "Test the project using the nose test runner.
+
+This requires the nose package to be installed."
+  (interactive (elpy-test-at-point))
+  (if test
+      (elpy-test-run top
+                     "nosetests" (format "%s:%s" module test))
+    (elpy-test-run top
+                   "nosetests")))
+
+(defun elpy-test-pytest-runner (top file module test)
+  "Test the project using the py.test test runner.
+
+This requires the pytest package to be installed."
+  (interactive (elpy-test-at-point))
+  (if test
+      ;; Apparently, py.test can't easily run just one method? Let's
+      ;; just run the class.
+      (let ((test-list (split-string test "\\.")))
+        (elpy-test-run top
+                       "py.test" (format "%s::%s" module (car test-list))))
+    (elpy-test-run top
+                   "py.test")))
 
 ;;;;;;;;;;;;;;;;;
 ;;; Documentation

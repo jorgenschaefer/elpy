@@ -1,36 +1,50 @@
-(ert-deftest elpy-test-should-save-some-buffers ()
+(ert-deftest elpy-test-should-run-current-test-if-in-test ()
   (elpy-testcase ()
-    (mletf* ((save-some-buffers-called nil)
-             (save-some-buffers () (setq save-some-buffers-called t))
-             (nosetests-all () nil))
+    (python-mode)
+    (elpy-mode)
+    (mletf* ((current-test (list "/dir/project"
+                                 "/dir/project/test.py"
+                                 "test"
+                                 "TestClass.test_method"))
+             (elpy-test-at-point () current-test)
+             (called-args nil)
+             (elpy-test-runner (lambda (&rest args)
+                                 (setq called-args args))))
 
       (elpy-test)
 
-      (should save-some-buffers-called))))
+      (should (equal called-args current-test)))))
 
-(ert-deftest elpy-test-should-test-all-with-no-args ()
+(ert-deftest elpy-test-should-run-all-tests-otherwise ()
   (elpy-testcase ()
-    (mletf* ((nosetests-all-called nil)
-             (nosetests-all () (setq nosetests-all-called t)))
+    (python-mode)
+    (elpy-mode)
+    (mletf* ((current-test (list "/dir/project"
+                                 nil
+                                 nil
+                                 nil))
+             (elpy-test-at-point () current-test)
+             (called-args nil)
+             (elpy-test-runner (lambda (&rest args)
+                                 (setq called-args args))))
 
       (elpy-test)
 
-      (should nosetests-all-called))))
+      (should (equal called-args (list "/dir/project" nil nil nil))))))
 
-(ert-deftest elpy-test-should-test-one-with-single-arg ()
+(ert-deftest elpy-test-should-run-all-tests-with-prefix-argument ()
   (elpy-testcase ()
-    (mletf* ((nosetests-one-called nil)
-             (nosetests-one () (setq nosetests-one-called t)))
+    (python-mode)
+    (elpy-mode)
+    (mletf* ((current-test (list "/dir/project"
+                                 "/dir/project/test.py"
+                                 "test"
+                                 "TestClass.test_method"))
+             (elpy-test-at-point () current-test)
+             (called-args nil)
+             (elpy-test-runner (lambda (&rest args)
+                                 (setq called-args args))))
 
       (elpy-test 4)
 
-      (should nosetests-one-called))))
-
-(ert-deftest elpy-test-should-test-module-with-two-args ()
-  (elpy-testcase ()
-    (mletf* ((nosetests-module-called nil)
-             (nosetests-module () (setq nosetests-module-called t)))
-
-      (elpy-test 16)
-
-      (should nosetests-module-called))))
+      (should (equal called-args (list "/dir/project" nil nil nil))))))

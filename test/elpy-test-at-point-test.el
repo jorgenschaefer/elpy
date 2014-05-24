@@ -1,0 +1,58 @@
+(ert-deftest elpy-test-at-point-should-return-project-root-without-file ()
+  (elpy-testcase ()
+    (mletf* ((saved nil)
+             (save-some-buffers () (setq saved 'all))
+             (save-buffer () (setq saved 'one))
+             (elpy-project-root () "/project/root"))
+
+      (should (equal (elpy-test-at-point)
+                     (list "/project/root"
+                           nil nil nil)))
+      (should (eq saved 'all)))))
+
+(ert-deftest elpy-test-at-point-should-return-project-root-without-file ()
+  (elpy-testcase ()
+    (mletf* ((saved nil)
+             (save-some-buffers () (setq saved 'all))
+             (save-buffer () (setq saved 'one))
+             (elpy-project-root () "/project/root"))
+
+      (should (equal (elpy-test-at-point)
+                     (list "/project/root"
+                           nil nil nil)))
+      (should (eq saved 'all)))))
+
+(ert-deftest elpy-test-at-point-should-return-project-root-without-test ()
+  (elpy-testcase ()
+    (mletf* ((saved nil)
+             (save-some-buffers () (setq saved 'all))
+             (save-buffer () (setq saved 'one))
+             (elpy-project-root () "/project/root")
+             (buffer-file-name "/project/root/tests/test.py"))
+
+      (should (equal (elpy-test-at-point)
+                     (list "/project/root"
+                           nil nil nil)))
+      (should (eq saved 'all)))))
+
+(ert-deftest elpy-test-at-point-should-return-current-test ()
+  (elpy-testcase ()
+    (mletf* ((saved nil)
+             (save-some-buffers () (setq saved 'all))
+             (save-buffer () (setq saved 'one))
+             (elpy-project-root () "/project/root")
+             (buffer-file-name "/project/root/tests/test.py"))
+      (insert-source "class TestClass(TestCase):"
+                     "    def test_method(self):"
+                     "        self.assertTrue(False)")
+      (goto-char (point-min))
+      (search-forward "False)")
+
+      (should (equal (elpy-test-at-point)
+                     (list "/project/root"
+                           "/project/root/tests/test.py"
+                           "tests.test"
+                           (if (version< emacs-version "24.3")
+                               "TestClass"
+                             "TestClass.test_method"))))
+      (should (eq saved 'one)))))
