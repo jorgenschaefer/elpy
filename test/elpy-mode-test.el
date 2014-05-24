@@ -28,3 +28,33 @@
       (elpy-mode -1)
 
       (should buffer-stop-called))))
+
+(ert-deftest elpy-mode-should-run-global-init-if-not-done ()
+  (elpy-testcase ()
+    (mletf* ((global-init-run nil)
+             (elpy-modules-run (command)
+                               (when (eq command 'global-init)
+                                 (setq global-init-run t))))
+
+      (setq elpy-modules-initialized-p nil)
+      (python-mode)
+      (elpy-mode)
+
+      (should global-init-run))))
+
+(ert-deftest elpy-mode-should-run-global-init-only-once ()
+  (elpy-testcase ()
+    (mletf* ((global-init-run nil)
+             (elpy-modules-run (command)
+                               (when (eq command 'global-init)
+                                 (setq global-init-run t))))
+
+      (setq elpy-modules-initialized-p nil)
+      (python-mode)
+
+      (elpy-mode)
+      (should global-init-run)
+      (setq global-init-run nil)
+      (elpy-mode)
+
+      (should-not global-init-run))))

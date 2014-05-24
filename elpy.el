@@ -200,6 +200,9 @@ have any external requirements."
     map)
   "Key map for the Emacs Lisp Python Environment.")
 
+(defvar elpy-modules-initialized-p nil
+  "Boolean, set to true if modules were run with `global-init'.")
+
 ;;;###autoload
 (defun elpy-enable (&optional ignored)
   "Enable Elpy in all future Python buffers."
@@ -216,14 +219,15 @@ have any external requirements."
       (error (concat "You are using python-mode.el. "
                      "Elpy only works with python.el from "
                      "Emacs 24 and above"))))
-  (add-hook 'python-mode-hook 'elpy-mode)
-  (elpy-modules-run 'global-init))
+  (add-hook 'python-mode-hook 'elpy-mode))
 
 (defun elpy-disable ()
   "Disable Elpy in all future Python buffers."
   (interactive)
   (remove-hook 'python-mode-hook 'elpy-mode)
-  (elpy-modules-run 'global-stop))
+  (when elpy-modules-initialized-p
+    (elpy-modules-run 'global-stop)
+    (setq elpy-modules-initialized-p nil)))
 
 ;;;###autoload
 (define-minor-mode elpy-mode
@@ -243,8 +247,11 @@ more structured list.
     (error "Elpy only works with `python-mode'"))
   (cond
    (elpy-mode
+    (when (not elpy-modules-initialized-p)
+      (elpy-modules-run 'global-init)
+      (setq elpy-modules-initialized-p t))
     (elpy-modules-run 'buffer-init))
-   (t
+   ((not elpy-mode)
     (elpy-modules-run 'buffer-stop))))
 
 ;;;;;;;;;;;;;;;;;;;;

@@ -11,15 +11,3 @@
                 (`(python-mode symbol-function)
                  "/some/path/python-mode.el"))))
       (should-error (elpy-enable)))))
-
-(ert-deftest elpy-enable-should-run-global-init ()
-  (elpy-testcase ()
-    (mletf* ((global-init-called nil)
-             (elpy-modules-run
-              (command &rest args)
-              (pcase command
-                (`global-init (setq global-init-called t)))))
-
-      (elpy-enable)
-
-      (should global-init-called))))
