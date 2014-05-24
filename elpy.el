@@ -293,7 +293,7 @@ a customize buffer, but has some more options."
         (custom-search-field nil))
     (with-current-buffer buf
       (elpy-insert--header "Elpy Configuration")
-      ;; Configuration problems
+
       (elpy-config--insert-configuration-problems config)
 
       (elpy-insert--header "Options")
@@ -374,15 +374,17 @@ item in another window.\n\n")
     (setq config (elpy-config--get-config)))
   (elpy-config--insert-configuration-table config)
   (insert "\n")
-  (cond
-   ;; Python not found
-   ((not (gethash "python_rpc_executable" config))
+
+  ;; Python not found
+  (when (not (gethash "python_rpc_executable" config))
     (elpy-insert--para
      "Elpy can not find the configured Python interpreter. Please make "
      "sure that the variable `elpy-rpc-python-command' points to a "
      "command in your PATH. You can change the variable below.\n"))
-   ;; Python can't find the elpy module
-   ((not (gethash "elpy_version" config))
+
+  ;; Python found, but can't find the elpy module
+  (when (and (gethash "python_rpc_executable" config)
+             (not (gethash "elpy_version" config)))
     (elpy-insert--para
      "The Python interpreter could not find the elpy module. "
      "Make sure the module is installed"
@@ -391,9 +393,10 @@ item in another window.\n\n")
        ".\n"))
     (insert "\n")
     (widget-create 'elpy-insert--pip-button "elpy")
-    (insert "\n"))
-   ;; Otherwise unparseable output.
-   ((gethash "error_output" config)
+    (insert "\n\n"))
+
+  ;; Otherwise unparseable output.
+  (when (gethash "error_output" config)
     (elpy-insert--para
      "There was an unexpected problem starting the RPC process. Please "
      "check the following output to see if this makes sense to you. "
@@ -401,11 +404,13 @@ item in another window.\n\n")
     (insert "\n"
             (gethash "error_output" config) "\n"
             "\n"))
-   ;; Requested backend unavailable
-   ((or (and (equal elpy-rpc-backend "rope")
-             (not (gethash "rope_version" config)))
-        (and (equal elpy-rpc-backend "jedi")
-             (not (gethash "jedi_version" config))))
+
+  ;; Requested backend unavailable
+  (when (and (gethash "python_rpc_executable" config)
+             (or (and (equal elpy-rpc-backend "rope")
+                      (not (gethash "rope_version" config)))
+                 (and (equal elpy-rpc-backend "jedi")
+                      (not (gethash "jedi_version" config)))))
     (elpy-insert--para
      "You requested Elpy to use the backend " elpy-rpc-backend ", "
      "but the Python interpreter could not load that module. Make "
@@ -413,11 +418,13 @@ item in another window.\n\n")
      "`elpy-rpc-backend' below to one of the available backends.\n")
     (insert "\n")
     (widget-create 'elpy-insert--pip-button elpy-rpc-backend)
-    (insert "\n"))
-   ;; Only native backend available, but requested automatic choice
-   ((and (not elpy-rpc-backend)
-         (not (gethash "rope_version" config))
-         (not (gethash "jedi_version" config)))
+    (insert "\n\n"))
+
+  ;; Only native backend available, but requested automatic choice
+  (when (and (gethash "python_rpc_executable" config)
+             (and (not elpy-rpc-backend)
+                  (not (gethash "rope_version" config))
+                  (not (gethash "jedi_version" config))))
     (elpy-insert--para
      "You did not specify a preference for an RPC backend, but there "
      "is only the native backend available. The native backend has "
@@ -429,10 +436,12 @@ item in another window.\n\n")
     (widget-create 'elpy-insert--pip-button "rope")
     (insert "\n")
     (widget-create 'elpy-insert--pip-button "jedi")
-    (insert "\n"))
-   ;; Bad backend version
-   ((not (equal (gethash "elpy_version" config)
-                elpy-version))
+    (insert "\n\n"))
+
+  ;; Bad backend version
+  (when (and (gethash "elpy_version" config)
+             (not (equal (gethash "elpy_version" config)
+                         elpy-version)))
     (let ((elpy-python-version (gethash "elpy_version" config)))
       (elpy-insert--para
        "The Elpy backend is version " elpy-python-version " while "
@@ -440,7 +449,18 @@ item in another window.\n\n")
        (if (version< elpy-python-version elpy-version)
            "Please upgrade the Python module."
          "Please upgrade the Emacs Lisp package.")
-       "\n")))))
+       "\n")))
+
+  (when (not (executable-find "flake8"))
+    (elpy-insert--para
+     "The configured syntax checker could not be found. Elpy uses this "
+     "program to provide syntax checks of your programs, so you might "
+     "want to install one. Elpy by default uses flake8.\n")
+    (insert "\n")
+    (widget-create 'elpy-insert--pip-button "flake8")
+    (insert "\n\n"))
+
+  )
 
 (defvar elpy-config--get-config "import json
 import sys
@@ -590,7 +610,17 @@ virtual_env_short"
                          "Not found"))
             ("Rope" . ,(if rope-version
                            rope-version
-                         "Not found"))))
+                         "Not found"))
+            ("Syntax checker" . ,(let ((syntax-checker
+                                        (executable-find
+                                         python-check-command)))
+                                   (if  syntax-checker
+                                       (format "%s (%s)"
+                                               (file-name-nondirectory
+                                                syntax-checker)
+                                               syntax-checker)
+                                     (format "Not found (%s)"
+                                             python-check-command))))))
     (setq maxwidth 0)
     (dolist (row table)
       (when (> (length (car row))
