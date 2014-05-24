@@ -25,11 +25,19 @@ elisp-test-all:
 	EMACS=emacs-24.2 cask exec ert-runner --quiet
 	EMACS=emacs-24.3 cask exec ert-runner --quiet
 
+elisp-coverage:
+	@echo "Missing tests:" ; cat elpy.el | sed -ne 's/^(\(defun\|define-minor-mode\|defmacro\) \([^ ]*\).*/\2/p' | while read fun ; do test -f "test/$${fun}-test.el" || echo "- $$fun" ; done
+
 python-test:
 	python -Qwarnall -tt -W error -m unittest discover elpy
 
 python-test-all:
 	tox
+
+python-coverage:
+	coverage run --source=elpy --branch -m unittest discover
+	coverage html --fail-under=95 --omit='elpy/tests/*,elpy/compat*,elpy/__main__*' -d ~/Public/elpy-coverage.html
+	coverage report -m --fail-under=95 --omit='elpy/tests/*,elpy/compat*,elpy/__main__*'
 
 test-all: test-warnings tox
 
@@ -37,3 +45,4 @@ clean:
 	find ./* -name '*.pyc' -delete
 	find ./* -name '*.elc' -delete
 	find ./* -name __pycache__ -delete
+	rm .coverage
