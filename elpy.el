@@ -1199,6 +1199,80 @@ With a prefix argument, prompt for a string to search for."
           (replace-match (format "\\1\nSearching for symbol %s\n"
                                  symbol)))))))
 
+;;;;;;;;;;;;;;;;;;;
+;;; Promise objects
+
+(defvar elpy-promise-marker (make-symbol "*elpy-promise*")
+  "An uninterned symbol marking an Elpy promise object.")
+
+(defun elpy-promise (success &optional error)
+  "Return a new promise.
+
+A promise is an object with a success and error callback. If the
+promise is resolved using `elpy-promise-resolve', its success
+callback is called with the given value. The current buffer is
+restored, too.
+
+If the promise is rejected using `elpy-promise-reject', its error
+callback is called. For this function, the current buffer is not
+necessarily restored, as it is also called when the buffer does
+not exist anymore."
+  (vector elpy-promise-marker ; 0 id
+          success             ; 1 success-callback
+          error               ; 2 error-callback
+          (current-buffer)    ; 3 current-buffer
+          nil                 ; 4 run
+          ))
+
+(defun elpy-promise-p (obj)
+  "Return non-nil if the argument is a promise object."
+  (and (vectorp obj)
+       (= (length obj) 5)
+       (eq (aref obj 0) elpy-promise-marker)))
+
+(defun elpy-promise-resolved-p (promise)
+  "Return non-nil if the PROMISE has been resolved or rejected."
+  (aref promise 4))
+
+(defun elpy-promise-resolve (promise value)
+  "Resolve PROMISE with VALUE."
+  (when (not (aref promise 4))
+    (unwind-protect
+        (let ((success-callback (aref promise 1)))
+          (when success-callback
+            (condition-case err
+                (with-current-buffer (aref promise 3)
+                  (funcall success-callback value))
+              (error
+               (elpy-promise-reject promise err)))))
+      (aset promise 4 t))))
+
+(defun elpy-promise-reject (promise reason)
+  "Reject PROMISE because of REASON."
+  (when (not (aref promise 4))
+    (unwind-protect
+        (let ((error-callback (aref promise 2)))
+          (when error-callback
+            (if (buffer-live-p (aref promise 3))
+                (with-current-buffer (aref promise 3)
+                  (funcall error-callback reason))
+              (with-temp-buffer
+                (funcall error-callback reason)))))
+      (aset promise 4 t))))
+
+(defun elpy-promise-wait (promise &optional timeout)
+  "Wait for PROMISE to be resolved, for up to TIMEOUT seconds.
+
+This will accept process output while waiting."
+  (let ((end-time (when timeout
+                    (time-add (current-time)
+                              (seconds-to-time timeout)))))
+    (while (and (not (elpy-promise-resolved-p promise))
+                (or (not end-time)
+                    (time-less-p (current-time)
+                                 end-time)))
+      (accept-process-output nil timeout))))
+
 ;;;;;;;;;;;;;;;;;;;;;
 ;;; elpy-rpc backends
 
