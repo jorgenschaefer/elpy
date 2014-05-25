@@ -1,9 +1,7 @@
 """Tests for elpy.backends.ropebackend."""
 
 import mock
-import re
 
-from elpy import rpc
 from elpy.tests import compat
 from elpy.tests.support import BackendTestCase, source_and_offset
 from elpy.backends import ropebackend
@@ -161,6 +159,15 @@ class TestGetCompletions(RopeBackendTestCase):
                                                        offset)
         self.assertIn('path', [symbol for (symbol, doc) in completions])
 
+    @mock.patch('elpy.backends.ropebackend.get_source')
+    def test_should_call_get_source(self, get_source):
+        get_source.return_value = "test-source"
+
+        self.backend.rpc_get_completions(self.project_root, None,
+                                         "test-source", 0)
+
+        get_source.assert_called_with("test-source")
+
 
 class TestGetDefinition(RopeBackendTestCase):
     def test_should_return_location_in_same_file(self):
@@ -233,6 +240,15 @@ class TestGetDefinition(RopeBackendTestCase):
                                         None,
                                         "",
                                         0)
+
+    @mock.patch('elpy.backends.ropebackend.get_source')
+    def test_should_call_get_source(self, get_source):
+        get_source.return_value = "test-source"
+
+        self.backend.rpc_get_definition(self.project_root, None,
+                                        "test-source", 0)
+
+        get_source.assert_called_with("test-source")
 
 
 class TestGetCalltip(RopeBackendTestCase):
@@ -335,6 +351,14 @@ class TestGetCalltip(RopeBackendTestCase):
                                                offset)
         self.assertIsNone(calltip)
 
+    @mock.patch('elpy.backends.ropebackend.get_source')
+    def test_should_call_get_source(self, get_source):
+        get_source.return_value = "test-source"
+
+        self.backend.rpc_get_calltip(self.project_root, None, "test-source", 0)
+
+        get_source.assert_called_with("test-source")
+
 
 class TestGetDocstring(RopeBackendTestCase):
     def test_should_get_docstring(self):
@@ -374,3 +398,12 @@ class TestGetDocstring(RopeBackendTestCase):
                                        None,
                                        "",
                                        0)
+
+    @mock.patch('elpy.backends.ropebackend.get_source')
+    def test_should_call_get_source(self, get_source):
+        get_source.return_value = "test-source"
+
+        self.backend.rpc_get_docstring(self.project_root, None,
+                                       "test-source", 0)
+
+        get_source.assert_called_with("test-source")

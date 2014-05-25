@@ -1,6 +1,10 @@
+# coding: utf-8
 """Tests for the elpy.backends.nativebackend backend."""
 
+import mock
+import os
 import pydoc
+import tempfile
 
 from elpy.backends import nativebackend
 from elpy.tests.support import BackendTestCase, source_and_offset
@@ -17,14 +21,28 @@ class TestInit(NativeBackendTestCase):
         self.assertEqual(self.backend.name, "native")
 
 
-class TestNoOpMethods(NativeBackendTestCase):
+class TestRPCGetDefinition(NativeBackendTestCase):
     def test_should_have_rpc_get_definition(self):
         self.assertIsNone(self.backend.rpc_get_definition(None, None,
                                                           None, None))
 
+    @mock.patch('elpy.backends.nativebackend.get_source')
+    def test_should_call_get_source(self, get_source):
+        self.backend.rpc_get_definition(None, None, "test-source", None)
+
+        get_source.assert_called_with("test-source")
+
+
+class TestRPCGetCalltip(NativeBackendTestCase):
     def test_should_have_rpc_get_calltip(self):
         self.assertIsNone(self.backend.rpc_get_calltip(None, None,
                                                        None, None))
+
+    @mock.patch('elpy.backends.nativebackend.get_source')
+    def test_should_call_get_source(self, get_source):
+        self.backend.rpc_get_calltip(None, None, "test-source", None)
+
+        get_source.assert_called_with("test-source")
 
 
 class TestGetCompletions(NativeBackendTestCase):
@@ -34,6 +52,12 @@ class TestGetCompletions(NativeBackendTestCase):
                                  self.backend.rpc_get_completions(
                                      None, None, source, offset)]),
                          sorted(["bject", "ct", "pen", "r", "rd"]))
+
+    @mock.patch('elpy.backends.nativebackend.get_source')
+    def test_should_call_get_source(self, get_source):
+        self.backend.rpc_get_completions(None, None, "test-source", 0)
+
+        get_source.assert_called_with("test-source")
 
 
 class TestGetDocstring(NativeBackendTestCase):
@@ -46,6 +70,14 @@ class TestGetDocstring(NativeBackendTestCase):
         self.assertEqual(self.backend.rpc_get_docstring(None, None,
                                                         source, offset),
                          docstring)
+
+    @mock.patch('elpy.backends.nativebackend.get_source')
+    def test_should_call_get_source(self, get_source):
+        get_source.return_value = "test-source"
+
+        self.backend.rpc_get_docstring(None, None, "test-source", 0)
+
+        get_source.assert_called_with("test-source")
 
 
 class TestGetPydocDocumentation(NativeBackendTestCase):
@@ -127,3 +159,42 @@ class TestFindDottedSymbol(NativeBackendTestCase):
         self.assertEqual(result[0], "threading.cur")
         self.assertEqual(source[result[1]:result[2]],
                          "threading.cur")
+
+
+class TestGetSource(NativeBackendTestCase):
+    def test_should_return_string_by_default(self):
+        self.assertEqual(nativebackend.get_source("foo"),
+                         "foo")
+
+    def test_should_return_file_contents(self):
+        fd, filename = tempfile.mkstemp(prefix="elpy-test-")
+        self.addCleanup(os.remove, filename)
+        with open(filename, "w") as f:
+            f.write("file contents")
+
+        fileobj = {'filename': filename}
+
+        self.assertEqual(nativebackend.get_source(fileobj),
+                         "file contents")
+
+    def test_should_clean_up_tempfile(self):
+        fd, filename = tempfile.mkstemp(prefix="elpy-test-")
+        with open(filename, "w") as f:
+            f.write("file contents")
+
+        fileobj = {'filename': filename,
+                   'delete_after_use': True}
+
+        self.assertEqual(nativebackend.get_source(fileobj),
+                         "file contents")
+        self.assertFalse(os.path.exists(filename))
+
+    def test_should_support_utf8(self):
+        fd, filename = tempfile.mkstemp(prefix="elpy-test-")
+        self.addCleanup(os.remove, filename)
+        with open(filename, "wb") as f:
+            f.write(u"möp".encode("utf-8"))
+
+        source = nativebackend.get_source({'filename': filename})
+
+        self.assertEqual(source, u"möp")

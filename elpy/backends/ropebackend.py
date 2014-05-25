@@ -6,11 +6,10 @@ http://rope.sourceforge.net/
 
 """
 import os
-import re
 import time
 from functools import wraps
 
-from elpy import rpc
+from elpy.backends.nativebackend import get_source
 from elpy.backends.nativebackend import NativeBackend
 import elpy.utils.pydocutils
 
@@ -113,6 +112,7 @@ class RopeBackend(NativeBackend):
             return None
 
     def rpc_get_completions(self, project_root, filename, source, offset):
+        source = get_source(source)
         project = self.get_project(project_root)
         resource = self.get_resource(project, filename)
         try:
@@ -134,6 +134,7 @@ class RopeBackend(NativeBackend):
                 for proposal in proposals]
 
     def rpc_get_definition(self, project_root, filename, source, offset):
+        source = get_source(source)
         project = self.get_project(project_root)
         resource = self.get_resource(project, filename)
         # The find_definition call fails on an empty strings
@@ -153,6 +154,7 @@ class RopeBackend(NativeBackend):
             return (location.resource.real_path, location.offset)
 
     def rpc_get_calltip(self, project_root, filename, source, offset):
+        source = get_source(source)
         offset = find_called_name_offset(source, offset)
         project = self.get_project(project_root)
         resource = self.get_resource(project, filename)
@@ -169,6 +171,7 @@ class RopeBackend(NativeBackend):
             return None
 
     def rpc_get_docstring(self, project_root, filename, source, offset):
+        source = get_source(source)
         project = self.get_project(project_root)
         resource = self.get_resource(project, filename)
         try:

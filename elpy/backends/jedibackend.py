@@ -6,10 +6,10 @@ https://github.com/davidhalter/jedi
 
 """
 
-import os
 import sys
 
 
+from elpy.backends.nativebackend import get_source
 from elpy.backends.nativebackend import NativeBackend
 
 
@@ -35,6 +35,7 @@ class JediBackend(NativeBackend):
         self.name = "jedi"
 
     def rpc_get_completions(self, project_root, filename, source, offset):
+        source = get_source(source)
         line, column = pos_to_linecol(source, offset)
         sys.path.append(project_root)
         try:
@@ -47,6 +48,7 @@ class JediBackend(NativeBackend):
                 for proposal in proposals]
 
     def rpc_get_definition(self, project_root, filename, source, offset):
+        source = get_source(source)
         line, column = pos_to_linecol(source, offset)
         sys.path.append(project_root)
         try:
@@ -78,6 +80,7 @@ class JediBackend(NativeBackend):
             return (loc.module_path, offset)
 
     def rpc_get_calltip(self, project_root, filename, source, offset):
+        source = get_source(source)
         line, column = pos_to_linecol(source, offset)
         sys.path.append(project_root)
         try:
@@ -104,6 +107,7 @@ class JediBackend(NativeBackend):
         that, but not for the symbol at a location. Huh.
 
         """
+        source = get_source(source)
         return super(JediBackend, self).rpc_get_docstring(project_root,
                                                           filename,
                                                           source,

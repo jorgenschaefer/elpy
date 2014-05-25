@@ -10,7 +10,8 @@ specific solutions do not work.
 
 """
 
-
+import io
+import os
 import pydoc
 import re
 import rlcompleter
@@ -47,6 +48,7 @@ class NativeBackend(object):
         Wrapper around rlcompleter.
 
         """
+        source = get_source(source)
         completer = rlcompleter.Completer()
         symbol, start, end = find_dotted_symbol_backward(source, offset)
         completions = []
@@ -66,6 +68,7 @@ class NativeBackend(object):
         Not implemented in the native backend.
 
         """
+        get_source(source)
         return None
 
     def rpc_get_calltip(self, project_root, filename, source, offset):
@@ -74,6 +77,7 @@ class NativeBackend(object):
         Not implemented in the native backend.
 
         """
+        get_source(source)
         return None
 
     def rpc_get_docstring(self, project_root, filename, source, offset):
@@ -83,6 +87,7 @@ class NativeBackend(object):
         for bold highlighting.
 
         """
+        source = get_source(source)
         symbol, start, end = find_dotted_symbol(source, offset)
         return self.rpc_get_pydoc_documentation(symbol)
 
@@ -140,3 +145,28 @@ def find_dotted_symbol(source, offset):
 
     """
     return find_symbol(source, offset, _DOTTED_SYMBOL_RX)
+
+
+def get_source(fileobj):
+    """Translate fileobj into file contents.
+
+    fileobj is either a string or a dict. If it's a string, that's the
+    file contents. If it's a string, then the filename key contains
+    the name of the file whose contents we are to use.
+
+    If the dict contains a true value for the key delete_after_use,
+    the file should be deleted once read.
+
+    """
+    if not isinstance(fileobj, dict):
+        return fileobj
+    else:
+        try:
+            with io.open(fileobj["filename"], encoding="utf-8") as f:
+                return f.read()
+        finally:
+            if fileobj.get('delete_after_use'):
+                try:
+                    os.remove(fileobj["filename"])
+                except:
+                    pass

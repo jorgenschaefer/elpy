@@ -79,6 +79,15 @@ class TestGetCompletions(JediBackendTestCase):
                                                      offset)
         self.assertEqual(proposals, [['d', 'add(self, a, b)\n\n']])
 
+    @mock.patch('elpy.backends.jedibackend.get_source')
+    def test_should_call_get_source(self, get_source):
+        get_source.return_value = "test-source"
+
+        self.backend.rpc_get_completions(self.project_root, None,
+                                         "test-source", 0)
+
+        get_source.assert_called_with("test-source")
+
 
 class TestGetDefinition(JediBackendTestCase):
     def test_should_return_definition_location_same_file(self):
@@ -170,6 +179,15 @@ class TestGetDefinition(JediBackendTestCase):
                                                          offset),
                          (filename, 0))
 
+    @mock.patch('elpy.backends.jedibackend.get_source')
+    def test_should_call_get_source(self, get_source):
+        get_source.return_value = "test-source"
+
+        self.backend.rpc_get_definition(self.project_root, None,
+                                        "test-source", 0)
+
+        get_source.assert_called_with("test-source")
+
 
 class TestGetCalltip(JediBackendTestCase):
     def test_should_return_calltip(self):
@@ -221,10 +239,19 @@ class TestGetCalltip(JediBackendTestCase):
             "        c.add(_|_\n")
         file2 = self.project_file("project/calculator.py", source2)
         calltip = self.backend.rpc_get_calltip(self.project_root,
-                                                 file2,
-                                                 source2,
-                                                 offset)
+                                               file2,
+                                               source2,
+                                               offset)
         self.assertEqual(calltip, 'add(a, b)')
+
+    @mock.patch('elpy.backends.jedibackend.get_source')
+    def test_should_call_get_source(self, get_source):
+        get_source.return_value = "test-source"
+
+        self.backend.rpc_get_calltip(self.project_root, None,
+                                     "test-source", 0)
+
+        get_source.assert_called_with("test-source")
 
 
 class TestGetDocstring(JediBackendTestCase):
@@ -252,6 +279,15 @@ class TestGetDocstring(JediBackendTestCase):
         self.backend.rpc_get_docstring(self.project_root,
                                        None,
                                        "open", 0)
+
+    @mock.patch('elpy.backends.jedibackend.get_source')
+    def test_should_call_get_source(self, get_source):
+        get_source.return_value = "test-source"
+
+        self.backend.rpc_get_docstring(self.project_root, None,
+                                       "test-source", 0)
+
+        get_source.assert_called_with("test-source")
 
 
 class TestPosToLinecol(unittest.TestCase):
