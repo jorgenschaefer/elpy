@@ -132,6 +132,16 @@ have any external requirements."
                  (const :tag "Automatic" nil))
   :group 'elpy)
 
+(defcustom elpy-rpc-large-buffer-size 4096
+  "Size for a source buffer up to which it will be sent directly.
+
+The Elpy RPC protocol uses JSON as the serialization format.
+Large buffers take a long time to encode, so Elpy can transmit
+them via temporary files. If a buffer is larger than this value,
+it is sent via a temporary file."
+  :type 'integer
+  :group 'elpy)
+
 (defcustom elpy-rpc-python-command (if (eq window-system 'w32)
                                        "pythonw"
                                      "python")
@@ -1625,6 +1635,20 @@ This includes `elpy-rpc-pythonpath' in the PYTHONPATH, if set."
       (cons (concat "PYTHONPATH=" new-pythonpath)
             process-environment))))
 
+(defun elpy-rpc--buffer-contents ()
+  "Return the contents of the current buffer.
+
+This returns either a string, or a file object for the RPC
+protocol if the buffer is larger than
+`elpy-rpc-large-buffer-size'."
+  (if (< (buffer-size) elpy-rpc-large-buffer-size)
+      (buffer-string)
+    (let ((file-name (make-temp-file "elpy-rpc-"))
+          (coding-system-for-write 'utf-8))
+      (write-region nil nil file-name nil :nomessage)
+      `((filename . ,file-name)
+        (delete_after_use . t)))))
+
 ;; RPC API functions
 
 (defun elpy-rpc-restart ()
@@ -1657,7 +1681,7 @@ Returns a calltip string for the function call at point."
   (elpy-rpc "get_calltip"
             (list (expand-file-name (elpy-project-root))
                   buffer-file-name
-                  (buffer-string)
+                  (elpy-rpc--buffer-contents)
                   (- (point)
                      (point-min)))
             success error))
@@ -1670,7 +1694,7 @@ point."
   (elpy-rpc "get_completions"
             (list (expand-file-name (elpy-project-root))
                   buffer-file-name
-                  (buffer-string)
+                  (elpy-rpc--buffer-contents)
                   (- (point)
                      (point-min)))
             success error))
@@ -1682,7 +1706,7 @@ Returns nil or a list of (filename, point)."
   (elpy-rpc "get_definition"
             (list (expand-file-name (elpy-project-root))
                   buffer-file-name
-                  (buffer-string)
+                  (elpy-rpc--buffer-contents)
                   (- (point)
                      (point-min)))
             success error))
@@ -1694,7 +1718,7 @@ Returns a possible multi-line docstring for the symbol at point."
   (elpy-rpc "get_docstring"
             (list (expand-file-name (elpy-project-root))
                   buffer-file-name
-                  (buffer-string)
+                  (elpy-rpc--buffer-contents)
                   (- (point)
                      (point-min)))
             success error))
