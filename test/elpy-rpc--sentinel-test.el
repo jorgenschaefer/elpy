@@ -14,28 +14,26 @@
         (setq elpy-rpc--buffer-p t)
         (elpy-rpc--register-callback
          0
-         (lambda (arg) nil)
-         (lambda (error-obj) (setq error-called error-obj))
-         buf)
+         (elpy-promise (lambda (arg) nil)
+                       (lambda (error-obj) (setq error-called error-obj)))))
 
-        (elpy-rpc--sentinel 'process "killed\n")
+      (elpy-rpc--sentinel 'process "killed\n")
 
-        (should (equal error-called "killed"))))))
+      (should (equal error-called '(process-sentinel "killed"))))))
 
 (ert-deftest elpy-rpc--sentinel-should-call-error-handler-in-correct-buffer ()
   (elpy-testcase ()
     (mletf* ((orig-buf (current-buffer))
              (buf (get-buffer-create "*temp*"))
              (process-buffer (proc) buf)
-             (error-called-in nil))
+             (error-called-in nil)
+             (promise (elpy-promise (lambda (arg) nil)
+                                    (lambda (error-obj)
+                                      (setq error-called-in
+                                            (current-buffer))))))
       (with-current-buffer buf
         (setq elpy-rpc--buffer-p t)
-        (elpy-rpc--register-callback
-         0
-         (lambda (arg) nil)
-         (lambda (error-obj)
-           (setq error-called-in (current-buffer)))
-         orig-buf)
+        (elpy-rpc--register-callback 0 promise)
 
         (elpy-rpc--sentinel 'process "killed\n")
 

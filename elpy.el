@@ -1332,25 +1332,18 @@ result and return that."
   "Call METHOD-NAME with PARAMS in the current RPC backend.
 
 Returns the result, blocking until this arrived."
-  (let ((result-arrived nil)
-        (error-occured nil)
-        (result-value nil)
-        (error-object nil)
-        (end-time (time-add (current-time)
-                            (seconds-to-time elpy-rpc--timeout)))
-        (process (get-buffer-process (elpy-rpc--get-rpc-buffer))))
-    (elpy-rpc--call method-name params
-                    (lambda (result)
-                      (setq result-value result
-                            result-arrived t))
-                    (lambda (err)
-                      (setq error-object err
-                            error-occured t)))
-    (while (and (time-less-p (current-time)
-                             end-time)
-                (not (or result-arrived
-                         error-occured)))
-      (accept-process-output process elpy-rpc--timeout))
+  (let* ((result-arrived nil)
+         (error-occured nil)
+         (result-value nil)
+         (error-object nil)
+         (promise (elpy-rpc--call method-name params
+                                  (lambda (result)
+                                    (setq result-value result
+                                          result-arrived t))
+                                  (lambda (err)
+                                    (setq error-object err
+                                          error-occured t)))))
+    (elpy-promise-wait promise elpy-rpc--timeout)
     (cond
      (error-occured
       (elpy-rpc--default-error-callback error-object))
@@ -1363,31 +1356,31 @@ Returns the result, blocking until this arrived."
 (defun elpy-rpc--call (method-name params success error)
   "Call METHOD-NAME with PARAMS in the current RPC backend.
 
-Returns immediately. When a result is available, SUCCESS will be
-called with that value as its sole argument. If an error occurs,
-ERROR is called, if set."
-  (let ((orig-buf (current-buffer)))
+When a result is available, SUCCESS will be called with that
+value as its sole argument. If an error occurs, ERROR will be
+called with the error list.
+
+Returns a PROMISE object."
+  (let ((promise (elpy-promise success error)))
     (with-current-buffer (elpy-rpc--get-rpc-buffer)
       (setq elpy-rpc--call-id (1+ elpy-rpc--call-id))
-      (elpy-rpc--register-callback elpy-rpc--call-id
-                                   success
-                                   error
-                                   orig-buf)
+      (elpy-rpc--register-callback elpy-rpc--call-id promise)
       (process-send-string
        (get-buffer-process (current-buffer))
        (concat (json-encode `((id . ,elpy-rpc--call-id)
                               (method . ,method-name)
                               (params . ,params)))
-               "\n")))))
+               "\n")))
+    promise))
 
-(defun elpy-rpc--register-callback (call-id success error buffer)
-  "Register for SUCCESS and ERROR to be called when CALL-ID returns.
+(defun elpy-rpc--register-callback (call-id promise)
+  "Register for PROMISE to be called when CALL-ID returns.
 
 Must be called in an elpy-rpc buffer."
   (assert elpy-rpc--buffer-p)
   (when (not elpy-rpc--backend-callbacks)
     (setq elpy-rpc--backend-callbacks (make-hash-table :test #'equal)))
-  (puthash call-id (list success error buffer) elpy-rpc--backend-callbacks))
+  (puthash call-id promise elpy-rpc--backend-callbacks))
 
 (defun elpy-rpc--get-rpc-buffer ()
   "Return the RPC buffer associated with the current buffer,
@@ -1493,16 +1486,15 @@ died, this will kill the process and buffer."
 As process sentinels are only ever called when the process
 terminates, this will call the error handler of all registered
 RPC calls with the event."
-  (let ((buffer (process-buffer process)))
+  (let ((buffer (process-buffer process))
+        (err (list 'process-sentinel (substring event 0 -1))))
     (when (and buffer
                (buffer-live-p buffer))
       (with-current-buffer buffer
         (when elpy-rpc--backend-callbacks
-          (maphash (lambda (call-id callbacks)
+          (maphash (lambda (call-id promise)
                      (ignore-errors
-                       (with-current-buffer (nth 2 callbacks)
-                           (funcall (nth 1 callbacks)
-                                    (substring event 0 -1)))))
+                       (elpy-promise-reject promise err)))
                    elpy-rpc--backend-callbacks)
           (setq elpy-rpc--backend-callbacks nil))))))
 
@@ -1580,19 +1572,14 @@ This is usually an error or backtrace."
   "Handle a single JSON object from the RPC backend."
   (let ((call-id (cdr (assq 'id json)))
         (error-object (cdr (assq 'error json)))
-        (result (cdr (assq 'result json)))
-        success-callback error-callback)
-    (let ((callbacks (gethash call-id elpy-rpc--backend-callbacks)))
-      (when (not callbacks)
+        (result (cdr (assq 'result json))))
+    (let ((promise (gethash call-id elpy-rpc--backend-callbacks)))
+      (when (not promise)
         (error "Received a response for unknown call-id %s" call-id))
-      (setq success-callback (nth 0 callbacks)
-            error-callback (nth 1 callbacks)
-            orig-buf (nth 2 callbacks))
       (remhash call-id elpy-rpc--backend-callbacks)
-      (with-current-buffer orig-buf
-        (if error-object
-            (funcall error-callback error-object)
-          (funcall success-callback result))))))
+      (if error-object
+          (elpy-promise-reject promise error-object)
+        (elpy-promise-resolve promise result)))))
 
 (defun elpy-rpc--default-error-callback (error-object)
   "Display an error from the RPC backend."

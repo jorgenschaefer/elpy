@@ -3,7 +3,9 @@
     (mletf* ((elpy-rpc--timeout 0.1)
              (elpy-rpc--call
               (method params success error)
-              (funcall success "test-success")))
+              (let ((promise (elpy-promise success error)))
+                (elpy-promise-resolve promise "test-success")
+                promise)))
       (should (equal (elpy-rpc--call-blocking "test-method" nil)
                      "test-success")))))
 
@@ -17,7 +19,9 @@
              (elpy-rpc--timeout 0.1)
              (elpy-rpc--call
               (method params success error)
-              (funcall error "test-failure")))
+              (let ((promise (elpy-promise success error)))
+                (elpy-promise-reject promise "test-failure")
+                promise)))
 
       (elpy-rpc--call-blocking "test-method" nil)
 

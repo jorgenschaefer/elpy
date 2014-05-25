@@ -9,12 +9,12 @@
           (called-in nil)
           (called-with nil))
       (setq elpy-rpc--buffer-p t)
-      (elpy-rpc--register-callback 5
-                                   (lambda (arg)
-                                     (setq called-in (current-buffer)
-                                           called-with arg))
-                                   nil
-                                   buf)
+      (elpy-rpc--register-callback
+       5
+       (with-current-buffer buf
+         (elpy-promise (lambda (arg)
+                         (setq called-in (current-buffer)
+                               called-with arg)))))
 
       (elpy-rpc--handle-json '((id . 5)
                                (result . 23)))
@@ -28,12 +28,13 @@
           (called-in nil)
           (called-with nil))
       (setq elpy-rpc--buffer-p t)
-      (elpy-rpc--register-callback 5
-                                   nil
-                                   (lambda (arg)
-                                     (setq called-in (current-buffer)
-                                           called-with arg))
-                                   buf)
+      (elpy-rpc--register-callback
+       5
+       (with-current-buffer buf
+         (elpy-promise nil
+                       (lambda (arg)
+                         (setq called-in (current-buffer)
+                               called-with arg)))))
 
       (elpy-rpc--handle-json '((id . 5)
                                (error . 23)))
