@@ -126,3 +126,31 @@ for that file."
 (defun insert-source (&rest lines)
   (dolist (line lines)
     (insert line "\n")))
+
+(defun buffer-string-with-point ()
+  "Return the contents of the current buffer, with point marked with _|_."
+  (insert "_|_")
+  (prog1 (buffer-string)
+    (delete-char -3)))
+
+(defun set-buffer-string-with-point (&rest strings)
+  "Set STRINGS to be the buffer contents, moving point wherever _|_ is."
+  (erase-buffer)
+  (apply #'insert-source strings)
+  (goto-char (point-min))
+  (search-forward "_|_")
+  (delete-char -3))
+
+(defun source-string (&rest lines)
+  (mapconcat (lambda (line) (concat line "\n"))
+             lines
+             ""))
+
+(defun buffer-be (&rest lines)
+  (equal (apply #'source-string lines)
+         (buffer-string-with-point)))
+
+(defun buffer-be-explainer (&rest lines)
+  `(buffer-contents-differ ,(apply #'source-string lines)
+                           ,(buffer-string-with-point)))
+(put 'buffer-be 'ert-explainer 'buffer-be-explainer)
