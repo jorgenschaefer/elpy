@@ -1901,7 +1901,6 @@ error if the backend is not supported."
   "Return a call tip for the python call at point."
   (elpy-rpc-get-calltip
    (lambda (calltip)
-     (message "Calltip: %S" calltip)
      (eldoc-message
       (if (not calltip)
           (let ((current-defun (python-info-current-defun)))
