@@ -1018,6 +1018,34 @@ prefix is given, run all tests in the current project."
       ;; Else, run only this test
       (apply elpy-test-runner current-test))))
 
+(defvar elpy-set-test-runner-history nil
+  "History variable for `elpy-set-test-runner'.")
+
+(defun elpy-set-test-runner (test-runner)
+  "Tell Elpy to use TEST-RUNNER to run tests.
+
+See `elpy-test' for how to invoke it."
+  (interactive
+   (list
+    (let* ((runners (mapcar (lambda (value)
+                              (cons (nth 2 value)
+                                    (nth 3 value)))
+                            (cdr (get 'elpy-test-runner 'custom-type))))
+           (current (cdr (assq elpy-test-runner
+                               (mapcar (lambda (cell)
+                                         (cons (cdr cell) (car cell)))
+                                       runners))))
+           (choice (completing-read (if current
+                                        (format "Test runner (currently %s): "
+                                                current)
+                                      "Test runner: ")
+                                    runners
+                                    nil t nil 'elpy-set-test-runner-history)))
+      (if (equal choice "")
+          elpy-test-runner
+        (cdr (assoc choice runners))))))
+  (setq elpy-test-runner test-runner))
+
 (defun elpy-test-at-point ()
   "Return a list specifying the test at point, if any.
 
