@@ -86,11 +86,12 @@
   :group 'languages)
 
 (defcustom elpy-modules '(elpy-module-sane-defaults
-                          elpy-module-find-file-in-project
                           elpy-module-company
                           elpy-module-eldoc
+                          elpy-module-find-file-in-project
                           elpy-module-flymake
                           elpy-module-highlight-indentation
+                          elpy-module-pyvenv
                           elpy-module-yasnippet)
   "Which Elpy modules to use.
 
@@ -102,6 +103,8 @@ can be inidividually enabled or disabled."
                      elpy-module-eldoc)
               (const :tag "Highlight syntax errors (Flymake)"
                      elpy-module-flymake)
+              (const :tag "Show the virtualenv in the mode line (pyvenv)"
+                     elpy-module-pyvenv)
               (const :tag "Display indentation markers (highlight-indentation)"
                      elpy-module-highlight-indentation)
               (const :tag "Expand code snippets (YASnippet)"
@@ -1765,21 +1768,6 @@ error if the backend is not supported."
      (kill-local-variable 'forward-sexp-function)
      (kill-local-variable 'comment-inline-offset))))
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;; Module: Find File in Project
-
-(defun elpy-module-find-file-in-project (command &rest args)
-  "Module to enable finding files in the current project."
-  (pcase command
-    (`global-init
-     (require 'find-file-in-project))
-    (`buffer-init
-     (when buffer-file-name
-       (set (make-local-variable 'ffip-project-root)
-            (elpy-project-root))))
-    (`buffer-stop
-     (kill-local-variable 'ffip-project-root))))
-
 ;;;;;;;;;;;;;;;;;;;
 ;;; Module: Company
 
@@ -1931,6 +1919,21 @@ error if the backend is not supported."
   ;; Return the last message until we're done
   eldoc-last-message)
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; Module: Find File in Project
+
+(defun elpy-module-find-file-in-project (command &rest args)
+  "Module to enable finding files in the current project."
+  (pcase command
+    (`global-init
+     (require 'find-file-in-project))
+    (`buffer-init
+     (when buffer-file-name
+       (set (make-local-variable 'ffip-project-root)
+            (elpy-project-root))))
+    (`buffer-stop
+     (kill-local-variable 'ffip-project-root))))
+
 ;;;;;;;;;;;;;;;;;;;
 ;;; Module: Flymake
 
@@ -2026,6 +2029,14 @@ description."
      (highlight-indentation-mode 1))
     (`buffer-stop
      (highlight-indentation-mode -1))))
+
+(defun elpy-module-pyvenv (command &rest args)
+  "Module to display the current virtualenv in the mode line."
+  (pcase command
+    (`global-init
+     (pyvenv-mode 1))
+    (`global-stop
+     (pyvenv-mode -1))))
 
 ;;;;;;;;;;;;;;;;;;;;;
 ;;; Module: Yasnippet

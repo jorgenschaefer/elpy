@@ -1,0 +1,13 @@
+(ert-deftest elpy-module-pyvenv-global-init-should-enable-pyvenv-mode ()
+  (elpy-testcase ()
+    (pyvenv-mode -1)
+    (should-not pyvenv-mode)
+    (elpy-module-pyvenv 'global-init)
+    (should pyvenv-mode)))
+
+(ert-deftest elpy-module-pyvenv-global-stop-should-disable-pyvenv-mode ()
+  (elpy-testcase ()
+    (pyvenv-mode 1)
+    (should pyvenv-mode)
+    (elpy-module-pyvenv 'global-stop)
+    (should-not pyvenv-mode)))
