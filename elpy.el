@@ -1822,7 +1822,10 @@ error if the backend is not supported."
      (company-mode -1)
      (kill-local-variable 'company-idle-delay)
      (kill-local-variable 'company-tooltip-align-annotations)
-     (kill-local-variable 'company-backends))))
+     (kill-local-variable 'company-backends))
+    ;; See `company-require-match'.
+    (`require-match
+     'never)))
 
 (defvar elpy-company-candidate-cache nil
   "Buffer-local cache for candidate information.")
