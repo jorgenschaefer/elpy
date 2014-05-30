@@ -1,33 +1,33 @@
-(ert-deftest elpy-test-at-point-should-return-project-root-without-file ()
+(ert-deftest elpy-test-at-point-should-return-library-root-without-file ()
   (elpy-testcase ()
     (mletf* ((saved nil)
              (save-some-buffers () (setq saved 'all))
              (save-buffer () (setq saved 'one))
-             (elpy-project-root () "/project/root"))
+             (elpy-library-root () "/project/root"))
 
       (should (equal (elpy-test-at-point)
                      (list "/project/root"
                            nil nil nil)))
       (should (eq saved 'all)))))
 
-(ert-deftest elpy-test-at-point-should-return-project-root-without-file ()
+(ert-deftest elpy-test-at-point-should-return-library-root-without-file ()
   (elpy-testcase ()
     (mletf* ((saved nil)
              (save-some-buffers () (setq saved 'all))
              (save-buffer () (setq saved 'one))
-             (elpy-project-root () "/project/root"))
+             (elpy-library-root () "/project/root"))
 
       (should (equal (elpy-test-at-point)
                      (list "/project/root"
                            nil nil nil)))
       (should (eq saved 'all)))))
 
-(ert-deftest elpy-test-at-point-should-return-project-root-without-test ()
+(ert-deftest elpy-test-at-point-should-return-library-root-without-test ()
   (elpy-testcase ()
     (mletf* ((saved nil)
              (save-some-buffers () (setq saved 'all))
              (save-buffer () (setq saved 'one))
-             (elpy-project-root () "/project/root")
+             (elpy-library-root () "/project/root")
              (buffer-file-name "/project/root/tests/test.py"))
 
       (should (equal (elpy-test-at-point)
@@ -40,7 +40,7 @@
     (mletf* ((saved nil)
              (save-some-buffers () (setq saved 'all))
              (save-buffer () (setq saved 'one))
-             (elpy-project-root () "/project/root")
+             (elpy-library-root () "/project/root")
              (buffer-file-name "/project/root/tests/test.py"))
       (insert-source "class TestClass(TestCase):"
                      "    def test_method(self):"

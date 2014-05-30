@@ -1,41 +1,41 @@
-(ert-deftest elpy-rpc-find-buffer-should-find-correct-buffer ()
+(ert-deftest elpy-rpc--find-buffer-should-find-correct-buffer ()
   (elpy-testcase ()
     (mletf* ((buffer (current-buffer))
              (elpy-rpc--process-buffer-p (buf) (equal buf buffer)))
-      (setq elpy-rpc--backend-project-root "test-project"
+      (setq elpy-rpc--backend-library-root "test-project"
             elpy-rpc--backend-python-command "test-python-command")
 
       (should (equal (elpy-rpc--find-buffer "test-project"
                                             "test-python-command")
                      (current-buffer))))))
 
-(ert-deftest elpy-rpc-find-buffer-should-not-find-without-process-buffer ()
+(ert-deftest elpy-rpc--find-buffer-should-not-find-without-process-buffer ()
   (elpy-testcase ()
     (mletf* ((buffer (current-buffer))
              (elpy-rpc--process-buffer-p (buf) nil))
-      (setq elpy-rpc--backend-project-root "test-project"
+      (setq elpy-rpc--backend-library-root "test-project"
             elpy-rpc--backend-python-command "test-python-command")
 
       (should (equal (elpy-rpc--find-buffer "test-project"
                                             "test-python-command")
                      nil)))))
 
-(ert-deftest elpy-rpc-find-buffer-should-not-find-with-bad-project-root ()
+(ert-deftest elpy-rpc--find-buffer-should-not-find-with-bad-project-root ()
   (elpy-testcase ()
     (mletf* ((buffer (current-buffer))
              (elpy-rpc--process-buffer-p (buf) t))
-      (setq elpy-rpc--backend-project-root "bad-test-project"
+      (setq elpy-rpc--backend-library-root "bad-test-project"
             elpy-rpc--backend-python-command "test-python-command")
 
       (should (equal (elpy-rpc--find-buffer "test-project"
                                             "test-python-command")
                      nil)))))
 
-(ert-deftest elpy-rpc-find-buffer-should-not-find-without-bad-python-command ()
+(ert-deftest elpy-rpc--find-buffer-should-not-find-without-bad-python-command ()
   (elpy-testcase ()
     (mletf* ((buffer (current-buffer))
              (elpy-rpc--process-buffer-p (buf) t))
-      (setq elpy-rpc--backend-project-root "test-project"
+      (setq elpy-rpc--backend-library-root "test-project"
             elpy-rpc--backend-python-command "bad-test-python-command")
 
       (should (equal (elpy-rpc--find-buffer "test-project"

@@ -6,7 +6,8 @@
 
 (ert-deftest elpy-project-root-should-call-find-root-if-not-set ()
   (elpy-testcase ()
-    (let ((elpy-project-root nil))
-      (mletf* ((elpy-project--find-root () "/project/root"))
-        (should (f-equal? (elpy-project-root)
-                          "/project/root"))))))
+    (let ((elpy-project-root nil)
+          (elpy-project-root-finder-functions '((lambda ()
+                                                  "/project/root"))))
+      (should (f-equal? (elpy-project-root)
+                        "/project/root")))))

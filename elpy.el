@@ -121,6 +121,27 @@ can be inidividually enabled or disabled."
   :type '(repeat string)
   :group 'elpy)
 
+(defcustom elpy-project-root-finder-functions
+  '(elpy-project-find-projectile-root
+    elpy-project-find-python-root
+    elpy-project-find-git-root
+    elpy-project-find-hg-root
+    elpy-project-find-svn-root)
+  "List of functions to ask for the current project root.
+
+These will be checked in turn. The first directory found is used."
+  :type '(set (const :tag "Projectile project root"
+                     elpy-project-find-projectile-root)
+              (const :tag "Python project (setup.py, setup.cfg)"
+                     elpy-project-find-python-root)
+              (const :tag "Git repository root (.git)"
+                     elpy-project-find-git-root)
+              (const :tag "Mercurial project root (.hg)"
+                     elpy-project-find-hg-root)
+              (const :tag "Subversion project root (.svn)"
+                     elpy-project-find-svn-root))
+  :group 'elpy)
+
 (defcustom elpy-rpc-backend nil
   "Your preferred backend.
 
@@ -743,44 +764,77 @@ time. Honestly."
     (setcdr (assq mode-name minor-mode-alist)
             (list "")))))
 
-;;;;;;;;;;;;;;;;
-;;; Project root
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; Project and library roots
 
 (defvar elpy-project-root nil
-  "The root of the project the current buffer is in.")
+  "The root of the project the current buffer is in.
+
+See the `elpy-project-root' function for details.")
 (make-variable-buffer-local 'elpy-project-root)
 (put 'elpy-project-root 'safe-local-variable 'file-directory-p)
 
 (defun elpy-project-root ()
   "Return the root of the current buffer's project.
 
-You can set the variable `elpy-project-root' in, for example,
-.dir-locals.el to configure this."
+This can very well be nil if the current file is not part of a
+project.
+
+See `elpy-project-root-finder-functions' for a way to configure
+how the project root is found. You can also set the variable
+`elpy-project-root' in, for example, .dir-locals.el to override
+this."
   (when (not elpy-project-root)
-    (setq elpy-project-root (elpy-project--find-root)))
+    (setq elpy-project-root
+          (run-hook-with-args-until-success
+           'elpy-project-root-finder-functions)))
   elpy-project-root)
-
-(defun elpy-project--find-root ()
-  "Find the first directory in the tree not containing an __init__.py
-
-If there is no __init__.py in the current directory, return the
-current directory."
-  (cond
-   ((and (functionp 'projectile-project-root)
-         (projectile-project-root))
-    (projectile-project-root))
-   ((file-exists-p (format "%s/__init__.py" default-directory))
-    (locate-dominating-file default-directory
-                            (lambda (dir)
-                              (not (file-exists-p
-                                    (format "%s/__init__.py" dir))))))
-   (t
-    default-directory)))
 
 (defun elpy-set-project-root (new-root)
   "Set the Elpy project root to NEW-ROOT."
   (interactive "DNew project root: ")
   (setq elpy-project-root new-root))
+
+(defun elpy-library-root ()
+  "Return the root of the Python package chain of the current buffer.
+
+That is, if you have /foo/package/module.py, it will return /foo,
+so that import package.module will pick up module.py."
+  (locate-dominating-file default-directory
+                          (lambda (dir)
+                            (not (file-exists-p
+                                  (format "%s/__init__.py"
+                                          dir))))))
+
+(defun elpy-project-find-python-root ()
+  "Return the current Python project root, if any.
+
+This is marked with setup.py or setup.cfg."
+  (or (locate-dominating-file default-directory "setup.py")
+      (locate-dominating-file default-directory "setup.cfg")))
+
+(defun elpy-project-find-git-root ()
+  "Return the current git repository root, if any."
+  (locate-dominating-file default-directory ".git"))
+
+(defun elpy-project-find-hg-root ()
+  "Return the current git repository root, if any."
+  (locate-dominating-file default-directory ".hg"))
+
+(defun elpy-project-find-svn-root ()
+  "Return the current git repository root, if any."
+  (locate-dominating-file default-directory
+                          (lambda (dir)
+                            (and (file-directory-p (format "%s/.svn" dir))
+                                 (not (file-directory-p (format "%s/../.svn"
+                                                                dir)))))))
+
+(defun elpy-project-find-projectile-root ()
+  "Return the current project root according to projectile."
+  ;; `ignore-errors' both to avoid an unbound function error as well
+  ;; as ignore projectile saying there is no project root here.
+  (ignore-errors
+    (projectile-project-root)))
 
 ;;;;;;;;;;;;;;;;;;;;;
 ;;; Interactive Shell
@@ -938,7 +992,8 @@ with a prefix argument)."
         (exec-path (python-shell-calculate-exec-path))
         (file-name-or-directory (expand-file-name
                                  (if whole-project-p
-                                     (elpy-project-root)
+                                     (or (elpy-project-root)
+                                         (buffer-file-name))
                                    (buffer-file-name))))
         (extra-args (if whole-project-p
                         (concat " --exclude="
@@ -1264,8 +1319,8 @@ directory is not nil."
   (if (not buffer-file-name)
       (progn
         (save-some-buffers)
-        (list (elpy-project-root) nil nil nil))
-    (let* ((top (elpy-project-root))
+        (list (elpy-library-root) nil nil nil))
+    (let* ((top (elpy-library-root))
            (file buffer-file-name)
            (module (elpy-test--module-name top file))
            (test (python-info-current-defun)))
@@ -1426,7 +1481,8 @@ With a prefix argument, prompt for a string to search for."
                                                grep-find-ignored-directories)))
     (rgrep (format "\\b%s\\b" symbol)
            "*.py"
-           (elpy-project-root)))
+           (or (elpy-project-root)
+               default-directory)))
   (with-current-buffer next-error-last-buffer
     (let ((inhibit-read-only t))
       (save-excursion
@@ -1532,9 +1588,9 @@ Used to associate responses to callbacks.")
   "The elpy-rpc buffer associated with this buffer.")
 (make-variable-buffer-local 'elpy-rpc--buffer)
 
-(defvar elpy-rpc--backend-project-root nil
+(defvar elpy-rpc--backend-library-root nil
   "The project root used by this backend.")
-(make-variable-buffer-local 'elpy-rpc--backend-project-root)
+(make-variable-buffer-local 'elpy-rpc--backend-library-root)
 
 (defvar elpy-rpc--backend-python-command nil
   "The Python interpreter used by this backend.")
@@ -1623,9 +1679,9 @@ Must be called in an elpy-rpc buffer."
 creating one if necessary."
   (when (not (elpy-rpc--process-buffer-p elpy-rpc--buffer))
     (setq elpy-rpc--buffer
-          (or (elpy-rpc--find-buffer (elpy-project-root)
+          (or (elpy-rpc--find-buffer (elpy-library-root)
                                      elpy-rpc-python-command)
-              (elpy-rpc--open (elpy-project-root)
+              (elpy-rpc--open (elpy-library-root)
                               elpy-rpc-python-command))))
   elpy-rpc--buffer)
 
@@ -1650,35 +1706,35 @@ died, this will kill the process and buffer."
       (kill-buffer buffer))
     nil)))
 
-(defun elpy-rpc--find-buffer (project-root python-command)
+(defun elpy-rpc--find-buffer (library-root python-command)
   "Return an existing RPC buffer for this project root and command."
   (catch 'return
     (dolist (buf (buffer-list))
       (when (and (elpy-rpc--process-buffer-p buf)
-                 (equal (buffer-local-value 'elpy-rpc--backend-project-root
+                 (equal (buffer-local-value 'elpy-rpc--backend-library-root
                                             buf)
-                        project-root)
+                        library-root)
                  (equal (buffer-local-value 'elpy-rpc--backend-python-command
                                             buf)
                         python-command))
         (throw 'return buf)))
     nil))
 
-(defun elpy-rpc--open (project-root python-command)
+(defun elpy-rpc--open (library-root python-command)
   "Start a new RPC process and return the associated buffer."
   ;; Prevent configuration errors
   (when (and elpy-rpc-backend
              (not (stringp elpy-rpc-backend)))
     (error "`elpy-rpc-backend' should be nil or a string."))
   (let* ((name (format "*elpy-rpc [project:%s python:%s]*"
-                                      project-root
-                                      python-command))
+                       library-root
+                       python-command))
          (new-elpy-rpc-buffer (generate-new-buffer name))
          (proc nil))
     (with-current-buffer new-elpy-rpc-buffer
       (setq elpy-rpc--buffer-p t
             elpy-rpc--buffer (current-buffer)
-            elpy-rpc--backend-project-root project-root
+            elpy-rpc--backend-library-root library-root
             elpy-rpc--backend-python-command python-command
             default-directory "/"
             proc (condition-case err
@@ -1931,7 +1987,7 @@ Returns the name of the backend currently in use."
 
 Returns a calltip string for the function call at point."
   (elpy-rpc "get_calltip"
-            (list (expand-file-name (elpy-project-root))
+            (list (expand-file-name (elpy-library-root))
                   buffer-file-name
                   (elpy-rpc--buffer-contents)
                   (- (point)
@@ -1944,7 +2000,7 @@ Returns a calltip string for the function call at point."
 Returns a list of possible completions for the Python symbol at
 point."
   (elpy-rpc "get_completions"
-            (list (expand-file-name (elpy-project-root))
+            (list (expand-file-name (elpy-library-root))
                   buffer-file-name
                   (elpy-rpc--buffer-contents)
                   (- (point)
@@ -1956,7 +2012,7 @@ point."
 
 Returns nil or a list of (filename, point)."
   (elpy-rpc "get_definition"
-            (list (expand-file-name (elpy-project-root))
+            (list (expand-file-name (elpy-library-root))
                   buffer-file-name
                   (elpy-rpc--buffer-contents)
                   (- (point)
@@ -1968,7 +2024,7 @@ Returns nil or a list of (filename, point)."
 
 Returns a possible multi-line docstring for the symbol at point."
   (elpy-rpc "get_docstring"
-            (list (expand-file-name (elpy-project-root))
+            (list (expand-file-name (elpy-library-root))
                   buffer-file-name
                   (elpy-rpc--buffer-contents)
                   (- (point)
@@ -2181,10 +2237,10 @@ error if the backend is not supported."
      (require 'find-file-in-project))
     (`buffer-init
      (when buffer-file-name
-       (set (make-local-variable 'ffip-project-root)
-            (elpy-project-root))))
+       (set (make-local-variable 'ffip-project-root-function)
+            #'elpy-project-root)))
     (`buffer-stop
-     (kill-local-variable 'ffip-project-root))))
+     (kill-local-variable 'ffip-project-root-function))))
 
 ;;;;;;;;;;;;;;;;;;;
 ;;; Module: Flymake

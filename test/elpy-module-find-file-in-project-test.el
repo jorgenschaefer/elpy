@@ -9,9 +9,8 @@
 
 (ert-deftest elpy-module-find-file-in-project-buffer-init ()
   (elpy-testcase ()
-    (mletf* ((elpy-project-root () "/"))
-      (setq buffer-file-name "test")
+    (setq buffer-file-name "test")
 
-      (elpy-module-find-file-in-project 'buffer-init)
+    (elpy-module-find-file-in-project 'buffer-init)
 
-      (should (equal ffip-project-root "/")))))
+    (should (equal ffip-project-root-function #'elpy-project-root))))

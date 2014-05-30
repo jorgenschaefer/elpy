@@ -25,10 +25,24 @@
   (elpy-testcase ((:project project-root "test.py"))
     (find-file (f-join project-root "test.py"))
     (mletf* ((command nil)
+             (elpy-project-root project-root)
              (elpy-project-ignored-directories '("foo" "bar"))
              (compilation-start (command-arg mode name-function)
                                 (setq command command-arg)))
       (elpy-check t)
       (should (equal command (format "%s %s --exclude=foo,bar"
                                      python-check-command
-                                     (format "%s/" project-root)))))))
+                                     project-root))))))
+
+(ert-deftest elpy-check-should-check-file-if-no-project-root ()
+  (elpy-testcase ((:project project-root "test.py"))
+    (find-file (f-join project-root "test.py"))
+    (mletf* ((command nil)
+             (elpy-project-root () nil)
+             (elpy-project-ignored-directories '("foo" "bar"))
+             (compilation-start (command-arg mode name-function)
+                                (setq command command-arg)))
+      (elpy-check t)
+      (should (equal command (format "%s %s --exclude=foo,bar"
+                                     python-check-command
+                                     (buffer-file-name)))))))

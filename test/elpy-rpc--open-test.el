@@ -30,7 +30,7 @@
       (with-current-buffer (elpy-rpc--open "/tmp" "python")
         (should elpy-rpc--buffer-p)
         (should (equal elpy-rpc--buffer (current-buffer)))
-        (should (equal elpy-rpc--backend-project-root "/tmp"))
+        (should (equal elpy-rpc--backend-library-root "/tmp"))
         (should (equal elpy-rpc--backend-python-command "python"))
         (should (equal default-directory "/"))
         (should (equal exit-flag-disabled-for 'test-process))

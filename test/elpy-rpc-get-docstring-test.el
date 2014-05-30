@@ -1,6 +1,6 @@
 (ert-deftest elpy-rpc-get-docstring ()
   (elpy-testcase ()
-    (mletf* ((elpy-project-root () "/")
+    (mletf* ((elpy-library-root () "/")
              (called-args nil)
              (elpy-rpc (&rest args) (setq called-args args)))
 
