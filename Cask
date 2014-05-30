@@ -10,7 +10,7 @@
 (depends-on "highlight-indentation" "0.5.0")
 (depends-on "idomenu" "0.1")
 (depends-on "iedit" "0.97")
-(depends-on "pyvenv" "1.0")
+(depends-on "pyvenv" "1.2")
 (depends-on "yasnippet" "0.8.0")
 
 (development

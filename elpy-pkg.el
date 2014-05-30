@@ -5,6 +5,6 @@
                   (highlight-indentation "0.5.0")
                   (idomenu "0.1")
                   (iedit "0.97")
-                  (pyvenv "1.0")
+                  (pyvenv "1.2")
                   (yasnippet "0.8.0"))
                 )
