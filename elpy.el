@@ -2104,9 +2104,7 @@ error if the backend is not supported."
      (kill-local-variable 'company-idle-delay)
      (kill-local-variable 'company-tooltip-align-annotations)
      (kill-local-variable 'company-backends))
-    ;; See `company-require-match'.
-    (`require-match
-     'never)))
+    ))
 
 (defvar elpy-company-candidate-cache nil
   "Buffer-local cache for candidate information.")
@@ -2175,9 +2173,12 @@ error if the backend is not supported."
                   (gethash arg elpy-company-candidate-cache))))
        (when doc
          (company-doc-buffer doc))))
+    ;; require-match => Never require a match, even if the user
+    ;; started to interact with company. See `company-require-match'.
+    (`require-match
+     'never)
     ;; location <candidate> => (buffer . point) or (file . line-number)
     ;; match <candidate> => for non-prefix based backends
-    ;; require-match => user may not enter non-match ... meh?
     ;; post-completion <candidate> => after insertion, for snippets
     ))
 

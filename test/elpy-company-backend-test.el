@@ -40,6 +40,11 @@
     (should (equal (elpy-company-backend 'prefix)
                    '("world" . t)))))
 
+(ert-deftest elpy-company-backend-should-never-require-match ()
+  (elpy-testcase ()
+    (should (equal (elpy-company-backend 'require-match)
+                   'never))))
+
 ;; FIXME! candidates is a convoluted *mess*.
 
 ;; FIXME! Do the rest when we're re-doing the completion.
