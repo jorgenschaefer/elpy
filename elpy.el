@@ -2334,8 +2334,10 @@ description."
     (python-send-buffer)))
 (when (not (fboundp 'python-info-current-defun))
   (defalias 'python-info-current-defun 'python-current-defun))
-(when (not (fboundp 'python-nav-backward-statement))
-  (defalias 'python-nav-backward-statement 'backward-sexp))
+(when (not (fboundp 'python-nav-forward-statement))
+  (defun python-nav-forward-statement (&rest ignored)
+    "Function added in Emacs 24.3"
+    (error "Enhanced Python navigation only available in Emacs 24.3+")))
 
 (when (not (fboundp 'python-shell-get-process-name))
   (defun python-shell-get-process-name (dedicated)

@@ -1,3 +1,5 @@
+;; -*- lexical-binding: t -*-
+
 (require 'f)
 (let ((elpy-dir (f-parent (f-dirname (f-this-file)))))
   (add-to-list 'load-path elpy-dir)
@@ -53,14 +55,18 @@ Run BODY with that binding."
       `(progn ,@body)
     (let ((spec (car speclist)))
       (pcase (car spec)
-        (:project
+        (`:project
          (let ((symbol (cadr spec))
                (filespec (cddr spec)))
            `(with-temp-dir ,symbol
-                           (elpy-testcase-create-files ,symbol
-                                                       ',filespec)
-                           ,(elpy-testcase-transform-spec (cdr speclist)
-                                                          body))))
+              (elpy-testcase-create-files ,symbol
+                                          ',filespec)
+              ,(elpy-testcase-transform-spec (cdr speclist)
+                                             body))))
+        (`:emacs-required
+         (when (not (version< emacs-version (cadr spec))) 
+           (elpy-testcase-transform-spec (cdr speclist)
+					 body)))
         (t
          (error "Bad environment specifier %s" (car spec)))))))
 

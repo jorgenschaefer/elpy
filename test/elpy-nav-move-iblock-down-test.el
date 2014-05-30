@@ -1,5 +1,5 @@
 (ert-deftest elpy-nav-move-iblock-down-should-move-from-start-of-def-down ()
-  (elpy-testcase ()
+  (elpy-testcase ((:emacs-required "24.3"))
     (set-buffer-string-with-point
      "def foo():"
      "    _|_if bar:"
@@ -18,7 +18,7 @@
       "    fred"))))
 
 (ert-deftest elpy-nav-move-iblock-down-should-move-block-to-end ()
-  (elpy-testcase ()
+  (elpy-testcase ((:emacs-required "24.3"))
     (set-buffer-string-with-point
      "def foo():"
      "    _|_if bar:"
@@ -36,7 +36,7 @@
     ))
 
 (ert-deftest elpy-nav-move-iblock-down-should-stop-at-last-line ()
-  (elpy-testcase ()
+  (elpy-testcase ((:emacs-required "24.3"))
     (set-buffer-string-with-point
      "def foo():"
      "    qux"
@@ -53,7 +53,7 @@
       "        baz"))))
 
 (ert-deftest elpy-nav-move-iblock-down-should-work-at-end-of-file ()
-  (elpy-testcase ()
+  (elpy-testcase ((:emacs-required "24.3"))
     (set-buffer-string-with-point
      "_|_foo"
      "bar")

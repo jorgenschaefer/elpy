@@ -1,5 +1,5 @@
 (ert-deftest elpy-nav-forward-iblock-should-move-to-lower-level ()
-  (elpy-testcase ()
+  (elpy-testcase ((:emacs-required "24.3"))
     (set-buffer-string-with-point
      "_|_def foo():"
      "    x = 1"
@@ -16,7 +16,7 @@
       "    z = 3"))))
 
 (ert-deftest elpy-nav-forward-iblock-should-move-over-complex-statement ()
-  (elpy-testcase ()
+  (elpy-testcase ((:emacs-required "24.3"))
     (set-buffer-string-with-point
      "def foo():"
      "    _|_if ("
@@ -41,7 +41,7 @@
       "    z = 3"))))
 
 (ert-deftest elpy-nav-forward-iblock-does-not-go-to-end-of-file ()
-  (elpy-testcase ()
+  (elpy-testcase ((:emacs-required "24.3"))
     (set-buffer-string-with-point
      "def foo():"
      "    x = 1"
@@ -60,7 +60,7 @@
       ""))))
 
 (ert-deftest elpy-nav-forward-iblock-does-work-at-end-of-file ()
-  (elpy-testcase ()
+  (elpy-testcase ((:emacs-required "24.3"))
     (set-buffer-string-with-point
      "def foo():"
      "    x = 1"

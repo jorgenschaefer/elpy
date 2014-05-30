@@ -1,5 +1,5 @@
 (ert-deftest elpy-nav-next-iblock-should-move-forward-one-line ()
-  (elpy-testcase ()
+  (elpy-testcase ((:emacs-required "24.3"))
     (set-buffer-string-with-point
      "def foo():"
      "    _|_x = 1"
@@ -16,7 +16,7 @@
       "    z = 3"))))
 
 (ert-deftest elpy-nav-next-iblock-should-move-from-def-to-def ()
-  (elpy-testcase ()
+  (elpy-testcase ((:emacs-required "24.3"))
     (set-buffer-string-with-point
      "class Test(object):"
      "    _|_def foo(self):"
@@ -37,7 +37,7 @@
       "        pass"))))
 
 (ert-deftest elpy-nav-next-iblock-should-move-over-complex-statement ()
-  (elpy-testcase ()
+  (elpy-testcase ((:emacs-required "24.3"))
     (set-buffer-string-with-point
      "def foo(self):"
      "    _|_if ("
@@ -60,7 +60,7 @@
       "    _|_x = 1"))))
 
 (ert-deftest elpy-nav-next-iblock-should-stop-at-end-of-class ()
-  (elpy-testcase ()
+  (elpy-testcase ((:emacs-required "24.3"))
     (set-buffer-string-with-point
      "class Test(object):"
      "    def foo(self):"
@@ -87,7 +87,7 @@
       "    pass"))))
 
 (ert-deftest elpy-nav-next-iblock-should-stop-at-end-of-file ()
-  (elpy-testcase ()
+  (elpy-testcase ((:emacs-required "24.3"))
     (set-buffer-string-with-point
      "_|_class Test2:"
      "    pass")
