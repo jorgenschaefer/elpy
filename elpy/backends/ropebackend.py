@@ -158,10 +158,27 @@ class RopeBackend(NativeBackend):
         offset = find_called_name_offset(source, offset)
         project = self.get_project(project_root)
         resource = self.get_resource(project, filename)
+        if offset > 0 and source[offset] == ')':
+            offset -= 1
         try:
-            return self.codeassist.get_calltip(project, source, offset,
-                                               resource, MAXFIXES,
-                                               remove_self=True)
+            calltip = self.codeassist.get_calltip(project, source, offset,
+                                                  resource, MAXFIXES,
+                                                  remove_self=True)
+            if calltip:
+                calltip = calltip.replace(".__init__(", "(")
+                calltip = calltip.replace("(self)", "()")
+                calltip = calltip.replace("(self, ", "(")
+                # "elpy.tests.support.source_and_offset(source)"
+                # =>
+                # "support.source_and_offset(source)"
+                try:
+                    openpos = calltip.index("(")
+                    period2 = calltip.rindex(".", 0, openpos)
+                    period1 = calltip.rindex(".", 0, period2)
+                    calltip = calltip[period1 + 1:]
+                except ValueError:
+                    pass
+            return calltip
         except (self.ModuleSyntaxError, IndentationError):
             # Rope can't parse this file
             return None

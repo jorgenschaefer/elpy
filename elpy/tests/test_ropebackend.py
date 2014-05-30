@@ -261,10 +261,10 @@ class TestGetCalltip(RopeBackendTestCase):
                                                source,
                                                offset)
         if compat.PYTHON3:
-            expected = ("threading.Thread.__init__(group=None, target=None, "
+            expected = ("threading.Thread(group=None, target=None, "
                         "name=None, args=(), kwargs=None, daemon=None, *)")
         else:
-            expected = ("threading.Thread.__init__(group=None, target=None, "
+            expected = ("threading.Thread(group=None, target=None, "
                         "name=None, args=(), kwargs=None, verbose=None)")
         self.assertEqual(calltip, expected)
 
@@ -277,10 +277,26 @@ class TestGetCalltip(RopeBackendTestCase):
                                                source,
                                                offset)
         if compat.PYTHON3:
-            expected = ("threading.Thread.__init__(group=None, target=None, "
+            expected = ("threading.Thread(group=None, target=None, "
                         "name=None, args=(), kwargs=None, daemon=None, *)")
         else:
-            expected = ("threading.Thread.__init__(group=None, target=None, "
+            expected = ("threading.Thread(group=None, target=None, "
+                        "name=None, args=(), kwargs=None, verbose=None)")
+        self.assertEqual(calltip, expected)
+
+    def test_should_get_calltip_at_closing_paren(self):
+        source, offset = source_and_offset(
+            "import threading\nthreading.Thread(_|_)")
+        filename = self.project_file("test.py", source)
+        calltip = self.backend.rpc_get_calltip(self.project_root,
+                                               filename,
+                                               source,
+                                               offset)
+        if compat.PYTHON3:
+            expected = ("threading.Thread(group=None, target=None, "
+                        "name=None, args=(), kwargs=None, daemon=None, *)")
+        else:
+            expected = ("threading.Thread(group=None, target=None, "
                         "name=None, args=(), kwargs=None, verbose=None)")
         self.assertEqual(calltip, expected)
 
@@ -358,6 +374,29 @@ class TestGetCalltip(RopeBackendTestCase):
         self.backend.rpc_get_calltip(self.project_root, None, "test-source", 0)
 
         get_source.assert_called_with("test-source")
+
+    def test_should_remove_self_argument(self):
+        source, offset = source_and_offset(
+            "d = dict()\n"
+            "d.keys(_|_")
+        filename = self.project_file("test.py", source)
+        calltip = self.backend.rpc_get_calltip(self.project_root,
+                                               filename,
+                                               source,
+                                               offset)
+        self.assertEqual(calltip, "__builtin__.keys()")
+
+    def test_should_remove_package_prefix(self):
+        source, offset = source_and_offset(
+            "import multiprocessing\n"
+            "q = multiprocessing.Queue()\n"
+            "q.qsize(_|_")
+        filename = self.project_file("test.py", source)
+        calltip = self.backend.rpc_get_calltip(self.project_root,
+                                               filename,
+                                               source,
+                                               offset)
+        self.assertEqual(calltip, "Queue.qsize()")
 
 
 class TestGetDocstring(RopeBackendTestCase):

@@ -87,20 +87,16 @@ class JediBackend(NativeBackend):
         line, column = pos_to_linecol(source, offset)
         sys.path.append(project_root)
         try:
-            call = run_with_debug(self.jedi, 'call_signatures',
+            call = run_with_debug(self.jedi, 'get_in_function_call',
                                   source=source, line=line, column=column,
                                   path=filename, encoding='utf-8')
-            if call:
-                call = call[0]
-            else:
-                call = None
         finally:
             sys.path.pop()
-        if call is None:
+        if not call:
             return None
-        return "{0}({1})".format(call.name,
-                                 ", ".join(param.description.strip()
-                                           for param in call.params))
+        return {"name": call.name,
+                "index": call.index,
+                "params": [param.description for param in call.params]}
 
     def rpc_get_docstring(self, project_root, filename, source, offset):
         """Return a docstring for the symbol at offset.

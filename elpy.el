@@ -2203,32 +2203,25 @@ error if the backend is not supported."
   (elpy-rpc-get-calltip
    (lambda (calltip)
      (eldoc-message
-      (if (not calltip)
-          (let ((current-defun (python-info-current-defun)))
-            (when current-defun
-              (format "In: %s()" current-defun)))
-        (with-temp-buffer
-          ;; multiprocessing.queues.Queue.cancel_join_thread(self)
-          (insert calltip)
-          (goto-char (point-min))
-          ;; First, remove the whole path up to the second-to-last dot. We
-          ;; retain the class just to make it nicer.
-          (while (search-forward "." nil t)
-            nil)
-          (when (search-backward "." nil t 2)
-            (delete-region (point-min) (1+ (point))))
-          ;; Then remove the occurrence of "self", that's not passed by
-          ;; the user.
-          (when (re-search-forward "(self\\(, \\)?" nil t)
-            (replace-match "("))
-          (goto-char (point-min))
-          ;; Lastly, we'd like to highlight the argument are on.
-
-          ;; This is tricky with keyword vs. positions arguments, and
-          ;; possibly quite complex argument values.
-
-          ;; Hence, we don't do anything for now.
-          (buffer-string))))))
+      (cond
+       ((not calltip)
+        (let ((current-defun (python-info-current-defun)))
+          (when current-defun
+            (format "In: %s()" current-defun))))
+       ((stringp calltip)
+        calltip)
+       (t
+        (let ((name (cdr (assq 'name calltip)))
+              (index (cdr (assq 'index calltip)))
+              (params (cdr (assq 'params calltip))))
+          (setf (nth index params)
+                (propertize (nth index params)
+                            'face
+                            'eldoc-highlight-function-argument))
+          (format "%s(%s)"
+                  name
+                  (mapconcat #'identity params ", "))
+          ))))))
   ;; Return the last message until we're done
   eldoc-last-message)
 

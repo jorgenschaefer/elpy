@@ -199,13 +199,25 @@ class TestGetCalltip(JediBackendTestCase):
                                                filename,
                                                source, offset)
         if compat.PYTHON3:
-            self.assertEqual(calltip.replace(" = ", "="),
-                             "Thread(group=None, target=None, name=None, "
-                             "args=(), kwargs=None, daemon=None)")
+            self.assertEqual(calltip,
+                             {"name": "Thread",
+                              "params": ["group = None",
+                                         "target = None",
+                                         "name = None",
+                                         "args = ()",
+                                         "kwargs = None",
+                                         "daemon = None"],
+                              "index": 0})
         else:
-            self.assertEqual(calltip.replace(" = ", "="),
-                             "Thread(group=None, target=None, name=None, "
-                             "args=(), kwargs=None, verbose=None)")
+            self.assertEqual(calltip,
+                             {"name": "Thread",
+                              "params": ["group = None",
+                                         "target = None",
+                                         "name = None",
+                                         "args = ()",
+                                         "kwargs = None",
+                                         "verbose = None"],
+                              "index": 0})
 
     def test_should_return_none_outside_of_all(self):
         filename = self.project_file("test.py", "")
@@ -243,7 +255,10 @@ class TestGetCalltip(JediBackendTestCase):
                                                file2,
                                                source2,
                                                offset)
-        self.assertEqual(calltip, 'add(a, b)')
+        self.assertEqual(calltip,
+                         {'name': u'add',
+                          'index': 0,
+                          'params': [u'a', u'b']})
 
     @mock.patch('elpy.backends.jedibackend.get_source')
     def test_should_call_get_source(self, get_source):

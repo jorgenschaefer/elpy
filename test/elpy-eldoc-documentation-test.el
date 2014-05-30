@@ -28,14 +28,33 @@
 
       (should (equal calltip nil)))))
 
-(ert-deftest elpy-eldoc-documentation-should-return-nil-without-defun ()
+(ert-deftest elpy-eldoc-documentation-should-show-string-calltip ()
   (elpy-testcase ()
     (mletf* ((elpy-rpc-get-calltip
               (callback)
-              (funcall callback "multiprocessing.queues.Queue.cancel_join_thread(self)"))
+              (funcall callback "Queue.cancel_join_thread()"))
              (calltip nil)
              (eldoc-message (tip) (setq calltip tip)))
 
       (elpy-eldoc-documentation)
 
       (should (equal calltip "Queue.cancel_join_thread()")))))
+
+(ert-deftest elpy-eldoc-documentation-should-show-object-calltip ()
+  (elpy-testcase ()
+    (mletf* ((elpy-rpc-get-calltip
+              (callback)
+              (funcall callback '((name . "cancel_join_thread")
+                                  (index . 0)
+                                  (params "foo" "bar"))))
+             (calltip nil)
+             (eldoc-message (tip) (setq calltip tip)))
+
+      (elpy-eldoc-documentation)
+
+      (should (equal calltip
+                     (format "cancel_join_thread(%s, bar)"
+                             (propertize "foo"
+                                         'face
+                                         'eldoc-highlight-function-argument))))
+      )))
