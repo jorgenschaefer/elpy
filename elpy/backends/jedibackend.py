@@ -39,9 +39,9 @@ class JediBackend(NativeBackend):
         line, column = pos_to_linecol(source, offset)
         sys.path.append(project_root)
         try:
-            script = self.jedi.Script(source, line, column, filename,
-                                      encoding='utf-8')
-            proposals = script.completions()
+            proposals = run_with_debug(self.jedi, 'completions',
+                                       source=source, line=line, column=column,
+                                       path=filename, encoding='utf-8')
         finally:
             sys.path.pop()
         return [[proposal.complete, proposal.docstring()]
@@ -52,9 +52,9 @@ class JediBackend(NativeBackend):
         line, column = pos_to_linecol(source, offset)
         sys.path.append(project_root)
         try:
-            script = self.jedi.Script(source, line, column, filename,
-                                      encoding='utf-8')
-            locations = script.goto_definitions()
+            locations = run_with_debug(self.jedi, 'goto_definitions',
+                                       source=source, line=line, column=column,
+                                       path=filename, encoding='utf-8')
             # goto_definitions() can return silly stuff like __builtin__
             # for int variables, so we fall back on goto() in those
             # cases. See issue #76.
@@ -62,7 +62,10 @@ class JediBackend(NativeBackend):
                     locations and
                     locations[0].module_path is None
             ):
-                locations = script.goto_assignments()
+                locations = run_with_debug(self.jedi, 'goto_assignments',
+                                           source=source, line=line,
+                                           column=column,
+                                           path=filename, encoding='utf-8')
         finally:
             sys.path.pop()
         if not locations:
@@ -84,9 +87,9 @@ class JediBackend(NativeBackend):
         line, column = pos_to_linecol(source, offset)
         sys.path.append(project_root)
         try:
-            script = self.jedi.Script(source, line, column, filename,
-                                      encoding='utf-8')
-            call = script.call_signatures()
+            call = run_with_debug(self.jedi, 'call_signatures',
+                                  source=source, line=line, column=column,
+                                  path=filename, encoding='utf-8')
             if call:
                 call = call[0]
             else:
@@ -160,3 +163,41 @@ def linecol_to_pos(text, line, col):
         raise ValueError("Line {0} column {1} is not within the text"
                          .format(line, col))
     return offset
+
+
+def run_with_debug(jedi, name, *args, **kwargs):
+    try:
+        script = jedi.Script(*args, **kwargs)
+        return getattr(script, name)()
+    except:
+        from jedi import debug
+
+        debug_info = []
+
+        def _debug(level, str_out):
+            if level == debug.NOTICE:
+                prefix = "[N]"
+            elif level == debug.WARNING:
+                prefix = "[W]"
+            else:
+                prefix = "[?]"
+            debug_info.append("{0} {1}".format(prefix, str_out))
+
+        jedi.set_debug_function(_debug, speed=False)
+        try:
+            script = jedi.Script(*args, **kwargs)
+            return getattr(script, name)()
+        except Exception as e:
+            source = kwargs.get('source')
+            sc_args = []
+            sc_args.extend(repr(arg) for arg in args)
+            sc_args.extend("{0}={1}".format(k, "source" if k == "source"
+                                            else repr(v))
+                           for (k, v) in kwargs.items())
+            e.jedi_debug_info = {'script_args': ", ".join(sc_args),
+                                 'source': source,
+                                 'method': name,
+                                 'debug_info': debug_info}
+            raise
+        finally:
+            jedi.set_debug_function(None)

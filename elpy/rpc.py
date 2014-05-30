@@ -107,8 +107,10 @@ class JSONRPCServer(object):
             self.write_json(error={"message": str(e)},
                             id=request_id)
         except Exception as e:
+            jedi_debug_info = getattr(e, 'jedi_debug_info', None)
             self.write_json(error={"message": str(e),
-                                   "traceback": traceback.format_exc()},
+                                   "traceback": traceback.format_exc(),
+                                   "jedi_debug_info": jedi_debug_info},
                             id=request_id)
 
     def handle(self, method_name, args):

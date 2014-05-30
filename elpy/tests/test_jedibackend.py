@@ -2,6 +2,7 @@
 
 import unittest
 
+import jedi
 import mock
 
 from elpy.tests import compat
@@ -326,3 +327,66 @@ class TestLinecolToPos(unittest.TestCase):
     def test_should_fail_for_column_past_text(self):
         self.assertRaises(ValueError,
                           jedibackend.linecol_to_pos, "foo\n", 1, 10)
+
+
+class TestRunWithDebug(unittest.TestCase):
+    @mock.patch('jedi.Script')
+    def test_should_call_method(self, Script):
+        Script.return_value.test_method.return_value = "test-result"
+
+        result = jedibackend.run_with_debug(jedi, 'test_method', 1, 2, arg=3)
+
+        Script.assert_called_with(1, 2, arg=3)
+        self.assertEqual(result, 'test-result')
+
+    @mock.patch('jedi.Script')
+    @mock.patch('jedi.set_debug_function')
+    def test_should_keep_debug_info(self, set_debug_function, Script):
+        Script.side_effect = RuntimeError
+
+        try:
+            jedibackend.run_with_debug(jedi, 'test_method', 1, 2, arg=3)
+        except RuntimeError as e:
+            self.assertIsNotNone(e.jedi_debug_info)
+            self.assertEqual(e.jedi_debug_info["script_args"],
+                             "1, 2, arg=3")
+            self.assertEqual(e.jedi_debug_info["source"], None)
+            self.assertEqual(e.jedi_debug_info["method"], "test_method")
+            self.assertEqual(e.jedi_debug_info["debug_info"], [])
+
+    @mock.patch('jedi.Script')
+    @mock.patch('jedi.set_debug_function')
+    def test_should_handle_source_special(self, set_debug_function, Script):
+        Script.side_effect = RuntimeError
+
+        try:
+            jedibackend.run_with_debug(jedi, 'test_method', source="foo")
+        except RuntimeError as e:
+            self.assertEqual(e.jedi_debug_info["script_args"],
+                             "source=source")
+            self.assertEqual(e.jedi_debug_info["source"], "foo")
+
+    @mock.patch('jedi.Script')
+    @mock.patch('jedi.set_debug_function')
+    def test_should_set_debug_info(self, set_debug_function, Script):
+        the_debug_function = [None]
+
+        def my_set_debug_function(debug_function, **kwargs):
+            the_debug_function[0] = debug_function
+
+        def my_script(*args, **kwargs):
+            the_debug_function[0](jedi.debug.NOTICE, "Notice")
+            the_debug_function[0](jedi.debug.WARNING, "Warning")
+            the_debug_function[0]("other", "Other")
+            raise RuntimeError
+
+        set_debug_function.side_effect = my_set_debug_function
+        Script.return_value.test_method = my_script
+
+        try:
+            jedibackend.run_with_debug(jedi, 'test_method', source="foo")
+        except RuntimeError as e:
+            self.assertEqual(e.jedi_debug_info["debug_info"],
+                             ["[N] Notice",
+                              "[W] Warning",
+                              "[?] Other"])
