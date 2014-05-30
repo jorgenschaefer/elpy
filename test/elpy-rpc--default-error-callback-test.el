@@ -19,3 +19,7 @@
       (goto-char (point-min))
       (re-search-forward "backend encountered an unexpected error")
       (re-search-forward "e-traceback"))))
+
+(ert-deftest elpy-rpc--default-error-callback-should-handle-real-error ()
+  (elpy-testcase ()
+    (should-error (elpy-rpc--default-error-callback '(error "frob")))))
