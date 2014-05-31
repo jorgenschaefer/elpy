@@ -2102,9 +2102,14 @@ error if the backend is not supported."
      ;; And annotations should be right-aligned
      (set (make-local-variable 'company-tooltip-align-annotations)
           t)
-     ;; Add our own backend
+     ;; Add our own backend and remove a bunch of backends that
+     ;; interfere in Python mode.
      (set (make-local-variable 'company-backends)
-          (cons 'elpy-company-backend company-backends))
+          (cons 'elpy-company-backend
+                (delq 'company-semantic
+                      (delq 'company-ropemacs
+                            (delq 'company-capf
+                                  (mapcar #'identity company-backends))))))
      (company-mode 1))
     (`buffer-stop
      (company-mode -1)
