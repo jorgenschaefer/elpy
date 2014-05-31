@@ -1555,15 +1555,22 @@ not exist anymore."
 (defun elpy-promise-wait (promise &optional timeout)
   "Wait for PROMISE to be resolved, for up to TIMEOUT seconds.
 
-This will accept process output while waiting."
+This will accept process output while waiting.
+
+This will wait for the current Elpy RPC process specifically, as
+Emacs currently has a bug where it can wait for the entire time
+of the timeout, even if output arrives.
+
+See http://debbugs.gnu.org/cgi/bugreport.cgi?bug=17647"
   (let ((end-time (when timeout
                     (time-add (current-time)
-                              (seconds-to-time timeout)))))
+                              (seconds-to-time timeout))))
+        (process (get-buffer-process (elpy-rpc--get-rpc-buffer))))
     (while (and (not (elpy-promise-resolved-p promise))
                 (or (not end-time)
                     (time-less-p (current-time)
                                  end-time)))
-      (accept-process-output nil timeout))))
+      (accept-process-output process timeout))))
 
 ;;;;;;;;;;;;;;;;;;;;;
 ;;; elpy-rpc backends
