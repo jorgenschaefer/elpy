@@ -44,7 +44,9 @@ class JediBackend(NativeBackend):
                                        path=filename, encoding='utf-8')
         finally:
             sys.path.pop()
-        return [[proposal.complete, proposal.docstring()]
+        return [{'suffix': proposal.complete,
+                 'annotation': proposal.description,
+                 'docstring': proposal.docstring(fast=True)}
                 for proposal in proposals]
 
     def rpc_get_definition(self, project_root, filename, source, offset):
@@ -87,11 +89,15 @@ class JediBackend(NativeBackend):
         line, column = pos_to_linecol(source, offset)
         sys.path.append(project_root)
         try:
-            call = run_with_debug(self.jedi, 'get_in_function_call',
-                                  source=source, line=line, column=column,
-                                  path=filename, encoding='utf-8')
+            calls = run_with_debug(self.jedi, 'call_signatures',
+                                   source=source, line=line, column=column,
+                                   path=filename, encoding='utf-8')
         finally:
             sys.path.pop()
+        if calls:
+            call = calls[0]
+        else:
+            call = None
         if not call:
             return None
         return {"name": call.name,

@@ -126,11 +126,12 @@ class RopeBackend(NativeBackend):
         except IndentationError:
             # Rope can't parse this file
             return []
-        except IndexError as e:
+        except IndexError:
             # Bug in Rope, see #186
             return []
         prefixlen = offset - starting_offset
-        return [[proposal.name[prefixlen:], proposal.get_doc()]
+        return [{'suffix': proposal.name[prefixlen:],
+                 'docstring': proposal.get_doc()}
                 for proposal in proposals]
 
     def rpc_get_definition(self, project_root, filename, source, offset):
@@ -158,7 +159,7 @@ class RopeBackend(NativeBackend):
         offset = find_called_name_offset(source, offset)
         project = self.get_project(project_root)
         resource = self.get_resource(project, filename)
-        if offset > 0 and source[offset] == ')':
+        if 0 < offset < len(source) and source[offset] == ')':
             offset -= 1
         try:
             calltip = self.codeassist.get_calltip(project, source, offset,

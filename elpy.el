@@ -2113,22 +2113,30 @@ error if the backend is not supported."
      (kill-local-variable 'company-backends))
     ))
 
-(defvar elpy-company-candidate-cache nil
+(defvar elpy-company--cache nil
   "Buffer-local cache for candidate information.")
-(make-variable-buffer-local 'elpy-company-candidate-cache)
+(make-variable-buffer-local 'elpy-company--cache)
+
+(defun elpy-company--cache-annotation (name)
+  "Return the cached annotation for NAME."
+  (when elpy-company--cache
+    (cdr (assq 'annotation (gethash name elpy-company--cache)))))
+
+(defun elpy-company--cache-docstring (name)
+  "Return the cached docstring for NAME."
+  (when elpy-company--cache
+    (cdr (assq 'docstring (gethash name elpy-company--cache)))))
 
 (defun elpy-company--cache-completions (prefix result)
   "Store RESULT in the candidate cache and return candidates."
-  (if elpy-company-candidate-cache
-      (clrhash elpy-company-candidate-cache)
-    (setq elpy-company-candidate-cache
+  (if elpy-company--cache
+      (clrhash elpy-company--cache)
+    (setq elpy-company--cache
           (make-hash-table :test #'equal)))
   (mapcar (lambda (completion)
-            (let ((name (concat prefix
-                                (car completion)))
-                  (doc (cadr completion)))
-              (puthash name doc
-                       elpy-company-candidate-cache)
+            (let* ((suffix (cdr (assq 'suffix completion)))
+                   (name (concat prefix suffix)))
+              (puthash name completion elpy-company--cache)
               name))
           result))
 
@@ -2166,18 +2174,16 @@ error if the backend is not supported."
     ;; no-cache <prefix> => t if company shouldn't cache results
     ;; meta <candidate> => short docstring for minibuffer
     (`meta
-     (let ((doc (when elpy-company-candidate-cache
-                  (gethash arg elpy-company-candidate-cache))))
+     (let ((doc (elpy-company--cache-docstring arg)))
        (when (and doc
                   (string-match "^\\(?:\\s-\\|\n\\)*\\(.*\\)$" doc))
          (match-string 1 doc))))
     ;; annotation <candidate> => short docstring for completion buffer
     (`annotation
-     "p")
+     (elpy-company--cache-annotation arg))
     ;; doc-buffer <candidate> => put doc buffer in `company-doc-buffer'
     (`doc-buffer
-     (let ((doc (when elpy-company-candidate-cache
-                  (gethash arg elpy-company-candidate-cache))))
+     (let ((doc (elpy-company--cache-docstring arg)))
        (when doc
          (company-doc-buffer doc))))
     ;; require-match => Never require a match, even if the user

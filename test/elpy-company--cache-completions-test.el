@@ -2,17 +2,25 @@
   (elpy-testcase ()
     (elpy-company--cache-completions "prefix" nil)
 
-    (should (hash-table-p elpy-company-candidate-cache))))
+    (should (hash-table-p elpy-company--cache))))
 
-(ert-deftest elpy-company--cache-completions-should-add-docstrings ()
+(ert-deftest elpy-company--cache-completions-should-add-info ()
   (elpy-testcase ()
     (elpy-company--cache-completions
      "prefix-"
-     '(("candidate-1" "doc-1")
-       ("candidate-2" "doc-2")))
+     '(((suffix . "candidate-1")
+        (annotation . "anno-1")
+        (docstring . "doc-1"))
+       ((suffix . "candidate-2")
+        (annotation . "anno-2")
+        (docstring . "doc-2"))))
 
-    (should (hash-table-p elpy-company-candidate-cache))
-    (should (equal (gethash "prefix-candidate-1" elpy-company-candidate-cache)
+    (should (equal (elpy-company--cache-annotation "prefix-candidate-1")
+                   "anno-1"))
+    (should (equal (elpy-company--cache-annotation "prefix-candidate-2")
+                   "anno-2"))
+
+    (should (equal (elpy-company--cache-docstring "prefix-candidate-1")
                    "doc-1"))
-    (should (equal (gethash "prefix-candidate-2" elpy-company-candidate-cache)
+    (should (equal (elpy-company--cache-docstring "prefix-candidate-2")
                    "doc-2"))))

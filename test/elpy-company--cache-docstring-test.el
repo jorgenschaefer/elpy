@@ -1,0 +1,10 @@
+(ert-deftest elpy-company--cache-docstring ()
+  (elpy-testcase ()
+    (setq elpy-company--cache (make-hash-table :test #'equal))
+    (puthash "test" '((suffix . "st")
+                      (annotation . "anno")
+                      (docstring . "doc"))
+             elpy-company--cache)
+
+    (should (equal (elpy-company--cache-docstring "test")
+                   "doc"))))

@@ -32,11 +32,12 @@ class TestInit(JediBackendTestCase):
 class TestGetCompletions(JediBackendTestCase):
     def test_should_complete_builtin(self):
         source, offset = source_and_offset("o_|_")
-        self.assertEqual(sorted([name for (name, doc) in
-                                 self.backend.rpc_get_completions(
-                                     None, "test.py", source, offset)]),
-                         sorted(['SError', 'bject', 'ct', 'pen', 'r',
-                                 'rd', 'verflowError']))
+        self.assertEqual(
+            sorted([cand['suffix'] for cand in
+                    self.backend.rpc_get_completions(None, "test.py",
+                                                     source, offset)]),
+            sorted(['SError', 'bject', 'ct', 'pen', 'r', 'rd',
+                    'verflowError']))
 
     def test_should_find_with_trailing_text(self):
         source, offset = source_and_offset(
@@ -45,10 +46,12 @@ class TestGetCompletions(JediBackendTestCase):
             expected = ["hread", "hreadError", "IMEOUT_MAX", "imer"]
         else:
             expected = ["hread", "hread", "hreadError", "imer"]
-        self.assertEqual(sorted([name for (name, doc) in
-                                 self.backend.rpc_get_completions(
-                                     None, "test.py", source, offset)]),
-                         sorted(expected))
+
+        got = [cand['suffix'] for cand in
+               self.backend.rpc_get_completions(None, "test.py",
+                                                source, offset)]
+
+        self.assertEqual(sorted(got), sorted(expected))
 
     def test_should_not_fail_on_inexisting_file(self):
         self.backend.rpc_get_completions(self.project_root,
@@ -78,7 +81,10 @@ class TestGetCompletions(JediBackendTestCase):
                                                      file2,
                                                      source2,
                                                      offset)
-        self.assertEqual(proposals, [['d', 'add(self, a, b)\n\n']])
+        self.assertEqual(proposals,
+                         [{'suffix': 'd',
+                           'docstring': 'add(self, a, b)\n\n',
+                           'annotation': 'function: add.Add.add'}])
 
     @mock.patch('elpy.backends.jedibackend.get_source')
     def test_should_call_get_source(self, get_source):
