@@ -115,8 +115,9 @@ can be inidividually enabled or disabled."
                      elpy-module-sane-defaults))
   :group 'elpy)
 
-(defcustom elpy-project-ignored-directories '(".tox" "build" "dist" ".git"
-                                              ".svn" "CVS" ".bzr" ".hg")
+(defcustom elpy-project-ignored-directories ' (".bzr" "CVS" ".git" ".hg" ".svn"
+                                               ".tox"  "build" "dist"
+                                               ".cask")
   "Directories ignored by functions working on the whole project."
   :type '(repeat string)
   :group 'elpy)
