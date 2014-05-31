@@ -313,6 +313,50 @@ class TestGetDocstring(JediBackendTestCase):
         get_source.assert_called_with("test-source")
 
 
+class TestGetUsages(JediBackendTestCase):
+    def test_should_return_uses_in_same_file(self):
+        filename = self.project_file("test.py", "")
+        source, offset = source_and_offset(
+            "def foo(x):\n"
+            "    return _|_x + x\n")
+
+        usages = self.backend.rpc_get_usages(self.project_root,
+                                             filename,
+                                             source,
+                                             offset)
+
+        self.assertEqual(usages,
+                         [{'name': 'x',
+                           'offset': 8,
+                           'filename': filename},
+                          {'name': 'x',
+                           'filename': filename,
+                           'offset': 23},
+                          {'name': u'x',
+                           'filename': filename,
+                           'offset': 27}])
+
+    def test_should_return_uses_in_other_file(self):
+        file1 = self.project_file("file1.py", "")
+        file2 = self.project_file("file2.py", "x = 5")
+        source, offset = source_and_offset(
+            "import file2\n"
+            "file2._|_x\n")
+
+        usages = self.backend.rpc_get_usages(self.project_root,
+                                             file1,
+                                             source,
+                                             offset)
+
+        self.assertEqual(usages,
+                         [{'name': 'x',
+                           'filename': file1,
+                           'offset': 19},
+                          {'name': 'x',
+                           'filename': file2,
+                           'offset': 0}])
+
+
 class TestPosToLinecol(unittest.TestCase):
     def test_should_handle_beginning_of_string(self):
         self.assertEqual(jedibackend.pos_to_linecol("foo", 0),

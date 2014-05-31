@@ -6,6 +6,7 @@ import os
 import pydoc
 import tempfile
 
+from elpy import rpc
 from elpy.backends import nativebackend
 from elpy.tests.support import BackendTestCase, source_and_offset
 
@@ -58,6 +59,12 @@ class TestGetCompletions(NativeBackendTestCase):
         self.backend.rpc_get_completions(None, None, "test-source", 0)
 
         get_source.assert_called_with("test-source")
+
+
+class TestGetUsages(NativeBackendTestCase):
+    def test_should_raise_fault(self):
+        with self.assertRaises(rpc.Fault):
+            self.backend.rpc_get_usages(None, None, None, None)
 
 
 class TestGetDocstring(NativeBackendTestCase):

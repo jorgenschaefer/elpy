@@ -119,6 +119,27 @@ class JediBackend(NativeBackend):
                                                           source,
                                                           offset)
 
+    def rpc_get_usages(self, project_root, filename, source, offset):
+        """Return the uses of the symbol at offset.
+
+        Returns a list of occurrences of the symbol, as dicts with the
+        fields name, filename, and offset.
+
+        """
+        source = get_source(source)
+        line, column = pos_to_linecol(source, offset)
+        sys.path.append(project_root)
+        try:
+            uses = run_with_debug(self.jedi, 'usages',
+                                  source=source, line=line, column=column,
+                                  path=filename, encoding='utf-8')
+        finally:
+            sys.path.pop()
+        return [{"name": use.name,
+                 "filename": use.module_path,
+                 "offset": linecol_to_pos(source, use.line, use.column)}
+                for use in uses]
+
 
 # From the Jedi documentation:
 #
