@@ -4,7 +4,6 @@
                   (find-file-in-project "3.2")
                   (highlight-indentation "0.5.0")
                   (idomenu "0.1")
-                  (iedit "0.97")
                   (pyvenv "1.2")
                   (yasnippet "0.8.0"))
                 )
