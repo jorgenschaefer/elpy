@@ -2100,8 +2100,11 @@ error if the backend is not supported."
      ;; We want immediate completions from company.
      (set (make-local-variable 'company-idle-delay)
           t)
-     ;; And annotations should be right-aligned
+     ;; And annotations should be right-aligned.
      (set (make-local-variable 'company-tooltip-align-annotations)
+          t)
+     ;; Also, dabbrev in comments and strings is nice.
+     (set (make-local-variable 'company-dabbrev-code-everywhere)
           t)
      ;; Add our own backend and remove a bunch of backends that
      ;; interfere in Python mode.
