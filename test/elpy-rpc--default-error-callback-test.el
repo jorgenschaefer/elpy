@@ -5,9 +5,16 @@
                       (setq output (apply #'format fmt args))))
 
       (elpy-rpc--default-error-callback '((name . "e-name")
-                                          (message . "e-message")))
+                                          (message . "e-message")
+                                          (warning . t)))
 
       (should (equal output "Elpy warning: e-message")))))
+
+(ert-deftest elpy-rpc--default-error-callback-no-traceback-is-normal-error ()
+  (elpy-testcase ()
+    (should-error
+     (elpy-rpc--default-error-callback '((name . "e-name")
+                                         (message . "e-message"))))))
 
 (ert-deftest elpy-rpc--default-error-callback-should-include-traceback ()
   (elpy-testcase ()

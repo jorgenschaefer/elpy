@@ -104,6 +104,10 @@ class JSONRPCServer(object):
                 self.write_json(result=result,
                                 id=request_id)
         except Warning as e:
+            self.write_json(error={"message": str(e),
+                                   "warning": True},
+                            id=request_id)
+        except Fault as e:
             self.write_json(error={"message": str(e)},
                             id=request_id)
         except Exception as e:

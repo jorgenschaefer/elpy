@@ -1886,59 +1886,64 @@ This is usually an error or backtrace."
   (if (and (consp error-object)
            (eq 'error (car error-object)))
       (apply 'error (cdr error-object))
-   (let ((cls-name (cdr (assq 'name error-object)))
-         (err (cdr (assq 'error error-object)))
-         (text (cdr (assq 'message error-object)))
-         (traceback (cdr (assq 'traceback error-object)))
-         (jedi-info (cdr (assq 'jedi_debug_info error-object)))
-         (config (elpy-config--get-config)))
-     (if (not traceback)
-         (message "Elpy warning: %s" text)
-       (elpy-insert--popup "*Elpy Error*"
-         (elpy-insert--header "Elpy Error")
-         (elpy-insert--para
-          "The backend encountered an unexpected error. This indicates "
-          "a bug in Elpy. Please open a bug report with the data below "
-          "in the Elpy bug tracker:")
-         (insert "\n"
-                 "\n")
-         (insert-button
-          "https://github.com/jorgenschaefer/elpy/issues/new"
-          'action (lambda (button)
-                    (browse-url (button-get button 'url)))
-          'url "https://github.com/jorgenschaefer/elpy/issues/new")
-         (insert "\n"
-                 "\n"
-                 "```\n")
-         (elpy-insert--header "Configuration")
-         (elpy-config--insert-configuration-table config)
-         (insert "\n")
-         (elpy-insert--header "Traceback")
-         (insert traceback)
-         (when jedi-info
-           (insert "\n")
-           (elpy-insert--header "Jedi Debug Information")
-           (dolist (outstr (cdr (assq 'debug_info jedi-info)))
-             (insert outstr "\n"))
-           (insert "\n"
-                   "```\n"
-                   "\n"
-                   "Reproduction:"
-                   "\n"
-                   "\n")
-           (let ((method (cdr (assq 'method jedi-info)))
-                 (source (cdr (assq 'source jedi-info)))
-                 (script-args (cdr (assq 'script_args jedi-info))))
-             (insert "```Python\n")
-             (insert "import jedi\n"
-                     "\n"
-                     "source = '''\\\n"
-                     source
-                     "'''\n"
-                     "\n"
-                     "script = jedi.Script(" script-args ")\n"
-                     "script." method "()\n")))
-         (insert "```"))))))
+    (let ((cls-name (cdr (assq 'name error-object)))
+          (err (cdr (assq 'error error-object)))
+          (warning (cdr (assq 'warning error-object)))
+          (text (cdr (assq 'message error-object)))
+          (traceback (cdr (assq 'traceback error-object)))
+          (jedi-info (cdr (assq 'jedi_debug_info error-object)))
+          (config (elpy-config--get-config)))
+      (cond
+       (warning
+        (message "Elpy warning: %s" text))
+       ((not traceback)
+        (error "Elpy error: %s" text))
+       (t
+        (elpy-insert--popup "*Elpy Error*"
+          (elpy-insert--header "Elpy Error")
+          (elpy-insert--para
+           "The backend encountered an unexpected error. This indicates "
+           "a bug in Elpy. Please open a bug report with the data below "
+           "in the Elpy bug tracker:")
+          (insert "\n"
+                  "\n")
+          (insert-button
+           "https://github.com/jorgenschaefer/elpy/issues/new"
+           'action (lambda (button)
+                     (browse-url (button-get button 'url)))
+           'url "https://github.com/jorgenschaefer/elpy/issues/new")
+          (insert "\n"
+                  "\n"
+                  "```\n")
+          (elpy-insert--header "Configuration")
+          (elpy-config--insert-configuration-table config)
+          (insert "\n")
+          (elpy-insert--header "Traceback")
+          (insert traceback)
+          (when jedi-info
+            (insert "\n")
+            (elpy-insert--header "Jedi Debug Information")
+            (dolist (outstr (cdr (assq 'debug_info jedi-info)))
+              (insert outstr "\n"))
+            (insert "\n"
+                    "```\n"
+                    "\n"
+                    "Reproduction:"
+                    "\n"
+                    "\n")
+            (let ((method (cdr (assq 'method jedi-info)))
+                  (source (cdr (assq 'source jedi-info)))
+                  (script-args (cdr (assq 'script_args jedi-info))))
+              (insert "```Python\n")
+              (insert "import jedi\n"
+                      "\n"
+                      "source = '''\\\n"
+                      source
+                      "'''\n"
+                      "\n"
+                      "script = jedi.Script(" script-args ")\n"
+                      "script." method "()\n")))
+          (insert "```")))))))
 
 (defun elpy-rpc--environment ()
   "Return a `process-environment' for the RPC process.
