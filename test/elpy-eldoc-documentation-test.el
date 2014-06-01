@@ -58,3 +58,17 @@
                                          'face
                                          'eldoc-highlight-function-argument))))
       )))
+
+(ert-deftest elpy-eldoc-documentation-should-not-fail-for-index-nil ()
+  (elpy-testcase ()
+    (mletf* ((elpy-rpc-get-calltip
+              (callback)
+              (funcall callback '((name . "cancel_join_thread")
+                                  (index . nil)
+                                  (params . nil))))
+             (calltip nil)
+             (eldoc-message (tip) (setq calltip tip)))
+
+      (elpy-eldoc-documentation)
+
+      (should (equal calltip "cancel_join_thread()")))))

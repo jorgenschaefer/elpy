@@ -338,7 +338,7 @@ class TestGetUsages(JediBackendTestCase):
 
     def test_should_return_uses_in_other_file(self):
         file1 = self.project_file("file1.py", "")
-        file2 = self.project_file("file2.py", "x = 5")
+        file2 = self.project_file("file2.py", "\n\n\n\n\nx = 5")
         source, offset = source_and_offset(
             "import file2\n"
             "file2._|_x\n")
@@ -354,7 +354,7 @@ class TestGetUsages(JediBackendTestCase):
                            'offset': 19},
                           {'name': 'x',
                            'filename': file2,
-                           'offset': 0}])
+                           'offset': 5}])
 
 
 class TestPosToLinecol(unittest.TestCase):

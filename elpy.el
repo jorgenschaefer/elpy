@@ -218,6 +218,7 @@ Usually, there is no need to change this."
     (define-key map (kbd "C-c C-c") 'elpy-shell-send-region-or-buffer)
     (define-key map (kbd "C-c C-z") 'elpy-shell-switch-to-shell)
     (define-key map (kbd "C-c C-d") 'elpy-doc)
+    (define-key map (kbd "C-c C-e") 'elpy-multiedit-python-symbol-at-point)
     (define-key map (kbd "C-c C-f") 'find-file-in-project)
     (define-key map (kbd "C-c C-j") 'idomenu)
     (define-key map (kbd "C-c C-n") 'elpy-flymake-forward-error)
@@ -2066,6 +2067,15 @@ Returns a possible multi-line docstring."
     (elpy-rpc "get_pydoc_documentation" (list symbol)
               success error))
 
+(defun elpy-rpc-get-usages (&optional success error)
+  (elpy-rpc "get_usages"
+            (list (expand-file-name (elpy-library-root))
+                  buffer-file-name
+                  (elpy-rpc--buffer-contents)
+                  (- (point)
+                     (point-min)))
+            success error))
+
 (defun elpy-rpc-set-backend (backend &optional success error)
   "Call the set_backend API function.
 
@@ -2156,6 +2166,46 @@ If multiedit is active, stop it."
         (while (re-search-forward regex nil t)
           (elpy-multiedit-add-overlay (match-beginning 0)
                                       (match-end 0)))))))
+
+(defun elpy-multiedit-python-symbol-at-point (&optional use-symbol-p)
+  "Edit all usages of the the Python symbol at point.
+
+With prefix arg, edit all syntactic usages of the symbol at
+point. This might include unrelated symbols that just share the
+name."
+  (interactive "P")
+  (cond
+   (elpy-multiedit-overlays
+    (elpy-multiedit-stop))
+   (use-symbol-p
+    (call-interactively 'elpy-multiedit))
+   (t
+    (let ((buffers nil)
+          (name nil)
+          (count 0))
+      (dolist (usage (elpy-rpc-get-usages))
+        (let ((filename (cdr (assq 'filename usage)))
+              (this-name (cdr (assq 'name usage)))
+              (offset (cdr (assq 'offset usage))))
+          (setq name this-name)
+          (with-current-buffer (find-file-noselect filename)
+            (when (not (member (buffer-name) buffers))
+              (push (buffer-name) buffers))
+            (setq count (1+ count))
+            (elpy-multiedit-add-overlay (+ offset 1)
+                                        (+ offset 1 (length this-name))))))
+      (cond
+       ((= count 0)
+        (message "No occurrences found for the symbol at point."))
+       ((> (length buffers) 1)
+        (message "Editing %s usages of '%s' in %s buffers (%s)"
+                 count
+                 name
+                 (length buffers)
+                 (mapconcat #'identity buffers ", ")))
+       (t
+        (message "Editing %s usages of '%s' in this buffer"
+                 count name)))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Module: Sane Defaults
@@ -2325,10 +2375,11 @@ If multiedit is active, stop it."
         (let ((name (cdr (assq 'name calltip)))
               (index (cdr (assq 'index calltip)))
               (params (cdr (assq 'params calltip))))
-          (setf (nth index params)
-                (propertize (nth index params)
-                            'face
-                            'eldoc-highlight-function-argument))
+          (when index
+            (setf (nth index params)
+                  (propertize (nth index params)
+                              'face
+                              'eldoc-highlight-function-argument)))
           (format "%s(%s)"
                   name
                   (mapconcat #'identity params ", "))

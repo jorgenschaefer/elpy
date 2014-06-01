@@ -135,11 +135,21 @@ class JediBackend(NativeBackend):
                                   path=filename, encoding='utf-8')
         finally:
             sys.path.pop()
-        return [{"name": use.name,
-                 "filename": use.module_path,
-                 "offset": linecol_to_pos(source, use.line, use.column)}
-                for use in uses]
 
+        result = []
+        for use in uses:
+            if use.module_path == filename:
+                offset = linecol_to_pos(source, use.line, use.column)
+            else:
+                with open(use.module_path) as f:
+                    text = f.read()
+                offset = linecol_to_pos(text, use.line, use.column)
+
+            result.append({"name": use.name,
+                           "filename": use.module_path,
+                           "offset": offset})
+
+        return result
 
 # From the Jedi documentation:
 #

@@ -16,6 +16,8 @@ import pydoc
 import re
 import rlcompleter
 
+from elpy import rpc
+
 
 class NativeBackend(object):
     """Elpy backend that uses native Python implementations.
@@ -90,6 +92,12 @@ class NativeBackend(object):
         source = get_source(source)
         symbol, start, end = find_dotted_symbol(source, offset)
         return self.rpc_get_pydoc_documentation(symbol)
+
+    def rpc_get_usages(self, project_root, filename, source, offset):
+        """Get usages for the symbol at point.
+
+        """
+        raise rpc.Fault("get_usages not implemented by current backend")
 
 
 # Helper functions
