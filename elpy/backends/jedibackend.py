@@ -45,7 +45,8 @@ class JediBackend(NativeBackend):
         finally:
             sys.path.pop()
         return [{'suffix': proposal.complete,
-                 'annotation': proposal.description,
+                 'annotation': proposal.type,
+                 'meta': proposal.description,
                  'docstring': proposal.docstring(fast=True)}
                 for proposal in proposals]
 

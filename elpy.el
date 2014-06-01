@@ -2136,6 +2136,11 @@ error if the backend is not supported."
   (when elpy-company--cache
     (cdr (assq 'annotation (gethash name elpy-company--cache)))))
 
+(defun elpy-company--cache-meta (name)
+  "Return the cached annotation for NAME."
+  (when elpy-company--cache
+    (cdr (assq 'meta (gethash name elpy-company--cache)))))
+
 (defun elpy-company--cache-docstring (name)
   "Return the cached docstring for NAME."
   (when elpy-company--cache
@@ -2188,10 +2193,7 @@ error if the backend is not supported."
     ;; no-cache <prefix> => t if company shouldn't cache results
     ;; meta <candidate> => short docstring for minibuffer
     (`meta
-     (let ((doc (elpy-company--cache-docstring arg)))
-       (when (and doc
-                  (string-match "^\\(?:\\s-\\|\n\\)*\\(.*\\)$" doc))
-         (match-string 1 doc))))
+     (elpy-company--cache-meta arg))
     ;; annotation <candidate> => short docstring for completion buffer
     (`annotation
      (elpy-company--cache-annotation arg))

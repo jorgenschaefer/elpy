@@ -130,9 +130,20 @@ class RopeBackend(NativeBackend):
             # Bug in Rope, see #186
             return []
         prefixlen = offset - starting_offset
-        return [{'suffix': proposal.name[prefixlen:],
-                 'docstring': proposal.get_doc()}
-                for proposal in proposals]
+
+        result = []
+        for proposal in proposals:
+            doc = proposal.get_doc()
+            if doc:
+                meta = doc.strip().split("\n", 1)[0]
+            else:
+                meta = None
+            result.append({'suffix': proposal.name[prefixlen:],
+                           'docstring': doc,
+                           'annotation': proposal.type,
+                           'meta': meta})
+
+        return result
 
     def rpc_get_definition(self, project_root, filename, source, offset):
         source = get_source(source)
@@ -267,6 +278,7 @@ def get_import_completions(self):
 class FakeProposal(object):
     def __init__(self, name):
         self.name = name
+        self.type = "mock"
 
     def get_doc(self):
         return None

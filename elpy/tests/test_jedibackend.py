@@ -84,7 +84,8 @@ class TestGetCompletions(JediBackendTestCase):
         self.assertEqual(proposals,
                          [{'suffix': 'd',
                            'docstring': 'add(self, a, b)\n\n',
-                           'annotation': 'function: add.Add.add'}])
+                           'annotation': 'function',
+                           'meta': 'function: add.Add.add'}])
 
     @mock.patch('elpy.backends.jedibackend.get_source')
     def test_should_call_get_source(self, get_source):
