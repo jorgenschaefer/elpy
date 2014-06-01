@@ -317,6 +317,13 @@ more structured list.
           (symbol-name symbol)
         nil))))
 
+(defun elpy--standard-value (var)
+  "Return the standard value of the given variable."
+  (let ((sv (get var 'standard-value)))
+    (when (consp sv)
+      (ignore-errors
+        (eval (car sv))))))
+
 ;;;;;;;;;;;;;;;;;;;;;;
 ;;; Elpy Config Buffer
 
@@ -2280,7 +2287,8 @@ error if the backend is not supported."
      (elpy-remove-modeline-lighter 'flymake-mode)
      ;; Flymake support using flake8, including warning faces.
      (when (and (executable-find "flake8")
-                (not (executable-find python-check-command)))
+                (equal python-check-command
+                       (elpy--standard-value 'python-check-command)))
        (setq python-check-command "flake8"))
 
      ;; Add our initializer function
