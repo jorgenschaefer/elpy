@@ -64,9 +64,14 @@ Run BODY with that binding."
               ,(elpy-testcase-transform-spec (cdr speclist)
                                              body))))
         (`:emacs-required
-         (when (not (version< emacs-version (cadr spec))) 
+         (when (not (version< emacs-version (cadr spec)))
            (elpy-testcase-transform-spec (cdr speclist)
 					 body)))
+        (`:teardown
+         `(unwind-protect
+              ,(elpy-testcase-transform-spec (cdr speclist)
+                                             body)
+            ,@ (cdr spec)))
         (t
          (error "Bad environment specifier %s" (car spec)))))))
 

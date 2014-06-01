@@ -242,7 +242,6 @@ Usually, there is no need to change this."
     (define-key map (kbd "<M-left>") 'elpy-nav-move-iblock-left)
     (define-key map (kbd "<M-right>") 'elpy-nav-move-iblock-right)
 
-    ;; (define-key map (kbd "M-,")     'iedit-mode
     (define-key map (kbd "M-.")     'elpy-goto-definition)
     (define-key map (kbd "M-TAB")   'elpy-company-backend)
 
@@ -2081,6 +2080,82 @@ error if the backend is not supported."
   (elpy-rpc "set_backend" (list backend) success error))
 
 (defalias 'elpy-set-backend 'elpy-rpc-set-backend)
+
+;;;;;;;;;;;;;;
+;;; Multi-Edit
+
+(defvar elpy-multiedit-overlays nil
+  "List of overlays currently being edited.")
+
+(defun elpy-multiedit-add-overlay (beg end)
+  "Add an editable overlay between BEG and END.
+
+A modification in any of these overlays will modify all other
+overlays, too."
+  (interactive "r")
+  (when (elpy-multiedit--overlays-in-p beg end)
+    (error "Overlapping multiedit overlays are not allowed"))
+  (let ((ov (make-overlay beg end nil nil :rear-advance)))
+    (overlay-put ov 'elpy-multiedit t)
+    (overlay-put ov 'face 'highlight)
+    (overlay-put ov 'modification-hooks '(elpy-multiedit--overlay-changed))
+    (overlay-put ov 'insert-in-front-hooks '(elpy-multiedit--overlay-changed))
+    (overlay-put ov 'insert-behind-hooks '(elpy-multiedit--overlay-changed))
+    (push ov elpy-multiedit-overlays)))
+
+(defun elpy-multiedit--overlays-in-p (beg end)
+  "Return t iff there are multiedit overlays between beg and end."
+  (catch 'return
+    (dolist (ov (overlays-in beg end))
+      (when (overlay-get ov 'elpy-multiedit)
+        (throw 'return t)))
+    nil))
+
+(defun elpy-multiedit-stop ()
+  "Stop editing multiple places at once."
+  (interactive)
+  (dolist (ov elpy-multiedit-overlays)
+    (delete-overlay ov))
+  (setq elpy-multiedit-overlays nil))
+
+(defun elpy-multiedit--overlay-changed (ov after-change beg end
+                                           &optional pre-change-length)
+  "Called for each overlay that changes.
+
+This updates all other overlays."
+  (when (and after-change
+             (not undo-in-progress))
+    (let ((text (buffer-substring (overlay-start ov)
+                                  (overlay-end ov)))
+          (inhibit-modification-hooks t))
+      (dolist (other-ov elpy-multiedit-overlays)
+        (when (and (not (equal other-ov ov))
+                   (buffer-live-p (overlay-buffer other-ov)))
+          (with-current-buffer (overlay-buffer other-ov)
+            (save-excursion
+              (goto-char (overlay-start other-ov))
+              (insert text)
+              (delete-region (point) (overlay-end other-ov)))))))))
+
+(defun elpy-multiedit ()
+  "Edit all occurences of the symbol at point, or the active region.
+
+If multiedit is active, stop it."
+  (interactive)
+  (if elpy-multiedit-overlays
+      (elpy-multiedit-stop)
+    (let ((regex (if (use-region-p)
+                     (regexp-quote (buffer-substring (region-beginning)
+                                                     (region-end)))
+                   (format "\\_<%s\\_>" (regexp-quote
+                                         (symbol-name
+                                          (symbol-at-point))))))
+          (case-fold-search nil))
+      (save-excursion
+        (goto-char (point-min))
+        (while (re-search-forward regex nil t)
+          (elpy-multiedit-add-overlay (match-beginning 0)
+                                      (match-end 0)))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Module: Sane Defaults
