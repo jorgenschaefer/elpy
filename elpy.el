@@ -2177,7 +2177,8 @@ name."
   (cond
    (elpy-multiedit-overlays
     (elpy-multiedit-stop))
-   (use-symbol-p
+   ((or use-symbol-p
+        (use-region-p))
     (call-interactively 'elpy-multiedit))
    (t
     (let ((buffers nil)
