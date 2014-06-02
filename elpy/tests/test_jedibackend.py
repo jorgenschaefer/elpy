@@ -356,6 +356,16 @@ class TestGetUsages(JediBackendTestCase):
                            'filename': file2,
                            'offset': 5}])
 
+    def test_should_not_fail_without_symbol(self):
+        filename = self.project_file("file.py", "")
+
+        usages = self.backend.rpc_get_usages(self.project_root,
+                                             filename,
+                                             "",
+                                             0)
+
+        self.assertEqual(usages, [])
+
 
 class TestPosToLinecol(unittest.TestCase):
     def test_should_handle_beginning_of_string(self):

@@ -133,6 +133,8 @@ class JediBackend(NativeBackend):
             uses = run_with_debug(self.jedi, 'usages',
                                   source=source, line=line, column=column,
                                   path=filename, encoding='utf-8')
+        except self.jedi.NotFoundError:
+            return []
         finally:
             sys.path.pop()
 
