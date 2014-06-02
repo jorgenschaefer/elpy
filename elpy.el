@@ -1930,8 +1930,11 @@ This is usually an error or backtrace."
           (when jedi-info
             (insert "\n")
             (elpy-insert--header "Jedi Debug Information")
-            (dolist (outstr (cdr (assq 'debug_info jedi-info)))
-              (insert outstr "\n"))
+            (pcase (cdr (assq 'debug_info jedi-info))
+              (`nil (insert "Jedi did not emit any debug info.\n"))
+              (infos
+               (dolist (outstr infos)
+                 (insert outstr "\n"))))
             (insert "\n"
                     "```\n"
                     "\n"
