@@ -197,6 +197,7 @@ Usually, there is no need to change this."
                  (const :tag "Nose" elpy-test-nose-runner)
                  (const :tag "py.test" elpy-test-pytest-runner))
   :group 'elpy)
+(put 'elpy-test-runner 'safe-local-variable 'elpy-test-runner-p)
 
 (defconst elpy-version "1.4.50"
   "The version of the Elpy lisp code.")
@@ -1352,6 +1353,12 @@ of /project/root/package/module.py, this would return
     (if (string-match "^\\." dotted)
         (concat "." (replace-regexp-in-string (regexp-quote "...") "." dotted))
       dotted)))
+
+(defun elpy-test-runner-p (obj)
+  "Return t iff OBJ is a test runner.
+
+This uses the `elpy-test-runner-p' symbol property."
+  (get obj 'elpy-test-runner-p))
 
 (defun elpy-test-run (working-directory command &rest args)
   "Run COMMAND with ARGS in WORKING-DIRECTORY as a test command."
