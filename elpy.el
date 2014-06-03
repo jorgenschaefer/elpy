@@ -1385,9 +1385,10 @@ This requires Django 1.6 or the django-discover-runner package."
   (interactive (elpy-test-at-point))
   (if test
       (elpy-test-run top
-                     "django-admin.py" "test" (format "%s.%s" module test))
+                     "django-admin.py" "test" "--noinput"
+                     (format "%s.%s" module test))
     (elpy-test-run top
-                   "django-admin.py" "test")))
+                   "django-admin.py" "test" "--noinput")))
 
 (defun elpy-test-nose-runner (top file module test)
   "Test the project using the nose test runner.
