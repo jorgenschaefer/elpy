@@ -252,6 +252,17 @@ class TestGetDefinition(RopeBackendTestCase):
 
         get_source.assert_called_with("test-source")
 
+    def test_should_not_fail_on_keyword(self):
+        source, offset = source_and_offset(
+            "_|_try:\n"
+            "    pass\n"
+            "except:\n"
+            "    pass\n")
+        filename = self.project_file("test.py", source)
+
+        self.backend.rpc_get_definition(self.project_root,
+                                        filename, source, offset)
+
 
 class TestGetCalltip(RopeBackendTestCase):
     def test_should_get_calltip(self):

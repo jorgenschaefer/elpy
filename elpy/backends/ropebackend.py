@@ -156,7 +156,9 @@ class RopeBackend(NativeBackend):
         try:
             location = self.findit.find_definition(project, source, offset,
                                                    resource, MAXFIXES)
-        except (self.ModuleSyntaxError, IndentationError):
+        except (IndentationError,
+                self.ModuleSyntaxError,
+                self.BadIdentifierError):
             # Rope can't parse this file
             return None
 
