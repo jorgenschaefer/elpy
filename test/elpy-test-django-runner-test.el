@@ -25,5 +25,5 @@
       (elpy-test-django-runner "/project/root/" nil nil nil)
 
       (should (equal command
-                     '("django-admin.py" "test")))
+                     '("django-admin.py" "test" "--noinput")))
       (should (equal top "/project/root/")))))
