@@ -18,15 +18,15 @@ install:
   - curl -fsSkL https://raw.github.com/cask/cask/master/go | python
   - export PATH="$HOME/.cask/bin:$PATH"
   - cask
-  - pip install jedi --use-mirrors
+  - pip install jedi
   - if [[ "$TRAVIS_PYTHON_VERSION" == 2.6 ]] ; then
-      pip install unittest2 --use-mirrors ;
+      pip install unittest2 ;
     fi
   - if [[ "$TRAVIS_PYTHON_VERSION" == 2.* ]] ; then
-      pip install rope --use-mirrors ;
+      pip install rope ;
     fi
   - if [[ "$TRAVIS_PYTHON_VERSION" == 3.* ]] ; then
-      pip install rope_py3k --use-mirrors ;
+      pip install rope_py3k ;
     fi
 script:
   - nosetests
