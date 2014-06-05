@@ -25,3 +25,7 @@
 
       (should (equal command '("nosetests")))
       (should (equal top "/project/root/")))))
+
+(ert-deftest elpy-test-nose-runner-should-be-test-runner ()
+  (elpy-testcase ()
+    (elpy-test-runner-p 'elpy-test-nose-runner)))

@@ -1377,6 +1377,7 @@ This requires Python 2.7 or later."
                      "python" "-m" "unittest" (format "%s.%s" module test))
     (elpy-test-run top
                    "python" "-m" "unittest" "discover")))
+(put 'elpy-test-discover-runner 'elpy-test-runner-p t)
 
 (defun elpy-test-django-runner (top file module test)
   "Test the project using the Django discover runner.
@@ -1389,6 +1390,7 @@ This requires Django 1.6 or the django-discover-runner package."
                      (format "%s.%s" module test))
     (elpy-test-run top
                    "django-admin.py" "test" "--noinput")))
+(put 'elpy-test-django-runner 'elpy-test-runner-p t)
 
 (defun elpy-test-nose-runner (top file module test)
   "Test the project using the nose test runner.
@@ -1400,6 +1402,7 @@ This requires the nose package to be installed."
                      "nosetests" (format "%s:%s" module test))
     (elpy-test-run top
                    "nosetests")))
+(put 'elpy-test-nose-runner 'elpy-test-runner-p t)
 
 (defun elpy-test-pytest-runner (top file module test)
   "Test the project using the py.test test runner.
@@ -1414,6 +1417,7 @@ This requires the pytest package to be installed."
                        "py.test" (format "%s::%s" module (car test-list))))
     (elpy-test-run top
                    "py.test")))
+(put 'elpy-test-pytest-runner 'elpy-test-runner-p t)
 
 ;;;;;;;;;;;;;;;;;
 ;;; Documentation

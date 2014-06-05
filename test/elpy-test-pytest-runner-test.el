@@ -25,3 +25,7 @@
 
       (should (equal command '("py.test")))
       (should (equal top "/project/root/")))))
+
+(ert-deftest elpy-test-pytest-runner-should-be-test-runner ()
+  (elpy-testcase ()
+    (elpy-test-runner-p 'elpy-test-pytest-runner)))

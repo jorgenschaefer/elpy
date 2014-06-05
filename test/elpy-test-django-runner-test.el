@@ -27,3 +27,7 @@
       (should (equal command
                      '("django-admin.py" "test" "--noinput")))
       (should (equal top "/project/root/")))))
+
+(ert-deftest elpy-test-django-runner-should-be-test-runner ()
+  (elpy-testcase ()
+    (elpy-test-runner-p 'elpy-test-django-runner)))

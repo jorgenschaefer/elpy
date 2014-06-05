@@ -27,3 +27,7 @@
       (should (equal command
                      '("python" "-m" "unittest" "discover")))
       (should (equal top "/project/root/")))))
+
+(ert-deftest elpy-test-discover-runner-should-be-test-runner ()
+  (elpy-testcase ()
+    (elpy-test-runner-p 'elpy-test-discover-runner)))
