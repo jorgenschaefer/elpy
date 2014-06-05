@@ -1481,28 +1481,31 @@ Also, switch to that buffer."
         (select-window window)
       (switch-to-buffer "*Occur*"))))
 
-(defun elpy-rgrep-symbol (symbol)
-  "Search for SYMBOL in the current project.
+(defun elpy-rgrep-symbol (regexp)
+  "Search for REGEXP in the current project.
 
-SYMBOL defaults to the symbol at point, or the current region if
+REGEXP defaults to the symbol at point, or the current region if
 active.
 
-With a prefix argument, prompt for a string to search for."
+With a prefix argument, always prompt for a string to search
+for."
   (interactive
    (list
     (cond
      (current-prefix-arg
-      (read-from-minibuffer "Search for symbol: "))
+      (read-from-minibuffer "Search in project for regexp: "))
      ((use-region-p)
       (buffer-substring-no-properties (region-beginning)
                                       (region-end)))
      (t
-      (or (thing-at-point 'symbol)
-          (read-from-minibuffer "Search for symbol: "))))))
+      (let ((symbol (thing-at-point 'symbol)))
+        (if symbol
+            (format "\\<%s\\>" symbol)
+          (read-from-minibuffer "Search in project for regexp: ")))))))
   (grep-compute-defaults)
   (let ((grep-find-ignored-directories (append elpy-project-ignored-directories
                                                grep-find-ignored-directories)))
-    (rgrep (format "\\b%s\\b" symbol)
+    (rgrep regexp
            "*.py"
            (or (elpy-project-root)
                default-directory)))
@@ -1511,8 +1514,8 @@ With a prefix argument, prompt for a string to search for."
       (save-excursion
         (goto-char (point-min))
         (when (re-search-forward "^find .*" nil t)
-          (replace-match (format "\\1\nSearching for symbol %s\n"
-                                 symbol)))))))
+          (replace-match (format "Searching for '%s'\n"
+                                 (regexp-quote regexp))))))))
 
 ;;;;;;;;;;;;;;;;;;;
 ;;; Promise objects
