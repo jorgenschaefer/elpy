@@ -2192,39 +2192,98 @@ With prefix arg, edit all syntactic usages of the symbol at
 point. This might include unrelated symbols that just share the
 name."
   (interactive "P")
-  (cond
-   (elpy-multiedit-overlays
-    (elpy-multiedit-stop))
-   ((or use-symbol-p
-        (use-region-p))
-    (call-interactively 'elpy-multiedit))
-   (t
-    (let ((buffers nil)
-          (name nil)
-          (count 0))
-      (dolist (usage (elpy-rpc-get-usages))
-        (let ((filename (cdr (assq 'filename usage)))
-              (this-name (cdr (assq 'name usage)))
-              (offset (cdr (assq 'offset usage))))
-          (setq name this-name)
-          (with-current-buffer (find-file-noselect filename)
-            (when (not (member (buffer-name) buffers))
-              (push (buffer-name) buffers))
-            (setq count (1+ count))
-            (elpy-multiedit-add-overlay (+ offset 1)
-                                        (+ offset 1 (length this-name))))))
+  (if (or elpy-multiedit-overlays
+          use-symbol-p
+          (use-region-p))
+      ;; If we are already doing a multiedit, or are explicitly told
+      ;; to use the symbol at point, or if we are on an active region,
+      ;; call the multiedit function that does just that already.
+      (call-interactively 'elpy-multiedit)
+    ;; Otherwise, fetch usages from backend.
+    (save-some-buffers)
+    (let ((usages (condition-case err
+                      (elpy-rpc-get-usages)
+                    ;; This is quite the stunt, but elisp parses JSON
+                    ;; null as nil, which is indistinguishable from
+                    ;; the empty list, we stick to the error.
+                    (error
+                     (if (and (eq (car err) 'error)
+                              (stringp (cadr err))
+                              (string-match "not implemented" (cadr err)))
+                         'not-supported
+                       (error (cadr err)))))))
       (cond
-       ((= count 0)
-        (message "No occurrences found for the symbol at point."))
-       ((> (length buffers) 1)
-        (message "Editing %s usages of '%s' in %s buffers (%s)"
-                 count
-                 name
-                 (length buffers)
-                 (mapconcat #'identity buffers ", ")))
+       ((eq usages 'not-supported)
+        (call-interactively 'elpy-multiedit)
+        (message (concat "Using syntactic editing "
+                         "as current backend does not support get_usages.")))
+       ((null usages)
+        (call-interactively 'elpy-multiedit)
+        (if elpy-multiedit-overlays
+            (message (concat "Using syntactic editing as no usages of the "
+                             "symbol at point were found by the backend."))
+          (message "No occurrences of the symbol at point found")))
        (t
+        (elpy-multiedit--usages usages))))))
+
+(defun elpy-multiedit--usages (usages)
+  "Mark the usages in USAGES for editing."
+  (let ((name nil)
+        (locations (make-hash-table :test #'equal)))
+    (dolist (usage usages)
+      (let* ((filename (cdr (assq 'filename usage)))
+             (this-name (cdr (assq 'name usage)))
+             (offset (cdr (assq 'offset usage))))
+        (setq name this-name)
+        (with-current-buffer (find-file-noselect filename)
+          (elpy-multiedit-add-overlay (+ offset 1)
+                                      (+ offset 1 (length this-name)))
+          (save-excursion
+            (goto-char (+ offset 1))
+            (puthash filename
+                     (cons (list offset
+                                 (buffer-substring (line-beginning-position)
+                                                   (line-end-position))
+                                 (- (point)
+                                    (line-beginning-position))
+                                 (- (+ (point) (length this-name))
+                                    (line-beginning-position)))
+                           (gethash filename locations))
+                     locations)))))
+    (if (<= (hash-table-count locations)
+            1)
         (message "Editing %s usages of '%s' in this buffer"
-                 count name)))))))
+                 (length usages) name)
+      (with-current-buffer (get-buffer-create "*Elpy Edit Usages*")
+        (let ((inhibit-read-only t)
+              (filenames nil))
+          (erase-buffer)
+          (elpy-insert--para
+           "The symbol '" name "' was found in multiple files. Editing "
+           "all locations:\n\n")
+          (maphash (lambda (key value)
+                     (when (not (member key filenames))
+                       (setq filenames (cons key filenames))))
+                   locations)
+          (dolist (filename (sort filenames #'string<))
+            (elpy-insert--header filename)
+            (dolist (location (sort (gethash filename locations)
+                                    (lambda (loc1 loc2)
+                                      (< (car loc1)
+                                         (car loc2)))))
+              (let ((line (nth 1 location))
+                    (start (+ (line-beginning-position)
+                              (nth 2 location)))
+                    (end (+ (line-end-position)
+                            (nth 3 location))))
+                ;; Insert the \n first, else we extend the overlay.
+                (insert line "\n")
+                (elpy-multiedit-add-overlay start end)))
+            (insert "\n"))
+          (goto-char (point-min))
+          (display-buffer (current-buffer)
+                          nil
+                          'visible))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Module: Sane Defaults
