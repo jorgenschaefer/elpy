@@ -2580,6 +2580,9 @@ description."
     (`buffer-stop
      (highlight-indentation-mode -1))))
 
+;;;;;;;;;;;;;;;;;;
+;;; Module: pyvenv
+
 (defun elpy-module-pyvenv (command &rest args)
   "Module to display the current virtualenv in the mode line."
   (pcase command
