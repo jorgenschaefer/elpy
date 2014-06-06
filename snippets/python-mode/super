@@ -1,8 +1,7 @@
 # -*- mode: snippet -*-
-# name: super() call
+# name: super()
 # key: super
-# group: Class
-# contributor: Jorgen Schaefer <contact@jorgenschaefer.de>
+# group: Definitions
 # --
 super`(elpy-snippet-super-form)`(${1:`(elpy-snippet-super-arguments)`})
 $0

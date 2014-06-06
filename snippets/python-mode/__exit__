@@ -1,7 +1,7 @@
 # -*- mode: snippet -*-
 # name: __exit__
-# key: ex
-# group: dunder methods
+# key: __exit__
+# group: Special methods
 # --
-__exit__(self, exc_type, exc_value, traceback):
+def __exit__(self, exc_type, exc_value, traceback):
     $0
