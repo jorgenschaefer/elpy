@@ -65,6 +65,9 @@
 
 (ert-deftest elpy-find-file-should-call-ffip ()
   (elpy-testcase ()
+    ;; The test failed on Travis in 24.3 because the function was not
+    ;; defined. Weird. Well, call it in explicitly.
+    (require 'find-file-in-project)
     (mletf* ((ffip-called nil)
              (find-file-in-project () (setq ffip-called t)))
 
