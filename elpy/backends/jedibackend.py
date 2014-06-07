@@ -7,8 +7,9 @@ https://github.com/davidhalter/jedi
 """
 
 import sys
+import traceback
 
-
+from elpy import rpc
 from elpy.backends.nativebackend import get_source
 from elpy.backends.nativebackend import NativeBackend
 
@@ -132,7 +133,8 @@ class JediBackend(NativeBackend):
         try:
             uses = run_with_debug(self.jedi, 'usages',
                                   source=source, line=line, column=column,
-                                  path=filename, encoding='utf-8')
+                                  path=filename, encoding='utf-8',
+                                  re_raise=(self.jedi.NotFoundError,))
         except self.jedi.NotFoundError:
             return []
         finally:
@@ -202,10 +204,14 @@ def linecol_to_pos(text, line, col):
 
 
 def run_with_debug(jedi, name, *args, **kwargs):
+    re_raise = kwargs.pop('re_raise', ())
     try:
         script = jedi.Script(*args, **kwargs)
         return getattr(script, name)()
-    except:
+    except Exception as e:
+        if isinstance(e, re_raise):
+            raise
+
         from jedi import debug
 
         debug_info = []
@@ -230,10 +236,16 @@ def run_with_debug(jedi, name, *args, **kwargs):
             sc_args.extend("{0}={1}".format(k, "source" if k == "source"
                                             else repr(v))
                            for (k, v) in kwargs.items())
-            e.jedi_debug_info = {'script_args': ", ".join(sc_args),
-                                 'source': source,
-                                 'method': name,
-                                 'debug_info': debug_info}
-            raise
+
+            data = {
+                "traceback": traceback.format_exc(),
+                "jedi_debug_info": {'script_args': ", ".join(sc_args),
+                                    'source': source,
+                                    'method': name,
+                                    'debug_info': debug_info}
+            }
+            raise rpc.Fault(message=str(e),
+                            code=400,
+                            data=data)
         finally:
             jedi.set_debug_function(None)

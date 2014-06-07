@@ -103,19 +103,17 @@ class JSONRPCServer(object):
             if request_id is not None:
                 self.write_json(result=result,
                                 id=request_id)
-        except Warning as e:
-            self.write_json(error={"message": str(e),
-                                   "warning": True},
-                            id=request_id)
-        except Fault as e:
-            self.write_json(error={"message": str(e)},
-                            id=request_id)
+        except Fault as fault:
+            error = {"message": fault.message,
+                     "code": fault.code}
+            if fault.data is not None:
+                error["data"] = fault.data
+            self.write_json(error=error, id=request_id)
         except Exception as e:
-            jedi_debug_info = getattr(e, 'jedi_debug_info', None)
-            self.write_json(error={"message": str(e),
-                                   "traceback": traceback.format_exc(),
-                                   "jedi_debug_info": jedi_debug_info},
-                            id=request_id)
+            error = {"message": str(e),
+                     "code": 500,
+                     "data": {"traceback": traceback.format_exc()}}
+            self.write_json(error=error, id=request_id)
 
     def handle(self, method_name, args):
         """Handle the call to method_name.
@@ -138,15 +136,16 @@ class JSONRPCServer(object):
 
 
 class Fault(Exception):
+    """RPC Fault instances.
+
+    code defines the severity of the warning.
+
+    2xx: Normal behavior lead to end of operation, i.e. a warning
+    4xx: An expected error occurred
+    5xx: An unexpected error occurred (usually includes a traceback)
+    """
     def __init__(self, message, code=500, data=None):
         super(Fault, self).__init__(message)
+        self.message = message
         self.code = code
         self.data = data
-
-
-class Warning(Fault):
-    """A warning.
-
-    This does not include a traceback in the error result.
-    """
-    pass
