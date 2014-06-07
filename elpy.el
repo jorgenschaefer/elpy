@@ -1597,7 +1597,7 @@ Returns a full path name for that module."
           (when (file-exists-p name)
             (throw 'return name)))
         (if (string-match "/$" path)
-            (setq path (substring path nil -1))
+            (setq path (substring path 0 -1))
           (setq path (file-name-directory path)))))
     nil))
 
