@@ -5,8 +5,6 @@ handles backend selection and passes methods on to the selected
 backend.
 
 """
-import sys
-
 import elpy
 
 from elpy.utils.pydocutils import get_pydoc_completions

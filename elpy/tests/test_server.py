@@ -1,6 +1,5 @@
 """Tests for the elpy.server module"""
 
-import sys
 import unittest
 
 import mock

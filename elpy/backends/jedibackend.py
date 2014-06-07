@@ -155,6 +155,7 @@ class JediBackend(NativeBackend):
 
         return result
 
+
 # From the Jedi documentation:
 #
 #   line is the current line you want to perform actions on (starting
