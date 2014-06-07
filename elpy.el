@@ -437,7 +437,16 @@ item in another window.\n\n")
     (elpy-insert--para
      "Elpy can not find the configured Python interpreter. Please make "
      "sure that the variable `elpy-rpc-python-command' points to a "
-     "command in your PATH. You can change the variable below.\n"))
+     "command in your PATH. You can change the variable below.\n\n"))
+
+  ;; No virtual env
+  (when (and (gethash "python_rpc_executable" config)
+             (not (gethash "virtual_env" (elpy-config--get-config))))
+    (elpy-insert--para
+     "You have not activated a virtual env. While Elpy supports this, "
+     "it is often a good idea to work inside a virtual env. You can use "
+     "M-x pyvenv-activate or M-x pyvenv-workon to activate a virtual "
+     "env.\n\n"))
 
   ;; Python found, but can't find the elpy module
   (when (and (gethash "python_rpc_executable" config)
