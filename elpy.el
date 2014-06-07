@@ -1596,7 +1596,7 @@ Returns a full path name for that module."
                             (format "%s/__init__.py" path)))
           (when (file-exists-p name)
             (throw 'return name)))
-        (if (string-suffix-p "/" path)
+        (if (string-match "/$" path)
             (setq path (substring path nil -1))
           (setq path (file-name-directory path)))))
     nil))
