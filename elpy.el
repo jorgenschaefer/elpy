@@ -68,14 +68,16 @@
 ;;; Code:
 
 (require 'cus-edit)
-(require 'elpy-refactor)
 (require 'etags)
-(require 'idomenu)
-(require 'json)
-(require 'python)
 (require 'grep)
-(require 'thingatpt)
+(require 'ido)
+;; (require 'json)
+(require 'python)
+;; (require 'thingatpt)
+
+(require 'elpy-refactor)
 (require 'pyvenv)
+
 
 ;;;;;;;;;;;;;;;
 ;;; Elpy itself
@@ -88,7 +90,6 @@
 (defcustom elpy-modules '(elpy-module-sane-defaults
                           elpy-module-company
                           elpy-module-eldoc
-                          elpy-module-find-file-in-project
                           elpy-module-flymake
                           elpy-module-highlight-indentation
                           elpy-module-pyvenv
@@ -109,8 +110,6 @@ can be inidividually enabled or disabled."
                      elpy-module-highlight-indentation)
               (const :tag "Expand code snippets (YASnippet)"
                      elpy-module-yasnippet)
-              (const :tag "Find files in a project (ffip)"
-                     elpy-module-find-file-in-project)
               (const :tag "Configure some sane defaults for Emacs"
                      elpy-module-sane-defaults))
   :group 'elpy)
@@ -220,7 +219,7 @@ Usually, there is no need to change this."
     (define-key map (kbd "C-c C-z") 'elpy-shell-switch-to-shell)
     (define-key map (kbd "C-c C-d") 'elpy-doc)
     (define-key map (kbd "C-c C-e") 'elpy-multiedit-python-symbol-at-point)
-    (define-key map (kbd "C-c C-f") 'find-file-in-project)
+    (define-key map (kbd "C-c C-f") 'elpy-find-file)
     (define-key map (kbd "C-c C-j") 'idomenu)
     (define-key map (kbd "C-c C-n") 'elpy-flymake-forward-error)
     (define-key map (kbd "C-c C-o") 'elpy-occur-definitions)
@@ -1475,6 +1474,309 @@ prefix argument is given, prompt for a symbol from the user."
                                    'face 'bold)
                        t t)))))
 
+;;;;;;;;;;;;;;
+;;; Find files
+
+(defun elpy-find-file (&optional dwim)
+  "Efficiently find a file in the current project.
+
+With prefix argument, tries to guess what kind of file the user
+wants to open.
+
+On an import line, it opens the file of that module.
+
+Otherwise, it opens a test file associated with the current file,
+if one exists. A test file is named test_<name>.py if the current
+file is <name>.py, and is either in the same directors or a
+\"test\" or \"tests\" subdirectory."
+  (interactive "P")
+  (cond
+   ((and dwim
+         (buffer-file-name)
+         (save-excursion
+           (goto-char (line-beginning-position))
+           (or (looking-at "^ *import +\\([[:alnum:]._]+\\)")
+               (looking-at "^ *from +\\([[:alnum:]._]+\\) +import +\\([[:alnum:]._]+\\)"))))
+    (let* ((module (if (match-string 2)
+                       (format "%s.%s" (match-string 1) (match-string 2))
+                     (match-string 1)))
+           (path (elpy--resolve-module module)))
+      (if path
+          (find-file path)
+        (elpy-find-file nil))))
+   ((and dwim
+         (buffer-file-name))
+    (let ((test-file (elpy--test-file)))
+      (if test-file
+          (find-file test-file)
+        (elpy-find-file nil))))
+   (t
+    (let ((ffip-prune-patterns elpy-project-ignored-directories)
+          (ffip-project-root (elpy-project-root))
+          ;; Set up ido to use vertical file lists.
+          (ido-decorations '("\n" "" "\n" "\n..."
+                             "[" "]" " [No match]" " [Matched]"
+                             " [Not readable]" " [Too big]"
+                             " [Confirm]"))
+          (ido-setup-hook (cons (lambda ()
+                                  (define-key ido-completion-map (kbd "<down>")
+                                    'ido-next-match)
+                                  (define-key ido-completion-map (kbd "<up>")
+                                    'ido-prev-match))
+                                ido-setup-hook)))
+      (find-file-in-project)))))
+
+(defun elpy--test-file ()
+  "Return the test file for the current file, if any.
+
+If this is a test file, return the non-test file.
+
+A test file is named test_<name>.py if the current file is
+<name>.py, and is either in the same directors or a \"test\" or
+\"tests\" subdirectory."
+  (catch 'return
+    (let (full-name directory file)
+      (setq full-name (buffer-file-name))
+      (when (not full-name)
+        (throw 'return nil))
+      (setq full-name (expand-file-name full-name)
+            directory (file-name-directory full-name)
+            file (file-name-nondirectory full-name))
+      (if (string-match "^test_" file)
+          (let ((file (substring file 5)))
+            (dolist (implementation (list (format "%s/%s" directory file)
+                                          (format "%s/../%s" directory file)))
+              (when (file-exists-p implementation)
+                (throw 'return implementation))))
+        (dolist (test (list (format "%s/test_%s" directory file)
+                            (format "%s/test/test_%s" directory file)
+                            (format "%s/tests/test_%s" directory file)
+                            (format "%s/../test/test_%s" directory file)
+                            (format "%s/../tests/test_%s" directory file)))
+          (when (file-exists-p test)
+            (throw 'return test)))))))
+
+(defun elpy--module-path (module)
+  "Return a directory path for MODULE.
+
+The resulting path is not guaranteed to exist. This simply
+resolves leading periods relative to the current directory and
+replaces periods in the middle of the string with slashes.
+
+Only works with absolute imports. Stop using implicit relative
+imports. They're a bad idea."
+  (let* ((relative-depth (when(string-match "^\\.+" module)
+                           (length (match-string 0 module))))
+         (base-directory (if relative-depth
+                             (format "%s/%s"
+                                     (buffer-file-name)
+                                     (mapconcat (lambda (_)
+                                                  "../")
+                                                (make-vector relative-depth
+                                                             nil)
+                                                ""))
+                           (elpy-library-root)))
+         (file-name (replace-regexp-in-string
+                     "\\."
+                     "/"
+                     (if relative-depth
+                         (substring module relative-depth)
+                       module))))
+    (expand-file-name (format "%s/%s" base-directory file-name))))
+
+(defun elpy--resolve-module (module)
+  "Resolve MODULE relative to the current file and project.
+
+Returns a full path name for that module."
+  (catch 'return
+    (let ((path (elpy--module-path module)))
+      (while (string-prefix-p (expand-file-name (elpy-library-root))
+                              path)
+        (dolist (name (list (format "%s.py" path)
+                            (format "%s/__init__.py" path)))
+          (when (file-exists-p name)
+            (throw 'return name)))
+        (if (string-suffix-p "/" path)
+            (setq path (substring path nil -1))
+          (setq path (file-name-directory path)))))
+    nil))
+
+;;;;;;;;;;;;;;
+;;; Multi-Edit
+
+(defvar elpy-multiedit-overlays nil
+  "List of overlays currently being edited.")
+
+(defun elpy-multiedit-add-overlay (beg end)
+  "Add an editable overlay between BEG and END.
+
+A modification in any of these overlays will modify all other
+overlays, too."
+  (interactive "r")
+  (when (elpy-multiedit--overlays-in-p beg end)
+    (error "Overlapping multiedit overlays are not allowed"))
+  (let ((ov (make-overlay beg end nil nil :rear-advance)))
+    (overlay-put ov 'elpy-multiedit t)
+    (overlay-put ov 'face 'highlight)
+    (overlay-put ov 'modification-hooks '(elpy-multiedit--overlay-changed))
+    (overlay-put ov 'insert-in-front-hooks '(elpy-multiedit--overlay-changed))
+    (overlay-put ov 'insert-behind-hooks '(elpy-multiedit--overlay-changed))
+    (push ov elpy-multiedit-overlays)))
+
+(defun elpy-multiedit--overlays-in-p (beg end)
+  "Return t iff there are multiedit overlays between beg and end."
+  (catch 'return
+    (dolist (ov (overlays-in beg end))
+      (when (overlay-get ov 'elpy-multiedit)
+        (throw 'return t)))
+    nil))
+
+(defun elpy-multiedit-stop ()
+  "Stop editing multiple places at once."
+  (interactive)
+  (dolist (ov elpy-multiedit-overlays)
+    (delete-overlay ov))
+  (setq elpy-multiedit-overlays nil))
+
+(defun elpy-multiedit--overlay-changed (ov after-change beg end
+                                           &optional pre-change-length)
+  "Called for each overlay that changes.
+
+This updates all other overlays."
+  (when (and after-change
+             (not undo-in-progress))
+    (let ((text (buffer-substring (overlay-start ov)
+                                  (overlay-end ov)))
+          (inhibit-modification-hooks t))
+      (dolist (other-ov elpy-multiedit-overlays)
+        (when (and (not (equal other-ov ov))
+                   (buffer-live-p (overlay-buffer other-ov)))
+          (with-current-buffer (overlay-buffer other-ov)
+            (save-excursion
+              (goto-char (overlay-start other-ov))
+              (insert text)
+              (delete-region (point) (overlay-end other-ov)))))))))
+
+(defun elpy-multiedit ()
+  "Edit all occurences of the symbol at point, or the active region.
+
+If multiedit is active, stop it."
+  (interactive)
+  (if elpy-multiedit-overlays
+      (elpy-multiedit-stop)
+    (let ((regex (if (use-region-p)
+                     (regexp-quote (buffer-substring (region-beginning)
+                                                     (region-end)))
+                   (format "\\_<%s\\_>" (regexp-quote
+                                         (symbol-name
+                                          (symbol-at-point))))))
+          (case-fold-search nil))
+      (save-excursion
+        (goto-char (point-min))
+        (while (re-search-forward regex nil t)
+          (elpy-multiedit-add-overlay (match-beginning 0)
+                                      (match-end 0)))))))
+
+(defun elpy-multiedit-python-symbol-at-point (&optional use-symbol-p)
+  "Edit all usages of the the Python symbol at point.
+
+With prefix arg, edit all syntactic usages of the symbol at
+point. This might include unrelated symbols that just share the
+name."
+  (interactive "P")
+  (if (or elpy-multiedit-overlays
+          use-symbol-p
+          (use-region-p))
+      ;; If we are already doing a multiedit, or are explicitly told
+      ;; to use the symbol at point, or if we are on an active region,
+      ;; call the multiedit function that does just that already.
+      (call-interactively 'elpy-multiedit)
+    ;; Otherwise, fetch usages from backend.
+    (save-some-buffers)
+    (let ((usages (condition-case err
+                      (elpy-rpc-get-usages)
+                    ;; This is quite the stunt, but elisp parses JSON
+                    ;; null as nil, which is indistinguishable from
+                    ;; the empty list, we stick to the error.
+                    (error
+                     (if (and (eq (car err) 'error)
+                              (stringp (cadr err))
+                              (string-match "not implemented" (cadr err)))
+                         'not-supported
+                       (error (cadr err)))))))
+      (cond
+       ((eq usages 'not-supported)
+        (call-interactively 'elpy-multiedit)
+        (message (concat "Using syntactic editing "
+                         "as current backend does not support get_usages.")))
+       ((null usages)
+        (call-interactively 'elpy-multiedit)
+        (if elpy-multiedit-overlays
+            (message (concat "Using syntactic editing as no usages of the "
+                             "symbol at point were found by the backend."))
+          (message "No occurrences of the symbol at point found")))
+       (t
+        (elpy-multiedit--usages usages))))))
+
+(defun elpy-multiedit--usages (usages)
+  "Mark the usages in USAGES for editing."
+  (let ((name nil)
+        (locations (make-hash-table :test #'equal)))
+    (dolist (usage usages)
+      (let* ((filename (cdr (assq 'filename usage)))
+             (this-name (cdr (assq 'name usage)))
+             (offset (cdr (assq 'offset usage))))
+        (setq name this-name)
+        (with-current-buffer (find-file-noselect filename)
+          (elpy-multiedit-add-overlay (+ offset 1)
+                                      (+ offset 1 (length this-name)))
+          (save-excursion
+            (goto-char (+ offset 1))
+            (puthash filename
+                     (cons (list offset
+                                 (buffer-substring (line-beginning-position)
+                                                   (line-end-position))
+                                 (- (point)
+                                    (line-beginning-position))
+                                 (- (+ (point) (length this-name))
+                                    (line-beginning-position)))
+                           (gethash filename locations))
+                     locations)))))
+    (if (<= (hash-table-count locations)
+            1)
+        (message "Editing %s usages of '%s' in this buffer"
+                 (length usages) name)
+      (with-current-buffer (get-buffer-create "*Elpy Edit Usages*")
+        (let ((inhibit-read-only t)
+              (filenames nil))
+          (erase-buffer)
+          (elpy-insert--para
+           "The symbol '" name "' was found in multiple files. Editing "
+           "all locations:\n\n")
+          (maphash (lambda (key value)
+                     (when (not (member key filenames))
+                       (setq filenames (cons key filenames))))
+                   locations)
+          (dolist (filename (sort filenames #'string<))
+            (elpy-insert--header filename)
+            (dolist (location (sort (gethash filename locations)
+                                    (lambda (loc1 loc2)
+                                      (< (car loc1)
+                                         (car loc2)))))
+              (let ((line (nth 1 location))
+                    (start (+ (line-beginning-position)
+                              (nth 2 location)))
+                    (end (+ (line-end-position)
+                            (nth 3 location))))
+                ;; Insert the \n first, else we extend the overlay.
+                (insert line "\n")
+                (elpy-multiedit-add-overlay start end)))
+            (insert "\n"))
+          (goto-char (point-min))
+          (display-buffer (current-buffer)
+                          nil
+                          'visible))))))
+
 ;;;;;;;;;;;;;;;;;
 ;;; Misc features
 
@@ -1711,7 +2013,8 @@ Returns a PROMISE object."
   "Register for PROMISE to be called when CALL-ID returns.
 
 Must be called in an elpy-rpc buffer."
-  (assert elpy-rpc--buffer-p)
+  (when (not elpy-rpc--buffer-p)
+    (error "Must be called in RPC buffer"))
   (when (not elpy-rpc--backend-callbacks)
     (setq elpy-rpc--backend-callbacks (make-hash-table :test #'equal)))
   (puthash call-id promise elpy-rpc--backend-callbacks))
@@ -2124,182 +2427,6 @@ error if the backend is not supported."
 
 (defalias 'elpy-set-backend 'elpy-rpc-set-backend)
 
-;;;;;;;;;;;;;;
-;;; Multi-Edit
-
-(defvar elpy-multiedit-overlays nil
-  "List of overlays currently being edited.")
-
-(defun elpy-multiedit-add-overlay (beg end)
-  "Add an editable overlay between BEG and END.
-
-A modification in any of these overlays will modify all other
-overlays, too."
-  (interactive "r")
-  (when (elpy-multiedit--overlays-in-p beg end)
-    (error "Overlapping multiedit overlays are not allowed"))
-  (let ((ov (make-overlay beg end nil nil :rear-advance)))
-    (overlay-put ov 'elpy-multiedit t)
-    (overlay-put ov 'face 'highlight)
-    (overlay-put ov 'modification-hooks '(elpy-multiedit--overlay-changed))
-    (overlay-put ov 'insert-in-front-hooks '(elpy-multiedit--overlay-changed))
-    (overlay-put ov 'insert-behind-hooks '(elpy-multiedit--overlay-changed))
-    (push ov elpy-multiedit-overlays)))
-
-(defun elpy-multiedit--overlays-in-p (beg end)
-  "Return t iff there are multiedit overlays between beg and end."
-  (catch 'return
-    (dolist (ov (overlays-in beg end))
-      (when (overlay-get ov 'elpy-multiedit)
-        (throw 'return t)))
-    nil))
-
-(defun elpy-multiedit-stop ()
-  "Stop editing multiple places at once."
-  (interactive)
-  (dolist (ov elpy-multiedit-overlays)
-    (delete-overlay ov))
-  (setq elpy-multiedit-overlays nil))
-
-(defun elpy-multiedit--overlay-changed (ov after-change beg end
-                                           &optional pre-change-length)
-  "Called for each overlay that changes.
-
-This updates all other overlays."
-  (when (and after-change
-             (not undo-in-progress))
-    (let ((text (buffer-substring (overlay-start ov)
-                                  (overlay-end ov)))
-          (inhibit-modification-hooks t))
-      (dolist (other-ov elpy-multiedit-overlays)
-        (when (and (not (equal other-ov ov))
-                   (buffer-live-p (overlay-buffer other-ov)))
-          (with-current-buffer (overlay-buffer other-ov)
-            (save-excursion
-              (goto-char (overlay-start other-ov))
-              (insert text)
-              (delete-region (point) (overlay-end other-ov)))))))))
-
-(defun elpy-multiedit ()
-  "Edit all occurences of the symbol at point, or the active region.
-
-If multiedit is active, stop it."
-  (interactive)
-  (if elpy-multiedit-overlays
-      (elpy-multiedit-stop)
-    (let ((regex (if (use-region-p)
-                     (regexp-quote (buffer-substring (region-beginning)
-                                                     (region-end)))
-                   (format "\\_<%s\\_>" (regexp-quote
-                                         (symbol-name
-                                          (symbol-at-point))))))
-          (case-fold-search nil))
-      (save-excursion
-        (goto-char (point-min))
-        (while (re-search-forward regex nil t)
-          (elpy-multiedit-add-overlay (match-beginning 0)
-                                      (match-end 0)))))))
-
-(defun elpy-multiedit-python-symbol-at-point (&optional use-symbol-p)
-  "Edit all usages of the the Python symbol at point.
-
-With prefix arg, edit all syntactic usages of the symbol at
-point. This might include unrelated symbols that just share the
-name."
-  (interactive "P")
-  (if (or elpy-multiedit-overlays
-          use-symbol-p
-          (use-region-p))
-      ;; If we are already doing a multiedit, or are explicitly told
-      ;; to use the symbol at point, or if we are on an active region,
-      ;; call the multiedit function that does just that already.
-      (call-interactively 'elpy-multiedit)
-    ;; Otherwise, fetch usages from backend.
-    (save-some-buffers)
-    (let ((usages (condition-case err
-                      (elpy-rpc-get-usages)
-                    ;; This is quite the stunt, but elisp parses JSON
-                    ;; null as nil, which is indistinguishable from
-                    ;; the empty list, we stick to the error.
-                    (error
-                     (if (and (eq (car err) 'error)
-                              (stringp (cadr err))
-                              (string-match "not implemented" (cadr err)))
-                         'not-supported
-                       (error (cadr err)))))))
-      (cond
-       ((eq usages 'not-supported)
-        (call-interactively 'elpy-multiedit)
-        (message (concat "Using syntactic editing "
-                         "as current backend does not support get_usages.")))
-       ((null usages)
-        (call-interactively 'elpy-multiedit)
-        (if elpy-multiedit-overlays
-            (message (concat "Using syntactic editing as no usages of the "
-                             "symbol at point were found by the backend."))
-          (message "No occurrences of the symbol at point found")))
-       (t
-        (elpy-multiedit--usages usages))))))
-
-(defun elpy-multiedit--usages (usages)
-  "Mark the usages in USAGES for editing."
-  (let ((name nil)
-        (locations (make-hash-table :test #'equal)))
-    (dolist (usage usages)
-      (let* ((filename (cdr (assq 'filename usage)))
-             (this-name (cdr (assq 'name usage)))
-             (offset (cdr (assq 'offset usage))))
-        (setq name this-name)
-        (with-current-buffer (find-file-noselect filename)
-          (elpy-multiedit-add-overlay (+ offset 1)
-                                      (+ offset 1 (length this-name)))
-          (save-excursion
-            (goto-char (+ offset 1))
-            (puthash filename
-                     (cons (list offset
-                                 (buffer-substring (line-beginning-position)
-                                                   (line-end-position))
-                                 (- (point)
-                                    (line-beginning-position))
-                                 (- (+ (point) (length this-name))
-                                    (line-beginning-position)))
-                           (gethash filename locations))
-                     locations)))))
-    (if (<= (hash-table-count locations)
-            1)
-        (message "Editing %s usages of '%s' in this buffer"
-                 (length usages) name)
-      (with-current-buffer (get-buffer-create "*Elpy Edit Usages*")
-        (let ((inhibit-read-only t)
-              (filenames nil))
-          (erase-buffer)
-          (elpy-insert--para
-           "The symbol '" name "' was found in multiple files. Editing "
-           "all locations:\n\n")
-          (maphash (lambda (key value)
-                     (when (not (member key filenames))
-                       (setq filenames (cons key filenames))))
-                   locations)
-          (dolist (filename (sort filenames #'string<))
-            (elpy-insert--header filename)
-            (dolist (location (sort (gethash filename locations)
-                                    (lambda (loc1 loc2)
-                                      (< (car loc1)
-                                         (car loc2)))))
-              (let ((line (nth 1 location))
-                    (start (+ (line-beginning-position)
-                              (nth 2 location)))
-                    (end (+ (line-end-position)
-                            (nth 3 location))))
-                ;; Insert the \n first, else we extend the overlay.
-                (insert line "\n")
-                (elpy-multiedit-add-overlay start end)))
-            (insert "\n"))
-          (goto-char (point-min))
-          (display-buffer (current-buffer)
-                          nil
-                          'visible))))))
-
 ;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Module: Sane Defaults
 
@@ -2443,6 +2570,7 @@ name."
   "Module to support ElDoc for Python files."
   (pcase command
     (`global-init
+     (require 'eldoc)
      (setq eldoc-minor-mode-string nil))
     (`buffer-init
      (set (make-local-variable 'eldoc-documentation-function)
@@ -2479,21 +2607,6 @@ name."
           ))))))
   ;; Return the last message until we're done
   eldoc-last-message)
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;; Module: Find File in Project
-
-(defun elpy-module-find-file-in-project (command &rest args)
-  "Module to enable finding files in the current project."
-  (pcase command
-    (`global-init
-     (require 'find-file-in-project))
-    (`buffer-init
-     (when buffer-file-name
-       (set (make-local-variable 'ffip-project-root-function)
-            #'elpy-project-root)))
-    (`buffer-stop
-     (kill-local-variable 'ffip-project-root-function))))
 
 ;;;;;;;;;;;;;;;;;;;
 ;;; Module: Flymake
