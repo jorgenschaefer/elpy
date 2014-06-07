@@ -1,0 +1,295 @@
+============
+IDE Features
+============
+
+.. default-domain:: el
+
+Projects
+========
+
+Elpy supports the notion of *projects*, a related collection of files
+under a common directory. This common directory is called the
+:index:`project root`. A number of Elpy's commands work on all files
+inside the project root.
+
+.. command:: elpy-find-file
+   :kbd: C-c C-f
+
+   Find a file in the current project. This uses a search-as-you-type
+   interface for all files under the project root.
+
+   A prefix argument enables "do what I mean" mode. On an import
+   statement, it will try to open the module imported. Elsewhere in a
+   file, it will look for an associated test or implementation file,
+   and if found, open that. If this fails, either way, it will fall
+   back to the normal find file in project behavior.
+
+   If the current file is called ``foo.py``, then this will search for
+   a ``test_foo.py`` in the same directory, or in a ``test`` or
+   ``tests`` subdirectory. If the current file is already called
+   ``test_foo.py``, it will try and find a ``foo.py`` nearby.
+
+   This command uses `find-file-in-project`_ under the hood, so see
+   there for more options.
+
+.. _find-file-in-project: https://github.com/technomancy/find-file-in-project
+
+.. command:: elpy-rgrep-symbol
+   :kbd: C-c C-s
+
+   Search the files in the current project for a string. By default,
+   this uses the symbol at point. With a prefix argument, it will
+   prompt for a regular expression to search.
+
+   This is basically a ``grep -r`` through the project.
+
+In addition to these two commands, :command:`elpy-check` also supports
+optionally checking all files in the current project.
+
+Elpy's idea of the project root and which files belong to a project
+and which don't can be influenced as well.
+
+.. command:: elpy-set-project-root
+
+   Set the current project root directory. This directory should
+   contain all files related to the current project.
+
+.. option:: elpy-project-ignored-directories
+
+   When Elpy searches for files in the current project, it will ignore
+   files in directories listed here.
+
+.. option:: elpy-project-root-finder-functions
+
+   To find the project root, Elpy can utilize a number of heuristics.
+   With this option, you can configure which are used.
+
+To configure Elpy specifically for a single project, you can use
+Emacs' `Directory Variables`_. Elpy provides a simple interface to
+this.
+
+.. command:: elpy-set-project-variable
+
+   Set or change the value of a project-wide variable. With a prefix
+   argument, the value for the variable is removed.
+
+   This only takes effect in new buffers.
+
+.. _Directory Variables: https://www.gnu.org/software/emacs/manual/html_node/emacs/Directory-Variables.html
+
+
+Completion
+==========
+
+When you type Python code, Elpy will try and figure out possible
+completions and provide them in a suggestion window. If Elpy doesn't
+do so automatically, you can force it to complete right where you are.
+
+.. command:: elpy-company-backend
+   :kbd: M-TAB
+
+   Provide completion suggestions for a completion at point.
+
+You can use cursor keys or :kbd:`M-n` and :kbd:`M-p` to scroll through
+the options, :kbd:`RET` to use the selected completion, or :kbd:`TAB`
+to complete the common part. :kbd:`C-d` or :kbd:`<f1>` on an option
+will show its documentation.
+
+Elpy uses `Company Mode`_ for the completion interface, so its
+documentation is a good place for further information.
+
+.. _Company Mode: https://company-mode.github.io/
+
+
+Navigation
+==========
+
+Elpy supports some advanced navigation features inside Python
+projects.
+
+.. command:: elpy-goto-definition
+   :kbd: M-.
+
+   Go to the location where the identifier at point is defined. This
+   is not always easy to make out, so the result can be wrong. Also,
+   the backends can not always identify what kind of symbol is at
+   point. Especially after a few indirections, they have basically no
+   hope of guessing right, so they don't.
+
+.. command:: pop-tag-mark
+   :kbd: M-*
+
+   Go back to the last place where :kbd:`M-.` was used, effectively
+   turning :kbd:`M-.` and :kbd:`M-*` into a forward and backward
+   motion for definition lookups.
+
+
+Interactive Python
+==================
+
+Emacs can run a Python interpreter in a special buffer, making it much
+easier to send code snippets over.
+
+.. command:: elpy-shell-switch-to-shell
+   :kbd: C-c C-z
+
+   Switch to buffer with a Python interpreter running, starting one if
+   necessary.
+
+   Do note that Elpy only starts a single interactive Python process.
+   This process will inherit the current virtual env. If you want to
+   start a Python interpreter with a different virtual env, you can
+   either kill the existing one, or rename the buffer.
+
+.. command:: elpy-shell-send-region-or-buffer
+   :kbd: C-c C-c
+
+   Whenever you are in an Elpy buffer, :kbd:`C-c C-c` will send Python
+   code to the subprocess. If there is an active region, that region
+   will be sent; if not, the whole buffer is sent.
+
+   This command will also escape any uses of the ``if __name__ ==
+   '__main__'`` idiom, to prevent accidental execution of a script. If
+   you want this to be evaluated, pass a prefix argument with
+   :kbd:`C-u`.
+
+.. command:: python-shell-send-defun
+   :kbd: C-M-x
+
+   Similar to :kbd:`C-c C-c`, this will send the code of the current
+   top level class or function to the interactive Python process.
+
+.. option:: python-shell-interpreter
+.. option:: python-shell-interpreter-args
+
+   Using these two options, you can change which command to use and
+   what arguments to pass to it to start the interactive Python
+   interpreter.
+
+.. command:: elpy-use-ipython
+.. command:: elpy-use-cpython
+
+   If you want to use `IPython`_ instead of the standard interpreter,
+   you can use this command, both interactively and in your
+   ``.emacs``. This changes the aforementioned interpreter options,
+   but also a few others necessary for IPython.
+
+   As an IPython user, you might be interested in the `Emacs IPython
+   Notebook`_
+
+.. _IPython: http://ipython.org/
+.. _Emacs IPython Notebook: https://tkf.github.io/emacs-ipython-notebook/
+
+
+Syntax Checking
+===============
+
+Whenever you save a file, Elpy will run a syntax check and highlight
+possible errors or warnings inline.
+
+.. command:: elpy-flymake-next-error
+   :kbd: C-c C-n
+.. command:: elpy-flymake-previous-error
+   :kbd: C-c C-p
+
+   You can navigate between any error messages with these keys. The
+   current error will be shown in the minibuffer.
+
+Elpy uses the built-in `Flymake`_ library to find syntax errors on the
+fly, so see there for more configuration options.
+
+.. _Flymake: https://www.gnu.org/software/emacs/manual/html_node/flymake/index.html#Top
+
+
+.. command:: elpy-check
+   :kbd: C-c C-v
+
+   Alternatively, you can run a syntax check on the current file where
+   the output is displayed in a new buffer, giving you an overview and
+   allowing you to jump to the errors from there.
+
+   With a prefix argument, this will run the syntax check on all files
+   in the current project.
+
+.. option:: python-check-command
+
+   To change which command is used for syntax checks, you can
+   customize this option. By default, Elpy uses the ``flake8``
+   program, which you have to install separately. The
+   :command:`elpy-config` command will prompt you to do this if Elpy
+   can't find the program.
+
+   It is possible to create a single virtual env for the sole purpose
+   of installing ``flake8`` in there, and then simply link the command
+   script to a directory inside your :envvar:`PATH`, meaning you do
+   not need to install the program in every virtual env separately.
+
+
+Documentation
+=============
+
+Elpy provides a single interface to documentation.
+
+.. command:: elpy-doc
+   :kbd: C-c C-d
+
+   When point is on a symbol, Elpy will try and find the documentation
+   for that object, and display that. If it can't find the
+   documentation for whatever reason, it will try and look up the
+   symbol at point in pydoc. If it's not there, either, it will prompt
+   the user for a string to look up in pydoc.
+
+   With a prefix argument, Elpy will skip all the guessing and just
+   prompt the user for a string to look up in pydoc.
+
+
+Testing
+=======
+
+Testing is an important part of programming. Elpy provides a central
+interface to testing, which allows for a good workflow for tests.
+
+Elpy's test interface is built around Emacs' `compilation framework`_.
+Elpy will run test commands as a compilation job, with all the
+advantages this brings.
+
+.. _compilation framework: https://www.gnu.org/software/emacs/manual/html_node/emacs/Compilation.html
+
+.. command:: elpy-test
+   :kbd: C-c C-t
+
+   Start a test run. This uses the currently configured test runner to
+   discover and run tests. If point is inside a test case, the test
+   runner will run exactly that test case. Otherwise, or if a prefix
+   argument is given, it will run all tests.
+
+.. command:: elpy-set-test-runner
+
+   This changes the current test runner. Elpy supports the standard
+   unittest discovery runner, the Django discovery runner, nose and
+   py.test. You can also write your own, as described in
+   :ref:`Writing Test Runners`.
+
+This enables a good workflow. You write a test and use :kbd:`C-c C-t`
+to watch it fail. You then go to your implementation file, for example
+using :kbd:`C-u C-c C-f`, and make the test pass. You can use a key
+bound to ``recompile`` (I use :kbd:`<f5>` for this) to just re-run
+that one test. Once that passes, you can use :kbd:`C-c C-t` again to
+run all tests to make sure they all pass as well. Repeat.
+
+For an even more automated way, you can use `tdd.el`_, which will run
+your last compile command whenever you save a file.
+
+.. _tdd.el: https://github.com/jorgenschaefer/emacs-tdd/
+
+
+Refactoring
+===========
+
+Elpy supports refactoring Python code. This feature is about to be
+rewritten, so not documented yet.
+
+.. command:: elpy-refactor
+   :kbd: C-c C-r
+
+   FIXME!
