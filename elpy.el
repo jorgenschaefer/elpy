@@ -69,11 +69,11 @@
 
 (require 'cus-edit)
 (require 'etags)
+(require 'files-x)
 (require 'grep)
 (require 'ido)
-;; (require 'json)
+(require 'json)
 (require 'python)
-;; (require 'thingatpt)
 
 (require 'elpy-refactor)
 (require 'pyvenv)
@@ -119,7 +119,23 @@ can be inidividually enabled or disabled."
                                                ".cask")
   "Directories ignored by functions working on the whole project."
   :type '(repeat string)
+  :safe (lambda (val)
+          (cl-every #'stringp val))
   :group 'elpy)
+
+(defcustom elpy-project-root nil
+  "The root of the project the current buffer is in.
+
+The value is automatically set for new buffers using
+`elpy-project-root-finder-functions', which see.
+
+Alternatively, you can set this in file- or directory-local
+variables using \\[add-file-local-variable] or
+\\[add-dir-local-variable]."
+  :type 'directory
+  :safe 'file-directory-p
+  :group 'elpy)
+(make-variable-buffer-local 'elpy-project-root)
 
 (defcustom elpy-project-root-finder-functions
   '(elpy-project-find-projectile-root
@@ -154,6 +170,8 @@ have any external requirements."
                  (const :tag "Jedi" "jedi")
                  (const :tag "Native" "native")
                  (const :tag "Automatic" nil))
+  :safe (lambda (val)
+          (member val '("rope" "jedi" "native" nil)))
   :group 'elpy)
 
 (defcustom elpy-rpc-large-buffer-size 4096
@@ -164,6 +182,7 @@ Large buffers take a long time to encode, so Elpy can transmit
 them via temporary files. If a buffer is larger than this value,
 it is sent via a temporary file."
   :type 'integer
+  :safe #'integerp
   :group 'elpy)
 
 (defcustom elpy-rpc-python-command (if (eq window-system 'w32)
@@ -178,6 +197,8 @@ and not an interactive shell like ipython."
                  (const :tag "python3" "python3")
                  (const :tag "pythonw (Python on Windows)" "pythonw")
                  (string :tag "Other"))
+  :safe (lambda (val)
+          (member val '("python" "python2" "python3" "pythonw")))
   :group 'elpy)
 
 (defcustom elpy-rpc-pythonpath (file-name-directory (locate-library "elpy"))
@@ -187,6 +208,23 @@ This should be a directory where the elpy module can be found. If
 this is nil, it's assumed elpy can be found in the standard path.
 Usually, there is no need to change this."
   :type 'directory
+  :safe #'file-directory-p
+  :group 'elpy)
+
+(defcustom elpy-rpc-timeout 1
+  "Number of seconds to wait for a response when blocking.
+
+When Elpy blocks Emacs to wait for a response from the RPC
+process, it will assume it won't come or wait too long after this
+many seconds. On a slow computer, or if you have a large project,
+you might want to increase this.
+
+A setting of nil means to block indefinitely."
+  :type '(choice (const :tag "Block indefinitely" nil)
+                 integer)
+  :safe (lambda (val)
+          (or (integerp val)
+              (null val)))
   :group 'elpy)
 
 (defcustom elpy-test-runner 'elpy-test-discover-runner
@@ -195,8 +233,8 @@ Usually, there is no need to change this."
                  (const :tag "Django Discover" elpy-test-django-runner)
                  (const :tag "Nose" elpy-test-nose-runner)
                  (const :tag "py.test" elpy-test-pytest-runner))
+  :safe 'elpy-test-runner-p
   :group 'elpy)
-(put 'elpy-test-runner 'safe-local-variable 'elpy-test-runner-p)
 
 (defconst elpy-version "1.4.50"
   "The version of the Elpy lisp code.")
@@ -221,9 +259,9 @@ Usually, there is no need to change this."
     (define-key map (kbd "C-c C-e") 'elpy-multiedit-python-symbol-at-point)
     (define-key map (kbd "C-c C-f") 'elpy-find-file)
     (define-key map (kbd "C-c C-j") 'idomenu)
-    (define-key map (kbd "C-c C-n") 'elpy-flymake-forward-error)
+    (define-key map (kbd "C-c C-n") 'elpy-flymake-next-error)
     (define-key map (kbd "C-c C-o") 'elpy-occur-definitions)
-    (define-key map (kbd "C-c C-p") 'elpy-flymake-backward-error)
+    (define-key map (kbd "C-c C-p") 'elpy-flymake-previous-error)
     (define-key map (kbd "C-c C-r") 'elpy-refactor)
     (define-key map (kbd "C-c C-s") 'elpy-rgrep-symbol)
     (define-key map (kbd "C-c C-t") 'elpy-test)
@@ -327,6 +365,21 @@ more structured list.
 ;;;;;;;;;;;;;;;;;;;;;;
 ;;; Elpy Config Buffer
 
+(defvar elpy--related-custom-groups
+  '(("Elpy" elpy "elpy-")
+    ("Python" python "python-")
+    ("Virtual Environments (Pyvenv)" pyvenv "pyvenv-")
+    ("Completion (Company)" company "company-")
+    ("Call Signatures (ElDoc)" eldoc "eldoc-")
+    ("Inline Errors (Flymake)" flymake "flymake-")
+    ("Snippets (YASnippet)" yasnippet "yas-")
+    ("Directory Grep (rgrep)" grep "grep-")
+    ("Search as You Type (ido)" ido "ido-")
+    ;; ffip does not use defcustom
+    ;; highlight-indent does not use defcustom, either. Its sole face
+    ;; is defined in basic-faces.
+    ))
+
 (defun elpy-config-error (&optional fmt &rest args)
   "Note a configuration problem.
 
@@ -357,36 +410,12 @@ a customize buffer, but has some more options."
       (let ((custom-buffer-style 'tree))
         (Custom-mode)
         (elpy-config--insert-help)
-        (widget-create 'custom-group
-                       :custom-last t
-                       :custom-state 'hidden
-                       :tag "Elpy"
-                       :value 'elpy)
-        (widget-create 'custom-group
-                       :custom-last t
-                       :custom-state 'hidden
-                       :tag "Python"
-                       :value 'python)
-        (widget-create 'custom-group
-                       :custom-last t
-                       :custom-state 'hidden
-                       :tag "Completion (Company)"
-                       :value 'company)
-        (widget-create 'custom-group
-                       :custom-last t
-                       :custom-state 'hidden
-                       :tag "Call Signatures (ElDoc)"
-                       :value 'eldoc)
-        (widget-create 'custom-group
-                       :custom-last t
-                       :custom-state 'hidden
-                       :tag "Inline Errors (Flymake)"
-                       :value 'flymake)
-        (widget-create 'custom-group
-                       :custom-last t
-                       :custom-state 'hidden
-                       :tag "Snippets (YASnippet)"
-                       :value 'yasnippet)
+        (dolist (cust elpy--related-custom-groups)
+          (widget-create 'custom-group
+                         :custom-last t
+                         :custom-state 'hidden
+                         :tag (car cust)
+                         :value (cadr cust)))
         (widget-setup)
         (goto-char (point-min))))
     (pop-to-buffer-same-window buf)))
@@ -784,15 +813,8 @@ time. Honestly."
     (setcdr (assq mode-name minor-mode-alist)
             (list "")))))
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;; Project and library roots
-
-(defvar elpy-project-root nil
-  "The root of the project the current buffer is in.
-
-See the `elpy-project-root' function for details.")
-(make-variable-buffer-local 'elpy-project-root)
-(put 'elpy-project-root 'safe-local-variable 'file-directory-p)
+;;;;;;;;;;;;
+;;; Projects
 
 (defun elpy-project-root ()
   "Return the root of the current buffer's project.
@@ -814,17 +836,6 @@ this."
   "Set the Elpy project root to NEW-ROOT."
   (interactive "DNew project root: ")
   (setq elpy-project-root new-root))
-
-(defun elpy-library-root ()
-  "Return the root of the Python package chain of the current buffer.
-
-That is, if you have /foo/package/module.py, it will return /foo,
-so that import package.module will pick up module.py."
-  (locate-dominating-file default-directory
-                          (lambda (dir)
-                            (not (file-exists-p
-                                  (format "%s/__init__.py"
-                                          dir))))))
 
 (defun elpy-project-find-python-root ()
   "Return the current Python project root, if any.
@@ -855,6 +866,248 @@ This is marked with setup.py or setup.cfg."
   ;; as ignore projectile saying there is no project root here.
   (ignore-errors
     (projectile-project-root)))
+
+(defun elpy-library-root ()
+  "Return the root of the Python package chain of the current buffer.
+
+That is, if you have /foo/package/module.py, it will return /foo,
+so that import package.module will pick up module.py."
+  (locate-dominating-file default-directory
+                          (lambda (dir)
+                            (not (file-exists-p
+                                  (format "%s/__init__.py"
+                                          dir))))))
+
+;;;;;;;;;;;;;;;;;;;;;
+;;; Project Variables
+
+(defvar elpy-project--variable-name-history nil
+  "The history for `elpy-project--read-project-variable'")
+
+(defun elpy-project--read-project-variable (prompt)
+  "Prompt the user for a variable name to set project-wide."
+  (let* ((prefixes (mapcar (lambda (cust)
+                             (nth 2 cust))
+                           elpy--related-custom-groups))
+         (var-regex (format "^%s" (regexp-opt prefixes))))
+    (intern
+     (completing-read
+      prompt
+      obarray
+      (lambda (sym)
+        (and (get sym 'safe-local-variable)
+             (string-match var-regex (symbol-name sym))
+             (get sym 'custom-type)))
+      :require-match
+      nil
+      'elpy-project--variable-name-history))))
+
+(defun elpy-project--read-variable-value (prompt variable)
+  "Read the value for VARIABLE from the user."
+  (let ((custom-type (get variable 'custom-type)))
+    (if custom-type
+        (widget-prompt-value (if (listp custom-type)
+                                 custom-type
+                               (list custom-type))
+                             prompt
+                             (if (boundp variable)
+                                 (funcall
+                                  (or (get variable 'custom-get)
+                                      'symbol-value)
+                                  variable))
+                             (not (boundp variable)))
+      (eval-minibuffer prompt))))
+
+(defun elpy-set-project-variable (variable value)
+  "Set or remove a variable in the project-wide .dir-locals.el.
+
+With prefix argument, remove the variable."
+  (interactive
+   (let* ((variable (elpy-project--read-project-variable
+                     (if current-prefix-arg
+                         "Remove project variable: "
+                       "Set project variable: ")))
+          (value (if current-prefix-arg
+                     nil
+                   (elpy-project--read-variable-value (format "Value for %s: "
+                                                              variable)
+                                                      variable))))
+     (list variable value)))
+  (with-current-buffer (find-file-noselect (format "%s/%s"
+                                                   (elpy-project-root)
+                                                   dir-locals-file))
+    (modify-dir-local-variable nil
+                               variable
+                               value
+                               (if current-prefix-arg
+                                   'delete
+                                 'add-or-replace))))
+
+;;;;;;;;;;;;;;;;;;;;;;;;
+;;; Search Project Files
+
+(defun elpy-rgrep-symbol (regexp)
+  "Search for REGEXP in the current project.
+
+REGEXP defaults to the symbol at point, or the current region if
+active.
+
+With a prefix argument, always prompt for a string to search
+for."
+  (interactive
+   (list
+    (cond
+     (current-prefix-arg
+      (read-from-minibuffer "Search in project for regexp: "))
+     ((use-region-p)
+      (buffer-substring-no-properties (region-beginning)
+                                      (region-end)))
+     (t
+      (let ((symbol (thing-at-point 'symbol)))
+        (if symbol
+            (format "\\<%s\\>" symbol)
+          (read-from-minibuffer "Search in project for regexp: ")))))))
+  (grep-compute-defaults)
+  (let ((grep-find-ignored-directories (append elpy-project-ignored-directories
+                                               grep-find-ignored-directories)))
+    (rgrep regexp
+           "*.py"
+           (or (elpy-project-root)
+               default-directory)))
+  (with-current-buffer next-error-last-buffer
+    (let ((inhibit-read-only t))
+      (save-excursion
+        (goto-char (point-min))
+        (when (re-search-forward "^find .*" nil t)
+          (replace-match (format "Searching for '%s'\n"
+                                 (regexp-quote regexp))))))))
+
+;;;;;;;;;;;;;;;;;;;;;;
+;;; Find Project Files
+
+(defun elpy-find-file (&optional dwim)
+  "Efficiently find a file in the current project.
+
+With prefix argument, tries to guess what kind of file the user
+wants to open.
+
+On an import line, it opens the file of that module.
+
+Otherwise, it opens a test file associated with the current file,
+if one exists. A test file is named test_<name>.py if the current
+file is <name>.py, and is either in the same directors or a
+\"test\" or \"tests\" subdirectory."
+  (interactive "P")
+  (cond
+   ((and dwim
+         (buffer-file-name)
+         (save-excursion
+           (goto-char (line-beginning-position))
+           (or (looking-at "^ *import +\\([[:alnum:]._]+\\)")
+               (looking-at "^ *from +\\([[:alnum:]._]+\\) +import +\\([[:alnum:]._]+\\)"))))
+    (let* ((module (if (match-string 2)
+                       (format "%s.%s" (match-string 1) (match-string 2))
+                     (match-string 1)))
+           (path (elpy--resolve-module module)))
+      (if path
+          (find-file path)
+        (elpy-find-file nil))))
+   ((and dwim
+         (buffer-file-name))
+    (let ((test-file (elpy--test-file)))
+      (if test-file
+          (find-file test-file)
+        (elpy-find-file nil))))
+   (t
+    (let ((ffip-prune-patterns elpy-project-ignored-directories)
+          (ffip-project-root (elpy-project-root))
+          ;; Set up ido to use vertical file lists.
+          (ido-decorations '("\n" "" "\n" "\n..."
+                             "[" "]" " [No match]" " [Matched]"
+                             " [Not readable]" " [Too big]"
+                             " [Confirm]"))
+          (ido-setup-hook (cons (lambda ()
+                                  (define-key ido-completion-map (kbd "<down>")
+                                    'ido-next-match)
+                                  (define-key ido-completion-map (kbd "<up>")
+                                    'ido-prev-match))
+                                ido-setup-hook)))
+      (find-file-in-project)))))
+
+(defun elpy--test-file ()
+  "Return the test file for the current file, if any.
+
+If this is a test file, return the non-test file.
+
+A test file is named test_<name>.py if the current file is
+<name>.py, and is either in the same directors or a \"test\" or
+\"tests\" subdirectory."
+  (catch 'return
+    (let (full-name directory file)
+      (setq full-name (buffer-file-name))
+      (when (not full-name)
+        (throw 'return nil))
+      (setq full-name (expand-file-name full-name)
+            directory (file-name-directory full-name)
+            file (file-name-nondirectory full-name))
+      (if (string-match "^test_" file)
+          (let ((file (substring file 5)))
+            (dolist (implementation (list (format "%s/%s" directory file)
+                                          (format "%s/../%s" directory file)))
+              (when (file-exists-p implementation)
+                (throw 'return implementation))))
+        (dolist (test (list (format "%s/test_%s" directory file)
+                            (format "%s/test/test_%s" directory file)
+                            (format "%s/tests/test_%s" directory file)
+                            (format "%s/../test/test_%s" directory file)
+                            (format "%s/../tests/test_%s" directory file)))
+          (when (file-exists-p test)
+            (throw 'return test)))))))
+
+(defun elpy--module-path (module)
+  "Return a directory path for MODULE.
+
+The resulting path is not guaranteed to exist. This simply
+resolves leading periods relative to the current directory and
+replaces periods in the middle of the string with slashes.
+
+Only works with absolute imports. Stop using implicit relative
+imports. They're a bad idea."
+  (let* ((relative-depth (when(string-match "^\\.+" module)
+                           (length (match-string 0 module))))
+         (base-directory (if relative-depth
+                             (format "%s/%s"
+                                     (buffer-file-name)
+                                     (mapconcat (lambda (_)
+                                                  "../")
+                                                (make-vector relative-depth
+                                                             nil)
+                                                ""))
+                           (elpy-library-root)))
+         (file-name (replace-regexp-in-string
+                     "\\."
+                     "/"
+                     (if relative-depth
+                         (substring module relative-depth)
+                       module))))
+    (expand-file-name (format "%s/%s" base-directory file-name))))
+
+(defun elpy--resolve-module (module)
+  "Resolve MODULE relative to the current file and project.
+
+Returns a full path name for that module."
+  (catch 'return
+    (let ((path (elpy--module-path module)))
+      (while (string-prefix-p (expand-file-name (elpy-library-root))
+                              path)
+        (dolist (name (list (format "%s.py" path)
+                            (format "%s/__init__.py" path)))
+          (when (file-exists-p name)
+            (throw 'return name)))
+        (if (string-match "/$" path)
+            (setq path (substring path 0 -1))
+          (setq path (file-name-directory path)))))
+    nil))
 
 ;;;;;;;;;;;;;;;;;;;;;
 ;;; Interactive Shell
@@ -1475,133 +1728,6 @@ prefix argument is given, prompt for a symbol from the user."
                        t t)))))
 
 ;;;;;;;;;;;;;;
-;;; Find files
-
-(defun elpy-find-file (&optional dwim)
-  "Efficiently find a file in the current project.
-
-With prefix argument, tries to guess what kind of file the user
-wants to open.
-
-On an import line, it opens the file of that module.
-
-Otherwise, it opens a test file associated with the current file,
-if one exists. A test file is named test_<name>.py if the current
-file is <name>.py, and is either in the same directors or a
-\"test\" or \"tests\" subdirectory."
-  (interactive "P")
-  (cond
-   ((and dwim
-         (buffer-file-name)
-         (save-excursion
-           (goto-char (line-beginning-position))
-           (or (looking-at "^ *import +\\([[:alnum:]._]+\\)")
-               (looking-at "^ *from +\\([[:alnum:]._]+\\) +import +\\([[:alnum:]._]+\\)"))))
-    (let* ((module (if (match-string 2)
-                       (format "%s.%s" (match-string 1) (match-string 2))
-                     (match-string 1)))
-           (path (elpy--resolve-module module)))
-      (if path
-          (find-file path)
-        (elpy-find-file nil))))
-   ((and dwim
-         (buffer-file-name))
-    (let ((test-file (elpy--test-file)))
-      (if test-file
-          (find-file test-file)
-        (elpy-find-file nil))))
-   (t
-    (let ((ffip-prune-patterns elpy-project-ignored-directories)
-          (ffip-project-root (elpy-project-root))
-          ;; Set up ido to use vertical file lists.
-          (ido-decorations '("\n" "" "\n" "\n..."
-                             "[" "]" " [No match]" " [Matched]"
-                             " [Not readable]" " [Too big]"
-                             " [Confirm]"))
-          (ido-setup-hook (cons (lambda ()
-                                  (define-key ido-completion-map (kbd "<down>")
-                                    'ido-next-match)
-                                  (define-key ido-completion-map (kbd "<up>")
-                                    'ido-prev-match))
-                                ido-setup-hook)))
-      (find-file-in-project)))))
-
-(defun elpy--test-file ()
-  "Return the test file for the current file, if any.
-
-If this is a test file, return the non-test file.
-
-A test file is named test_<name>.py if the current file is
-<name>.py, and is either in the same directors or a \"test\" or
-\"tests\" subdirectory."
-  (catch 'return
-    (let (full-name directory file)
-      (setq full-name (buffer-file-name))
-      (when (not full-name)
-        (throw 'return nil))
-      (setq full-name (expand-file-name full-name)
-            directory (file-name-directory full-name)
-            file (file-name-nondirectory full-name))
-      (if (string-match "^test_" file)
-          (let ((file (substring file 5)))
-            (dolist (implementation (list (format "%s/%s" directory file)
-                                          (format "%s/../%s" directory file)))
-              (when (file-exists-p implementation)
-                (throw 'return implementation))))
-        (dolist (test (list (format "%s/test_%s" directory file)
-                            (format "%s/test/test_%s" directory file)
-                            (format "%s/tests/test_%s" directory file)
-                            (format "%s/../test/test_%s" directory file)
-                            (format "%s/../tests/test_%s" directory file)))
-          (when (file-exists-p test)
-            (throw 'return test)))))))
-
-(defun elpy--module-path (module)
-  "Return a directory path for MODULE.
-
-The resulting path is not guaranteed to exist. This simply
-resolves leading periods relative to the current directory and
-replaces periods in the middle of the string with slashes.
-
-Only works with absolute imports. Stop using implicit relative
-imports. They're a bad idea."
-  (let* ((relative-depth (when(string-match "^\\.+" module)
-                           (length (match-string 0 module))))
-         (base-directory (if relative-depth
-                             (format "%s/%s"
-                                     (buffer-file-name)
-                                     (mapconcat (lambda (_)
-                                                  "../")
-                                                (make-vector relative-depth
-                                                             nil)
-                                                ""))
-                           (elpy-library-root)))
-         (file-name (replace-regexp-in-string
-                     "\\."
-                     "/"
-                     (if relative-depth
-                         (substring module relative-depth)
-                       module))))
-    (expand-file-name (format "%s/%s" base-directory file-name))))
-
-(defun elpy--resolve-module (module)
-  "Resolve MODULE relative to the current file and project.
-
-Returns a full path name for that module."
-  (catch 'return
-    (let ((path (elpy--module-path module)))
-      (while (string-prefix-p (expand-file-name (elpy-library-root))
-                              path)
-        (dolist (name (list (format "%s.py" path)
-                            (format "%s/__init__.py" path)))
-          (when (file-exists-p name)
-            (throw 'return name)))
-        (if (string-match "/$" path)
-            (setq path (substring path 0 -1))
-          (setq path (file-name-directory path)))))
-    nil))
-
-;;;;;;;;;;;;;;
 ;;; Multi-Edit
 
 (defvar elpy-multiedit-overlays nil
@@ -1792,42 +1918,6 @@ Also, switch to that buffer."
         (select-window window)
       (switch-to-buffer "*Occur*"))))
 
-(defun elpy-rgrep-symbol (regexp)
-  "Search for REGEXP in the current project.
-
-REGEXP defaults to the symbol at point, or the current region if
-active.
-
-With a prefix argument, always prompt for a string to search
-for."
-  (interactive
-   (list
-    (cond
-     (current-prefix-arg
-      (read-from-minibuffer "Search in project for regexp: "))
-     ((use-region-p)
-      (buffer-substring-no-properties (region-beginning)
-                                      (region-end)))
-     (t
-      (let ((symbol (thing-at-point 'symbol)))
-        (if symbol
-            (format "\\<%s\\>" symbol)
-          (read-from-minibuffer "Search in project for regexp: ")))))))
-  (grep-compute-defaults)
-  (let ((grep-find-ignored-directories (append elpy-project-ignored-directories
-                                               grep-find-ignored-directories)))
-    (rgrep regexp
-           "*.py"
-           (or (elpy-project-root)
-               default-directory)))
-  (with-current-buffer next-error-last-buffer
-    (let ((inhibit-read-only t))
-      (save-excursion
-        (goto-char (point-min))
-        (when (re-search-forward "^find .*" nil t)
-          (replace-match (format "Searching for '%s'\n"
-                                 (regexp-quote regexp))))))))
-
 ;;;;;;;;;;;;;;;;;;;
 ;;; Promise objects
 
@@ -1946,12 +2036,6 @@ Used to associate responses to callbacks.")
 This maps call IDs to functions.")
 (make-variable-buffer-local 'elpy-rpc--backend-callbacks)
 
-(defvar elpy-rpc--timeout 1
-  "Number of seconds to wait for a response.
-
-You can dynamically bind this to a higher value if you want to
-wait longer.")
-
 (defun elpy-rpc (method params &optional success error)
   "Call METHOD with PARAMS in the backend.
 
@@ -1979,7 +2063,7 @@ Returns the result, blocking until this arrived."
                                   (lambda (err)
                                     (setq error-object err
                                           error-occured t)))))
-    (elpy-promise-wait promise elpy-rpc--timeout)
+    (elpy-promise-wait promise elpy-rpc-timeout)
     (cond
      (error-occured
       (elpy-rpc--default-error-callback error-object))
@@ -2668,14 +2752,14 @@ error if the backend is not supported."
             ;; Run flake8 from / to avoid import problems (#169)
             "/"))))
 
-(defun elpy-flymake-forward-error ()
+(defun elpy-flymake-next-error ()
   "Move forward to the next Flymake error and show a
 description."
   (interactive)
   (flymake-goto-next-error)
   (elpy-flymake-show-error))
 
-(defun elpy-flymake-backward-error ()
+(defun elpy-flymake-previous-error ()
   "Move backward to the previous Flymake error and show a
 description."
   (interactive)

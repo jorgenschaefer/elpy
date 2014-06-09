@@ -2,6 +2,6 @@
 ;;; test flymake-goto-next-error, not this function). So, just call it
 ;;; to make sure it does not throw an error.
 
-(ert-deftest elpy-flymake-forward-error ()
+(ert-deftest elpy-flymake-next-error ()
   (elpy-testcase ()
-    (elpy-flymake-forward-error)))
+    (elpy-flymake-next-error)))
