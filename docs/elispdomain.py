@@ -95,7 +95,7 @@ class ELispOption(ELispMarkup):
 
     def handle_signature(self, sig, signode):
         signode += addnodes.desc_name(sig, sig)
-        signode += addnodes.desc_annotation("(Customize Option)",
+        signode += addnodes.desc_annotation(" (Customize Option)",
                                             " (Customize Option)")
         return sig
 

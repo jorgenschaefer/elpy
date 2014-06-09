@@ -20,17 +20,17 @@ form. ``C-f`` moves one character forward. Meta changes this to affect
 *words*, that is, consecutive sequences of alphanumeric characters.
 The Control-Meta combination then affects whole expressions.
 
-In the following table, | refers to the position of point.
+In the following table, ``|`` refers to the position of point.
 
-+----------------+-------+----------------+
-| Before         | Key   | After          |
-+================+=======+================+
-| \|hello_world  | C-f   | h\|ello_world  |
-+----------------+-------+----------------+
-| \|hello_world  | M-f   | hello\|_world  |
-+----------------+-------+----------------+
-| \|hello_world  | C-M-f | hello_world\|  |
-+----------------+-------+----------------+
++--------------------+-----------+--------------------+
+| Before             | Key       | After              |
++====================+===========+====================+
+| ``|hello_world``   | ``C-f``   | ``h|ello_world``   |
++--------------------+-----------+--------------------+
+| ``|hello_world``   | ``M-f``   | ``hello|_world``   |
++--------------------+-----------+--------------------+
+| ``|hello_world``   | ``C-M-f`` | ``hello_world|``   |
++--------------------+-----------+--------------------+
 
 Expression-based commands will also work on strings, tuples,
 dictionaries, or any balanced groups of parentheses. This works for

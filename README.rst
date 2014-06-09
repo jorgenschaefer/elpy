@@ -15,24 +15,16 @@ well as Python.
 Documentation
 =============
 
-You can find the documentation `on the wiki`__.
+Elpy is fully documented at readthedocs.org:
 
-.. __: https://github.com/jorgenschaefer/elpy/wiki
+http://elpy.readthedocs.org/en/latest/index.html
 
 Quick Installation
 ==================
 
-You can also read the `detailed installation instructions`__.
-
-.. __: https://github.com/jorgenschaefer/elpy/wiki/Installation
-
 First, install the required Python packages:::
 
-  pip install elpy rope
-
-(Note: If you are installing the development version of elpy, do not
-install the elpy Python package, but simply put the repository in your
-``PYTHONPATH``.)
+  pip install rope
 
 Evaluate this in your ``*scratch*`` buffer:
 
