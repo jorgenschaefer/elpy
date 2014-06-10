@@ -78,14 +78,24 @@
 (require 'elpy-refactor)
 (require 'pyvenv)
 
+(defconst elpy-version "1.4.50"
+  "The version of the Elpy lisp code.")
 
-;;;;;;;;;;;;;;;
-;;; Elpy itself
+;;;;;;;;;;;;;;;;;;;;;;
+;;; User customization
 
 (defgroup elpy nil
   "The Emacs Lisp Python Environment."
   :prefix "elpy-"
   :group 'languages)
+
+(defcustom elpy-mode-hook nil
+  "Hook run when `elpy-mode' is enabled.
+
+This can be used to enable minor modes for Python development."
+  :type 'hook
+  :options '(subword-mode hl-line-mode)
+  :group 'elpy)
 
 (defcustom elpy-modules '(elpy-module-sane-defaults
                           elpy-module-company
@@ -236,11 +246,8 @@ A setting of nil means to block indefinitely."
   :safe 'elpy-test-runner-p
   :group 'elpy)
 
-(defconst elpy-version "1.4.50"
-  "The version of the Elpy lisp code.")
-
-(defvar elpy-mode-hook nil
-  "Hook run when `elpy-mode' is enabled.")
+;;;;;;;;;;;;;
+;;; Elpy Mode
 
 (defvar elpy-mode-map
   (let ((map (make-sparse-keymap)))
@@ -287,9 +294,6 @@ A setting of nil means to block indefinitely."
     map)
   "Key map for the Emacs Lisp Python Environment.")
 
-(defvar elpy-modules-initialized-p nil
-  "Boolean, set to true if modules were run with `global-init'.")
-
 ;;;###autoload
 (defun elpy-enable (&optional ignored)
   "Enable Elpy in all future Python buffers."
@@ -306,18 +310,14 @@ A setting of nil means to block indefinitely."
       (error (concat "You are using python-mode.el. "
                      "Elpy only works with python.el from "
                      "Emacs 24 and above"))))
-  (when (not elpy-modules-initialized-p)
-    (elpy-modules-run 'global-init)
-    (setq elpy-modules-initialized-p t))
+  (elpy-modules-global-init)
   (add-hook 'python-mode-hook 'elpy-mode))
 
 (defun elpy-disable ()
   "Disable Elpy in all future Python buffers."
   (interactive)
   (remove-hook 'python-mode-hook 'elpy-mode)
-  (when elpy-modules-initialized-p
-    (elpy-modules-run 'global-stop)
-    (setq elpy-modules-initialized-p nil)))
+  (elpy-modules-global-stop))
 
 ;;;###autoload
 (define-minor-mode elpy-mode
@@ -337,35 +337,14 @@ more structured list.
     (error "Elpy only works with `python-mode'"))
   (cond
    (elpy-mode
-    (when (not elpy-modules-initialized-p)
-      (elpy-modules-run 'global-init)
-      (setq elpy-modules-initialized-p t))
-    (elpy-modules-run 'buffer-init))
+    (elpy-modules-buffer-init))
    ((not elpy-mode)
-    (elpy-modules-run 'buffer-stop))))
+    (elpy-modules-buffer-stop))))
 
-;;;;;;;;;;;;;;;;;;;;
-;;; Helper Functions
+;;;;;;;;;;;;;;;
+;;; Elpy Config
 
-(defun elpy-symbol-at-point ()
-  "Return the Python symbol at point, including dotted paths."
-  (with-syntax-table python-dotty-syntax-table
-    (let ((symbol (symbol-at-point)))
-      (if symbol
-          (symbol-name symbol)
-        nil))))
-
-(defun elpy--standard-value (var)
-  "Return the standard value of the given variable."
-  (let ((sv (get var 'standard-value)))
-    (when (consp sv)
-      (ignore-errors
-        (eval (car sv))))))
-
-;;;;;;;;;;;;;;;;;;;;;;
-;;; Elpy Config Buffer
-
-(defvar elpy--related-custom-groups
+(defvar elpy-config--related-custom-groups
   '(("Elpy" elpy "elpy-")
     ("Python" python "python-")
     ("Virtual Environments (Pyvenv)" pyvenv "pyvenv-")
@@ -379,6 +358,39 @@ more structured list.
     ;; highlight-indent does not use defcustom, either. Its sole face
     ;; is defined in basic-faces.
     ))
+
+(defvar elpy-config--get-config "import json
+import sys
+config = {}
+config['python_version'] = ('{major}.{minor}.{micro}'
+                            .format(major=sys.version_info[0],
+                                    minor=sys.version_info[1],
+                                    micro=sys.version_info[2]))
+
+try:
+    import elpy
+    config['elpy_version'] = elpy.__version__
+except:
+    config['elpy_version'] = None
+
+try:
+    import jedi
+    if isinstance(jedi.__version__, tuple):
+        config['jedi_version'] = '.'.join(str(x) for x in jedi.__version__)
+    else:
+        config['jedi_version'] = jedi.__version__
+except:
+    config['jedi_version'] = None
+
+try:
+    import rope
+    config['rope_version'] = rope.VERSION
+except:
+    config['rope_version'] = None
+
+
+json.dump(config, sys.stdout)
+")
 
 (defun elpy-config-error (&optional fmt &rest args)
   "Note a configuration problem.
@@ -410,7 +422,7 @@ a customize buffer, but has some more options."
       (let ((custom-buffer-style 'tree))
         (Custom-mode)
         (elpy-config--insert-help)
-        (dolist (cust elpy--related-custom-groups)
+        (dolist (cust elpy-config--related-custom-groups)
           (widget-create 'custom-group
                          :custom-last t
                          :custom-state 'hidden
@@ -548,6 +560,7 @@ item in another window.\n\n")
          "Please upgrade the Emacs Lisp package.")
        "\n")))
 
+  ;; flake8, the default syntax checker, not found
   (when (not (executable-find "flake8"))
     (elpy-insert--para
      "The configured syntax checker could not be found. Elpy uses this "
@@ -558,39 +571,6 @@ item in another window.\n\n")
     (insert "\n\n"))
 
   )
-
-(defvar elpy-config--get-config "import json
-import sys
-config = {}
-config['python_version'] = ('{major}.{minor}.{micro}'
-                            .format(major=sys.version_info[0],
-                                    minor=sys.version_info[1],
-                                    micro=sys.version_info[2]))
-
-try:
-    import elpy
-    config['elpy_version'] = elpy.__version__
-except:
-    config['elpy_version'] = None
-
-try:
-    import jedi
-    if isinstance(jedi.__version__, tuple):
-        config['jedi_version'] = '.'.join(str(x) for x in jedi.__version__)
-    else:
-        config['jedi_version'] = jedi.__version__
-except:
-    config['jedi_version'] = None
-
-try:
-    import rope
-    config['rope_version'] = rope.VERSION
-except:
-    config['rope_version'] = None
-
-
-json.dump(config, sys.stdout)
-")
 
 (defun elpy-config--get-config ()
   "Return the configuration from `elpy-rpc-python-command'.
@@ -767,10 +747,10 @@ virtual_env_short"
   :button-prefix "["
   :button-suffix "]"
   :format "%[run%] %v"
-  :value-create 'elpy-config--pip-button-value-create
-  :action 'elpy-config--pip-button-action)
+  :value-create 'elpy-insert--pip-button-value-create
+  :action 'elpy-insert--pip-button-action)
 
-(defun elpy-config--pip-button-value-create (widget)
+(defun elpy-insert--pip-button-value-create (widget)
   "The :value-create option for the pip button widget."
   (let* ((python-module (widget-get widget :value))
          (do-user-install (not (or (getenv "VIRTUAL_ENV")
@@ -788,33 +768,15 @@ virtual_env_short"
     (widget-put widget :command command)
     (insert command)))
 
-(defun elpy-config--pip-button-action (widget &optional event)
+(defun elpy-insert--pip-button-action (widget &optional event)
   "The :action option for the pip button widget."
   (async-shell-command (widget-get widget :command)))
 
-;;;;;;;;;;;;;;;;
-;;; Elpy modules
-
-(defun elpy-modules-run (command &rest args)
-  "Run COMMAND with ARGS for all modules in `elpy-modules'."
-  (dolist (module elpy-modules)
-    (apply module command args)))
-
-(defun elpy-remove-modeline-lighter (mode-name)
-  "Remove the lighter for MODE-NAME.
-
-It's not necessary to see (Python Elpy yas company ElDoc) all the
-time. Honestly."
-  (interactive)
-  (cond
-   ((eq mode-name 'eldoc-minor-mode)
-    (setq eldoc-minor-mode-string nil))
-   (t
-    (setcdr (assq mode-name minor-mode-alist)
-            (list "")))))
-
 ;;;;;;;;;;;;
 ;;; Projects
+
+(defvar elpy-project--variable-name-history nil
+  "The history for `elpy-project--read-project-variable'")
 
 (defun elpy-project-root ()
   "Return the root of the current buffer's project.
@@ -878,17 +840,11 @@ so that import package.module will pick up module.py."
                                   (format "%s/__init__.py"
                                           dir))))))
 
-;;;;;;;;;;;;;;;;;;;;;
-;;; Project Variables
-
-(defvar elpy-project--variable-name-history nil
-  "The history for `elpy-project--read-project-variable'")
-
 (defun elpy-project--read-project-variable (prompt)
   "Prompt the user for a variable name to set project-wide."
   (let* ((prefixes (mapcar (lambda (cust)
                              (nth 2 cust))
-                           elpy--related-custom-groups))
+                           elpy-config--related-custom-groups))
          (var-regex (format "^%s" (regexp-opt prefixes))))
     (intern
      (completing-read
@@ -1008,13 +964,13 @@ file is <name>.py, and is either in the same directors or a
     (let* ((module (if (match-string 2)
                        (format "%s.%s" (match-string 1) (match-string 2))
                      (match-string 1)))
-           (path (elpy--resolve-module module)))
+           (path (elpy-find--resolve-module module)))
       (if path
           (find-file path)
         (elpy-find-file nil))))
    ((and dwim
          (buffer-file-name))
-    (let ((test-file (elpy--test-file)))
+    (let ((test-file (elpy-find--test-file)))
       (if test-file
           (find-file test-file)
         (elpy-find-file nil))))
@@ -1034,7 +990,7 @@ file is <name>.py, and is either in the same directors or a
                                 ido-setup-hook)))
       (find-file-in-project)))))
 
-(defun elpy--test-file ()
+(defun elpy-find--test-file ()
   "Return the test file for the current file, if any.
 
 If this is a test file, return the non-test file.
@@ -1064,7 +1020,7 @@ A test file is named test_<name>.py if the current file is
           (when (file-exists-p test)
             (throw 'return test)))))))
 
-(defun elpy--module-path (module)
+(defun elpy-find--module-path (module)
   "Return a directory path for MODULE.
 
 The resulting path is not guaranteed to exist. This simply
@@ -1092,12 +1048,12 @@ imports. They're a bad idea."
                        module))))
     (expand-file-name (format "%s/%s" base-directory file-name))))
 
-(defun elpy--resolve-module (module)
+(defun elpy-find--resolve-module (module)
   "Resolve MODULE relative to the current file and project.
 
 Returns a full path name for that module."
   (catch 'return
-    (let ((path (elpy--module-path module)))
+    (let ((path (elpy-find--module-path module)))
       (while (string-prefix-p (expand-file-name (elpy-library-root))
                               path)
         (dolist (name (list (format "%s.py" path)
@@ -1195,7 +1151,7 @@ code is executed."
   (let ((if-main-regex "^if +__name__ +== +[\"']__main__[\"'] *:")
         (has-if-main nil))
     (if (region-active-p)
-        (let ((region (elpy--region-without-indentation
+        (let ((region (elpy-shell--region-without-indentation
                        (region-beginning) (region-end))))
           (setq has-if-main (string-match if-main-regex region))
           (python-shell-send-string region))
@@ -1210,7 +1166,21 @@ code is executed."
       (message (concat "Removed if __main__ == '__main__' construct, "
                        "use a prefix argument to evaluate.")))))
 
-(defun elpy--region-without-indentation (beg end)
+(defun elpy-shell-switch-to-shell ()
+  "Switch to inferior Python process buffer."
+  (interactive)
+  (pop-to-buffer (process-buffer (elpy-shell-get-or-create-process)) t))
+
+(defun elpy-shell-get-or-create-process ()
+  "Get or create an inferior Python process for current buffer and return it."
+  (let* ((bufname (format "*%s*" (python-shell-get-process-name nil)))
+         (proc (get-buffer-process bufname)))
+    (if proc
+        proc
+      (run-python (python-shell-parse-command))
+      (get-buffer-process bufname))))
+
+(defun elpy-shell--region-without-indentation (beg end)
   "Return the current region as a string, but without indentation."
   (if (= beg end)
       ""
@@ -1234,20 +1204,6 @@ code is executed."
                         (point-max)
                         (- indent-level))
         (buffer-string)))))
-
-(defun elpy-shell-switch-to-shell ()
-  "Switch to inferior Python process buffer."
-  (interactive)
-  (pop-to-buffer (process-buffer (elpy-shell-get-or-create-process)) t))
-
-(defun elpy-shell-get-or-create-process ()
-  "Get or create an inferior Python process for current buffer and return it."
-  (let* ((bufname (format "*%s*" (python-shell-get-process-name nil)))
-         (proc (get-buffer-process bufname)))
-    (if proc
-        proc
-      (run-python (python-shell-parse-command))
-      (get-buffer-process bufname))))
 
 ;;;;;;;;;;;;;;;;;
 ;;; Syntax Checks
@@ -1526,6 +1482,9 @@ one."
 ;;;;;;;;;;;;;;;;
 ;;; Test running
 
+(defvar elpy-set-test-runner-history nil
+  "History variable for `elpy-set-test-runner'.")
+
 (defun elpy-test (&optional test-whole-project)
   "Run tests on the current test, or the whole project.
 
@@ -1540,9 +1499,6 @@ prefix is given, run all tests in the current project."
                  nil nil nil)
       ;; Else, run only this test
       (apply elpy-test-runner current-test))))
-
-(defvar elpy-set-test-runner-history nil
-  "History variable for `elpy-set-test-runner'.")
 
 (defun elpy-set-test-runner (test-runner)
   "Tell Elpy to use TEST-RUNNER to run tests.
@@ -1595,7 +1551,7 @@ directory is not nil."
         (list (elpy-library-root) nil nil nil))
     (let* ((top (elpy-library-root))
            (file buffer-file-name)
-           (module (elpy-test--module-name top file))
+           (module (elpy-test--module-name-for-file top file))
            (test (python-info-current-defun)))
       (if (and test (string-match "test" test))
           (progn
@@ -1604,7 +1560,7 @@ directory is not nil."
         (save-some-buffers)
         (list top nil nil nil)))))
 
-(defun elpy-test--module-name (top-level module-file)
+(defun elpy-test--module-name-for-file (top-level module-file)
   "Return the module name relative to TOP-LEVEL for MODULE-FILE.
 
 For example, for a top level of /project/root/ and a module file
@@ -1700,11 +1656,12 @@ prefix argument is given, prompt for a symbol from the user."
     (when (not current-prefix-arg)
       (setq doc (elpy-rpc-get-docstring))
       (when (not doc)
-        (setq doc (elpy-rpc-get-pydoc-documentation (elpy-symbol-at-point)))))
+        (setq doc (elpy-rpc-get-pydoc-documentation
+                   (elpy-doc--symbol-at-point)))))
     (when (not doc)
       (setq doc (elpy-rpc-get-pydoc-documentation
                  (elpy-doc--read-identifier-from-minibuffer
-                  (elpy-symbol-at-point)))))
+                  (elpy-doc--symbol-at-point)))))
     (if doc
         (elpy-doc--show doc)
       (error "No documentation found."))))
@@ -1726,6 +1683,14 @@ prefix argument is given, prompt for a symbol from the user."
         (replace-match (propertize (match-string 1)
                                    'face 'bold)
                        t t)))))
+
+(defun elpy-doc--symbol-at-point ()
+  "Return the Python symbol at point, including dotted paths."
+  (with-syntax-table python-dotty-syntax-table
+    (let ((symbol (symbol-at-point)))
+      (if symbol
+          (symbol-name symbol)
+        nil))))
 
 ;;;;;;;;;;;;;;
 ;;; Multi-Edit
@@ -1903,8 +1868,8 @@ name."
                           nil
                           'visible))))))
 
-;;;;;;;;;;;;;;;;;
-;;; Misc features
+;;;;;;;;;;;;;;;;;;;;;
+;;; Occur Definitions
 
 (defun elpy-occur-definitions ()
   "Display an occur buffer of all definitions in the current buffer.
@@ -1999,8 +1964,8 @@ See http://debbugs.gnu.org/cgi/bugreport.cgi?bug=17647"
                                  end-time)))
       (accept-process-output process timeout))))
 
-;;;;;;;;;;;;;;;;;;;;;
-;;; elpy-rpc backends
+;;;;;;;
+;;; RPC
 
 ;; elpy-rpc is a simple JSON-based RPC protocol. It's mostly JSON-RPC
 ;; 1.0, except we do not implement the full protocol as we do not need
@@ -2511,6 +2476,57 @@ error if the backend is not supported."
 
 (defalias 'elpy-set-backend 'elpy-rpc-set-backend)
 
+;;;;;;;;;;;
+;;; Modules
+
+(defvar elpy-modules-initialized-p nil
+  "Boolean, set to true if modules were run with `global-init'.")
+
+(defun elpy-modules-run (command &rest args)
+  "Run COMMAND with ARGS for all modules in `elpy-modules'."
+  (dolist (module elpy-modules)
+    (apply module command args)))
+
+(defun elpy-modules-global-init ()
+  "Run the global-init method of Elpy modules.
+
+Make sure this only happens once."
+  (when (not elpy-modules-initialized-p)
+    (elpy-modules-run 'global-init)
+    (setq elpy-modules-initialized-p t)))
+
+(defun elpy-modules-global-stop ()
+  "Run the global-stop method of Elpy modules.
+
+Make sure this only happens once per global-init call."
+  (when elpy-modules-initialized-p
+    (elpy-modules-run 'global-stop)
+    (setq elpy-modules-initialized-p nil)))
+
+(defun elpy-modules-buffer-init ()
+  "Run the buffer-init method of Elpy modules.
+
+Make sure global-init is called first."
+  (elpy-modules-global-init)
+  (elpy-modules-run 'buffer-init))
+
+(defun elpy-modules-buffer-stop ()
+  "Run the buffer-stop method of Elpy modules."
+  (elpy-modules-run 'buffer-stop))
+
+(defun elpy-modules-remove-modeline-lighter (mode-name)
+  "Remove the lighter for MODE-NAME.
+
+It's not necessary to see (Python Elpy yas company ElDoc) all the
+time. Honestly."
+  (interactive)
+  (cond
+   ((eq mode-name 'eldoc-minor-mode)
+    (setq eldoc-minor-mode-string nil))
+   (t
+    (setcdr (assq mode-name minor-mode-alist)
+            (list "")))))
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Module: Sane Defaults
 
@@ -2534,7 +2550,7 @@ error if the backend is not supported."
   (pcase command
     (`global-init
      (require 'company)
-     (elpy-remove-modeline-lighter 'company-mode)
+     (elpy-modules-remove-modeline-lighter 'company-mode)
      (define-key company-active-map (kbd "C-d")
        'company-show-doc-buffer))
     (`buffer-init
@@ -2700,11 +2716,11 @@ error if the backend is not supported."
   (pcase command
     (`global-init
      (require 'flymake)
-     (elpy-remove-modeline-lighter 'flymake-mode)
+     (elpy-modules-remove-modeline-lighter 'flymake-mode)
      ;; Flymake support using flake8, including warning faces.
      (when (and (executable-find "flake8")
                 (equal python-check-command
-                       (elpy--standard-value 'python-check-command)))
+                       (elpy-flymake--standard-value 'python-check-command)))
        (setq python-check-command "flake8"))
 
      ;; Add our initializer function
@@ -2776,6 +2792,13 @@ description."
                           ", ")))
     (message "%s" text)))
 
+(defun elpy-flymake--standard-value (var)
+  "Return the standard value of the given variable."
+  (let ((sv (get var 'standard-value)))
+    (when (consp sv)
+      (ignore-errors
+        (eval (car sv))))))
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Module: Highlight Indentation
 
@@ -2808,7 +2831,7 @@ description."
   (pcase command
     (`global-init
      (require 'yasnippet)
-     (elpy-remove-modeline-lighter 'yas-minor-mode)
+     (elpy-modules-remove-modeline-lighter 'yas-minor-mode)
 
      ;; We provide some YASnippet snippets. Add them.
 
