@@ -159,23 +159,28 @@ easier to send code snippets over.
    Similar to :kbd:`C-c C-c`, this will send the code of the current
    top level class or function to the interactive Python process.
 
-.. option:: python-shell-interpreter
-.. option:: python-shell-interpreter-args
+.. option:: elpy-interactive-python-command
 
-   Using these two options, you can change which command to use and
-   what arguments to pass to it to start the interactive Python
-   interpreter.
+   This option changes the default interpreter to use for the
+   interactive Python shell. While there are options available from
+   ``python-mode``, using this one will do the right thing when you
+   choose to use `IPython`_.
+
+   The problem is that IPython uses a different prompt pattern and
+   slightly different modules for tab completion, which confuses the
+   standard ``python-mode`` interactive shell mode. Using this
+   variable will change all associated options to deal with IPython
+   correctly.
 
 .. command:: elpy-use-ipython
 .. command:: elpy-use-cpython
 
-   If you want to use `IPython`_ instead of the standard interpreter,
-   you can use this command, both interactively and in your
-   ``.emacs``. This changes the aforementioned interpreter options,
-   but also a few others necessary for IPython.
+   Alternatively, you can also use these commands, either
+   interactively or from your ``.emacs``, to set the interactive
+   interpreter.
 
    As an IPython user, you might be interested in the `Emacs IPython
-   Notebook`_
+   Notebook`_, too.
 
 .. _IPython: http://ipython.org/
 .. _Emacs IPython Notebook: https://tkf.github.io/emacs-ipython-notebook/
