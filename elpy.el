@@ -2609,6 +2609,13 @@ time. Honestly."
   "Buffer-local cache for candidate information.")
 (make-variable-buffer-local 'elpy-company--cache)
 
+(defun elpy-company--cache-clear ()
+  "Clear and initialize the cache."
+  (if elpy-company--cache
+      (clrhash elpy-company--cache)
+    (setq elpy-company--cache
+          (make-hash-table :test #'equal))))
+
 (defun elpy-company--cache-annotation (name)
   "Return the cached annotation for NAME."
   (when elpy-company--cache
@@ -2626,10 +2633,7 @@ time. Honestly."
 
 (defun elpy-company--cache-completions (prefix result)
   "Store RESULT in the candidate cache and return candidates."
-  (if elpy-company--cache
-      (clrhash elpy-company--cache)
-    (setq elpy-company--cache
-          (make-hash-table :test #'equal)))
+  (elpy-company--cache-clear)
   (mapcar (lambda (completion)
             (let* ((suffix (cdr (assq 'suffix completion)))
                    (name (concat prefix suffix)))
@@ -2655,6 +2659,7 @@ time. Honestly."
            (lambda (callback)
              (elpy-rpc-get-completions
               (lambda (result)
+                (elpy-company--cache-clear)
                 (funcall
                  callback
                  (if result
