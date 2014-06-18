@@ -246,7 +246,7 @@ def run_with_debug(jedi, name, *args, **kwargs):
                                     'debug_info': debug_info}
             }
             raise rpc.Fault(message=str(e),
-                            code=400,
+                            code=500,
                             data=data)
         finally:
             jedi.set_debug_function(None)
