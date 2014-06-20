@@ -5,20 +5,22 @@ handles backend selection and passes methods on to the selected
 backend.
 
 """
-import elpy
+import io
+import os
+import pydoc
 
-from elpy.utils.pydocutils import get_pydoc_completions
+from elpy.pydocutils import get_pydoc_completions
 from elpy.rpc import JSONRPCServer, Fault
 
-from elpy.backends.nativebackend import NativeBackend
-from elpy.backends.ropebackend import RopeBackend
-from elpy.backends.jedibackend import JediBackend
+try:
+    from elpy import jedibackend
+except ImportError:  # pragma: no cover
+    jedibackend = None
 
-BACKEND_MAP = {
-    'native': NativeBackend,
-    'rope': RopeBackend,
-    'jedi': JediBackend,
-}
+try:
+    from elpy import ropebackend
+except ImportError:  # pragma: no cover
+    ropebackend = None
 
 
 class ElpyRPCServer(JSONRPCServer):
@@ -27,33 +29,10 @@ class ElpyRPCServer(JSONRPCServer):
     See the rpc_* methods for exported method documentation.
 
     """
-
     def __init__(self):
-        """Return a new RPC server object.
-
-        As the default backend, we choose the first available from
-        rope, jedi, or native.
-
-        """
         super(ElpyRPCServer, self).__init__()
-        for cls in [RopeBackend, JediBackend, NativeBackend]:
-            backend = cls()
-            if backend is not None:
-                self.backend = backend
-                break
-
-    def handle(self, method_name, args):
-        """Call the RPC method method_name with the specified args.
-
-        """
-        method = getattr(self.backend, "rpc_" + method_name, None)
-        if method is None:
-            raise Fault("Unknown method {0}".format(method_name))
-        return method(*args)
-
-    def rpc_version(self):
-        """Return the version of the elpy RPC backend."""
-        return elpy.__version__
+        self.backend = None
+        self.project_root = None
 
     def rpc_echo(self, *args):
         """Return the arguments.
@@ -64,42 +43,64 @@ class ElpyRPCServer(JSONRPCServer):
         """
         return args
 
-    def rpc_set_backend(self, backend_name):
-        """Set the current backend to backend_name.
+    def rpc_init(self, options):
+        self.project_root = options["project_root"]
 
-        This will change the current backend. If the backend is not
-        found or can not find its library, it will raise a ValueError.
+        if ropebackend and options["backend"] == "rope":
+            self.backend = ropebackend.RopeBackend(self.project_root)
+        elif jedibackend and options["backend"] == "jedi":
+            self.backend = jedibackend.JediBackend(self.project_root)
+        elif ropebackend:
+            self.backend = ropebackend.RopeBackend(self.project_root)
+        elif jedibackend:
+            self.backend = jedibackend.JediBackend(self.project_root)
+        else:
+            self.backend = None
 
-        """
+        return {
+            'backend': (self.backend.name if self.backend is not None
+                        else None)
+        }
 
-        backend_cls = BACKEND_MAP.get(backend_name)
-        if backend_cls is None:
-            raise ValueError("Unknown backend {0}"
-                             .format(backend_name))
-        backend = backend_cls()
-        if backend is None:
-            raise ValueError("Backend {0} could not find the "
-                             "required Python library"
-                             .format(backend_name))
-        self.backend = backend
-
-    def rpc_get_backend(self):
-        """Return the name of the current backend."""
-        return self.backend.name
-
-    def rpc_get_available_backends(self):
-        """Return a list of names of the  available backends.
-
-        A backend is "available" if the libraries it uses can be
-        loaded.
+    def rpc_get_calltip(self, filename, source, offset):
+        """Get the calltip for the function at the offset.
 
         """
-        result = []
-        for cls in BACKEND_MAP.values():
-            backend = cls()
-            if backend is not None:
-                result.append(backend.name)
-        return result
+        source = get_source(source)
+        if hasattr(self.backend, "rpc_get_calltip"):
+            return self.backend.rpc_get_calltip(filename, source, offset)
+        else:
+            return None
+
+    def rpc_get_completions(self, filename, source, offset):
+        """Get a list of completion candidates for the symbol at offset.
+
+        """
+        source = get_source(source)
+        if hasattr(self.backend, "rpc_get_completions"):
+            return self.backend.rpc_get_completions(filename, source, offset)
+        else:
+            return []
+
+    def rpc_get_definition(self, filename, source, offset):
+        """Get the location of the definition for the symbol at the offset.
+
+        """
+        source = get_source(source)
+        if hasattr(self.backend, "rpc_get_definition"):
+            return self.backend.rpc_get_definition(filename, source, offset)
+        else:
+            return None
+
+    def rpc_get_docstring(self, filename, source, offset):
+        """Get the docstring for the symbol at the offset.
+
+        """
+        source = get_source(source)
+        if hasattr(self.backend, "rpc_get_docstring"):
+            return self.backend.rpc_get_docstring(filename, source, offset)
+        else:
+            return None
 
     def rpc_get_pydoc_completions(self, name=None):
         """Return a list of possible strings to pass to pydoc.
@@ -110,8 +111,21 @@ class ElpyRPCServer(JSONRPCServer):
         """
         return get_pydoc_completions(name)
 
-    def rpc_get_refactor_options(self, project_root, filename,
-                                 start, end=None):
+    def rpc_get_pydoc_documentation(self, symbol):
+        """Get the Pydoc documentation for the given symbol.
+
+        Uses pydoc and can return a string with backspace characters
+        for bold highlighting.
+
+        """
+        try:
+            return pydoc.render_doc(str(symbol),
+                                    "Elpy Pydoc Documentation for %s",
+                                    False)
+        except (ImportError, pydoc.ErrorDuringImport):
+            return None
+
+    def rpc_get_refactor_options(self, filename, start, end=None):
         """Return a list of possible refactoring options.
 
         This list will be filtered depending on whether it's
@@ -123,10 +137,10 @@ class ElpyRPCServer(JSONRPCServer):
             from elpy import refactor
         except:
             raise ImportError("Rope not installed, refactorings unavailable")
-        ref = refactor.Refactor(project_root, filename)
+        ref = refactor.Refactor(self.project_root, filename)
         return ref.get_refactor_options(start, end)
 
-    def rpc_refactor(self, project_root, filename, method, args):
+    def rpc_refactor(self, filename, method, args):
         """Return a list of changes from the refactoring action.
 
         A change is a dictionary describing the change. See
@@ -139,5 +153,41 @@ class ElpyRPCServer(JSONRPCServer):
             raise ImportError("Rope not installed, refactorings unavailable")
         if args is None:
             args = ()
-        ref = refactor.Refactor(project_root, filename)
+        ref = refactor.Refactor(self.project_root, filename)
         return ref.get_changes(method, *args)
+
+    def rpc_get_usages(self, filename, source, offset):
+        """Get usages for the symbol at point.
+
+        """
+        source = get_source(source)
+        if hasattr(self.backend, "rpc_get_usages"):
+            return self.backend.rpc_get_usages(filename, source, offset)
+        else:
+            raise Fault("get_usages not implemented by current backend",
+                        code=400)
+
+
+def get_source(fileobj):
+    """Translate fileobj into file contents.
+
+    fileobj is either a string or a dict. If it's a string, that's the
+    file contents. If it's a string, then the filename key contains
+    the name of the file whose contents we are to use.
+
+    If the dict contains a true value for the key delete_after_use,
+    the file should be deleted once read.
+
+    """
+    if not isinstance(fileobj, dict):
+        return fileobj
+    else:
+        try:
+            with io.open(fileobj["filename"], encoding="utf-8") as f:
+                return f.read()
+        finally:
+            if fileobj.get('delete_after_use'):
+                try:
+                    os.remove(fileobj["filename"])
+                except:  # pragma: no cover
+                    pass

@@ -1,5 +1,6 @@
 (ert-deftest elpy-rpc--call-blocking-should-return-success-value ()
   (elpy-testcase ()
+    (elpy-rpc--get-rpc-buffer)
     (mletf* ((elpy-rpc--timeout 0.1)
              (elpy-rpc--call
               (method params success error)

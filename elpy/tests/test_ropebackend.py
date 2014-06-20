@@ -1,48 +1,57 @@
-"""Tests for elpy.backends.ropebackend."""
+"""Tests for elpy.ropebackend."""
 
 import mock
 
+from elpy import ropebackend
 from elpy.tests import compat
 from elpy.tests.support import BackendTestCase, source_and_offset
-from elpy.backends import ropebackend
 
 
 class RopeBackendTestCase(BackendTestCase):
     def setUp(self):
         super(RopeBackendTestCase, self).setUp()
-        self.backend = ropebackend.RopeBackend()
+        self.backend = ropebackend.RopeBackend(self.project_root)
 
 
 class TestInit(RopeBackendTestCase):
     def test_should_have_rope_as_name(self):
         self.assertEqual(self.backend.name, "rope")
 
-    def test_should_return_object_if_rope_available(self):
-        self.assertIsNotNone(ropebackend.RopeBackend())
 
-    @mock.patch.object(compat.builtins, '__import__')
-    def test_should_return_none_if_no_rope(self, import_):
-        import_.side_effect = ImportError
-        self.assertIsNone(ropebackend.RopeBackend())
+class TestValidate(RopeBackendTestCase):
+    def test_should_call_validate_after_timeout(self):
+        with mock.patch("time.time") as t:
+            t.return_value = 10
+            self.backend.validate()
+            with mock.patch.object(self.backend, 'project') as project:
+                t.return_value = 10 + ropebackend.VALIDATE_EVERY_SECONDS + 1
+                self.backend.validate()
+
+                self.assertTrue(project.validate.called)
+
+    def test_should_not_call_validate_before_timeout(self):
+        with mock.patch("time.time") as t:
+            t.return_value = 10
+            self.backend.validate()
+            with mock.patch.object(self.backend, 'project') as project:
+                t.return_value = 10 + ropebackend.VALIDATE_EVERY_SECONDS - 1
+                self.backend.validate()
+
+                self.assertFalse(project.validate.called)
 
 
-class TestGetProject(RopeBackendTestCase):
-    def test_should_raise_error_for_none_as_project_root(self):
-        self.assertRaises(ValueError,
-                          self.backend.get_project, None)
+class TestRPCGetCompletions(RopeBackendTestCase):
+    def test_should_call_validate(self):
+        with mock.patch.object(self.backend, 'validate') as validate:
+            self.backend.rpc_get_completions(None, "", 0)
 
-    def test_should_return_none_for_inexisting_directory(self):
-        self.assertIsNone(self.backend.get_project(self.project_root +
-                                                   "/doesnotexist/"))
+            self.assertTrue(validate.called)
 
-
-class TestGetCompletions(RopeBackendTestCase):
     def test_should_return_completions(self):
         source, offset = source_and_offset("import json\n"
                                            "json.J_|_")
         filename = self.project_file("test.py", source)
-        completions = self.backend.rpc_get_completions(self.project_root,
-                                                       filename,
+        completions = self.backend.rpc_get_completions(filename,
                                                        source,
                                                        offset)
         self.assertEqual(
@@ -54,14 +63,12 @@ class TestGetCompletions(RopeBackendTestCase):
 
     def test_should_not_fail_on_inexisting_file(self):
         filename = self.project_root + "/doesnotexist.py"
-        self.backend.rpc_get_completions(self.project_root,
-                                         filename,
+        self.backend.rpc_get_completions(filename,
                                          "",
                                          0)
 
     def test_should_not_fail_if_file_is_none(self):
-        self.backend.rpc_get_completions(self.project_root,
-                                         None,
+        self.backend.rpc_get_completions(None,
                                          "",
                                          0)
 
@@ -92,9 +99,10 @@ class TestGetCompletions(RopeBackendTestCase):
         )
 
         filename = self.project_file("test.py", source)
-        self.assertEquals([],
-                          self.backend.rpc_get_completions
-                          (self.project_root, filename, source, offset))
+
+        actual = self.backend.rpc_get_completions(filename, source, offset)
+
+        self.assertEquals([], actual)
 
     def test_should_not_fail_for_bad_indentation(self):
         source, offset = source_and_offset(
@@ -102,15 +110,15 @@ class TestGetCompletions(RopeBackendTestCase):
             "       print 23_|_\n"
             "      print 17\n")
         filename = self.project_file("test.py", source)
-        self.assertEquals([],
-                          self.backend.rpc_get_completions
-                          (self.project_root, filename, source, offset))
+
+        actual = self.backend.rpc_get_completions(filename, source, offset)
+
+        self.assertEquals([], actual)
 
     def test_should_complete_top_level_modules_for_import(self):
         source, offset = source_and_offset("import multi_|_")
         filename = self.project_file("test.py", source)
-        completions = self.backend.rpc_get_completions(self.project_root,
-                                                       filename,
+        completions = self.backend.rpc_get_completions(filename,
                                                        source,
                                                        offset)
         if compat.PYTHON3:
@@ -123,8 +131,7 @@ class TestGetCompletions(RopeBackendTestCase):
     def test_should_complete_packages_for_import(self):
         source, offset = source_and_offset("import threading.current_t_|_")
         filename = self.project_file("test.py", source)
-        completions = self.backend.rpc_get_completions(self.project_root,
-                                                       filename,
+        completions = self.backend.rpc_get_completions(filename,
                                                        source,
                                                        offset)
         self.assertEqual([cand['suffix'] for cand in completions],
@@ -133,8 +140,7 @@ class TestGetCompletions(RopeBackendTestCase):
     def test_should_not_complete_for_import(self):
         source, offset = source_and_offset("import foo.Conf_|_")
         filename = self.project_file("test.py", source)
-        completions = self.backend.rpc_get_completions(self.project_root,
-                                                       filename,
+        completions = self.backend.rpc_get_completions(filename,
                                                        source,
                                                        offset)
         self.assertEqual([cand['suffix'] for cand in completions],
@@ -145,8 +151,7 @@ class TestGetCompletions(RopeBackendTestCase):
         # See #186
         source, offset = source_and_offset("from .. import foo_|_")
         filename = self.project_file("test.py", source)
-        completions = self.backend.rpc_get_completions(self.project_root,
-                                                       filename,
+        completions = self.backend.rpc_get_completions(filename,
                                                        source,
                                                        offset)
         # This is strictly speaking superfluous. Just avoid an error.
@@ -155,23 +160,19 @@ class TestGetCompletions(RopeBackendTestCase):
     def test_should_complete_sys(self):
         source, offset = source_and_offset("import sys\nsys._|_")
         filename = self.project_file("test.py", source)
-        completions = self.backend.rpc_get_completions(self.project_root,
-                                                       filename,
+        completions = self.backend.rpc_get_completions(filename,
                                                        source,
                                                        offset)
         self.assertIn('path', [cand['suffix'] for cand in completions])
 
-    @mock.patch('elpy.backends.ropebackend.get_source')
-    def test_should_call_get_source(self, get_source):
-        get_source.return_value = "test-source"
 
-        self.backend.rpc_get_completions(self.project_root, None,
-                                         "test-source", 0)
+class TestRPCGetDefinition(RopeBackendTestCase):
+    def test_should_call_validate(self):
+        with mock.patch.object(self.backend, 'validate') as validate:
+            self.backend.rpc_get_definition(None, "", 0)
 
-        get_source.assert_called_with("test-source")
+            self.assertTrue(validate.called)
 
-
-class TestGetDefinition(RopeBackendTestCase):
     def test_should_return_location_in_same_file(self):
         source, offset = source_and_offset(
             "import threading\n"
@@ -186,8 +187,7 @@ class TestGetDefinition(RopeBackendTestCase):
         if compat.PYTHON3:
             source = source.replace("(a, b)", "(b, a)")
         filename = self.project_file("test.py", "")  # Unsaved
-        definition = self.backend.rpc_get_definition(self.project_root,
-                                                     filename,
+        definition = self.backend.rpc_get_definition(filename,
                                                      source,
                                                      offset)
         self.assertEqual(definition, (filename, 71))
@@ -199,8 +199,7 @@ class TestGetDefinition(RopeBackendTestCase):
         source2, offset = source_and_offset("from test1 import test_function\n"
                                             "test_funct_|_ion(1, 2)\n")
         file2 = self.project_file("test2.py", source2)
-        definition = self.backend.rpc_get_definition(self.project_root,
-                                                     file2,
+        definition = self.backend.rpc_get_definition(file2,
                                                      source2,
                                                      offset)
         self.assertEqual(definition, (file1, 4))
@@ -208,8 +207,7 @@ class TestGetDefinition(RopeBackendTestCase):
     def test_should_return_none_if_location_not_found(self):
         source, offset = source_and_offset("test_f_|_unction()\n")
         filename = self.project_file("test.py", source)
-        definition = self.backend.rpc_get_definition(self.project_root,
-                                                     filename,
+        definition = self.backend.rpc_get_definition(filename,
                                                      source,
                                                      offset)
         self.assertIsNone(definition)
@@ -217,40 +215,27 @@ class TestGetDefinition(RopeBackendTestCase):
     def test_should_return_none_if_outside_of_symbol(self):
         source, offset = source_and_offset("test_function(_|_)\n")
         filename = self.project_file("test.py", source)
-        definition = self.backend.rpc_get_definition(self.project_root,
-                                                     filename,
+        definition = self.backend.rpc_get_definition(filename,
                                                      source,
                                                      offset)
         self.assertIsNone(definition)
 
     def test_should_not_fail_on_inexisting_file(self):
         filename = self.project_root + "/doesnotexist.py"
-        self.backend.rpc_get_definition(self.project_root,
-                                        filename,
+        self.backend.rpc_get_definition(filename,
                                         "",
                                         0)
 
     def test_should_not_fail_on_empty_file(self):
         filename = self.project_file("test.py", "")
-        self.backend.rpc_get_definition(self.project_root,
-                                        filename,
+        self.backend.rpc_get_definition(filename,
                                         "",
                                         0)
 
     def test_should_not_fail_if_file_is_none(self):
-        self.backend.rpc_get_definition(self.project_root,
-                                        None,
+        self.backend.rpc_get_definition(None,
                                         "",
                                         0)
-
-    @mock.patch('elpy.backends.ropebackend.get_source')
-    def test_should_call_get_source(self, get_source):
-        get_source.return_value = "test-source"
-
-        self.backend.rpc_get_definition(self.project_root, None,
-                                        "test-source", 0)
-
-        get_source.assert_called_with("test-source")
 
     def test_should_not_fail_on_keyword(self):
         source, offset = source_and_offset(
@@ -260,17 +245,21 @@ class TestGetDefinition(RopeBackendTestCase):
             "    pass\n")
         filename = self.project_file("test.py", source)
 
-        self.backend.rpc_get_definition(self.project_root,
-                                        filename, source, offset)
+        self.backend.rpc_get_definition(filename, source, offset)
 
 
-class TestGetCalltip(RopeBackendTestCase):
+class TestRPCGetCalltip(RopeBackendTestCase):
+    def test_should_call_validate(self):
+        with mock.patch.object(self.backend, 'validate') as validate:
+            self.backend.rpc_get_calltip(None, "", 0)
+
+            self.assertTrue(validate.called)
+
     def test_should_get_calltip(self):
         source, offset = source_and_offset(
             "import threading\nthreading.Thread(_|_")
         filename = self.project_file("test.py", source)
-        calltip = self.backend.rpc_get_calltip(self.project_root,
-                                               filename,
+        calltip = self.backend.rpc_get_calltip(filename,
                                                source,
                                                offset)
         if compat.PYTHON3:
@@ -285,8 +274,7 @@ class TestGetCalltip(RopeBackendTestCase):
         source, offset = source_and_offset(
             "import threading\nthreading.Thread(foo()_|_")
         filename = self.project_file("test.py", source)
-        calltip = self.backend.rpc_get_calltip(self.project_root,
-                                               filename,
+        calltip = self.backend.rpc_get_calltip(filename,
                                                source,
                                                offset)
         if compat.PYTHON3:
@@ -301,8 +289,7 @@ class TestGetCalltip(RopeBackendTestCase):
         source, offset = source_and_offset(
             "import threading\nthreading.Thread(_|_)")
         filename = self.project_file("test.py", source)
-        calltip = self.backend.rpc_get_calltip(self.project_root,
-                                               filename,
+        calltip = self.backend.rpc_get_calltip(filename,
                                                source,
                                                offset)
         if compat.PYTHON3:
@@ -317,22 +304,19 @@ class TestGetCalltip(RopeBackendTestCase):
         source, offset = source_and_offset(
             "froblgoo(_|_")
         filename = self.project_file("test.py", source)
-        calltip = self.backend.rpc_get_calltip(self.project_root,
-                                               filename,
+        calltip = self.backend.rpc_get_calltip(filename,
                                                source,
                                                offset)
         self.assertIsNone(calltip)
 
     def test_should_not_fail_on_inexisting_file(self):
         filename = self.project_root + "/doesnotexist.py"
-        self.backend.rpc_get_calltip(self.project_root,
-                                     filename,
+        self.backend.rpc_get_calltip(filename,
                                      "",
                                      0)
 
     def test_should_not_fail_if_file_is_none(self):
-        self.backend.rpc_get_calltip(self.project_root,
-                                     None,
+        self.backend.rpc_get_calltip(None,
                                      "",
                                      0)
 
@@ -362,8 +346,7 @@ class TestGetCalltip(RopeBackendTestCase):
             "  pass\n")
 
         filename = self.project_file("test.py", source)
-        calltip = self.backend.rpc_get_calltip(self.project_root,
-                                               filename,
+        calltip = self.backend.rpc_get_calltip(filename,
                                                source,
                                                offset)
         self.assertIsNone(calltip)
@@ -374,27 +357,17 @@ class TestGetCalltip(RopeBackendTestCase):
             "       _|_print 23\n"
             "      print 17\n")
         filename = self.project_file("test.py", source)
-        calltip = self.backend.rpc_get_calltip(self.project_root,
-                                               filename,
+        calltip = self.backend.rpc_get_calltip(filename,
                                                source,
                                                offset)
         self.assertIsNone(calltip)
-
-    @mock.patch('elpy.backends.ropebackend.get_source')
-    def test_should_call_get_source(self, get_source):
-        get_source.return_value = "test-source"
-
-        self.backend.rpc_get_calltip(self.project_root, None, "test-source", 0)
-
-        get_source.assert_called_with("test-source")
 
     def test_should_remove_self_argument(self):
         source, offset = source_and_offset(
             "d = dict()\n"
             "d.keys(_|_")
         filename = self.project_file("test.py", source)
-        calltip = self.backend.rpc_get_calltip(self.project_root,
-                                               filename,
+        calltip = self.backend.rpc_get_calltip(filename,
                                                source,
                                                offset)
         if compat.PYTHON3:
@@ -408,8 +381,7 @@ class TestGetCalltip(RopeBackendTestCase):
             "q = multiprocessing.Queue()\n"
             "q.qsize(_|_")
         filename = self.project_file("test.py", source)
-        calltip = self.backend.rpc_get_calltip(self.project_root,
-                                               filename,
+        calltip = self.backend.rpc_get_calltip(filename,
                                                source,
                                                offset)
         if compat.PYTHON3 and calltip is None:
@@ -419,13 +391,18 @@ class TestGetCalltip(RopeBackendTestCase):
             self.assertEqual(calltip, "Queue.qsize()")
 
 
-class TestGetDocstring(RopeBackendTestCase):
+class TestRPCGetDocstring(RopeBackendTestCase):
+    def test_should_call_validate(self):
+        with mock.patch.object(self.backend, 'validate') as validate:
+            self.backend.rpc_get_docstring(None, "", 0)
+
+            self.assertTrue(validate.called)
+
     def test_should_get_docstring(self):
         source, offset = source_and_offset(
             "import threading\nthreading.Thread.join_|_(")
         filename = self.project_file("test.py", source)
-        docstring = self.backend.rpc_get_docstring(self.project_root,
-                                                   filename,
+        docstring = self.backend.rpc_get_docstring(filename,
                                                    source,
                                                    offset)
 
@@ -439,30 +416,18 @@ class TestGetDocstring(RopeBackendTestCase):
         source, offset = source_and_offset(
             "froblgoo_|_(\n")
         filename = self.project_file("test.py", source)
-        docstring = self.backend.rpc_get_docstring(self.project_root,
-                                                   filename,
+        docstring = self.backend.rpc_get_docstring(filename,
                                                    source,
                                                    offset)
         self.assertIsNone(docstring)
 
     def test_should_not_fail_on_inexisting_file(self):
         filename = self.project_root + "/doesnotexist.py"
-        self.backend.rpc_get_docstring(self.project_root,
-                                       filename,
+        self.backend.rpc_get_docstring(filename,
                                        "",
                                        0)
 
     def test_should_not_fail_if_file_is_none(self):
-        self.backend.rpc_get_docstring(self.project_root,
-                                       None,
+        self.backend.rpc_get_docstring(None,
                                        "",
                                        0)
-
-    @mock.patch('elpy.backends.ropebackend.get_source')
-    def test_should_call_get_source(self, get_source):
-        get_source.return_value = "test-source"
-
-        self.backend.rpc_get_docstring(self.project_root, None,
-                                       "test-source", 0)
-
-        get_source.assert_called_with("test-source")

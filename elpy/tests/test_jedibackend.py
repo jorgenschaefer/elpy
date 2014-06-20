@@ -1,33 +1,25 @@
-"""Tests for the elpy.backends.jedibackend module."""
+"""Tests for the elpy.jedibackend module."""
 
 import unittest
 
 import jedi
 import mock
 
-from elpy.tests import compat
-from elpy.backends import jedibackend
-from elpy.tests.support import BackendTestCase, source_and_offset
+from elpy import jedibackend
 from elpy import rpc
+from elpy.tests import compat
+from elpy.tests.support import BackendTestCase, source_and_offset
 
 
 class JediBackendTestCase(BackendTestCase):
     def setUp(self):
         super(JediBackendTestCase, self).setUp()
-        self.backend = jedibackend.JediBackend()
+        self.backend = jedibackend.JediBackend(self.project_root)
 
 
 class TestInit(JediBackendTestCase):
     def test_should_have_jedi_as_name(self):
         self.assertEqual(self.backend.name, "jedi")
-
-    def test_should_return_object_if_jedi_available(self):
-        self.assertIsNotNone(jedibackend.JediBackend())
-
-    @mock.patch.object(compat.builtins, '__import__')
-    def test_should_return_none_if_no_rope(self, import_):
-        import_.side_effect = ImportError
-        self.assertIsNone(jedibackend.JediBackend())
 
 
 class TestGetCompletions(JediBackendTestCase):
@@ -35,7 +27,7 @@ class TestGetCompletions(JediBackendTestCase):
         source, offset = source_and_offset("o_|_")
         self.assertEqual(
             sorted([cand['suffix'] for cand in
-                    self.backend.rpc_get_completions(None, "test.py",
+                    self.backend.rpc_get_completions("test.py",
                                                      source, offset)]),
             sorted(['SError', 'bject', 'ct', 'pen', 'r', 'rd',
                     'verflowError']))
@@ -49,19 +41,16 @@ class TestGetCompletions(JediBackendTestCase):
             expected = ["hread", "hread", "hreadError", "imer"]
 
         got = [cand['suffix'] for cand in
-               self.backend.rpc_get_completions(None, "test.py",
-                                                source, offset)]
+               self.backend.rpc_get_completions("test.py", source, offset)]
 
         self.assertEqual(sorted(got), sorted(expected))
 
     def test_should_not_fail_on_inexisting_file(self):
-        self.backend.rpc_get_completions(self.project_root,
-                                         "doesnotexist.py",
+        self.backend.rpc_get_completions("doesnotexist.py",
                                          "", 0)
 
     def test_should_not_fail_if_file_is_none(self):
-        self.backend.rpc_get_completions(self.project_root,
-                                         None,
+        self.backend.rpc_get_completions(None,
                                          "open", 0)
 
     def test_should_find_completion_different_package(self):
@@ -78,8 +67,7 @@ class TestGetCompletions(JediBackendTestCase):
             "        c = Add()\n"
             "        c.ad_|_\n")
         file2 = self.project_file("project/calculator.py", source2)
-        proposals = self.backend.rpc_get_completions(self.project_root,
-                                                     file2,
+        proposals = self.backend.rpc_get_completions(file2,
                                                      source2,
                                                      offset)
         self.assertEqual(proposals,
@@ -87,15 +75,6 @@ class TestGetCompletions(JediBackendTestCase):
                            'docstring': 'add(self, a, b)\n\n',
                            'annotation': 'function',
                            'meta': 'function: add.Add.add'}])
-
-    @mock.patch('elpy.backends.jedibackend.get_source')
-    def test_should_call_get_source(self, get_source):
-        get_source.return_value = "test-source"
-
-        self.backend.rpc_get_completions(self.project_root, None,
-                                         "test-source", 0)
-
-        get_source.assert_called_with("test-source")
 
 
 class TestGetDefinition(JediBackendTestCase):
@@ -106,8 +85,7 @@ class TestGetDefinition(JediBackendTestCase):
                                            "\n"
                                            "test_func_|_tion(\n")
         filename = self.project_file("test.py", source)
-        self.assertEqual(self.backend.rpc_get_definition(self.project_root,
-                                                         filename,
+        self.assertEqual(self.backend.rpc_get_definition(filename,
                                                          source,
                                                          offset),
                          (filename, 17))
@@ -119,8 +97,7 @@ class TestGetDefinition(JediBackendTestCase):
             "\n"
             "fo_|_o()\n")
         self.assertIsNone(
-            self.backend.rpc_get_definition(self.project_root,
-                                            self.project_root +
+            self.backend.rpc_get_definition(self.project_root +
                                             "/doesnotexist.py",
                                             source,
                                             offset))
@@ -130,8 +107,7 @@ class TestGetDefinition(JediBackendTestCase):
             "fo_|_o()\n")
         filename = self.project_file("test.py", source)
         self.assertIsNone(
-            self.backend.rpc_get_definition(self.project_root,
-                                            filename,
+            self.backend.rpc_get_definition(filename,
                                             source,
                                             offset))
 
@@ -142,8 +118,7 @@ class TestGetDefinition(JediBackendTestCase):
         source2, offset = source_and_offset("from test1 import test_function\n"
                                             "test_function_|_(1, 2)\n")
         file2 = self.project_file("test2.py", source2)
-        location = self.backend.rpc_get_definition(self.project_root,
-                                                   file2,
+        location = self.backend.rpc_get_definition(file2,
                                                    source2,
                                                    offset)
         self.assertEqual(location, (file1, 0))
@@ -161,20 +136,17 @@ class TestGetDefinition(JediBackendTestCase):
             "    def add(self, a, b):\n"
             "        return Add_|_().add(a, b)\n")
         file2 = self.project_file("project/calculator.py", source2)
-        location = self.backend.rpc_get_definition(self.project_root,
-                                                   file2,
+        location = self.backend.rpc_get_definition(file2,
                                                    source2,
                                                    offset)
         self.assertEqual(location, (file1, 0))
 
     def test_should_not_fail_on_inexisting_file(self):
-        self.backend.rpc_get_definition(self.project_root,
-                                        "doesnotexist.py",
+        self.backend.rpc_get_definition("doesnotexist.py",
                                         "open", 0)
 
     def test_should_not_fail_if_file_is_none(self):
-        self.backend.rpc_get_definition(self.project_root,
-                                        None,
+        self.backend.rpc_get_definition(None,
                                         "open", 0)
 
     def test_should_find_variable_definition(self):
@@ -182,20 +154,10 @@ class TestGetDefinition(JediBackendTestCase):
                                            "\n"
                                            "variable = _|_SOME_VALUE\n")
         filename = self.project_file("test.py", source)
-        self.assertEqual(self.backend.rpc_get_definition(self.project_root,
-                                                         filename,
+        self.assertEqual(self.backend.rpc_get_definition(filename,
                                                          source,
                                                          offset),
                          (filename, 0))
-
-    @mock.patch('elpy.backends.jedibackend.get_source')
-    def test_should_call_get_source(self, get_source):
-        get_source.return_value = "test-source"
-
-        self.backend.rpc_get_definition(self.project_root, None,
-                                        "test-source", 0)
-
-        get_source.assert_called_with("test-source")
 
 
 class TestGetCalltip(JediBackendTestCase):
@@ -203,8 +165,7 @@ class TestGetCalltip(JediBackendTestCase):
         filename = self.project_file("test.py", "")
         source, offset = source_and_offset("import threading\n"
                                            "threading.Thread(_|_")
-        calltip = self.backend.rpc_get_calltip(self.project_root,
-                                               filename,
+        calltip = self.backend.rpc_get_calltip(filename,
                                                source, offset)
         if compat.PYTHON3:
             self.assertEqual(calltip,
@@ -230,19 +191,16 @@ class TestGetCalltip(JediBackendTestCase):
     def test_should_return_none_outside_of_all(self):
         filename = self.project_file("test.py", "")
         source, offset = source_and_offset("import thr_|_eading\n")
-        calltip = self.backend.rpc_get_calltip(self.project_root,
-                                               filename,
+        calltip = self.backend.rpc_get_calltip(filename,
                                                source, offset)
         self.assertIsNone(calltip)
 
     def test_should_not_fail_on_inexisting_file(self):
-        self.backend.rpc_get_calltip(self.project_root,
-                                     "doesnotexist.py",
+        self.backend.rpc_get_calltip("doesnotexist.py",
                                      "open(", 5)
 
     def test_should_not_fail_if_file_is_none(self):
-        self.backend.rpc_get_calltip(self.project_root,
-                                     None,
+        self.backend.rpc_get_calltip(None,
                                      "open", 0)
 
     def test_should_find_calltip_different_package(self):
@@ -259,59 +217,13 @@ class TestGetCalltip(JediBackendTestCase):
             "        c = Add()\n"
             "        c.add(_|_\n")
         file2 = self.project_file("project/calculator.py", source2)
-        calltip = self.backend.rpc_get_calltip(self.project_root,
-                                               file2,
+        calltip = self.backend.rpc_get_calltip(file2,
                                                source2,
                                                offset)
         self.assertEqual(calltip,
                          {'name': u'add',
                           'index': 0,
                           'params': [u'a', u'b']})
-
-    @mock.patch('elpy.backends.jedibackend.get_source')
-    def test_should_call_get_source(self, get_source):
-        get_source.return_value = "test-source"
-
-        self.backend.rpc_get_calltip(self.project_root, None,
-                                     "test-source", 0)
-
-        get_source.assert_called_with("test-source")
-
-
-class TestGetDocstring(JediBackendTestCase):
-    def test_should_get_docstring(self):
-        filename = self.project_file("test.py", "")
-        source, offset = source_and_offset(
-            "import threading\nthreading.Thread.join_|_(")
-        docstring = self.backend.rpc_get_docstring(self.project_root,
-                                                   filename,
-                                                   source,
-                                                   offset)
-
-        import pydoc
-        wanted = pydoc.render_doc("threading.Thread.join",
-                                  "Elpy Pydoc Documentation for %s",
-                                  False)
-        self.assertEqual(docstring, wanted)
-
-    def test_should_not_fail_on_inexisting_file(self):
-        self.backend.rpc_get_docstring(self.project_root,
-                                       "doesnotexist.py",
-                                       "open", 0)
-
-    def test_should_not_fail_if_file_is_none(self):
-        self.backend.rpc_get_docstring(self.project_root,
-                                       None,
-                                       "open", 0)
-
-    @mock.patch('elpy.backends.jedibackend.get_source')
-    def test_should_call_get_source(self, get_source):
-        get_source.return_value = "test-source"
-
-        self.backend.rpc_get_docstring(self.project_root, None,
-                                       "test-source", 0)
-
-        get_source.assert_called_with("test-source")
 
 
 class TestGetUsages(JediBackendTestCase):
@@ -321,8 +233,7 @@ class TestGetUsages(JediBackendTestCase):
             "def foo(x):\n"
             "    return _|_x + x\n")
 
-        usages = self.backend.rpc_get_usages(self.project_root,
-                                             filename,
+        usages = self.backend.rpc_get_usages(filename,
                                              source,
                                              offset)
 
@@ -344,8 +255,7 @@ class TestGetUsages(JediBackendTestCase):
             "import file2\n"
             "file2._|_x\n")
 
-        usages = self.backend.rpc_get_usages(self.project_root,
-                                             file1,
+        usages = self.backend.rpc_get_usages(file1,
                                              source,
                                              offset)
 
@@ -360,8 +270,7 @@ class TestGetUsages(JediBackendTestCase):
     def test_should_not_fail_without_symbol(self):
         filename = self.project_file("file.py", "")
 
-        usages = self.backend.rpc_get_usages(self.project_root,
-                                             filename,
+        usages = self.backend.rpc_get_usages(filename,
                                              "",
                                              0)
 

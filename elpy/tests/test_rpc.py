@@ -154,6 +154,19 @@ class TestHandleRequest(TestJSONRPCServer):
         self.assertEqual(result["error"]["message"], "This is a fault")
         self.assertNotIn("traceback", result["error"])
 
+    def test_should_add_data_for_faults(self):
+        def test_method():
+            raise rpc.Fault("St. Andreas' Fault",
+                            code=12345, data="Yippieh")
+
+        self.write(json.dumps(dict(method="foo", id=23)))
+        self.rpc.rpc_foo = test_method
+
+        self.rpc.handle_request()
+        result = json.loads(self.read())
+
+        self.assertEqual(result["error"]["data"], "Yippieh")
+
     def test_should_call_handle_for_unknown_method(self):
         def test_handle(method_name, args):
             return "It works"

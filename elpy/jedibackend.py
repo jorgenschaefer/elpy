@@ -9,69 +9,52 @@ https://github.com/davidhalter/jedi
 import sys
 import traceback
 
+import jedi
+
 from elpy import rpc
-from elpy.backends.nativebackend import get_source
-from elpy.backends.nativebackend import NativeBackend
 
 
-class JediBackend(NativeBackend):
+class JediBackend(object):
     """The Jedi backend class.
 
-    Implements the RPC calls we can pass on to Jedi. Also subclasses
-    the native backend to provide methods Jedi does not provide, if
-    any.
+    Implements the RPC calls we can pass on to Jedi.
+
+    Documentation: http://jedi.jedidjah.ch/en/latest/docs/plugin-api.html
 
     """
-    def __new__(cls):
-        try:
-            import jedi
-        except:
-            return None
-        obj = super(JediBackend, cls).__new__(cls)
-        obj.jedi = jedi
-        return obj
+    name = "jedi"
 
-    def __init__(self):
-        super(JediBackend, self).__init__()
-        self.name = "jedi"
-
-    def rpc_get_completions(self, project_root, filename, source, offset):
-        source = get_source(source)
-        line, column = pos_to_linecol(source, offset)
+    def __init__(self, project_root):
+        self.project_root = project_root
         sys.path.append(project_root)
-        try:
-            proposals = run_with_debug(self.jedi, 'completions',
-                                       source=source, line=line, column=column,
-                                       path=filename, encoding='utf-8')
-        finally:
-            sys.path.pop()
+
+    def rpc_get_completions(self, filename, source, offset):
+        line, column = pos_to_linecol(source, offset)
+        proposals = run_with_debug(jedi, 'completions',
+                                   source=source, line=line, column=column,
+                                   path=filename, encoding='utf-8')
         return [{'suffix': proposal.complete,
                  'annotation': proposal.type,
                  'meta': proposal.description,
                  'docstring': proposal.docstring(fast=True)}
                 for proposal in proposals]
 
-    def rpc_get_definition(self, project_root, filename, source, offset):
-        source = get_source(source)
+    def rpc_get_definition(self, filename, source, offset):
         line, column = pos_to_linecol(source, offset)
-        sys.path.append(project_root)
-        try:
-            locations = run_with_debug(self.jedi, 'goto_definitions',
-                                       source=source, line=line, column=column,
+        locations = run_with_debug(jedi, 'goto_definitions',
+                                   source=source, line=line, column=column,
+                                   path=filename, encoding='utf-8')
+        # goto_definitions() can return silly stuff like __builtin__
+        # for int variables, so we fall back on goto() in those
+        # cases. See issue #76.
+        if (
+                locations and
+                locations[0].module_path is None
+        ):
+            locations = run_with_debug(jedi, 'goto_assignments',
+                                       source=source, line=line,
+                                       column=column,
                                        path=filename, encoding='utf-8')
-            # goto_definitions() can return silly stuff like __builtin__
-            # for int variables, so we fall back on goto() in those
-            # cases. See issue #76.
-            if (
-                    locations and
-                    locations[0].module_path is None
-            ):
-                locations = run_with_debug(self.jedi, 'goto_assignments',
-                                           source=source, line=line,
-                                           column=column,
-                                           path=filename, encoding='utf-8')
-        finally:
-            sys.path.pop()
         if not locations:
             return None
         else:
@@ -86,16 +69,11 @@ class JediBackend(NativeBackend):
                 return None
             return (loc.module_path, offset)
 
-    def rpc_get_calltip(self, project_root, filename, source, offset):
-        source = get_source(source)
+    def rpc_get_calltip(self, filename, source, offset):
         line, column = pos_to_linecol(source, offset)
-        sys.path.append(project_root)
-        try:
-            calls = run_with_debug(self.jedi, 'call_signatures',
-                                   source=source, line=line, column=column,
-                                   path=filename, encoding='utf-8')
-        finally:
-            sys.path.pop()
+        calls = run_with_debug(jedi, 'call_signatures',
+                               source=source, line=line, column=column,
+                               path=filename, encoding='utf-8')
         if calls:
             call = calls[0]
         else:
@@ -106,39 +84,21 @@ class JediBackend(NativeBackend):
                 "index": call.index,
                 "params": [param.description for param in call.params]}
 
-    def rpc_get_docstring(self, project_root, filename, source, offset):
-        """Return a docstring for the symbol at offset.
-
-        This uses the nativebackend, as apparently, Jedi does not know
-        how to do this. It can do a completion and find docstrings for
-        that, but not for the symbol at a location. Huh.
-
-        """
-        source = get_source(source)
-        return super(JediBackend, self).rpc_get_docstring(project_root,
-                                                          filename,
-                                                          source,
-                                                          offset)
-
-    def rpc_get_usages(self, project_root, filename, source, offset):
+    def rpc_get_usages(self, filename, source, offset):
         """Return the uses of the symbol at offset.
 
         Returns a list of occurrences of the symbol, as dicts with the
         fields name, filename, and offset.
 
         """
-        source = get_source(source)
         line, column = pos_to_linecol(source, offset)
-        sys.path.append(project_root)
         try:
-            uses = run_with_debug(self.jedi, 'usages',
+            uses = run_with_debug(jedi, 'usages',
                                   source=source, line=line, column=column,
                                   path=filename, encoding='utf-8',
-                                  re_raise=(self.jedi.NotFoundError,))
-        except self.jedi.NotFoundError:
+                                  re_raise=(jedi.NotFoundError,))
+        except jedi.NotFoundError:
             return []
-        finally:
-            sys.path.pop()
 
         result = []
         for use in uses:
@@ -162,11 +122,6 @@ class JediBackend(NativeBackend):
 #   with line #1 as the first line). column represents the current
 #   column/indent of the cursor (starting with zero). source_path
 #   should be the path of your file in the file system.
-#
-# Now, why you'd offset a program to a piece of code in a string using
-# line/column indeces is a bit beyond me. And even moreso, why you'd
-# make lines one-based and columns zero-based is a complete mystery.
-# But well, that's what it says.
 
 def pos_to_linecol(text, pos):
     """Return a tuple of line and column for offset pos in text.

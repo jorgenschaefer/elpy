@@ -15,7 +15,8 @@ PYDOC_TYPES = (type,
                types.BuiltinMethodType,
                types.MethodType,
                types.ModuleType)
-if not compat.PYTHON3:  # Python 2 old style classes
+if not compat.PYTHON3:  # pragma: nocover
+    # Python 2 old style classes
     CONTAINER_TYPES = tuple(list(CONTAINER_TYPES) + [types.ClassType])
     PYDOC_TYPES = tuple(list(PYDOC_TYPES) + [types.ClassType])
 

@@ -204,7 +204,6 @@ can use the native backend, which is very limited but does not
 have any external requirements."
   :type '(choice (const :tag "Rope" "rope")
                  (const :tag "Jedi" "jedi")
-                 (const :tag "Native" "native")
                  (const :tag "Automatic" nil))
   :safe (lambda (val)
           (member val '("rope" "jedi" "native" nil)))
@@ -1940,35 +1939,51 @@ not exist anymore."
        (= (length obj) 5)
        (eq (aref obj 0) elpy-promise-marker)))
 
-(defun elpy-promise-resolved-p (promise)
+(defsubst elpy-promise-success-callback (promise)
+  "Return the success callback for PROMISE."
+  (aref promise 1))
+
+(defsubst elpy-promise-error-callback (promise)
+  "Return the error callback for PROMISE."
+  (aref promise 2))
+
+(defsubst elpy-promise-buffer (promise)
+  "Return the buffer for PROMISE."
+  (aref promise 3))
+
+(defsubst elpy-promise-resolved-p (promise)
   "Return non-nil if the PROMISE has been resolved or rejected."
   (aref promise 4))
 
+(defsubst elpy-promise-set-resolved (promise)
+  "Mark PROMISE as having been resolved."
+  (aset promise 4 t))
+
 (defun elpy-promise-resolve (promise value)
   "Resolve PROMISE with VALUE."
-  (when (not (aref promise 4))
+  (when (not (elpy-promise-resolved-p promise))
     (unwind-protect
-        (let ((success-callback (aref promise 1)))
+        (let ((success-callback (elpy-promise-success-callback promise)))
           (when success-callback
             (condition-case err
-                (with-current-buffer (aref promise 3)
+                (with-current-buffer (elpy-promise-buffer promise)
                   (funcall success-callback value))
               (error
                (elpy-promise-reject promise err)))))
-      (aset promise 4 t))))
+      (elpy-promise-set-resolved promise))))
 
 (defun elpy-promise-reject (promise reason)
   "Reject PROMISE because of REASON."
-  (when (not (aref promise 4))
+  (when (not (elpy-promise-resolved-p promise))
     (unwind-protect
-        (let ((error-callback (aref promise 2)))
+        (let ((error-callback (elpy-promise-error-callback promise)))
           (when error-callback
-            (if (buffer-live-p (aref promise 3))
-                (with-current-buffer (aref promise 3)
+            (if (buffer-live-p (elpy-promise-buffer promise))
+                (with-current-buffer (elpy-promise-buffer promise)
                   (funcall error-callback reason))
               (with-temp-buffer
                 (funcall error-callback reason)))))
-      (aset promise 4 t))))
+      (elpy-promise-set-resolved promise))))
 
 (defun elpy-promise-wait (promise &optional timeout)
   "Wait for PROMISE to be resolved, for up to TIMEOUT seconds.
@@ -2172,24 +2187,14 @@ died, this will kill the process and buffer."
       (set-process-query-on-exit-flag proc nil)
       (set-process-sentinel proc #'elpy-rpc--sentinel)
       (set-process-filter proc #'elpy-rpc--filter)
-      (cond
-       ;; User requested a specific backend
-       (elpy-rpc-backend
-        (elpy-rpc-set-backend
-         elpy-rpc-backend
-         (lambda (result)
-           ;; Requested backend successfully set
-           t)
-         (lambda (err)
-           (elpy-config-error "Requested backend %s not available"
-                              elpy-rpc-backend))))
-       ;; User did not specify a backend, make sure we are not using the
-       ;; native one.
-       (t
-        (elpy-rpc-get-backend
-         (lambda (current-backend)
-           (when (equal current-backend "native")
-             (elpy-config-error "Only native backend found")))))))
+      (elpy-rpc-init elpy-rpc-backend library-root
+                     (lambda (result)
+                       (let ((backend (cdr (assq 'backend result))))
+                         (when (and elpy-rpc-backend
+                                    (not (equal backend elpy-rpc-backend)))
+                           (elpy-config-error
+                            "Can't set backend %s, using %s instead"
+                            elpy-rpc-backend backend))))))
     new-elpy-rpc-buffer))
 
 (defun elpy-rpc--sentinel (process event)
@@ -2297,12 +2302,14 @@ This is usually an error or backtrace."
   "Display an error from the RPC backend."
   ;; We actually might get an (error "foo") thing here.
   (if (and (consp error-object)
-           (eq 'error (car error-object)))
-      (apply 'error (cdr error-object))
+           (not (consp (car error-object))))
+      (signal (car error-object) (cdr error-object))
     (let ((message (cdr (assq 'message error-object)))
           (code (cdr (assq 'code error-object)))
           (data (cdr (assq 'data error-object))))
       (cond
+       ((not (numberp code))
+        (error "Bad response from RPC: %S" error-object))
        ((< code 300)
         (message "Elpy warning: %s" message))
        ((< code 500)
@@ -2325,6 +2332,8 @@ This is usually an error or backtrace."
             (insert "\n"
                     "\n"
                     "```\n")
+            (elpy-insert--header "Error Message")
+            (insert message "\n\n")
             (elpy-insert--header "Configuration")
             (elpy-config--insert-configuration-table config)
             (let ((traceback (cdr (assq 'traceback data))))
@@ -2404,26 +2413,25 @@ protocol if the buffer is larger than
       (ignore-errors
         (kill-buffer buffer)))))
 
-(defun elpy-rpc-get-available-backends (&optional success  error)
-  "Call the get_available_backends API function.
+(defun elpy-rpc-init (backend library-root &optional success error)
+  "Initialize the backend.
 
-Returns a list of names of available backends, depending on which
-Python libraries are installed."
-  (elpy-rpc "get_available_backends" nil success error))
-
-(defun elpy-rpc-get-backend (&optional success error)
-  "Call the get_backend API function.
-
-Returns the name of the backend currently in use."
-  (elpy-rpc "get_backend" nil success error))
+This has to be called as the first method, else Elpy won't be
+able to respond to other calls."
+  (elpy-rpc "init"
+            ;; This uses a vector because otherwise, json-encode in
+            ;; older Emacsen gets seriously confused, especially when
+            ;; backend is nil.
+            (vector `((backend . ,backend)
+                      (project_root . ,(expand-file-name library-root))))
+            success error))
 
 (defun elpy-rpc-get-calltip (&optional success error)
   "Call the get_calltip API function.
 
 Returns a calltip string for the function call at point."
   (elpy-rpc "get_calltip"
-            (list (expand-file-name (elpy-library-root))
-                  buffer-file-name
+            (list buffer-file-name
                   (elpy-rpc--buffer-contents)
                   (- (point)
                      (point-min)))
@@ -2435,8 +2443,7 @@ Returns a calltip string for the function call at point."
 Returns a list of possible completions for the Python symbol at
 point."
   (elpy-rpc "get_completions"
-            (list (expand-file-name (elpy-library-root))
-                  buffer-file-name
+            (list buffer-file-name
                   (elpy-rpc--buffer-contents)
                   (- (point)
                      (point-min)))
@@ -2447,8 +2454,7 @@ point."
 
 Returns nil or a list of (filename, point)."
   (elpy-rpc "get_definition"
-            (list (expand-file-name (elpy-library-root))
-                  buffer-file-name
+            (list buffer-file-name
                   (elpy-rpc--buffer-contents)
                   (- (point)
                      (point-min)))
@@ -2459,8 +2465,7 @@ Returns nil or a list of (filename, point)."
 
 Returns a possible multi-line docstring for the symbol at point."
   (elpy-rpc "get_docstring"
-            (list (expand-file-name (elpy-library-root))
-                  buffer-file-name
+            (list buffer-file-name
                   (elpy-rpc--buffer-contents)
                   (- (point)
                      (point-min)))
@@ -2480,27 +2485,11 @@ Returns a possible multi-line docstring."
 
 (defun elpy-rpc-get-usages (&optional success error)
   (elpy-rpc "get_usages"
-            (list (expand-file-name (elpy-library-root))
-                  buffer-file-name
+            (list buffer-file-name
                   (elpy-rpc--buffer-contents)
                   (- (point)
                      (point-min)))
             success error))
-
-(defun elpy-rpc-set-backend (backend &optional success error)
-  "Call the set_backend API function.
-
-This changes the current backend to the named backend. Raises an
-error if the backend is not supported."
-  (interactive
-   (list (completing-read
-          (format "Switch elpy backend (currently %s): "
-                  (elpy-rpc-get-backend))
-          (elpy-rpc-get-available-backends)
-          nil t)))
-  (elpy-rpc "set_backend" (list backend) success error))
-
-(defalias 'elpy-set-backend 'elpy-rpc-set-backend)
 
 ;;;;;;;;;;;
 ;;; Modules

@@ -1,0 +1,5 @@
+(ert-deftest elpy-promise-success-callback ()
+  (elpy-testcase ()
+    (let ((promise (elpy-promise "success" "error")))
+      (should (equal (elpy-promise-success-callback promise)
+                     "success")))))
