@@ -1177,7 +1177,7 @@ code is executed."
   (elpy-shell-get-or-create-process)
   (let ((if-main-regex "^if +__name__ +== +[\"']__main__[\"'] *:")
         (has-if-main nil))
-    (if (region-active-p)
+    (if (use-region-p)
         (let ((region (elpy-shell--region-without-indentation
                        (region-beginning) (region-end))))
           (setq has-if-main (string-match if-main-regex region))
