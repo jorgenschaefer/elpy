@@ -1743,8 +1743,17 @@ prefix argument is given, prompt for a symbol from the user."
     (when (not current-prefix-arg)
       (setq doc (elpy-rpc-get-docstring))
       (when (not doc)
+        (save-excursion
+          (python-nav-backward-up-list)
+          (setq doc (elpy-rpc-get-docstring))))
+      (when (not doc)
         (setq doc (elpy-rpc-get-pydoc-documentation
-                   (elpy-doc--symbol-at-point)))))
+                   (elpy-doc--symbol-at-point))))
+      (when (not doc)
+        (save-excursion
+          (python-nav-backward-up-list)
+          (setq doc (elpy-rpc-get-pydoc-documentation
+                     (elpy-doc--symbol-at-point))))))
     (when (not doc)
       (setq doc (elpy-rpc-get-pydoc-documentation
                  (elpy-doc--read-identifier-from-minibuffer

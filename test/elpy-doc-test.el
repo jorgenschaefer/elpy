@@ -9,3 +9,30 @@
     (elpy-doc)
     (with-current-buffer "*Python Doc*"
       (should (re-search-forward "This module provides access")))))
+
+(ert-deftest elpy-doc-should-find-documentation-from-inside-arguments ()
+  (elpy-testcase ()
+    (python-mode)
+    (elpy-mode)
+    (insert "import socket\n"
+            "socket.getaddrinfo(socket.gethostname(")
+    (save-excursion
+      (insert "))\n"))
+
+    (elpy-doc)
+
+    (with-current-buffer "*Python Doc*"
+      (should (re-search-forward "gethostname")))
+
+    (erase-buffer)
+
+
+    (insert "import socket\n"
+            "socket.getaddrinfo(socket.gethostname(), ")
+    (save-excursion
+      (insert ")\n"))
+
+    (elpy-doc)
+
+    (with-current-buffer "*Python Doc*"
+      (should (re-search-forward "getaddrinfo")))))
