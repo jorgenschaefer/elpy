@@ -2974,34 +2974,46 @@ description."
 ;;; Backwards compatibility
 
 ;; Functions for Emacs 24 before 24.3
-(when (not (fboundp 'python-shell-send-string))
-  (defalias 'python-shell-send-string 'python-send-string))
-(when (not (fboundp 'python-shell-send-buffer))
-  (defun python-shell-send-buffer (&optional arg)
-    (python-send-buffer)))
 (when (not (fboundp 'python-info-current-defun))
   (defalias 'python-info-current-defun 'python-current-defun))
+
 (when (not (fboundp 'python-nav-forward-statement))
   (defun python-nav-forward-statement (&rest ignored)
     "Function added in Emacs 24.3"
     (error "Enhanced Python navigation only available in Emacs 24.3+")))
 
-(when (not (fboundp 'python-shell-get-process-name))
-  (defun python-shell-get-process-name (dedicated)
-    "Compatibility function for older Emacsen."
-    "Python"))
-(when (not (fboundp 'python-shell-parse-command))
-  (defun python-shell-parse-command ()
-    "Compatibility function for older Emacsen."
-    python-python-command))
-(when (not (fboundp 'python-shell-calculate-process-environment))
-  (defun python-shell-calculate-process-environment ()
-    "Compatibility function for older Emacsen."
-    process-environment))
+(when (not (fboundp 'python-nav-backward-up-list))
+  (defun python-nav-backward-up-list ()
+    "Compatibility function for older Emacsen"
+    (ignore-errors
+      (backward-up-list))))
+
 (when (not (fboundp 'python-shell-calculate-exec-path))
   (defun python-shell-calculate-exec-path ()
     "Compatibility function for older Emacsen."
     exec-path))
+
+(when (not (fboundp 'python-shell-calculate-process-environment))
+  (defun python-shell-calculate-process-environment ()
+    "Compatibility function for older Emacsen."
+    process-environment))
+
+(when (not (fboundp 'python-shell-get-process-name))
+  (defun python-shell-get-process-name (dedicated)
+    "Compatibility function for older Emacsen."
+    "Python"))
+
+(when (not (fboundp 'python-shell-parse-command))
+  (defun python-shell-parse-command ()
+    "Compatibility function for older Emacsen."
+    python-python-command))
+
+(when (not (fboundp 'python-shell-send-buffer))
+  (defun python-shell-send-buffer (&optional arg)
+    (python-send-buffer)))
+
+(when (not (fboundp 'python-shell-send-string))
+  (defalias 'python-shell-send-string 'python-send-string))
 
 ;; Emacs 24.2 made `locate-dominating-file' accept a predicate instead
 ;; of a string. Simply overwrite the current one, it's
