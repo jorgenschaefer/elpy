@@ -214,8 +214,28 @@ def find_called_name_offset(source, orig_offset):
 
 
 ##################################################################
+# A recurring problem in Rope for Elpy is that it searches the whole
+# project root for Python files. If the user edits a file in their
+# home directory, this can easily read a whole lot of files, making
+# Rope practically useless. We change the file finding algorithm here
+# to only recurse into directories with an __init__.py file in them.
+def patch_project_files(project):
+    project.file_list.files = set(get_python_project_files(project))
+
+
+def get_python_project_files(project):
+    for dirname, subdirs, files in os.walk(project.root.real_path):
+        for filename in files:
+            yield rope.base.libutils.path_to_resource(
+                project, os.path.join(dirname, filename), 'file')
+            subdirs[:] = [subdir for subdir in subdirs
+                          if os.path.exists(os.path.join(dirname, subdir,
+                                                         "__init__.py"))]
+
+##################################################################
 # Monkey patching a method in rope because it doesn't complete import
 # statements.
+
 from functools import wraps
 
 

@@ -1,5 +1,7 @@
 """Tests for elpy.ropebackend."""
 
+import os
+
 import mock
 
 from elpy import ropebackend
@@ -471,3 +473,39 @@ class TestRPCGetDocstring(RopeBackendTestCase):
         self.backend.rpc_get_docstring(None,
                                        "",
                                        0)
+
+
+class TestGetPythonProjectFiles(RopeBackendTestCase):
+    def test(self):
+        self.project_file("foo.txt", "")
+        self.project_file("gooddir/__init__.py", "")
+        self.project_file("gooddir/file.py", "")
+        self.project_file("baddir/file.py", "")
+        expected = set(os.path.join(self.project_root, name)
+                       for name in ["foo.txt", "gooddir/__init__.py",
+                                    "gooddir/file.py"])
+        project = self.backend.project
+
+        actual = set(resource.real_path
+                     for resource
+                     in ropebackend.get_python_project_files(project))
+
+        self.assertItemsEqual(expected, actual)
+
+
+class TestPatchProjectFiles(RopeBackendTestCase):
+    def test(self):
+        self.project_file("foo.txt", "")
+        self.project_file("gooddir/__init__.py", "")
+        self.project_file("gooddir/file.py", "")
+        self.project_file("baddir/file.py", "")
+        expected = set(os.path.join(self.project_root, name)
+                       for name in ["foo.txt", "gooddir/__init__.py",
+                                    "gooddir/file.py"])
+
+        ropebackend.patch_project_files(self.backend.project)
+
+        actual = set(resource.real_path
+                     for resource
+                     in self.backend.project.get_files())
+        self.assertItemsEqual(expected, actual)
