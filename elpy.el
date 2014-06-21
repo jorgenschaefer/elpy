@@ -1,10 +1,12 @@
-;;; elpy.el --- Emacs Lisp Python Environment -*- lexical-binding: t -*-
+;;; elpy.el --- Emacs Python Development Environment -*- lexical-binding: t -*-
 
 ;; Copyright (C) 2012-2014  Jorgen Schaefer
 
 ;; Author: Jorgen Schaefer <contact@jorgenschaefer.de>
 ;; URL: https://github.com/jorgenschaefer/elpy
 ;; Version: 1.4.50
+;; Keywords: Python, IDE, Languages, Tools
+;; Package-Requires: ((company "0.8.0") (find-file-in-project "3.3")  (highlight-indentation "0.5.0") (idomenu "0.1") (pyvenv "1.2") (yasnippet "0.8.0"))
 
 ;; This program is free software; you can redistribute it and/or
 ;; modify it under the terms of the GNU General Public License
