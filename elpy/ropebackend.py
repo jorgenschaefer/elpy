@@ -55,6 +55,7 @@ class RopeBackend(object):
         self.project = rope.base.project.Project(self.project_root,
                                                  ropefolder=None,
                                                  **prefs)
+        patch_project_files(self.project)
 
     def get_resource(self, filename):
         if filename is not None and os.path.exists(filename):

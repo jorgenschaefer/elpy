@@ -19,6 +19,9 @@ class TestInit(RopeBackendTestCase):
     def test_should_have_rope_as_name(self):
         self.assertEqual(self.backend.name, "rope")
 
+    def test_should_patch_project_files(self):
+        self.assertIsNotNone(self.backend.project.file_list.files)
+
 
 class TestValidate(RopeBackendTestCase):
     def test_should_call_validate_after_timeout(self):
