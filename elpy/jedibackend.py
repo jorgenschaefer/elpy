@@ -26,6 +26,7 @@ class JediBackend(object):
 
     def __init__(self, project_root):
         self.project_root = project_root
+        self.completions = {}
         sys.path.append(project_root)
 
     def rpc_get_completions(self, filename, source, offset):
@@ -33,11 +34,27 @@ class JediBackend(object):
         proposals = run_with_debug(jedi, 'completions',
                                    source=source, line=line, column=column,
                                    path=filename, encoding='utf-8')
-        return [{'suffix': proposal.complete,
+        self.completions = dict((proposal.name, proposal)
+                                for proposal in proposals)
+        return [{'name': proposal.name,
+                 'suffix': proposal.complete,
                  'annotation': proposal.type,
-                 'meta': proposal.description,
-                 'docstring': proposal.docstring(fast=True)}
+                 'meta': proposal.description}
                 for proposal in proposals]
+
+    def rpc_get_completion_docstring(self, completion):
+        proposal = self.completions.get(completion)
+        if proposal is None:
+            return None
+        else:
+            return proposal.docstring(fast=False)
+
+    def rpc_get_completion_location(self, completion):
+        proposal = self.completions.get(completion)
+        if proposal is None:
+            return None
+        else:
+            return (proposal.module_path, proposal.line)
 
     def rpc_get_definition(self, filename, source, offset):
         line, column = pos_to_linecol(source, offset)

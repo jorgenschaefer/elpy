@@ -57,9 +57,6 @@ class TestRPCGetCompletions(RopeBackendTestCase):
         self.assertEqual(
             sorted([cand['suffix'] for cand in completions]),
             sorted(["SONDecoder", "SONEncoder"]))
-        self.assertIn("Simple JSON",
-                      [cand['docstring'] for cand in completions
-                       if cand['suffix'] == 'SONDecoder'][0])
 
     def test_should_not_fail_on_inexisting_file(self):
         filename = self.project_root + "/doesnotexist.py"
@@ -164,6 +161,49 @@ class TestRPCGetCompletions(RopeBackendTestCase):
                                                        source,
                                                        offset)
         self.assertIn('path', [cand['suffix'] for cand in completions])
+
+
+class TestRPCGetCompletionDocstring(RopeBackendTestCase):
+    def test_should_return_docs(self):
+        source, offset = source_and_offset("import json\n"
+                                           "json.J_|_")
+        filename = self.project_file("test.py", source)
+        completions = self.backend.rpc_get_completions(filename,
+                                                       source,
+                                                       offset)
+        completions.sort(key=lambda p: p["name"])
+        prop = completions[0]
+        self.assertEqual(prop["name"], "JSONDecoder")
+
+        docs = self.backend.rpc_get_completion_docstring("JSONDecoder")
+
+        self.assertIn("Simple JSON", docs)
+
+    def test_should_return_none_if_unknown(self):
+        docs = self.backend.rpc_get_completion_docstring("Foo")
+
+        self.assertIsNone(docs)
+
+
+class TestRPCGetCompletionLocation(RopeBackendTestCase):
+    def test_should_return_location(self):
+        source, offset = source_and_offset("donaudampfschiff = 1\n"
+                                           "donau_|_")
+        filename = self.project_file("test.py", source)
+        completions = self.backend.rpc_get_completions(filename,
+                                                       source,
+                                                       offset)
+        prop = completions[0]
+        self.assertEqual(prop["name"], "donaudampfschiff")
+
+        loc = self.backend.rpc_get_completion_location("donaudampfschiff")
+
+        self.assertEqual((filename, 1), loc)
+
+    def test_should_return_none_if_unknown(self):
+        docs = self.backend.rpc_get_completion_location("Foo")
+
+        self.assertIsNone(docs)
 
 
 class TestRPCGetDefinition(RopeBackendTestCase):

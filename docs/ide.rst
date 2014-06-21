@@ -92,8 +92,12 @@ do so automatically, you can force it to complete right where you are.
 
 You can use cursor keys or :kbd:`M-n` and :kbd:`M-p` to scroll through
 the options, :kbd:`RET` to use the selected completion, or :kbd:`TAB`
-to complete the common part. :kbd:`C-d` or :kbd:`<f1>` on an option
-will show its documentation.
+to complete the common part.
+
+On any completion option, :kbd:`C-d` or :kbd:`<f1>` will display a
+temporary window with documentation. :kbd:`C-w` will display a
+temporary window showing the source code of the completion to get some
+context.
 
 Elpy uses `Company Mode`_ for the completion interface, so its
 documentation is a good place for further information.

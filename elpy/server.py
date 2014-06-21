@@ -34,6 +34,16 @@ class ElpyRPCServer(JSONRPCServer):
         self.backend = None
         self.project_root = None
 
+    def _call_backend(self, method, default, *args, **kwargs):
+        """Call the backend method with args.
+
+        If there is currently no backend, return default."""
+        meth = getattr(self.backend, method, None)
+        if meth is None:
+            return default
+        else:
+            return meth(*args, **kwargs)
+
     def rpc_echo(self, *args):
         """Return the arguments.
 
@@ -66,41 +76,45 @@ class ElpyRPCServer(JSONRPCServer):
         """Get the calltip for the function at the offset.
 
         """
-        source = get_source(source)
-        if hasattr(self.backend, "rpc_get_calltip"):
-            return self.backend.rpc_get_calltip(filename, source, offset)
-        else:
-            return None
+        return self._call_backend("rpc_get_calltip", None, filename,
+                                  get_source(source), offset)
 
     def rpc_get_completions(self, filename, source, offset):
         """Get a list of completion candidates for the symbol at offset.
 
         """
-        source = get_source(source)
-        if hasattr(self.backend, "rpc_get_completions"):
-            return self.backend.rpc_get_completions(filename, source, offset)
-        else:
-            return []
+        return self._call_backend("rpc_get_completions", [], filename,
+                                  get_source(source), offset)
+
+    def rpc_get_completion_docstring(self, completion):
+        """Return documentation for a previously returned completion.
+
+        """
+        return self._call_backend("rpc_get_completion_docstring",
+                                  None, completion)
+
+    def rpc_get_completion_location(self, completion):
+        """Return the location for a previously returned completion.
+
+        This returns a list of [file name, line number].
+
+        """
+        return self._call_backend("rpc_get_completion_location", None,
+                                  completion)
 
     def rpc_get_definition(self, filename, source, offset):
         """Get the location of the definition for the symbol at the offset.
 
         """
-        source = get_source(source)
-        if hasattr(self.backend, "rpc_get_definition"):
-            return self.backend.rpc_get_definition(filename, source, offset)
-        else:
-            return None
+        return self._call_backend("rpc_get_definition", None, filename,
+                                  get_source(source), offset)
 
     def rpc_get_docstring(self, filename, source, offset):
         """Get the docstring for the symbol at the offset.
 
         """
-        source = get_source(source)
-        if hasattr(self.backend, "rpc_get_docstring"):
-            return self.backend.rpc_get_docstring(filename, source, offset)
-        else:
-            return None
+        return self._call_backend("rpc_get_docstring", None, filename,
+                                  get_source(source), offset)
 
     def rpc_get_pydoc_completions(self, name=None):
         """Return a list of possible strings to pass to pydoc.

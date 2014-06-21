@@ -162,7 +162,33 @@ class TestRPCGetCompletions(BackendCallTestCase):
         self.srv.backend = None
         self.assertEqual([],
                          self.srv.rpc_get_completions("filname", "source",
-                                                       "offset"))
+                                                      "offset"))
+
+
+class TestRPCGetCompletionDocs(ServerTestCase):
+    def test_should_call_backend(self):
+        with mock.patch.object(self.srv, "backend") as backend:
+            self.srv.rpc_get_completion_docstring("completion")
+
+            (backend.rpc_get_completion_docstring
+             .assert_called_with("completion"))
+
+    def test_should_handle_no_backend(self):
+        self.srv.backend = None
+        self.assertIsNone(self.srv.rpc_get_completion_docstring("foo"))
+
+
+class TestRPCGetCompletionLocation(ServerTestCase):
+    def test_should_call_backend(self):
+        with mock.patch.object(self.srv, "backend") as backend:
+            self.srv.rpc_get_completion_location("completion")
+
+            (backend.rpc_get_completion_location
+             .assert_called_with("completion"))
+
+    def test_should_handle_no_backend(self):
+        self.srv.backend = None
+        self.assertIsNone(self.srv.rpc_get_completion_location("foo"))
 
 
 class TestRPCGetDefinition(BackendCallTestCase):

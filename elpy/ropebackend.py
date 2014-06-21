@@ -34,6 +34,7 @@ class RopeBackend(object):
         super(RopeBackend, self).__init__()
         self.last_validation = 0
         self.project_root = project_root
+        self.completions = {}
         prefs = dict(ignored_resources=['*.pyc', '*~', '.ropeproject',
                                         '.hg', '.svn', '_svn', '.git'],
                      python_files=['*.py'],
@@ -90,21 +91,35 @@ class RopeBackend(object):
                 IndexError):
             # Rope can't parse this file
             return []
+
         prefixlen = offset - starting_offset
+        self.completions = dict((proposal.name, proposal)
+                                for proposal in proposals)
+        return [{'name': proposal.name,
+                 'suffix': proposal.name[prefixlen:],
+                 'annotation': proposal.type,
+                 'meta': str(proposal)}
+                for proposal in proposals]
 
-        result = []
-        for proposal in proposals:
-            doc = proposal.get_doc()
-            if doc:
-                meta = doc.strip().split("\n", 1)[0]
-            else:
-                meta = None
-            result.append({'suffix': proposal.name[prefixlen:],
-                           'docstring': doc,
-                           'annotation': proposal.type,
-                           'meta': meta})
+    def rpc_get_completion_docstring(self, completion):
+        proposal = self.completions.get(completion)
+        if proposal is None:
+            return None
+        else:
+            return proposal.get_doc()
 
-        return result
+    def rpc_get_completion_location(self, completion):
+        proposal = self.completions.get(completion)
+        if proposal is None:
+            return None
+        else:
+            if not proposal.pyname:
+                return None
+            module, lineno = proposal.pyname.get_definition_location()
+            if module is None:
+                return None
+            resource = module.get_module().get_resource()
+            return (resource.real_path, lineno)
 
     def rpc_get_definition(self, filename, source, offset):
         self.validate()

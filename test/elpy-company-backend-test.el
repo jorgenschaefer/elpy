@@ -47,4 +47,62 @@
 
 ;; FIXME! candidates is a convoluted *mess*.
 
-;; FIXME! Do the rest when we're re-doing the completion.
+(ert-deftest elpy-company-backend-should-get-cached-meta ()
+  (elpy-testcase ()
+    (mletf* ((called-with nil)
+             (elpy-company--cache-meta (arg)
+                                       (setq called-with arg)
+                                       "bar"))
+
+      (should (equal "bar"
+                     (elpy-company-backend 'meta "foo")))
+      (should (equal "foo" called-with)))))
+
+(ert-deftest elpy-company-backend-should-get-cached-annotation ()
+  (elpy-testcase ()
+    (mletf* ((called-with nil)
+             (elpy-company--cache-annotation (arg)
+                                             (setq called-with arg)
+                                             "bar"))
+
+      (should (equal "bar"
+                     (elpy-company-backend 'annotation "foo")))
+      (should (equal "foo" called-with)))))
+
+(ert-deftest elpy-company-backend-should-get-cached-docs ()
+  (elpy-testcase ()
+    (mletf* ((called-with-origname nil)
+             (elpy-company--cache-name (arg)
+                                       (setq called-with-origname arg)
+                                       "backend-name")
+             (called-with-backendname nil)
+             (elpy-rpc-get-completion-docstring (arg)
+                                                (setq called-with-backendname
+                                                      arg)
+                                                "docstring")
+             (called-with-doc nil)
+             (company-doc-buffer (doc)
+                                 (setq called-with-doc doc)))
+
+      (elpy-company-backend 'doc-buffer "orig-name")
+
+      (should (equal called-with-origname "orig-name"))
+      (should (equal called-with-backendname "backend-name"))
+      (should (equal called-with-doc "docstring")))))
+
+(ert-deftest elpy-company-backend-should-get-cached-location ()
+  (elpy-testcase ()
+    (mletf* ((called-with-origname nil)
+             (elpy-company--cache-name (arg)
+                                       (setq called-with-origname arg)
+                                       "backend-name")
+             (called-with-backendname nil)
+             (elpy-rpc-get-completion-location (arg)
+                                               (setq called-with-backendname
+                                                     arg)
+                                               '("file" 23)))
+
+      (should (equal '("file" . 23)
+                     (elpy-company-backend 'location "orig-name")))
+      (should (equal called-with-origname "orig-name"))
+      (should (equal called-with-backendname "backend-name")))))

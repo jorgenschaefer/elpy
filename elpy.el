@@ -2438,7 +2438,7 @@ Returns a calltip string for the function call at point."
             success error))
 
 (defun elpy-rpc-get-completions (&optional success error)
-  "Call the find_completions API function.
+  "Call the get_completions API function.
 
 Returns a list of possible completions for the Python symbol at
 point."
@@ -2448,6 +2448,18 @@ point."
                   (- (point)
                      (point-min)))
             success error))
+
+(defun elpy-rpc-get-completion-docstring (completion &optional success error)
+  "Call the get_completion_docstring API function.
+
+Returns a doc string or nil"
+  (elpy-rpc "get_completion_docstring" (list completion) success error))
+
+(defun elpy-rpc-get-completion-location (completion &optional success error)
+  "Call the get_completion_location API function.
+
+Returns a list of file name and line number, or nil"
+  (elpy-rpc "get_completion_location" (list completion) success error))
 
 (defun elpy-rpc-get-definition (&optional success error)
   "Call the find_definition API function.
@@ -2615,10 +2627,13 @@ time. Honestly."
   (when elpy-company--cache
     (cdr (assq 'meta (gethash name elpy-company--cache)))))
 
-(defun elpy-company--cache-docstring (name)
-  "Return the cached docstring for NAME."
+(defun elpy-company--cache-name (name)
+  "Return the cached name for NAME.
+
+Confused yet? We pass \"our\" name, that is, prefix + suffix,
+here, and return the \"name\" as used by the backend."
   (when elpy-company--cache
-    (cdr (assq 'docstring (gethash name elpy-company--cache)))))
+    (cdr (assq 'name (gethash name elpy-company--cache)))))
 
 (defun elpy-company--cache-completions (prefix result)
   "Store RESULT in the candidate cache and return candidates."
@@ -2671,14 +2686,22 @@ time. Honestly."
      (elpy-company--cache-annotation arg))
     ;; doc-buffer <candidate> => put doc buffer in `company-doc-buffer'
     (`doc-buffer
-     (let ((doc (elpy-company--cache-docstring arg)))
+     (let* ((name (elpy-company--cache-name arg))
+            (doc (elpy-rpc-get-completion-docstring name)))
        (when doc
          (company-doc-buffer doc))))
     ;; require-match => Never require a match, even if the user
     ;; started to interact with company. See `company-require-match'.
     (`require-match
      'never)
-    ;; location <candidate> => (buffer . point) or (file . line-number)
+    ;; location <candidate> => (buffer . point) or (file .
+    ;; line-number)
+    (`location
+     (let* ((name (elpy-company--cache-name arg))
+            (loc (elpy-rpc-get-completion-location name)))
+       (when loc
+         (cons (car loc)
+               (cadr loc)))))
     ;; match <candidate> => for non-prefix based backends
     ;; post-completion <candidate> => after insertion, for snippets
     ))
