@@ -321,6 +321,66 @@ A setting of nil means to block indefinitely."
     map)
   "Key map for the Emacs Lisp Python Environment.")
 
+(easy-menu-define elpy-menu elpy-mode-map
+  "Elpy Mode Menu"
+  '("Elpy"
+    ["Documentation" elpy-doc
+     :help "Get documentation for symbol at point"]
+    ["Run Tests" elpy-test
+     :help "Run test at point, or all tests in the project"]
+    ["Go to Definition" elpy-goto-definition
+     :help "Go to the definition of the symbol at point"]
+    ["Go to previous definition" pop-tag-mark
+     :active (not (ring-empty-p find-tag-marker-ring))
+     :help "Return to the position"]
+    ["Complete" elpy-company-backend
+     :keys "M-TAB"
+     :help "Complete at point"]
+    ["Refactor" elpy-refactor
+     :help "Refactor options"]
+    "---"
+    ("Interactive Python"
+     ["Switch to Python Shell" elpy-shell-switch-to-shell
+      :help "Start and switch to the interactive Python"]
+     ["Send Region or Buffer" elpy-shell-send-region-or-buffer
+      :label (if (use-region-p)
+                 "Send Region to Python"
+               "Send Buffer to Python")
+      :help "Send the current region or the whole buffer to Python"]
+     ["Send Definition" python-shell-send-defun
+      :help "Send current definition to Python"])
+    ("Project"
+     ["Find File" elpy-find-file
+      :help "Interactively find a file in the current project"]
+     ["Find Symbol" elpy-rgrep-symbol
+      :help "Find occurrences of a symbol in the current project"]
+     ["Set Project Root" elpy-set-project-root
+      :help "Change the current project root"]
+     ["Set Project Variable" elpy-set-project-variable
+      :help "Configure a project-specific option"])
+    ("Syntax Check"
+     ["Check Syntax" elpy-check
+      :help "Check the syntax of the current file"]
+     ["Next Error" elpy-flymake-next-error
+      :help "Go to the next inline error, if any"]
+     ["Previous Error" elpy-flymake-previous-error
+      :help "Go to the previous inline error, if any"])
+    ("Indentation Blocks"
+     ["Dedent" elpy-nav-move-iblock-left
+      :help "Dedent current block or region"
+      :suffix (if (use-region-p) "Region" "Block")]
+     ["Indentt" elpy-nav-move-iblock-right
+      :help "Indent current block or region"
+      :suffix (if (use-region-p) "Region" "Block")]
+     ["Up" elpy-nav-move-iblock-up
+      :help "Move current block or region up"
+      :suffix (if (use-region-p) "Region" "Block")]
+     ["Down" elpy-nav-move-iblock-down
+      :help "Move current block or region down"
+      :suffix (if (use-region-p) "Region" "Block")])
+    "---"
+    ["Configure" elpy-config t]))
+
 ;;;###autoload
 (defun elpy-enable (&optional ignored)
   "Enable Elpy in all future Python buffers."
