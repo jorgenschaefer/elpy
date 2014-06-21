@@ -490,7 +490,7 @@ class TestGetPythonProjectFiles(RopeBackendTestCase):
                      for resource
                      in ropebackend.get_python_project_files(project))
 
-        self.assertItemsEqual(expected, actual)
+        self.assertEqual(expected, actual)
 
 
 class TestPatchProjectFiles(RopeBackendTestCase):
@@ -508,4 +508,4 @@ class TestPatchProjectFiles(RopeBackendTestCase):
         actual = set(resource.real_path
                      for resource
                      in self.backend.project.get_files())
-        self.assertItemsEqual(expected, actual)
+        self.assertEqual(expected, actual)
