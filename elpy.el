@@ -369,7 +369,7 @@ A setting of nil means to block indefinitely."
      ["Dedent" elpy-nav-move-iblock-left
       :help "Dedent current block or region"
       :suffix (if (use-region-p) "Region" "Block")]
-     ["Indentt" elpy-nav-move-iblock-right
+     ["Indent" elpy-nav-move-iblock-right
       :help "Indent current block or region"
       :suffix (if (use-region-p) "Region" "Block")]
      ["Up" elpy-nav-move-iblock-up
