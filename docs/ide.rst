@@ -295,8 +295,27 @@ your last compile command whenever you save a file.
 Refactoring
 ===========
 
-Elpy supports refactoring Python code. This feature is about to be
-rewritten, so not documented yet.
+Elpy supports two forms of refactoring Python code.
+
+.. command:: elpy-multiedit-python-symbol-at-point
+   :kbd: C-c C-e
+
+   Edit all occurrences of the symbol at point at once. This will
+   highlight all such occurrences, and editing one of them will edit
+   all. This is an easy way to rename identifiers.
+
+   If the backend does not support finding occurrences (currently only
+   Jedi does), or if a prefix argument is given, this will edit
+   syntactic occurrences instead of semantic ones. This can match more
+   occurrences than it should, so be careful. You can narrow the
+   current buffer to the current function using :kbd:`C-x n d` to
+   restrict where this matches.
+
+   Finally, if there is a region active, Elpy will edit all
+   occurrences of the text in the region.
+
+
+Elpy also supports a more complex form of refactoring.
 
 .. command:: elpy-refactor
    :kbd: C-c C-r
