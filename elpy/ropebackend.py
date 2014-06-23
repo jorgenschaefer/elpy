@@ -87,7 +87,8 @@ class RopeBackend(object):
                                                             maxfixes=MAXFIXES)
             starting_offset = rope.contrib.codeassist.starting_offset(source,
                                                                       offset)
-        except (rope.base.exceptions.ModuleSyntaxError,
+        except (rope.base.exceptions.BadIdentifierError,
+                rope.base.exceptions.ModuleSyntaxError,
                 IndentationError,
                 IndexError):
             # Rope can't parse this file
