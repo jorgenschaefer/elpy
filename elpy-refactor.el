@@ -268,20 +268,17 @@ The user can review the changes and confirm them with
   "Get a list of refactoring options from the Elpy RPC."
   (if (use-region-p)
       (elpy-rpc "get_refactor_options"
-                (list (elpy-project-root)
-                      (buffer-file-name)
+                (list (buffer-file-name)
                       (1- (region-beginning))
                       (1- (region-end))))
     (elpy-rpc "get_refactor_options"
-              (list (elpy-project-root)
-                    (buffer-file-name)
+              (list (buffer-file-name)
                     (1- (point))))))
 
 (defun elpy-refactor-rpc-get-changes (method args)
   "Get a list of changes from the Elpy RPC after applying METHOD with ARGS."
   (elpy-rpc "refactor"
-            (list (elpy-project-root)
-                  (buffer-file-name)
+            (list (buffer-file-name)
                   method args)))
 
 (provide 'elpy-refactor)
