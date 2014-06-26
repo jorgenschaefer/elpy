@@ -444,7 +444,7 @@ If there is no __init__.py in the current directory, return the
 current directory."
   (cond
    ((and (functionp 'projectile-project-root)
-         (projectile-project-root))
+         (ignore-errors (projectile-project-root)))
     (projectile-project-root))
    ((file-exists-p (format "%s/__init__.py" default-directory))
     (locate-dominating-file default-directory
