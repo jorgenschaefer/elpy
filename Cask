@@ -2,7 +2,7 @@
 (source "elpy" "http://jorgenschaefer.github.io/packages/")
 (source melpa)
 
-(package "elpy" "1.4.1" "Emacs Python Development Environment")
+(package "elpy" "1.4.2" "Emacs Python Development Environment")
 
 (depends-on "auto-complete" "1.4")
 (depends-on "find-file-in-project" "3.2")
