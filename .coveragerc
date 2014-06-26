@@ -1,0 +1,9 @@
+[run]
+source = elpy
+branch = True
+
+[report]
+omit =
+    elpy/tests/*
+    elpy/compat.py
+    elpy/__main__.py

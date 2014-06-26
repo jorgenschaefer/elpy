@@ -28,6 +28,10 @@ install:
   - if [[ "$TRAVIS_PYTHON_VERSION" == 3.* ]] ; then
       pip install rope_py3k ;
     fi
+  - pip install coveralls
 script:
   - nosetests
   - PYTHONPATH="`pwd`" cask exec ert-runner
+after_success:
+  - coverage run -m nose.__main__
+  - coveralls

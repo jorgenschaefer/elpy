@@ -6,11 +6,11 @@ Elpy is an Emacs package to bring powerful Python editing to Emacs. It
 combines a number of other packages, both written in Emacs Lisp as
 well as Python.
 
-.. image:: https://secure.travis-ci.org/jorgenschaefer/elpy.png
-   :alt: Build Status
-   :target: http://travis-ci.org/jorgenschaefer/elpy
-   :width: 77px
-   :height: 19px
+.. image:: https://secure.travis-ci.org/jorgenschaefer/elpy.png?branch=master
+   :target: http://travis-ci.org/jorgenschaefer/elpy?branch=master
+
+.. image:: https://coveralls.io/repos/jorgenschaefer/elpy/badge.png?branch=master
+   :target: https://coveralls.io/r/jorgenschaefer/elpy?branch=master
 
 Documentation
 =============

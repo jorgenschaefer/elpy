@@ -35,9 +35,9 @@ python-test-all:
 	tox
 
 python-coverage:
-	coverage run --source=elpy --branch -m unittest discover
-	coverage html --omit='elpy/tests/*,elpy/compat*,elpy/__main__*' -d ~/Public/elpy-coverage.html
-	coverage report -m --fail-under=95 --omit='elpy/tests/*,elpy/compat*,elpy/__main__*'
+	coverage run -m unittest discover
+	coverage html -d ~/Public/elpy-coverage.html
+	coverage report -m --fail-under=95
 
 test-all: test-warnings tox
 
