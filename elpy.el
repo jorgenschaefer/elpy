@@ -379,6 +379,7 @@ A setting of nil means to block indefinitely."
       :help "Move current block or region down"
       :suffix (if (use-region-p) "Region" "Block")])
     "---"
+    ["News" elpy-news t]
     ["Configure" elpy-config t]))
 
 ;;;###autoload
@@ -427,6 +428,20 @@ more structured list.
     (elpy-modules-buffer-init))
    ((not elpy-mode)
     (elpy-modules-buffer-stop))))
+
+;;;;;;;;;;;;;
+;;; Elpy News
+
+(defun elpy-news ()
+  "Display Elpy's release notes."
+  (interactive)
+  (with-current-buffer (get-buffer-create "*Elpy News*")
+    (let ((inhibit-read-only t))
+      (erase-buffer)
+      (insert-file (concat (file-name-directory (locate-library "elpy"))
+                           "NEWS.md"))
+      (help-mode))
+    (pop-to-buffer (current-buffer))))
 
 ;;;;;;;;;;;;;;;
 ;;; Elpy Config
