@@ -15,6 +15,23 @@
 
       (should (equal called-args current-test)))))
 
+(ert-deftest elpy-test-should-run-current-module-if-in-test ()
+  (elpy-testcase ()
+    (python-mode)
+    (elpy-mode)
+    (mletf* ((current-test (list "/dir/project"
+                                 "/dir/project/test.py"
+                                 "test"
+                                 nil))
+             (elpy-test-at-point () current-test)
+             (called-args nil)
+             (elpy-test-runner (lambda (&rest args)
+                                 (setq called-args args))))
+
+      (elpy-test)
+
+      (should (equal called-args current-test)))))
+
 (ert-deftest elpy-test-should-run-all-tests-otherwise ()
   (elpy-testcase ()
     (python-mode)

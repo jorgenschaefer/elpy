@@ -1655,7 +1655,7 @@ directory is not nil."
            (file buffer-file-name)
            (module (elpy-test--module-name-for-file top file))
            (test (python-info-current-defun)))
-      (if (and test (string-match "test" test))
+      (if (and file (string-match "/test[^/]*$" file))
           (progn
             (save-buffer)
             (list top file module test))
@@ -1694,11 +1694,12 @@ This uses the `elpy-test-runner-p' symbol property."
 
 This requires Python 2.7 or later."
   (interactive (elpy-test-at-point))
-  (if test
-      (elpy-test-run top
-                     "python" "-m" "unittest" (format "%s.%s" module test))
+  (let ((test (cond
+               (test (format "%s.%s" module test))
+               (module module)
+               (t "discover"))))
     (elpy-test-run top
-                   "python" "-m" "unittest" "discover")))
+                   "python" "-m" "unittest" test)))
 (put 'elpy-test-discover-runner 'elpy-test-runner-p t)
 
 (defun elpy-test-django-runner (top file module test)
@@ -1706,10 +1707,12 @@ This requires Python 2.7 or later."
 
 This requires Django 1.6 or the django-discover-runner package."
   (interactive (elpy-test-at-point))
-  (if test
+  (if module
       (elpy-test-run top
                      "django-admin.py" "test" "--noinput"
-                     (format "%s.%s" module test))
+                     (if test
+                         (format "%s.%s" module test)
+                       module))
     (elpy-test-run top
                    "django-admin.py" "test" "--noinput")))
 (put 'elpy-test-django-runner 'elpy-test-runner-p t)
@@ -1719,9 +1722,11 @@ This requires Django 1.6 or the django-discover-runner package."
 
 This requires the nose package to be installed."
   (interactive (elpy-test-at-point))
-  (if test
+  (if module
       (elpy-test-run top
-                     "nosetests" (format "%s:%s" module test))
+                     "nosetests" (if test
+                                     (format "%s:%s" module test)
+                                   module))
     (elpy-test-run top
                    "nosetests")))
 (put 'elpy-test-nose-runner 'elpy-test-runner-p t)
@@ -1731,14 +1736,19 @@ This requires the nose package to be installed."
 
 This requires the pytest package to be installed."
   (interactive (elpy-test-at-point))
-  (if test
-      (let ((test-list (split-string test "\\.")))
-        (elpy-test-run top
-                       "py.test" (mapconcat #'identity
-                                            (cons file test-list)
-                                            "::")))
+  (cond
+   (test
+    (let ((test-list (split-string test "\\.")))
+      (elpy-test-run top
+                     "py.test" (mapconcat #'identity
+                                          (cons file test-list)
+                                          "::"))))
+   (module
     (elpy-test-run top
-                   "py.test")))
+                   "py.test" file))
+   (t
+    (elpy-test-run top
+                   "py.test"))))
 (put 'elpy-test-pytest-runner 'elpy-test-runner-p t)
 
 ;;;;;;;;;;;;;;;;;
