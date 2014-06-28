@@ -1732,11 +1732,11 @@ This requires the nose package to be installed."
 This requires the pytest package to be installed."
   (interactive (elpy-test-at-point))
   (if test
-      ;; Apparently, py.test can't easily run just one method? Let's
-      ;; just run the class.
       (let ((test-list (split-string test "\\.")))
         (elpy-test-run top
-                       "py.test" (format "%s::%s" module (car test-list))))
+                       "py.test" (mapconcat #'identity
+                                            (cons file test-list)
+                                            "::")))
     (elpy-test-run top
                    "py.test")))
 (put 'elpy-test-pytest-runner 'elpy-test-runner-p t)

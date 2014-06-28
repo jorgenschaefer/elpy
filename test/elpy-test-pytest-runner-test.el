@@ -11,7 +11,7 @@
                                "TestClass.test_method")
 
       (should (equal command
-                     '("py.test" "package.module::TestClass")))
+                     '("py.test" "/project/root/package/module.py::TestClass::test_method")))
       (should (equal top "/project/root/")))))
 
 (ert-deftest elpy-test-pytest-runner-should-run-single-test ()
