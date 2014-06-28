@@ -138,6 +138,23 @@ class GenericRPCTests(object):
 
         self.rpc(filename, source, offset)
 
+    def test_should_not_fail_for_dictionaries_in_weird_places(self):
+        # Bug in Jedi: jedi#417
+        source, offset = source_and_offset(
+            "import json\n"
+            "\n"
+            "def foo():\n"
+            "    json.loads(_|_\n"
+            "\n"
+            "    json.load.return_value = {'foo': [],\n"
+            "                              'bar': True}\n"
+            "\n"
+            "    c = Foo()\n"
+        )
+        filename = self.project_file("test.py", source)
+
+        self.rpc(filename, source, offset)
+
 
 class RPCGetCompletionsTests(GenericRPCTests):
     METHOD = "rpc_get_completions"

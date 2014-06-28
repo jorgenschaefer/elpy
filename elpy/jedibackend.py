@@ -34,6 +34,8 @@ class JediBackend(object):
         proposals = run_with_debug(jedi, 'completions',
                                    source=source, line=line, column=column,
                                    path=filename, encoding='utf-8')
+        if proposals is None:
+            return []
         self.completions = dict((proposal.name, proposal)
                                 for proposal in proposals)
         return [{'name': proposal.name,
@@ -126,6 +128,8 @@ class JediBackend(object):
         except jedi.NotFoundError:
             return []
 
+        if uses is None:
+            return None
         result = []
         for use in uses:
             if use.module_path == filename:
@@ -196,6 +200,9 @@ def run_with_debug(jedi, name, *args, **kwargs):
     except Exception as e:
         if isinstance(e, re_raise):
             raise
+        # Bug jedi#417
+        if isinstance(e, TypeError) and str(e) == 'no dicts allowed':
+            return None
 
         from jedi import debug
 
