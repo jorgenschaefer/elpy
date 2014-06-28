@@ -203,6 +203,9 @@ def run_with_debug(jedi, name, *args, **kwargs):
         # Bug jedi#417
         if isinstance(e, TypeError) and str(e) == 'no dicts allowed':
             return None
+        # Bug jedi#427
+        if isinstance(e, UnicodeDecodeError):
+            return None
 
         from jedi import debug
 

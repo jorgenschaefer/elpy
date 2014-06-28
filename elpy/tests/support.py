@@ -155,6 +155,31 @@ class GenericRPCTests(object):
 
         self.rpc(filename, source, offset)
 
+    def test_should_not_break_with_binary_characters_in_docstring(self):
+        # Bug in Jedi: jedi#427
+        template = '''\
+class Foo(object):
+    def __init__(self):
+        """
+        COMMUNITY instance that this conversion belongs to.
+        DISPERSY_VERSION is the dispersy conversion identifier (on the wire version; must be one byte).
+        COMMUNIY_VERSION is the community conversion identifier (on the wire version; must be one byte).
+
+        COMMUNIY_VERSION may not be '\\x00' or '\\xff'. '\\x00' is used by the DefaultConversion until
+        a proper conversion instance can be made for the Community.  '\\xff' is reserved for when
+        more than one byte is needed as a version indicator.
+        """
+        pass
+
+
+x = Foo()
+x._|_
+'''
+        source, offset = source_and_offset(template)
+        filename = self.project_file("test.py", source)
+
+        self.rpc(filename, source, offset)
+
 
 class RPCGetCompletionsTests(GenericRPCTests):
     METHOD = "rpc_get_completions"
