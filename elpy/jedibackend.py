@@ -187,6 +187,9 @@ def linecol_to_pos(text, line, col):
 
 def run_with_debug(jedi, name, *args, **kwargs):
     re_raise = kwargs.pop('re_raise', ())
+    # Remove form feed characters, they confuse Jedi (jedi#424)
+    if 'source' in kwargs:
+        kwargs['source'] = kwargs['source'].replace("\f", " ")
     try:
         script = jedi.Script(*args, **kwargs)
         return getattr(script, name)()

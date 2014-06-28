@@ -127,6 +127,17 @@ class GenericRPCTests(object):
 
         self.rpc(filename, source, 16)
 
+    def test_should_not_fail_with_form_feed_characters(self):
+        # Bug in Jedi: jedi#424
+        source, offset = source_and_offset(
+            "\f\n"
+            "class Test(object):_|_\n"
+            "    pass"
+        )
+        filename = self.project_file("test.py", source)
+
+        self.rpc(filename, source, offset)
+
 
 class RPCGetCompletionsTests(GenericRPCTests):
     METHOD = "rpc_get_completions"
