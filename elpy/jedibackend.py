@@ -58,9 +58,13 @@ class JediBackend(object):
 
     def rpc_get_definition(self, filename, source, offset):
         line, column = pos_to_linecol(source, offset)
-        locations = run_with_debug(jedi, 'goto_definitions',
-                                   source=source, line=line, column=column,
-                                   path=filename, encoding='utf-8')
+        try:
+            locations = run_with_debug(jedi, 'goto_definitions',
+                                       source=source, line=line, column=column,
+                                       path=filename, encoding='utf-8',
+                                       re_raise=jedi.NotFoundError)
+        except jedi.NotFoundError:
+            return None
         # goto_definitions() can return silly stuff like __builtin__
         # for int variables, so we fall back on goto() in those
         # cases. See issue #76.
@@ -78,10 +82,15 @@ class JediBackend(object):
             loc = locations[-1]
             try:
                 if loc.module_path:
-                    with open(loc.module_path) as f:
-                        offset = linecol_to_pos(f.read(),
+                    if loc.module_path == filename:
+                        offset = linecol_to_pos(source,
                                                 loc.line,
                                                 loc.column)
+                    else:
+                        with open(loc.module_path) as f:
+                            offset = linecol_to_pos(f.read(),
+                                                    loc.line,
+                                                    loc.column)
             except IOError:
                 return None
             return (loc.module_path, offset)
