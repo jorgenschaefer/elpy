@@ -167,6 +167,13 @@ class TestRPCGetCompletions(RopeBackendTestCase):
                                                        offset)
         self.assertIn('path', [cand['suffix'] for cand in completions])
 
+    def test_should_not_get_confused_by_bad_encoding(self):
+        source = u'# coding: utf-8X\n'
+        filename = self.project_file("test.py", source)
+        completions = self.backend.rpc_get_completions(filename, source, 16)
+
+        self.assertEqual([], completions)
+
 
 class TestRPCGetCompletionDocstring(RopeBackendTestCase):
     def test_should_return_docs(self):
@@ -291,6 +298,13 @@ class TestRPCGetDefinition(RopeBackendTestCase):
         filename = self.project_file("test.py", source)
 
         self.backend.rpc_get_definition(filename, source, offset)
+
+    def test_should_not_get_confused_by_bad_encoding(self):
+        source = u'# coding: utf-8X\n'
+        filename = self.project_file("test.py", source)
+        definition = self.backend.rpc_get_definition(filename, source, 16)
+
+        self.assertIsNone(definition)
 
 
 class TestRPCGetCalltip(RopeBackendTestCase):
@@ -435,6 +449,11 @@ class TestRPCGetCalltip(RopeBackendTestCase):
         else:
             self.assertEqual(calltip, "Queue.qsize()")
 
+    def test_should_not_get_confused_by_bad_encoding(self):
+        source = u'# coding: utf-8X\n'
+        filename = self.project_file("test.py", source)
+        self.backend.rpc_get_calltip(filename, source, 16)
+
 
 class TestRPCGetDocstring(RopeBackendTestCase):
     def test_should_call_validate(self):
@@ -476,6 +495,13 @@ class TestRPCGetDocstring(RopeBackendTestCase):
         self.backend.rpc_get_docstring(None,
                                        "",
                                        0)
+
+    def test_should_not_get_confused_by_bad_encoding(self):
+        source = u'# coding: utf-8X\n'
+        filename = self.project_file("test.py", source)
+        docstring = self.backend.rpc_get_docstring(filename, source, 16)
+
+        self.assertIsNone(docstring)
 
 
 class TestGetPythonProjectFiles(RopeBackendTestCase):
