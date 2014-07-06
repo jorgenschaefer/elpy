@@ -206,6 +206,9 @@ def run_with_debug(jedi, name, *args, **kwargs):
         # Bug jedi#427
         if isinstance(e, UnicodeDecodeError):
             return None
+        # Bug jedi#429
+        if isinstance(e, IndexError):
+            return None
 
         from jedi import debug
 

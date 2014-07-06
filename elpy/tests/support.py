@@ -180,6 +180,20 @@ x._|_
 
         self.rpc(filename, source, offset)
 
+    def test_should_not_fail_for_def_without_name(self):
+        # Bug jedi#429
+        source, offset = source_and_offset(
+            "def_|_():\n"
+            "    if True:\n"
+            "        return True\n"
+            "    else:\n"
+            "        return False\n"
+        )
+        filename = self.project_file("project.py", source)
+
+        self.rpc(filename, source, offset)
+
+
 
 class RPCGetCompletionsTests(GenericRPCTests):
     METHOD = "rpc_get_completions"
