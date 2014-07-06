@@ -439,7 +439,7 @@ more structured list.
     (let ((inhibit-read-only t))
       (erase-buffer)
       (insert-file (concat (file-name-directory (locate-library "elpy"))
-                           "NEWS.md"))
+                           "NEWS.rst"))
       (help-mode))
     (pop-to-buffer (current-buffer))))
 
