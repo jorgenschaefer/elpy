@@ -7,6 +7,7 @@ import mock
 from elpy import refactor
 from textwrap import dedent
 
+
 class RefactorTestCase(unittest.TestCase):
     def setUp(self):
         self.project_root = tempfile.mkdtemp(prefix="test-refactor-root")
@@ -214,7 +215,9 @@ class TestRenameAtPoint(RefactorTestCase):
             x = foo.Foo()
             x.foo()""")
         ref = refactor.Refactor(self.project_root, filename)
-        first, second = ref.refactor_rename_at_point(offset, "frob")
+        first, second = ref.refactor_rename_at_point(offset, "frob",
+                                                     in_hierarchy=False,
+                                                     docs=False)
         if first['file'] == filename:
             a, b = first, second
         else:
@@ -240,6 +243,100 @@ class TestRenameAtPoint(RefactorTestCase):
                          x = foo.Foo()
                          x.frob()"""))
 
+    def test_should_refactor_in_hierarchy(self):
+        filename, offset = self.create_file(
+            "foo.py",
+            """\
+            class Foo(object):
+                def _|_foo(self):
+                    return 5
+
+                def bar(self):
+                    return self.foo()
+
+            class Bar(Foo):
+                def foo(self):
+                    return 42
+
+            class Baz(object):
+                def foo(self):
+                    return 42
+            """)
+        file2, offset2 = self.create_file(
+            "bar.py",
+            """\
+            import foo
+
+
+            x, y, z = foo.Foo(), foo.Bar(), foo.Baz()
+            x.foo()
+            y.foo()
+            z.foo()""")
+        ref = refactor.Refactor(self.project_root, filename)
+        first, second = ref.refactor_rename_at_point(offset, "frob",
+                                                     in_hierarchy=True,
+                                                     docs=False)
+        if first['file'] == filename:
+            a, b = first, second
+        else:
+            a, b = second, first
+        self.assertEqual(a['action'], 'change')
+        self.assertEqual(a['file'], filename)
+        self.assertEqual(a['contents'],
+                         dedent("""\
+                         class Foo(object):
+                             def frob(self):
+                                 return 5
+
+                             def bar(self):
+                                 return self.frob()
+
+                         class Bar(Foo):
+                             def frob(self):
+                                 return 42
+
+                         class Baz(object):
+                             def foo(self):
+                                 return 42
+                         """))
+        self.assertEqual(b['action'], 'change')
+        self.assertEqual(b['file'], file2)
+        self.assertEqual(b['contents'],
+                         dedent("""\
+                         import foo
+
+
+                         x, y, z = foo.Foo(), foo.Bar(), foo.Baz()
+                         x.frob()
+                         y.frob()
+                         z.foo()"""))
+
+    def test_should_refactor_in_docstrings(self):
+        filename, offset = self.create_file(
+            "foo.py",
+            """\
+            class Foo(object):
+                "Frobnicate the foo"
+                def _|_foo(self):
+                    return 5
+
+            print "I'm an unrelated foo"
+            """)
+        ref = refactor.Refactor(self.project_root, filename)
+        (change,) = ref.refactor_rename_at_point(offset, "frob",
+                                                     in_hierarchy=False,
+                                                     docs=True)
+        self.assertEqual(change['action'], 'change')
+        self.assertEqual(change['file'], filename)
+        self.assertEqual(change['contents'],
+                         dedent("""\
+                         class Foo(object):
+                             "Frobnicate the frob"
+                             def frob(self):
+                                 return 5
+
+                         print "I'm an unrelated foo"
+                         """))
 
 @unittest.skipIf(not refactor.ROPE_AVAILABLE, "Requires Rope")
 class TestRenameCurrentModule(RefactorTestCase):
