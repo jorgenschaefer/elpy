@@ -238,6 +238,13 @@ class TestGetPydocDocumentation(ServerTestCase):
 
         self.assertIsNone(actual)
 
+    def test_should_return_valid_unicode(self):
+        import json
+
+        docstring = self.srv.rpc_get_pydoc_documentation("tarfile")
+
+        json.dumps(docstring)
+
 
 class TestRPCGetRefactorOptions(BackendTestCase):
     @mock.patch.object(compat.builtins, '__import__')

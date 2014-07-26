@@ -133,11 +133,13 @@ class ElpyRPCServer(JSONRPCServer):
 
         """
         try:
-            return pydoc.render_doc(str(symbol),
-                                    "Elpy Pydoc Documentation for %s",
-                                    False)
+            docstring = pydoc.render_doc(str(symbol),
+                                         "Elpy Pydoc Documentation for %s",
+                                         False)
         except (ImportError, pydoc.ErrorDuringImport):
             return None
+        else:
+            return unicode(docstring, "utf-8", "replace")
 
     def rpc_get_refactor_options(self, filename, start, end=None):
         """Return a list of possible refactoring options.
