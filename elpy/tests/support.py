@@ -193,6 +193,14 @@ x._|_
 
         self.rpc(filename, source, offset)
 
+    def test_should_not_fail_on_lambda(self):
+        # Bug #272 / jedi#431
+        source, offset = source_and_offset(
+            "map(lambda_|_"
+        )
+        filename = self.project_file("project.py", source)
+
+        self.rpc(filename, source, offset)
 
 
 class RPCGetCompletionsTests(GenericRPCTests):

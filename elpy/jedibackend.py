@@ -209,6 +209,9 @@ def run_with_debug(jedi, name, *args, **kwargs):
         # Bug jedi#429
         if isinstance(e, IndexError):
             return None
+        # Bug jedi#431
+        if isinstance(e, AttributeError) and str(e).endswith("'end_pos'"):
+            return None
 
         from jedi import debug
 
