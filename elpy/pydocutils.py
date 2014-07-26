@@ -70,10 +70,14 @@ def get_modules(modulename=None):
     """
     modulename = compat.ensure_not_unicode(modulename)
     if not modulename:
-        return ([modname for (importer, modname, ispkg)
-                 in iter_modules()
-                 if not modname.startswith("_")] +
-                list(sys.builtin_module_names))
+        try:
+            return ([modname for (importer, modname, ispkg)
+                     in iter_modules()
+                     if not modname.startswith("_")] +
+                    list(sys.builtin_module_names))
+        except OSError:
+            # Bug in Python 2.6, see #275
+            return list(sys.builtin_module_names)
     try:
         module = safeimport(modulename)
     except ErrorDuringImport:

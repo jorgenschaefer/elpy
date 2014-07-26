@@ -1,5 +1,11 @@
+import os
 import unittest
+import shutil
+import sys
+import tempfile
+
 import mock
+
 import elpy.pydocutils
 
 
@@ -68,6 +74,17 @@ class TestGetModules(unittest.TestCase):
     def test_should_catch_import_errors(self, safeimport):
         def raise_function(message):
             raise elpy.pydocutils.ErrorDuringImport(message,
-                                                          (None, None, None))
+                                                    (None, None, None))
         safeimport.side_effect = raise_function
         self.assertEqual([], elpy.pydocutils.get_modules("foo.bar"))
+
+    def test_should_not_fail_for_permission_denied(self):
+        tmpdir = tempfile.mkdtemp(prefix="test-elpy-get-modules-")
+        sys.path.append(tmpdir)
+        os.chmod(tmpdir, 0o000)
+        try:
+            elpy.pydocutils.get_modules()
+        finally:
+            os.chmod(tmpdir, 0o755)
+            shutil.rmtree(tmpdir)
+            sys.path.remove(tmpdir)

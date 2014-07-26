@@ -212,6 +212,9 @@ def run_with_debug(jedi, name, *args, **kwargs):
         # Bug jedi#431
         if isinstance(e, AttributeError) and str(e).endswith("'end_pos'"):
             return None
+        # Bug in Python 2.6, see #275
+        if isinstance(e, OSError) and e.errno == 13:
+            return None
 
         from jedi import debug
 
