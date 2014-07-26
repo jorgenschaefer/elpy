@@ -11,6 +11,7 @@ import pydoc
 
 from elpy.pydocutils import get_pydoc_completions
 from elpy.rpc import JSONRPCServer, Fault
+from elpy import compat
 
 try:
     from elpy import jedibackend
@@ -139,7 +140,9 @@ class ElpyRPCServer(JSONRPCServer):
         except (ImportError, pydoc.ErrorDuringImport):
             return None
         else:
-            return unicode(docstring, "utf-8", "replace")
+            if isinstance(docstring, bytes):
+                docstring = docstring.decode("utf-8", "replace")
+            return docstring
 
     def rpc_get_refactor_options(self, filename, start, end=None):
         """Return a list of possible refactoring options.
