@@ -2776,7 +2776,11 @@ here, and return the \"name\" as used by the backend."
     ;; no-cache <prefix> => t if company shouldn't cache results
     ;; meta <candidate> => short docstring for minibuffer
     (`meta
-     (elpy-company--cache-meta arg))
+     (let ((meta (elpy-company--cache-meta arg)))
+       (when (and meta
+                  (string-match "\\`\\(.*\n.*\\)\n.*" meta))
+         (setq meta (match-string 1 meta)))
+       meta))
     ;; annotation <candidate> => short docstring for completion buffer
     (`annotation
      (elpy-company--cache-annotation arg))

@@ -58,6 +58,17 @@
                      (elpy-company-backend 'meta "foo")))
       (should (equal "foo" called-with)))))
 
+(ert-deftest elpy-company-backend-should-trim-long-meta ()
+  (elpy-testcase ()
+    (mletf* ((called-with nil)
+             (elpy-company--cache-meta (arg)
+                                       (setq called-with arg)
+                                       "foo\nbar\nbaz\nqux"))
+
+      (should (equal "foo\nbar"
+                     (elpy-company-backend 'meta "foo")))
+      (should (equal "foo" called-with)))))
+
 (ert-deftest elpy-company-backend-should-get-cached-annotation ()
   (elpy-testcase ()
     (mletf* ((called-with nil)
