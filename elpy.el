@@ -1178,11 +1178,13 @@ With prefix arg, prompt for the command to use."
                        (read-file-name "IPython command: "))))
   (when (not ipython)
     (setq ipython "ipython"))
-  (if (boundp 'python-python-command)
-      ;; Emacs 24 until 24.3
-      (setq python-python-command ipython)
-    ;; Emacs 24.3 and onwards.
-
+  (cond
+   ;; Emacs 24 until 24.3
+   ((boundp 'python-python-command)
+    (setq python-python-command ipython))
+   ;; Emacs 24.3
+   ((and (version<= "24.3" emacs-version)
+         (not (boundp 'python-shell-interpreter-interactive-arg)))
     ;; This is from the python.el commentary.
     ;; Settings for IPython 0.11:
     (setq python-shell-interpreter ipython
@@ -1194,7 +1196,13 @@ With prefix arg, prompt for the command to use."
           python-shell-completion-module-string-code
           "';'.join(module_completion('''%s'''))\n"
           python-shell-completion-string-code
-          "';'.join(get_ipython().Completer.all_completions('''%s'''))\n")))
+          "';'.join(get_ipython().Completer.all_completions('''%s'''))\n"))
+   ;; Emacs 24.4
+   ((boundp 'python-shell-interpreter-interactive-arg)
+    (setq python-shell-interpreter "ipython"
+          python-shell-interpreter-args "-i"))
+   (t
+    (error "I don't know how to set ipython settings for this Emacs"))))
 
 (defun elpy-use-cpython (&optional cpython)
   "Set defaults to use the standard interpreter instead of IPython.
