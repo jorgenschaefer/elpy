@@ -1212,10 +1212,13 @@ With prefix arg, prompt for the command to use."
                        (read-file-name "Python command: "))))
   (when (not cpython)
     (setq cpython "python"))
-  (if (boundp 'python-python-command)
-      ;; Emacs 24 until 24.3
-      (setq python-python-command cpython)
-    ;; Emacs 24.3 and onwards.
+  (cond
+   ;; Emacs 24 until 24.3
+   ((boundp 'python-python-command)
+    (setq python-python-command cpython))
+   ;; Emacs 24.3 and onwards.
+   ((and (version<= "24.3" emacs-version)
+         (not (boundp 'python-shell-interpreter-interactive-arg)))
     (setq python-shell-interpreter cpython
           python-shell-interpreter-args "-i"
           python-shell-prompt-regexp ">>> "
@@ -1243,7 +1246,13 @@ else:
         return completions"
           python-shell-completion-module-string-code ""
           python-shell-completion-string-code
-          "';'.join(__COMPLETER_all_completions('''%s'''))\n")))
+          "';'.join(__COMPLETER_all_completions('''%s'''))\n"))
+   ;; Emacs 24.4
+   ((boundp 'python-shell-interpreter-interactive-arg)
+    (setq python-shell-interpreter "python"
+          python-shell-interpreter-args "-i"))
+   (t
+    (error "I don't know how to set ipython settings for this Emacs"))))
 
 (defun elpy-shell-send-region-or-buffer (&optional arg)
   "Send the active region or the buffer to the Python shell.

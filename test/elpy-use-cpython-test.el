@@ -24,6 +24,5 @@
                    python-shell-completion-string-code))
       (let ((orig (original-value sym)))
         (when orig
-          (message "%S" sym)
           (should (equal (symbol-value sym)
                          orig)))))))
