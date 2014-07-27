@@ -324,7 +324,7 @@ class TestRenameAtPoint(RefactorTestCase):
                 def _|_foo(self):
                     return 5
 
-            print "I'm an unrelated foo"
+            print("I'm an unrelated foo")
             """)
         ref = refactor.Refactor(self.project_root, filename)
         (change,) = ref.refactor_rename_at_point(offset, "frob",
@@ -339,7 +339,7 @@ class TestRenameAtPoint(RefactorTestCase):
                                    def frob(self):
                                        return 5
 
-                               print "I'm an unrelated foo"
+                               print("I'm an unrelated foo")
                                """)
 
 
