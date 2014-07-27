@@ -24,6 +24,10 @@ class RefactorTestCase(unittest.TestCase):
             f.write(contents)
         return filename, offset
 
+    def assertSourceEqual(self, first, second, msg=None):
+        """Fail if the two objects are unequal, ignoring indentation."""
+        self.assertEqual(dedent(first), dedent(second), msg=msg)
+
 
 class TestGetRefactorOptions(RefactorTestCase):
     def test_should_only_return_importsmodule_if_not_on_symbol(self):
@@ -133,12 +137,12 @@ class TestFromsToImports(RefactorTestCase):
         (change,) = ref.get_changes("refactor_froms_to_imports", offset)
         self.assertEqual(change['action'], 'change')
         self.assertEqual(change['file'], filename)
-        self.assertEqual(change['contents'],
-                         dedent("""\
-                         import datetime
+        self.assertSourceEqual(change['contents'],
+                               """\
+                               import datetime
 
-                         d = datetime.datetime(2013, 4, 7)
-                         """))
+                               d = datetime.datetime(2013, 4, 7)
+                               """)
 
 
 @unittest.skipIf(not refactor.ROPE_AVAILABLE, "Requires Rope")
@@ -157,15 +161,15 @@ class TestOrganizeImports(RefactorTestCase):
         (change,) = ref.get_changes("refactor_organize_imports")
         self.assertEqual(change['action'], 'change')
         self.assertEqual(change['file'], filename)
-        self.assertEqual(change['contents'],
-                         dedent("""\
-                         import json
-                         import unittest
+        self.assertSourceEqual(change['contents'],
+                               """\
+                               import json
+                               import unittest
 
 
-                         obj = json.dumps(23)
-                         unittest.TestCase()
-                         """))
+                               obj = json.dumps(23)
+                               unittest.TestCase()
+                               """)
 
 
 @unittest.skipIf(not refactor.ROPE_AVAILABLE, "Requires Rope")
@@ -224,24 +228,24 @@ class TestRenameAtPoint(RefactorTestCase):
             a, b = second, first
         self.assertEqual(a['action'], 'change')
         self.assertEqual(a['file'], filename)
-        self.assertEqual(a['contents'],
-                         dedent("""\
-                         class Foo(object):
-                             def frob(self):
-                                 return 5
+        self.assertSourceEqual(a['contents'],
+                               """\
+                               class Foo(object):
+                                   def frob(self):
+                                       return 5
 
-                             def bar(self):
-                                 return self.frob()
-                         """))
+                                   def bar(self):
+                                       return self.frob()
+                               """)
         self.assertEqual(b['action'], 'change')
         self.assertEqual(b['file'], file2)
-        self.assertEqual(b['contents'],
-                         dedent("""\
-                         import foo
+        self.assertSourceEqual(b['contents'],
+                               """\
+                               import foo
 
 
-                         x = foo.Foo()
-                         x.frob()"""))
+                               x = foo.Foo()
+                               x.frob()""")
 
     def test_should_refactor_in_hierarchy(self):
         filename, offset = self.create_file(
@@ -282,34 +286,34 @@ class TestRenameAtPoint(RefactorTestCase):
             a, b = second, first
         self.assertEqual(a['action'], 'change')
         self.assertEqual(a['file'], filename)
-        self.assertEqual(a['contents'],
-                         dedent("""\
-                         class Foo(object):
-                             def frob(self):
-                                 return 5
+        self.assertSourceEqual(a['contents'],
+                               """\
+                               class Foo(object):
+                                   def frob(self):
+                                       return 5
 
-                             def bar(self):
-                                 return self.frob()
+                                   def bar(self):
+                                       return self.frob()
 
-                         class Bar(Foo):
-                             def frob(self):
-                                 return 42
+                               class Bar(Foo):
+                                   def frob(self):
+                                       return 42
 
-                         class Baz(object):
-                             def foo(self):
-                                 return 42
-                         """))
+                               class Baz(object):
+                                   def foo(self):
+                                       return 42
+                               """)
         self.assertEqual(b['action'], 'change')
         self.assertEqual(b['file'], file2)
-        self.assertEqual(b['contents'],
-                         dedent("""\
-                         import foo
+        self.assertSourceEqual(b['contents'],
+                               """\
+                               import foo
 
 
-                         x, y, z = foo.Foo(), foo.Bar(), foo.Baz()
-                         x.frob()
-                         y.frob()
-                         z.foo()"""))
+                               x, y, z = foo.Foo(), foo.Bar(), foo.Baz()
+                               x.frob()
+                               y.frob()
+                               z.foo()""")
 
     def test_should_refactor_in_docstrings(self):
         filename, offset = self.create_file(
@@ -328,15 +332,15 @@ class TestRenameAtPoint(RefactorTestCase):
                                                  docs=True)
         self.assertEqual(change['action'], 'change')
         self.assertEqual(change['file'], filename)
-        self.assertEqual(change['contents'],
-                         dedent("""\
-                         class Foo(object):
-                             "Frobnicate the frob"
-                             def frob(self):
-                                 return 5
+        self.assertSourceEqual(change['contents'],
+                               """\
+                               class Foo(object):
+                                   "Frobnicate the frob"
+                                   def frob(self):
+                                       return 5
 
-                         print "I'm an unrelated foo"
-                         """))
+                               print "I'm an unrelated foo"
+                               """)
 
 
 @unittest.skipIf(not refactor.ROPE_AVAILABLE, "Requires Rope")
@@ -388,11 +392,11 @@ class TestMoveModule(RefactorTestCase):
 
         self.assertEqual(a['action'], 'change')
         self.assertEqual(a['file'], file2)
-        self.assertEqual(a['contents'],
-                         dedent("""\
-                           import frob.foo
-                           frob.foo.os
-                         """))
+        self.assertSourceEqual(a['contents'],
+                               """\
+                               import frob.foo
+                               frob.foo.os
+                               """)
 
         self.assertEqual(b['action'], 'move')
         self.assertEqual(b['type'], 'file')
@@ -421,14 +425,14 @@ class TestCreateInline(RefactorTestCase):
 
         self.assertEqual(change['action'], 'change')
         self.assertEqual(change['file'], self.filename)
-        self.assertEqual(change['contents'],
-                         dedent("""\
-                         def add(a, b):
-                             return a + b
+        self.assertSourceEqual(change['contents'],
+                               """\
+                               def add(a, b):
+                                   return a + b
 
-                         x = 2 + 3
-                         y = add(17, 4)
-                         """))
+                               x = 2 + 3
+                               y = add(17, 4)
+                               """)
 
     def test_should_refactor_all_occurrencs(self):
         ref = refactor.Refactor(self.project_root, self.filename)
@@ -436,10 +440,11 @@ class TestCreateInline(RefactorTestCase):
 
         self.assertEqual(change['action'], 'change')
         self.assertEqual(change['file'], self.filename)
-        self.assertEqual(change['contents'], dedent("""\
-                         x = 2 + 3
-                         y = 17 + 4
-                         """))
+        self.assertSourceEqual(change['contents'],
+                               """\
+                               x = 2 + 3
+                               y = 17 + 4
+                               """)
 
 
 @unittest.skipIf(not refactor.ROPE_AVAILABLE, "Requires Rope")
@@ -462,24 +467,25 @@ class TestExtractMethod(RefactorTestCase):
                                                 "calc", False)
         self.assertEqual(change['action'], 'change')
         self.assertEqual(change['file'], self.filename)
-        expected = dedent("""\
-                    class Foo(object):
-                        def spaghetti(self, a, b):
-                            return self.calc(a, b)
+        expected = """\
+                   class Foo(object):
+                       def spaghetti(self, a, b):
+                           return self.calc(a, b)
 
-                        def calc(self, a, b):
-                            x = a + 5
-                            y = b + 23
-                            return y
-                    """)
+                       def calc(self, a, b):
+                           x = a + 5
+                           y = b + 23
+                           return y
+                   """
         expected2 = expected.replace("return self.calc(a, b)",
                                      "return self.calc(b, a)")
         expected2 = expected2.replace("def calc(self, a, b)",
                                       "def calc(self, b, a)")
-        if change['contents'] == expected2:
-            self.assertEqual(change['contents'], expected2)
+        # This is silly, but it's what we got.
+        if change['contents'] == dedent(expected2):
+            self.assertSourceEqual(change['contents'], expected2)
         else:
-            self.assertEqual(change['contents'], expected)
+            self.assertSourceEqual(change['contents'], expected)
 
     def test_should_refactor_global(self):
         ref = refactor.Refactor(self.project_root, self.filename)
@@ -487,24 +493,24 @@ class TestExtractMethod(RefactorTestCase):
                                                 "calc", True)
         self.assertEqual(change['action'], 'change')
         self.assertEqual(change['file'], self.filename)
-        expected = dedent("""\
-                    class Foo(object):
-                        def spaghetti(self, a, b):
-                            return calc(a, b)
+        expected = """\
+                   class Foo(object):
+                       def spaghetti(self, a, b):
+                           return calc(a, b)
 
-                    def calc(a, b):
-                        x = a + 5
-                        y = b + 23
-                        return y
-                    """)
+                   def calc(a, b):
+                       x = a + 5
+                       y = b + 23
+                       return y
+                   """
         expected2 = expected.replace("return calc(a, b)",
                                      "return calc(b, a)")
         expected2 = expected2.replace("def calc(a, b)",
                                       "def calc(b, a)")
-        if change['contents'] == expected2:
-            self.assertEqual(change['contents'], expected2)
+        if change['contents'] == dedent(expected2):
+            self.assertSourceEqual(change['contents'], expected2)
         else:
-            self.assertEqual(change['contents'], expected)
+            self.assertSourceEqual(change['contents'], expected)
 
 
 @unittest.skipIf(not refactor.ROPE_AVAILABLE, "Requires Rope")
@@ -526,10 +532,11 @@ class TestUseFunction(RefactorTestCase):
 
         self.assertEqual(change['action'], 'change')
         self.assertEqual(change['file'], filename)
-        self.assertEqual(change['contents'], dedent("""\
-                         def add_and_multiply(a, b, c):
-                             temp = a + b
-                             return temp * c
+        self.assertSourceEqual(change['contents'],
+                               """\
+                               def add_and_multiply(a, b, c):
+                                   temp = a + b
+                                   return temp * c
 
-                         g = add_and_multiply(1, 2, 3)
-                         """))
+                               g = add_and_multiply(1, 2, 3)
+                               """)
