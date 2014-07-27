@@ -324,8 +324,8 @@ class TestRenameAtPoint(RefactorTestCase):
             """)
         ref = refactor.Refactor(self.project_root, filename)
         (change,) = ref.refactor_rename_at_point(offset, "frob",
-                                                     in_hierarchy=False,
-                                                     docs=True)
+                                                 in_hierarchy=False,
+                                                 docs=True)
         self.assertEqual(change['action'], 'change')
         self.assertEqual(change['file'], filename)
         self.assertEqual(change['contents'],
@@ -337,6 +337,7 @@ class TestRenameAtPoint(RefactorTestCase):
 
                          print "I'm an unrelated foo"
                          """))
+
 
 @unittest.skipIf(not refactor.ROPE_AVAILABLE, "Requires Rope")
 class TestRenameCurrentModule(RefactorTestCase):
