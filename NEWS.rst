@@ -1,3 +1,75 @@
+New in Elpy 1.5.0
+=================
+
+- Elpy now has a `manual`_. Additionally, there's a menu bar now which
+  should make it easier to discover Elpy features.
+- The Elpy Python package now ships with the Emacs Lisp package,
+  removing the need to install Elpy via pip.
+- Python 3.4 is now officially supported.
+- The new command ``elpy-config`` can be used to configure Elpy using
+  Emacs' built-in customize system. Elpy has been changed to make the
+  most of this.
+- Elpy now uses company-mode instead of auto-complete for on-the-fly
+  auto completion. This changes a few things. There is no automatic
+  documentation popup anymore. Instead, you can type ``C-d`` and get
+  the documentation buffer. In addition, you can type ``C-w`` to see
+  the source of the current candidate in context.
+- Elpy now uses pyvenv as the virtualenv module, enabling
+  virtualenvwrapper hooks.
+- We now ship with a large number of YASnippet snippets. Try ``M-x
+  yas-insert-snippet``.
+- The new unified test running interface on ``C-c C-t`` will try to
+  determine the current test and run it, or, failing that, run all
+  tests. Provide a prefix argument to just run all tests no matter
+  what. You can change the test runner to be used using
+  ``elpy-set-test-runner``. Elpy supports the default unittest
+  discover runner, the Django discover runner, nosetests and py.test
+  by default. New test runners can easily be defined.
+- There's a new multi-edit functionality. ``C-c C-e`` will edit all
+  occurrences of the symbol under point. When using Jedi, this is
+  using semantic information as opposed to just syntactic one. When a
+  region is active, edit all occurrences of the text in region in the
+  current buffer.
+- When sending Python code to the interactive interpreter using ``C-c
+  C-c``, Elpy will now not automatically pop to the interpreter
+  anymore. Use ``C-c C-z`` to switch to the interpreter.
+- Elpy will now display the current class and function if there is no
+  call tip to be displayed. Removes the ``C-c C-q`` binding.
+- If there is a call tip, highlight the current argument (requires Jedi).
+- The documentation interface using ``C-c C-d`` is much smarter now,
+  falling back to pydoc when necessary and providing sensible
+  completion for that, too. Provide a prefix argument if you want no
+  smarts, just pydoc.
+- ``<S-return>`` and ``<C-S-return>`` now open a line below or above
+  the current one.
+- ``<C-cursor>`` will now navigate between Python blocks of the same
+  indentation level. ``<M-cursor>`` will move the current block. Try
+  it, it's easier to understand when you see it than to explain it.
+- There's a new concept of modules. The variable
+  ``elpy-default-minor-modes`` is gone (use ``elpy-mode-hook`` for
+  minor modes). Instead, there's now ``elpy-modules`` which can be
+  used to enable or disable certain features of Elpy.
+- ``elpy-clean-modeline`` is gone, modules now clean themselves up.
+- Elpy now distinguishes between the project root, where project files
+  are located, and the library root, which should be part of
+  ``sys.path`` to import the module under development.
+- ``elpy-project-ignored-directories`` replaces the old
+  ``elpy-rgrep-ignored-directories`` and is used by more features.
+- ``elpy-doc-websearch`` has been removed as it was barely useable
+  as is.
+- Elpy now tries to be more helpful when errors in the backend happen.
+  This removes ``elpy-rpc-traceback``, as that will be displayed by
+  default.
+- Optimizations were added to handle large files, making general
+  interaction a lot faster.
+- When Rope is being used, do not search through unusually large
+  directories. This should speed up interaction in those cases,
+  especially when editing a file in the home directory.
+- And a whole lot of minor bug fixes and little improvements.
+
+.. _manual: http://elpy.readthedocs.org/
+
+
 New in Elpy 1.4.2
 ==================
 
