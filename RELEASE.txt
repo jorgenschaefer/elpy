@@ -20,11 +20,11 @@ This creates dist/elpy-X.Y.tar
 
 PyPI release:
 
-$ python setup.py bdist_wheel sdist
+$ python setup.py sdist bdist_wheel
 
 Recheck all is well, then
 
-$ python setup.py bdist_wheel sdist upload
+$ twine upload dist/*
 
 Github:
 
