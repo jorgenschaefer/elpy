@@ -39,7 +39,7 @@ python-coverage:
 	coverage html -d ~/Public/elpy-coverage.html
 	coverage report -m --fail-under=95
 
-test-all: test-warnings tox
+test-all: python-test tox
 
 VERSION=$(shell sed -ne 's/^;; Version: \(.*\)/\1/p' elpy.el)
 
