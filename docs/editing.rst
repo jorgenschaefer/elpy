@@ -77,7 +77,7 @@ combination with either the control or meta keys (but not both).
    The control key allows navigation. Up and down will skip between
    blocks of the same indentation level, allowing you to quickly find
    the end of a long for loop, for example. Left and right jump to the
-   closest preceding or following occurence of a higher or lower
+   closest preceding or following occurrence of a higher or lower
    indentation level.
 
 .. command:: elpy-nav-move-iblock-down
