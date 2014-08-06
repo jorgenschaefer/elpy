@@ -234,12 +234,18 @@ class Refactor(object):
 
     @options("Rename symbol at point", category="Symbol",
              args=[("offset", "offset", None),
-                   ("new_name", "string", "Rename to: ")],
+                   ("new_name", "string", "Rename to: "),
+                   ("in_hierarchy", "boolean",
+                    "Rename in super-/subclasses as well? "),
+                   ("docs", "boolean",
+                    "Replace occurences in docs and strings? ")
+                   ],
              available=ROPE_AVAILABLE)
-    def refactor_rename_at_point(self, offset, new_name):
+    def refactor_rename_at_point(self, offset, new_name, in_hierarchy, docs):
         """Rename the symbol at point."""
         refactor = Rename(self.project, self.resource, offset)
-        changes = refactor.get_changes(new_name)
+        changes = refactor.get_changes(new_name, in_hierarchy=in_hierarchy,
+                                       docs=docs)
         return translate_changes(changes)
 
     @options("Rename current module", category="Module",
