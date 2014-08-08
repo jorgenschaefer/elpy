@@ -55,7 +55,6 @@ class RopeBackend(object):
         self.project = rope.base.project.Project(self.project_root,
                                                  ropefolder=None,
                                                  **prefs)
-        patch_project_files(self.project)
 
     def get_resource(self, filename):
         if filename is not None and os.path.exists(filename):
@@ -225,8 +224,30 @@ def find_called_name_offset(source, orig_offset):
 # home directory, this can easily read a whole lot of files, making
 # Rope practically useless. We change the file finding algorithm here
 # to only recurse into directories with an __init__.py file in them.
-def patch_project_files(project):
-    project.file_list.files = set(get_python_project_files(project))
+def find_source_folders(self, folder):
+    for resource in folder.get_folders():
+        if self._is_package(resource):
+            return [folder]
+    result = []
+    for resource in folder.get_files():
+        if resource.name.endswith('.py'):
+            result.append(folder)
+            break
+    for resource in folder.get_folders():
+        if self._is_package(resource):
+            result.append(resource)
+    return result
+
+import rope.base.pycore
+rope.base.pycore.PyCore._find_source_folders = find_source_folders
+
+
+def get_files(self):
+    if self.files is None:
+        self.files = get_python_project_files(self.project)
+    return self.files
+
+rope.base.project._FileListCacher.get_files = get_files
 
 
 def get_python_project_files(project):
@@ -238,27 +259,21 @@ def get_python_project_files(project):
                           if os.path.exists(os.path.join(dirname, subdir,
                                                          "__init__.py"))]
 
+
 ##################################################################
 # Monkey patching a method in rope because it doesn't complete import
 # statements.
 
-from functools import wraps
+orig_code_completions = (rope.contrib.codeassist.
+                         _PythonCodeAssist._code_completions)
 
 
-def patch_codeassist(codeassist):
-    def wrapper(fun):
-        @wraps(fun)
-        def inner(self):
-            proposals = get_import_completions(self)
-            if proposals:
-                return proposals
-            else:
-                return fun(self)
-        inner.patched_by_elpy = True
-        return inner
-
-    codeassist._PythonCodeAssist._code_completions = \
-        wrapper(codeassist._PythonCodeAssist._code_completions)
+def code_completions(self):
+    proposals = get_import_completions(self)
+    if proposals:
+        return proposals
+    else:
+        return orig_code_completions(self)
 
 
 def get_import_completions(self):
@@ -281,5 +296,4 @@ class FakeProposal(object):
     def get_doc(self):
         return None
 
-
-patch_codeassist(rope.contrib.codeassist)
+rope.contrib.codeassist._PythonCodeAssist._code_completions = code_completions
