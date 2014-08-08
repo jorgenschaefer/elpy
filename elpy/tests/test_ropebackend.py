@@ -34,7 +34,15 @@ class TestInit(RopeBackendTestCase):
         self.assertEqual(self.backend.name, "rope")
 
     def test_should_patch_project_files(self):
-        self.assertIsNotNone(self.backend.project.file_list.files)
+        self.project_file("foo.txt", "")
+        self.project_file("baddir/file.py", "")
+
+        self.backend.project.validate()
+
+        actual = [f.real_path for f in
+                  self.backend.project.file_list.get_files()]
+        self.assertEqual([os.path.join(self.project_root, "foo.txt")],
+                         actual)
 
 
 class TestValidate(RopeBackendTestCase):
@@ -132,8 +140,6 @@ class TestPatchProjectFiles(RopeBackendTestCase):
         expected = set(os.path.join(self.project_root, name)
                        for name in ["foo.txt", "gooddir/__init__.py",
                                     "gooddir/file.py"])
-
-        ropebackend.patch_project_files(self.backend.project)
 
         actual = set(resource.real_path
                      for resource
