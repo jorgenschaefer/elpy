@@ -2779,17 +2779,25 @@ here, and return the \"name\" as used by the backend."
                 (elpy-company--cache-clear)
                 (funcall
                  callback
-                 (if result
-                     (elpy-company--cache-completions arg result)
-                   ;; Nothing from elpy, try dabbrev-code
-                   (let* ((company-backend 'company-dabbrev-code))
-                     (company--process-candidates
-                      (company-dabbrev-code
-                       'candidates arg))))))))))
+                 (cond
+                  ;; The backend returned something
+                  (result
+                   (elpy-company--cache-completions arg result))
+                  ;; Nothing from the backend, try dabbrev-code.
+                  ((> (length arg) company-minimum-prefix-length)
+                   (company-dabbrev-code 'candidates arg))
+                  ;; Well, ok, let's go meh.
+                  (t
+                   nil))))))))
     ;; sorted => t if the list is already sorted
     ;; - We could sort it ourselves according to "how likely it is".
     ;;   Does a backend do that?
     ;; duplicates => t if there could be duplicates
+    (`duplicates
+     ;; While elpy backends won't return duplicates, we are passing
+     ;; this on to `company-dabbrev-code' if we have no completions of
+     ;; our own, so return t just in case.
+     t)
     ;; no-cache <prefix> => t if company shouldn't cache results
     ;; meta <candidate> => short docstring for minibuffer
     (`meta
