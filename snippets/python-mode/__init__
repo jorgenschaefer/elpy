@@ -7,4 +7,4 @@ def __init__(self${1:, args}):
     """$2
 
     """
-    ${1:$(elpy-snippet-init-assignments text)}
+    ${1:$(elpy-snippet-init-assignments yas-text)}

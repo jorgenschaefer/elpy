@@ -9,5 +9,5 @@ class ${1:ClassName}(${2:object}):
     """
     def __init__(self${4:, args}):
         super($1, self).__init__($5)
-        ${4:$(elpy-snippet-init-assignments text)}
+        ${4:$(elpy-snippet-init-assignments yas-text)}
         $0
