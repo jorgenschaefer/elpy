@@ -5,6 +5,8 @@
   (add-to-list 'load-path elpy-dir)
   (add-to-list 'process-environment (format "PYTHONPATH=%s" elpy-dir)))
 (require 'elpy)
+;; Travis regularly has some lag for some reason.
+(setq elpy-rpc-timeout 10)
 
 (defmacro mletf* (bindings &rest body)
   "Liket `cl-letf*', just with a slightly more concise function syntax.
