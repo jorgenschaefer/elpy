@@ -1,3 +1,14 @@
+New in Elpy 1.5.1
+=================
+
+- Fix a bug where company-mode might get confused about the current
+  backend, leading to an error about ``Symbol's function definition is
+  void: nil``
+- Fix Rope so it won’t search the whole project directory. This was an
+  intended feature in v1.5 which did not work originally.
+- Use ``yas-text`` instead of ``text`` in snippets for compatibility
+  with the unreleased yasnippet from MELPA (thanks to Daniel Wu!)
+
 New in Elpy 1.5.0
 =================
 

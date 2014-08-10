@@ -4,6 +4,10 @@ $ tox
 
 Make sure nothing breaks.
 
+$ emacsclient NEWS.rst
+
+Update NEWS.rst with the latest changes.
+
 $ bumpversion minor
 
 MELPA release:
