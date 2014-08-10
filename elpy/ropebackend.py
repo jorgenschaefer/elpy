@@ -76,23 +76,31 @@ class RopeBackend(object):
             self.project.validate()
             self.last_validation = now
 
-    def rpc_get_completions(self, filename, source, offset):
+    def call_rope(self, rope_function, filename, source, offset,
+                  **kwargs):
         self.validate()
         resource = self.get_resource(filename)
         try:
-            proposals = rope.contrib.codeassist.code_assist(self.project,
-                                                            source, offset,
-                                                            resource,
-                                                            maxfixes=MAXFIXES)
-            starting_offset = rope.contrib.codeassist.starting_offset(source,
-                                                                      offset)
+            return rope_function(self.project,
+                                 source, offset,
+                                 resource,
+                                 maxfixes=MAXFIXES,
+                                 **kwargs)
         except (rope.base.exceptions.BadIdentifierError,
                 rope.base.exceptions.ModuleSyntaxError,
                 IndentationError,
                 LookupError):
-            # Rope can't parse this file
-            return []
+            return None
 
+    def rpc_get_completions(self, filename, source, offset):
+        proposals = self.call_rope(
+            rope.contrib.codeassist.code_assist,
+            filename, source, offset
+        )
+        if proposals is None:
+            return []
+        starting_offset = rope.contrib.codeassist.starting_offset(source,
+                                                                  offset)
         prefixlen = offset - starting_offset
         self.completions = dict((proposal.name, proposal)
                                 for proposal in proposals)
@@ -123,76 +131,48 @@ class RopeBackend(object):
             return (resource.real_path, lineno)
 
     def rpc_get_definition(self, filename, source, offset):
-        self.validate()
-
-        # The find_definition call fails on an empty strings
-        if source == '':
-            return None
-
-        resource = self.get_resource(filename)
-        try:
-            location = rope.contrib.findit.find_definition(self.project,
-                                                           source, offset,
-                                                           resource, MAXFIXES)
-        except (rope.base.exceptions.BadIdentifierError,
-                rope.base.exceptions.ModuleSyntaxError,
-                IndentationError,
-                LookupError):
-            # Rope can't parse this file
-            return None
-
+        location = self.call_rope(
+            rope.contrib.findit.find_definition,
+            filename, source, offset
+        )
         if location is None:
             return None
         else:
             return (location.resource.real_path, location.offset)
 
     def rpc_get_calltip(self, filename, source, offset):
-        self.validate()
         offset = find_called_name_offset(source, offset)
-        resource = self.get_resource(filename)
         if 0 < offset < len(source) and source[offset] == ')':
             offset -= 1
-        try:
-            calltip = rope.contrib.codeassist.get_calltip(
-                self.project, source, offset, resource, MAXFIXES,
-                remove_self=True)
-            if calltip:
-                calltip = calltip.replace(".__init__(", "(")
-                calltip = calltip.replace("(self)", "()")
-                calltip = calltip.replace("(self, ", "(")
-                # "elpy.tests.support.source_and_offset(source)"
-                # =>
-                # "support.source_and_offset(source)"
-                try:
-                    openpos = calltip.index("(")
-                    period2 = calltip.rindex(".", 0, openpos)
-                    period1 = calltip.rindex(".", 0, period2)
-                    calltip = calltip[period1 + 1:]
-                except ValueError:
-                    pass
-            return calltip
-        except (rope.base.exceptions.BadIdentifierError,
-                rope.base.exceptions.ModuleSyntaxError,
-                IndentationError,
-                LookupError):
-            # Rope can't parse this file
+
+        calltip = self.call_rope(
+            rope.contrib.codeassist.get_calltip,
+            filename, source, offset,
+            remove_self=True
+        )
+        if calltip is None:
             return None
 
-    def rpc_get_docstring(self, filename, source, offset):
-        self.validate()
-        resource = self.get_resource(filename)
+        calltip = calltip.replace(".__init__(", "(")
+        calltip = calltip.replace("(self)", "()")
+        calltip = calltip.replace("(self, ", "(")
+        # "elpy.tests.support.source_and_offset(source)"
+        # =>
+        # "support.source_and_offset(source)"
         try:
-            docstring = rope.contrib.codeassist.get_doc(self.project,
-                                                        source, offset,
-                                                        resource, MAXFIXES)
-        except (rope.base.exceptions.BadIdentifierError,
-                rope.base.exceptions.ModuleSyntaxError,
-                IndentationError,
-                IndexError,
-                LookupError):
-            # Rope can't parse this file
-            docstring = None
-        return docstring
+            openpos = calltip.index("(")
+            period2 = calltip.rindex(".", 0, openpos)
+            period1 = calltip.rindex(".", 0, period2)
+            calltip = calltip[period1 + 1:]
+        except ValueError:
+            pass
+        return calltip
+
+    def rpc_get_docstring(self, filename, source, offset):
+        return self.call_rope(
+            rope.contrib.codeassist.get_doc,
+            filename, source, offset
+        )
 
 
 def find_called_name_offset(source, orig_offset):
