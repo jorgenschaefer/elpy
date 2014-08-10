@@ -89,7 +89,6 @@ class RopeBackend(object):
         except (rope.base.exceptions.BadIdentifierError,
                 rope.base.exceptions.ModuleSyntaxError,
                 IndentationError,
-                IndexError,
                 LookupError):
             # Rope can't parse this file
             return []
@@ -175,7 +174,6 @@ class RopeBackend(object):
         except (rope.base.exceptions.BadIdentifierError,
                 rope.base.exceptions.ModuleSyntaxError,
                 IndentationError,
-                IndexError,
                 LookupError):
             # Rope can't parse this file
             return None

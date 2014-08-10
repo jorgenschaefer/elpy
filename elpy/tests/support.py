@@ -103,10 +103,20 @@ class GenericRPCTests(object):
         self.rpc(filename, source, offset)
 
     def test_should_not_fail_for_bad_indentation(self):
+        # Bug in Rope: rope#80
         source, offset = source_and_offset(
             "def foo():\n"
-            "       print 23_|_\n"
-            "      print 17\n")
+            "       print(23)_|_\n"
+            "      print(17)\n")
+        filename = self.project_file("test.py", source)
+
+        self.rpc(filename, source, offset)
+
+    def test_should_not_fail_for_relative_import(self):
+        # Bug in Rope: rope#81 and rope#82
+        source, offset = source_and_offset(
+            "from .. import foo_|_"
+        )
         filename = self.project_file("test.py", source)
 
         self.rpc(filename, source, offset)
@@ -122,10 +132,13 @@ class GenericRPCTests(object):
         self.rpc(filename, source, offset)
 
     def test_should_not_fail_with_bad_encoding(self):
-        source = u'# coding: utf-8X\n'
+        # Bug in Rope: rope#83
+        source, offset = source_and_offset(
+            u'# coding: utf-8X_|_\n'
+        )
         filename = self.project_file("test.py", source)
 
-        self.rpc(filename, source, 16)
+        self.rpc(filename, source, offset)
 
     def test_should_not_fail_with_form_feed_characters(self):
         # Bug in Jedi: jedi#424
