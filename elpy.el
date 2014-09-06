@@ -2849,32 +2849,41 @@ here, and return the \"name\" as used by the backend."
      (kill-local-variable 'eldoc-documentation-function))))
 
 (defun elpy-eldoc-documentation ()
-  "Return a call tip for the python call at point."
-  (elpy-rpc-get-calltip
-   (lambda (calltip)
-     (eldoc-message
-      (cond
-       ((not calltip)
-        (let ((current-defun (python-info-current-defun)))
-          (when current-defun
-            (format "In: %s()" current-defun))))
-       ((stringp calltip)
-        calltip)
-       (t
-        (let ((name (cdr (assq 'name calltip)))
-              (index (cdr (assq 'index calltip)))
-              (params (cdr (assq 'params calltip))))
-          (when index
-            (setf (nth index params)
-                  (propertize (nth index params)
-                              'face
-                              'eldoc-highlight-function-argument)))
-          (format "%s(%s)"
-                  name
-                  (mapconcat #'identity params ", "))
-          ))))))
-  ;; Return the last message until we're done
-  eldoc-last-message)
+  "Return some interesting information for the code at point.
+
+This will return flymake errors for the line at point if there
+are any. If not, this will do an asynchronous call to the RPC
+backend to get a call tip, and display that using
+`eldoc-message'. If the backend has no call tip, this will
+display the current class and method instead."
+  (let ((flymake-error (elpy-flymake-error-at-point)))
+    (if flymake-error
+        flymake-error
+      (elpy-rpc-get-calltip
+       (lambda (calltip)
+         (eldoc-message
+          (cond
+           ((not calltip)
+            (let ((current-defun (python-info-current-defun)))
+              (when current-defun
+                (format "In: %s()" current-defun))))
+           ((stringp calltip)
+            calltip)
+           (t
+            (let ((name (cdr (assq 'name calltip)))
+                  (index (cdr (assq 'index calltip)))
+                  (params (cdr (assq 'params calltip))))
+              (when index
+                (setf (nth index params)
+                      (propertize (nth index params)
+                                  'face
+                                  'eldoc-highlight-function-argument)))
+              (format "%s(%s)"
+                      name
+                      (mapconcat #'identity params ", "))
+              ))))))
+      ;; Return the last message until we're done
+      eldoc-last-message)))
 
 ;;;;;;;;;;;;;;;;;;;
 ;;; Module: Flymake
@@ -2952,13 +2961,18 @@ description."
 
 (defun elpy-flymake-show-error ()
   "Show the flymake error message at point."
+  (interactive)
+  (message "%s" (elpy-flymake-error-at-point)))
+
+(defun elpy-flymake-error-at-point ()
+  "Return the flymake error at point, or nil if there is none."
   (let* ((lineno (line-number-at-pos))
          (err-info (car (flymake-find-err-info flymake-err-info
-                                               lineno)))
-         (text (mapconcat #'flymake-ler-text
-                          err-info
-                          ", ")))
-    (message "%s" text)))
+                                               lineno))))
+    (when err-info
+      (mapconcat #'flymake-ler-text
+                 err-info
+                 ", "))))
 
 (defun elpy-flymake--standard-value (var)
   "Return the standard value of the given variable."
