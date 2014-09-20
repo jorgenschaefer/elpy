@@ -2259,15 +2259,16 @@ died, this will kill the process and buffer."
 (defun elpy-rpc--find-buffer (library-root python-command)
   "Return an existing RPC buffer for this project root and command."
   (catch 'return
-    (dolist (buf (buffer-list))
-      (when (and (elpy-rpc--process-buffer-p buf)
-                 (equal (buffer-local-value 'elpy-rpc--backend-library-root
-                                            buf)
-                        library-root)
-                 (equal (buffer-local-value 'elpy-rpc--backend-python-command
-                                            buf)
-                        python-command))
-        (throw 'return buf)))
+    (let ((full-python-command (executable-find python-command)))
+      (dolist (buf (buffer-list))
+        (when (and (elpy-rpc--process-buffer-p buf)
+                   (equal (buffer-local-value 'elpy-rpc--backend-library-root
+                                              buf)
+                          library-root)
+                   (equal (buffer-local-value 'elpy-rpc--backend-python-command
+                                              buf)
+                          full-python-command))
+          (throw 'return buf))))
     nil))
 
 (defun elpy-rpc--open (library-root python-command)
@@ -2276,23 +2277,24 @@ died, this will kill the process and buffer."
   (when (and elpy-rpc-backend
              (not (stringp elpy-rpc-backend)))
     (error "`elpy-rpc-backend' should be nil or a string."))
-  (let* ((name (format "*elpy-rpc [project:%s python:%s]*"
+  (let* ((full-python-command (executable-find python-command))
+         (name (format "*elpy-rpc [project:%s python:%s]*"
                        library-root
-                       python-command))
+                       full-python-command))
          (new-elpy-rpc-buffer (generate-new-buffer name))
          (proc nil))
     (with-current-buffer new-elpy-rpc-buffer
       (setq elpy-rpc--buffer-p t
             elpy-rpc--buffer (current-buffer)
             elpy-rpc--backend-library-root library-root
-            elpy-rpc--backend-python-command python-command
+            elpy-rpc--backend-python-command full-python-command
             default-directory "/"
             proc (condition-case err
                      (let ((process-connection-type nil)
                            (process-environment (elpy-rpc--environment)))
                        (start-process name
                                       (current-buffer)
-                                      python-command
+                                      full-python-command
                                       "-W" "ignore"
                                       "-m" "elpy.__main__"))
                    (error

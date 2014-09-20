@@ -3,10 +3,9 @@
     (mletf* ((buffer (current-buffer))
              (elpy-rpc--process-buffer-p (buf) (equal buf buffer)))
       (setq elpy-rpc--backend-library-root "test-project"
-            elpy-rpc--backend-python-command "test-python-command")
-
+            elpy-rpc--backend-python-command (executable-find "python"))
       (should (equal (elpy-rpc--find-buffer "test-project"
-                                            "test-python-command")
+                                            "python")
                      (current-buffer))))))
 
 (ert-deftest elpy-rpc--find-buffer-should-not-find-without-process-buffer ()
@@ -14,10 +13,10 @@
     (mletf* ((buffer (current-buffer))
              (elpy-rpc--process-buffer-p (buf) nil))
       (setq elpy-rpc--backend-library-root "test-project"
-            elpy-rpc--backend-python-command "test-python-command")
+            elpy-rpc--backend-python-command (executable-find "python"))
 
       (should (equal (elpy-rpc--find-buffer "test-project"
-                                            "test-python-command")
+                                            "python")
                      nil)))))
 
 (ert-deftest elpy-rpc--find-buffer-should-not-find-with-bad-project-root ()
@@ -25,10 +24,10 @@
     (mletf* ((buffer (current-buffer))
              (elpy-rpc--process-buffer-p (buf) t))
       (setq elpy-rpc--backend-library-root "bad-test-project"
-            elpy-rpc--backend-python-command "test-python-command")
+            elpy-rpc--backend-python-command (executable-find "python"))
 
       (should (equal (elpy-rpc--find-buffer "test-project"
-                                            "test-python-command")
+                                            "python")
                      nil)))))
 
 (ert-deftest elpy-rpc--find-buffer-should-not-find-without-bad-python-command ()
