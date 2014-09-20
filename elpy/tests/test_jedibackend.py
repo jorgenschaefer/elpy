@@ -206,3 +206,18 @@ class TestRunWithDebug(unittest.TestCase):
                              ["[N] Notice",
                               "[W] Warning",
                               "[?] Other"])
+
+    @mock.patch('jedi.set_debug_function')
+    @mock.patch('jedi.Script')
+    def test_should_not_fail_with_bad_data(self, Script, set_debug_function):
+        import jedi.debug
+
+        def set_debug(function, speed=True):
+            if function is not None:
+                function(jedi.debug.NOTICE, u"\xab")
+
+        set_debug_function.side_effect = set_debug
+        Script.return_value.test_method.side_effect = Exception
+
+        with self.assertRaises(rpc.Fault):
+            jedibackend.run_with_debug(jedi, 'test_method', 1, 2, arg=3)
