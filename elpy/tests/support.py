@@ -215,6 +215,14 @@ x._|_
 
         self.rpc(filename, source, offset)
 
+    def test_should_not_fail_on_literals(self):
+        # Bug #344 / jedi#466
+        source = u'lit = u"""\\\n# -*- coding: utf-8 -*-\n"""\n'
+        offset = 0
+        filename = self.project_file("project.py", source)
+
+        self.rpc(filename, source, offset)
+
 
 class RPCGetCompletionsTests(GenericRPCTests):
     METHOD = "rpc_get_completions"

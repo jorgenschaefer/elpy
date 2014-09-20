@@ -215,6 +215,12 @@ def run_with_debug(jedi, name, *args, **kwargs):
         # Bug in Python 2.6, see #275
         if isinstance(e, OSError) and e.errno == 13:
             return None
+        # Bug jedi#466
+        if (
+                isinstance(e, SyntaxError) and
+                "EOL while scanning string literal" in str(e)
+        ):
+            return None
 
         from jedi import debug
 
