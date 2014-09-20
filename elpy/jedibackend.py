@@ -221,6 +221,9 @@ def run_with_debug(jedi, name, *args, **kwargs):
                 "EOL while scanning string literal" in str(e)
         ):
             return None
+        # Bug jedi#482
+        if isinstance(e, UnicodeEncodeError):
+            return None
 
         from jedi import debug
 
@@ -233,8 +236,7 @@ def run_with_debug(jedi, name, *args, **kwargs):
                 prefix = "[W]"
             else:
                 prefix = "[?]"
-            str_out = str_out.encode("utf-8", "replace")
-            debug_info.append("{0} {1}".format(prefix, str_out))
+            debug_info.append(u"{0} {1}".format(prefix, str_out))
 
         jedi.set_debug_function(_debug, speed=False)
         try:

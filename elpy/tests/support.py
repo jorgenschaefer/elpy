@@ -1,3 +1,5 @@
+# coding: utf-8
+
 """Support classes and functions for the elpy test code.
 
 Elpy uses a bit of a peculiar test setup to avoid redundancy. For the
@@ -232,6 +234,20 @@ x._|_
         filename = self.project_file("project.py", source)
 
         self.rpc(filename, source, offset)
+
+    def test_should_not_fail_for_unicode_chars_in_string(self):
+        # Bug #358 / jedi#482
+        source = '''\
+# coding: utf-8
+
+logging.info(u"Saving «{}»...".format(title))
+requests.get(u"https://web.archive.org/save/{}".format(url))
+'''
+        offset = 57
+        filename = self.project_file("project.py", source)
+
+        self.rpc(filename, source, offset)
+
 
 
 class RPCGetCompletionsTests(GenericRPCTests):
