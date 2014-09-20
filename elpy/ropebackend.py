@@ -33,6 +33,8 @@ class RopeBackend(object):
     def __init__(self, project_root):
         super(RopeBackend, self).__init__()
         self.last_validation = 0
+        if not os.path.exists(project_root):
+            project_root = ""
         self.project_root = project_root
         self.completions = {}
         prefs = dict(ignored_resources=['*.pyc', '*~', '.ropeproject',
