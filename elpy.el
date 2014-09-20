@@ -1956,7 +1956,9 @@ name."
              (this-name (cdr (assq 'name usage)))
              (offset (cdr (assq 'offset usage))))
         (setq name this-name)
-        (with-current-buffer (find-file-noselect filename)
+        (with-current-buffer (if filename
+                                 (find-file-noselect filename)
+                               (current-buffer))
           (elpy-multiedit-add-overlay (+ offset 1)
                                       (+ offset 1 (length this-name)))
           (save-excursion

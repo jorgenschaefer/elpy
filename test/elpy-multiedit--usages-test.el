@@ -27,3 +27,17 @@
       (goto-char (point-min))
       (should (re-search-forward "test1.py" nil t))
       (should (re-search-forward "test2.py" nil t)))))
+
+(ert-deftest elpy-multiedit--usages-should-treat-nil-as-current-buffer ()
+  (elpy-testcase ((:project project-root
+                            ("test1.py" "foo\nbar\nbaz")))
+
+    (find-file (f-join project-root "test1.py"))
+
+    (elpy-multiedit--usages
+     `(((filename . nil)
+        (name . "bar")
+        (offset . 4))))
+
+    (should (overlay-get (car (overlays-at 5))
+                         'elpy-multiedit))))
