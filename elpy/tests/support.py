@@ -248,6 +248,13 @@ requests.get(u"https://web.archive.org/save/{}".format(url))
 
         self.rpc(filename, source, offset)
 
+    def test_should_not_fail_for_bad_escape_sequence(self):
+        # Bug #360 / jedi#485
+        source = r"v = '\x'"
+        offset = 8
+        filename = self.project_file("project.py", source)
+
+        self.rpc(filename, source, offset)
 
 
 class RPCGetCompletionsTests(GenericRPCTests):

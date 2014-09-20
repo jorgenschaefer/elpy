@@ -224,6 +224,18 @@ def run_with_debug(jedi, name, *args, **kwargs):
         # Bug jedi#482
         if isinstance(e, UnicodeEncodeError):
             return None
+        # Bug jedi#485
+        if (
+                isinstance(e, ValueError) and
+                "invalid \\x escape" in str(e)
+        ):
+            return None
+        # Bug jedi#485 in Python 3
+        if (
+                isinstance(e, SyntaxError) and
+                "truncated \\xXX escape" in str(e)
+        ):
+            return None
 
         from jedi import debug
 
