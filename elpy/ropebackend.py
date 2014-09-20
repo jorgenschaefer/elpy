@@ -91,7 +91,8 @@ class RopeBackend(object):
         except (rope.base.exceptions.BadIdentifierError,
                 rope.base.exceptions.ModuleSyntaxError,
                 IndentationError,
-                LookupError):
+                LookupError,
+                AttributeError):
             return None
 
     def rpc_get_completions(self, filename, source, offset):

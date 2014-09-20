@@ -223,6 +223,16 @@ x._|_
 
         self.rpc(filename, source, offset)
 
+    def test_should_not_fail_with_args_as_args(self):
+        # Bug #347 in rope_py3k
+        source, offset = source_and_offset(
+            "def my_function(*args):"
+            "    ret_|_"
+        )
+        filename = self.project_file("project.py", source)
+
+        self.rpc(filename, source, offset)
+
 
 class RPCGetCompletionsTests(GenericRPCTests):
     METHOD = "rpc_get_completions"
