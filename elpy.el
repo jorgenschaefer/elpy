@@ -305,10 +305,10 @@ A setting of nil means to block indefinitely."
     (define-key map (kbd "<S-return>") 'elpy-open-and-indent-line-below)
     (define-key map (kbd "<C-S-return>") 'elpy-open-and-indent-line-above)
 
-    (define-key map (kbd "<C-down>") 'elpy-nav-next-iblock)
-    (define-key map (kbd "<C-up>") 'elpy-nav-previous-iblock)
-    (define-key map (kbd "<C-left>") 'elpy-nav-backward-iblock)
-    (define-key map (kbd "<C-right>") 'elpy-nav-forward-iblock)
+    (define-key map (kbd "<C-down>") 'elpy-nav-forward-block)
+    (define-key map (kbd "<C-up>") 'elpy-nav-backward-block)
+    (define-key map (kbd "<C-left>") 'elpy-nav-backward-indent)
+    (define-key map (kbd "<C-right>") 'elpy-nav-forward-indent)
 
     (define-key map (kbd "<M-down>") 'elpy-nav-move-iblock-down)
     (define-key map (kbd "<M-up>") 'elpy-nav-move-iblock-up)
@@ -1376,6 +1376,65 @@ with a prefix argument)."
       (with-selected-window (get-buffer-window buffer)
         (goto-char (1+ offset))))))
 
+(defun elpy-nav-forward-block ()
+  "Move to the next line indented like point.
+
+This will skip over lines and statements with different
+indentation levels."
+  (interactive)
+  (let ((indent (current-column)))
+    (when (/= (% indent python-indent-offset)
+              0)
+      (setq indent (* (1+ (/ indent python-indent-offset))
+                      python-indent-offset)))
+    (python-nav-forward-statement)
+    (while (and (/= indent (current-indentation))
+                (not (eobp)))
+      (python-nav-forward-statement))))
+
+(defun elpy-nav-backward-block ()
+  "Move to the previous line indented like point.
+
+This will skip over lines and statements with different
+indentation levels."
+  (interactive)
+  (let ((indent (current-column)))
+    (when (/= (% indent python-indent-offset)
+              0)
+      (setq indent (* (1+ (/ indent python-indent-offset))
+                      python-indent-offset)))
+    (python-nav-backward-statement)
+    (while (and (/= indent (current-indentation))
+                (not (bobp)))
+      (python-nav-backward-statement))))
+
+(defun elpy-nav-forward-indent ()
+  "Move forward to the next indent level, or over the next word."
+  (interactive)
+  (if (< (current-column) (current-indentation))
+      (let* ((current (current-column))
+             (next (* (1+ (/ current python-indent-offset))
+                      python-indent-offset)))
+        (goto-char (+ (point-at-bol)
+                      next)))
+    (let ((eol (point-at-eol)))
+      (forward-word)
+      (when (> (point) eol)
+        (goto-char (point-at-bol))))))
+
+(defun elpy-nav-backward-indent ()
+  "Move backward to the previous indent level, or over the previous word."
+  (interactive)
+  (if (and (<= (current-column) (current-indentation))
+           (/= (current-column) 0))
+      (let* ((current (current-column))
+             (next (* (1- (/ current python-indent-offset))
+                      python-indent-offset)))
+        (goto-char (+ (point-at-bol)
+                      next)))
+    (backward-word)))
+
+
 (defun elpy-nav--iblock (direction skip)
   "Move point forward, skipping lines indented more than the current one.
 
@@ -1392,60 +1451,6 @@ to skip lines with smaller indentation."
                              (current-indentation)
                              start-indentation)))
       (python-nav-forward-statement direction))))
-
-
-(defun elpy-nav-next-iblock (&optional direction)
-  "Move forward to the beginning of the next indentation block.
-
-An indentation block is a block indented further than the current
-one."
-  (interactive)
-  (let ((start-indentation (current-indentation))
-        (new-pos (point)))
-    (unwind-protect
-        (progn
-          (elpy-nav--iblock direction #'>)
-          (when (= (current-indentation)
-                   start-indentation)
-            (back-to-indentation)
-            (setq new-pos (point))))
-      (goto-char new-pos))))
-
-(defun elpy-nav-previous-iblock ()
-  "Move forward to the beginning of the previous indentation block.
-
-An indentation block is a block indented further than the current
-one."
-  (interactive)
-  (elpy-nav-next-iblock -1))
-
-(defun elpy-nav-backward-iblock ()
-  "Move back to the previous line less indented than the current one."
-  (interactive)
-  (let ((start-indentation (current-indentation))
-        (new-pos (point)))
-    (unwind-protect
-        (progn
-          (elpy-nav--iblock -1 #'>=)
-          (when (< (current-indentation)
-                   start-indentation)
-            (back-to-indentation)
-            (setq new-pos (point))))
-      (goto-char new-pos))))
-
-(defun elpy-nav-forward-iblock ()
-  "Move forward to the next line indented more than the current one."
-  (interactive)
-  (let ((start-indentation (current-indentation))
-        (new-pos (point)))
-    (unwind-protect
-        (progn
-          (elpy-nav--iblock 1 #'<=)
-          (when (> (current-indentation)
-                   start-indentation)
-            (back-to-indentation)
-            (setq new-pos (point))))
-      (goto-char new-pos))))
 
 (defun elpy-nav-move-iblock-down (&optional beg end)
   "Move the current indentation block below the next one.
