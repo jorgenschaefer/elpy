@@ -228,7 +228,7 @@ x._|_
     def test_should_not_fail_with_args_as_args(self):
         # Bug #347 in rope_py3k
         source, offset = source_and_offset(
-            "def my_function(*args):"
+            "def my_function(*args):\n"
             "    ret_|_"
         )
         filename = self.project_file("project.py", source)
@@ -263,6 +263,20 @@ requests.get(u"https://web.archive.org/save/{}".format(url))
         filename = self.project_file("project.py", source)
 
         self.rpc(filename, source, offset)
+
+    # For some reason, this breaks a lot of other tests. Couldn't
+    # figure out why.
+    #
+    # def test_should_not_fail_for_sys_path(self):
+    #     # Bug #365 / jedi#486
+    #     source, offset = source_and_offset(
+    #         "import sys\n"
+    #         "\n"
+    #         "sys.path.index(_|_\n"
+    #     )
+    #     filename = self.project_file("project.py", source)
+
+    #     self.rpc(filename, source, offset)
 
 
 class RPCGetCompletionsTests(GenericRPCTests):

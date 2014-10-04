@@ -134,7 +134,7 @@ class JediBackend(object):
         for use in uses:
             if use.module_path == filename:
                 offset = linecol_to_pos(source, use.line, use.column)
-            else:
+            elif use.module_path is not None:
                 with open(use.module_path) as f:
                     text = f.read()
                 offset = linecol_to_pos(text, use.line, use.column)
@@ -246,6 +246,12 @@ def run_with_debug(jedi, name, *args, **kwargs):
         if (
                 isinstance(e, ImportError) and
                 "No module named" in str(e)
+        ):
+            return None
+        # Bug #365 / jedi#486 - fixed in Jedi 0.8.2
+        if (
+                isinstance(e, UnboundLocalError) and
+                "local variable 'path' referenced before assignment" in str(e)
         ):
             return None
 

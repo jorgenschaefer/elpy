@@ -81,7 +81,13 @@ class TestRPCGetCalltip(RPCGetCalltipTests,
 
 class TestRPCGetUsages(RPCGetUsagesTests,
                        JediBackendTestCase):
-    pass
+    def test_should_not_fail_for_missing_module(self):
+        # This causes use.module_path to be None
+        source = "import sys\n\nsys.path.\n"  # insert()"
+        offset = 21
+        filename = self.project_file("project.py", source)
+
+        self.rpc(filename, source, offset)
 
 
 class TestPosToLinecol(unittest.TestCase):
