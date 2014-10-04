@@ -627,6 +627,21 @@ item in another window.\n\n")
        "M-x pyvenv-activate or M-x pyvenv-workon to activate a virtual "
        "env.\n\n"))
 
+    ;; No virtual env, but ~/.local/bin not in PATH
+    (when (and (not (memq system-type '(ms-dos windows-nt)))
+               (gethash "python_rpc_executable" config)
+               (not pyvenv-virtual-env)
+               (not (or (member (expand-file-name "~/.local/bin")
+                                exec-path)
+                        (member (expand-file-name "~/.local/bin/")
+                                exec-path))))
+      (elpy-insert--para
+       "The directory ~/.local/bin/ is not in your PATH, even though you "
+       "do not have an active virtualenv. Installing Python packages "
+       "locally will create executables in that directory, so Emacs "
+       "won't find them. If you are missing some commands, do add this "
+       "directory to your PATH.\n\n"))
+
     ;; Python found, but can't find the elpy module
     (when (and (gethash "python_rpc_executable" config)
                (not (gethash "elpy_version" config)))
