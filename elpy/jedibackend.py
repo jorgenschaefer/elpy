@@ -236,6 +236,12 @@ def run_with_debug(jedi, name, *args, **kwargs):
                 "truncated \\xXX escape" in str(e)
         ):
             return None
+        # Bug jedi#465
+        if (
+                isinstance(e, SyntaxError) and
+                "encoding declaration in Unicode string" in str(e)
+        ):
+            return None
 
         from jedi import debug
 

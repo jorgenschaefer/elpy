@@ -218,7 +218,7 @@ x._|_
         self.rpc(filename, source, offset)
 
     def test_should_not_fail_on_literals(self):
-        # Bug #344 / jedi#466
+        # Bug #314, #344 / jedi#466
         source = u'lit = u"""\\\n# -*- coding: utf-8 -*-\n"""\n'
         offset = 0
         filename = self.project_file("project.py", source)
@@ -251,6 +251,14 @@ requests.get(u"https://web.archive.org/save/{}".format(url))
     def test_should_not_fail_for_bad_escape_sequence(self):
         # Bug #360 / jedi#485
         source = r"v = '\x'"
+        offset = 8
+        filename = self.project_file("project.py", source)
+
+        self.rpc(filename, source, offset)
+
+    def test_should_not_fail_for_coding_declarations_in_strings(self):
+        # Bug #314 / jedi#465 / python#22221
+        source = u'lit = """\\\n# -*- coding: utf-8 -*-\n"""'
         offset = 8
         filename = self.project_file("project.py", source)
 
