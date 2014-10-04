@@ -254,6 +254,12 @@ def run_with_debug(jedi, name, *args, **kwargs):
                 "local variable 'path' referenced before assignment" in str(e)
         ):
             return None
+        # Bug #366 / jedi#491
+        if (
+                isinstance(e, ValueError) and
+                "__loader__ is None" in str(e)
+        ):
+            return None
 
         from jedi import debug
 
