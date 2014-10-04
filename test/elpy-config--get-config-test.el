@@ -9,7 +9,9 @@
                      "python_version"
                      "elpy_version"
                      "jedi_version"
+                     "jedi_latest"
                      "rope_version"
+                     "rope_latest"
                      "virtual_env"
                      "virtual_env_short"))
         (should (not (eq :not-set (gethash key config :not-set))))))))
