@@ -242,6 +242,12 @@ def run_with_debug(jedi, name, *args, **kwargs):
                 "encoding declaration in Unicode string" in str(e)
         ):
             return None
+        # Bug #337 / jedi#471
+        if (
+                isinstance(e, ImportError) and
+                "No module named" in str(e)
+        ):
+            return None
 
         from jedi import debug
 
