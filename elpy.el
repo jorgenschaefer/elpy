@@ -2892,8 +2892,8 @@ here, and return the \"name\" as used by the backend."
                   (t
                    nil))))))))
     ;; sorted => t if the list is already sorted
-    ;; - We could sort it ourselves according to "how likely it is".
-    ;;   Does a backend do that?
+    (`sorted
+     t)
     ;; duplicates => t if there could be duplicates
     (`duplicates
      ;; While elpy backends won't return duplicates, we are passing

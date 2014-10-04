@@ -164,6 +164,22 @@ class TestRPCGetCompletions(BackendCallTestCase):
                          self.srv.rpc_get_completions("filname", "source",
                                                       "offset"))
 
+    def test_should_sort_results(self):
+        with mock.patch.object(self.srv, 'backend') as backend:
+            backend.rpc_get_completions.return_value = [
+                {'name': '_e'},
+                {'name': '__d'},
+                {'name': 'c'},
+                {'name': 'B'},
+                {'name': 'a'},
+            ]
+            expected = list(reversed(backend.rpc_get_completions.return_value))
+
+            actual = self.srv.rpc_get_completions("filename", "source",
+                                                  "offset")
+
+            self.assertEqual(expected, actual)
+
 
 class TestRPCGetCompletionDocs(ServerTestCase):
     def test_should_call_backend(self):
@@ -349,3 +365,23 @@ class TestGetSource(unittest.TestCase):
         source = server.get_source({'filename': filename})
 
         self.assertEqual(source, u"möp")
+
+
+class TestPysymbolKey(BackendTestCase):
+    def keyLess(self, a, b):
+        self.assertLess(b, a)
+        self.assertLess(server._pysymbol_key(a),
+                        server._pysymbol_key(b))
+
+    def test_should_be_case_insensitive(self):
+        self.keyLess("bar", "Foo")
+
+    def test_should_sort_private_symbols_after_public_symbols(self):
+        self.keyLess("foo", "_bar")
+
+    def test_should_sort_private_symbols_after_dunder_symbols(self):
+        self.assertLess(server._pysymbol_key("__foo__"),
+                        server._pysymbol_key("_bar"))
+
+    def test_should_sort_dunder_symbols_after_public_symbols(self):
+        self.keyLess("bar", "__foo")
