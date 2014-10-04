@@ -704,8 +704,6 @@ item in another window.\n\n")
       (elpy-insert--para
        "There is no backend available. Please install either Rope or Jedi.\n")
       (insert "\n")
-
-      (insert "\n")
       (widget-create 'elpy-insert--pip-button :package rope-pypi-package)
       (insert "\n")
       (widget-create 'elpy-insert--pip-button :package "jedi")
