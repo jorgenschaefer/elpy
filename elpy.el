@@ -559,6 +559,12 @@ a customize buffer, but has some more options."
         (goto-char (point-min))))
     (pop-to-buffer-same-window buf)))
 
+;;;###autoload
+(defun elpy-version ()
+  "Display the version of Elpy."
+  (interactive)
+  (message "Elpy %s (use M-x elpy-config for details)" elpy-version))
+
 (defun elpy-config--insert-help ()
   (let ((start (point)))
     ;; Help display from `customize-browse'
