@@ -2216,6 +2216,38 @@ See http://debbugs.gnu.org/cgi/bugreport.cgi?bug=17647"
                                  end-time)))
       (accept-process-output process timeout))))
 
+;;;;;;;;;;;;;;;;
+;;; Debugging
+
+
+(defun elpy-debug (arg)
+  "Run the current file using pdb."
+  (interactive "P")
+  (let* ((cmd (if (not arg)
+		  (concat "python -m pdb " (buffer-file-name))
+		(read-string "Script/Command: "))))
+    (pdb cmd)))
+
+(defun elpy-debug-insert-break-point ()
+  "Insert a pdb set_trace breakpoint."
+  (interactive)
+  (save-excursion
+    (move-beginning-of-line 1)
+    (python-indent-line)
+    (insert "import pdb; pdb.set_trace();\n")
+    (python-indent-line)))
+
+(defun elpy-debug-clear-all-break-points ()
+  "Remove all pdb set_trace breakpoints.
+
+This specifically looks for breakpoints in the form of
+'import pdb; pdb.set_trace();\n'."
+  (interactive)
+  (save-excursion
+    (beginning-of-buffer)
+    (replace-regexp "^[ ]*import pdb; pdb.set_trace();\n" "")))
+
+
 ;;;;;;;
 ;;; RPC
 
