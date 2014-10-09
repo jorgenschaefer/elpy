@@ -102,8 +102,15 @@ class RopeBackend(object):
         )
         if proposals is None:
             return []
-        starting_offset = rope.contrib.codeassist.starting_offset(source,
-                                                                  offset)
+        try:
+            starting_offset = rope.contrib.codeassist.starting_offset(source,
+                                                                      offset)
+        except (rope.base.exceptions.BadIdentifierError,
+                rope.base.exceptions.ModuleSyntaxError,
+                IndentationError,
+                LookupError,
+                AttributeError):
+            return []
         prefixlen = offset - starting_offset
         self.completions = dict((proposal.name, proposal)
                                 for proposal in proposals)
