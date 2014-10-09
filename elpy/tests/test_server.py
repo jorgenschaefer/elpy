@@ -180,6 +180,19 @@ class TestRPCGetCompletions(BackendCallTestCase):
 
             self.assertEqual(expected, actual)
 
+    def test_should_uniquify_results(self):
+        with mock.patch.object(self.srv, 'backend') as backend:
+            backend.rpc_get_completions.return_value = [
+                {'name': 'a'},
+                {'name': 'a'},
+            ]
+            expected = [{'name': 'a'}]
+
+            actual = self.srv.rpc_get_completions("filename", "source",
+                                                  "offset")
+
+            self.assertEqual(expected, actual)
+
 
 class TestRPCGetCompletionDocs(ServerTestCase):
     def test_should_call_backend(self):
