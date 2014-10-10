@@ -2382,7 +2382,7 @@ died, this will kill the process and buffer."
              (not (stringp elpy-rpc-backend)))
     (error "`elpy-rpc-backend' should be nil or a string."))
   (let* ((full-python-command (executable-find python-command))
-         (name (format "*elpy-rpc [project:%s python:%s]*"
+         (name (format " *elpy-rpc [project:%s python:%s]*"
                        library-root
                        full-python-command))
          (new-elpy-rpc-buffer (generate-new-buffer name))

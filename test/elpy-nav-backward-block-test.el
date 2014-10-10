@@ -84,3 +84,28 @@
       "    _|_if True:"
       "        pass"
       "    y = 2"))))
+
+(ert-deftest elpy-nav-backward-block-should-hold-on-less-indent ()
+  (elpy-testcase ((:emacs-required "24.3"))
+    (set-buffer-string-with-point
+     "def foo():"
+     "    if True:"
+     "        pass"
+     ""
+     "def bar():"
+     "    _|_if False:"
+     "        pass"
+     )
+
+    (elpy-nav-backward-block)
+
+    (should
+     (buffer-be
+      "def foo():"
+      "    if True:"
+      "        pass"
+      ""
+      "def bar():"
+      "    _|_if False:"
+      "        pass"
+      ))))
