@@ -1474,15 +1474,19 @@ with a prefix argument)."
 This will skip over lines and statements with different
 indentation levels."
   (interactive)
-  (let ((indent (current-column)))
+  (let ((indent (current-column))
+        (start (point)))
     (when (/= (% indent python-indent-offset)
               0)
       (setq indent (* (1+ (/ indent python-indent-offset))
                       python-indent-offset)))
     (python-nav-forward-statement)
-    (while (and (/= indent (current-indentation))
+    (while (and (< indent (current-indentation))
                 (not (eobp)))
-      (python-nav-forward-statement))))
+      (python-nav-forward-statement))
+    (when (< (current-indentation)
+             indent)
+      (goto-char start))))
 
 (defun elpy-nav-backward-block ()
   "Move to the previous line indented like point.
@@ -1490,15 +1494,19 @@ indentation levels."
 This will skip over lines and statements with different
 indentation levels."
   (interactive)
-  (let ((indent (current-column)))
+  (let ((indent (current-column))
+        (start (point)))
     (when (/= (% indent python-indent-offset)
               0)
       (setq indent (* (1+ (/ indent python-indent-offset))
                       python-indent-offset)))
     (python-nav-backward-statement)
-    (while (and (/= indent (current-indentation))
+    (while (and (< indent (current-indentation))
                 (not (bobp)))
-      (python-nav-backward-statement))))
+      (python-nav-backward-statement))
+    (when (< (current-indentation)
+             indent)
+      (goto-char start))))
 
 (defun elpy-nav-forward-indent ()
   "Move forward to the next indent level, or over the next word."
