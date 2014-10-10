@@ -11,7 +11,6 @@ import pydoc
 
 from elpy.pydocutils import get_pydoc_completions
 from elpy.rpc import JSONRPCServer, Fault
-from elpy import compat
 
 try:
     from elpy import jedibackend

@@ -14,5 +14,5 @@ if sys.version_info >= (3, 0):
     from io import StringIO
 else:
     PYTHON3 = False
-    import __builtin__ as builtins
-    from StringIO import StringIO
+    import __builtin__ as builtins  # noqa
+    from StringIO import StringIO  # noqa

@@ -18,7 +18,7 @@ if sys.version_info >= (3, 0):
 else:
     PYTHON3 = False
 
-    from StringIO import StringIO
+    from StringIO import StringIO  # noqa
 
     def ensure_not_unicode(obj):
         """Return obj. If it's a unicode string, convert it to str first.
