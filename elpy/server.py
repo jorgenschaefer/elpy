@@ -87,7 +87,8 @@ class ElpyRPCServer(JSONRPCServer):
         results = self._call_backend("rpc_get_completions", [], filename,
                                      get_source(source), offset)
         # Uniquify by name
-        results = {res['name']: res for res in results}.values()
+        results = list(dict((res['name'], res) for res in results)
+                       .values())
         results.sort(key=lambda cand: _pysymbol_key(cand["name"]))
         return results
 
