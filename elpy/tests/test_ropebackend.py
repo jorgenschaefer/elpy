@@ -1,6 +1,8 @@
 """Tests for elpy.ropebackend."""
 
 import os
+import shutil
+import tempfile
 
 import mock
 
@@ -68,6 +70,15 @@ class TestValidate(RopeBackendTestCase):
                 self.backend.validate()
 
                 self.assertFalse(project.validate.called)
+
+    def test_should_not_fail_if_root_vanishes(self):
+        # Bug #353
+        tmpdir = tempfile.mkdtemp(prefix="elpy-test-validate-")
+        try:
+            backend = ropebackend.RopeBackend(tmpdir)
+        finally:
+            shutil.rmtree(tmpdir)
+        backend.validate()
 
 
 class TestRPCGetCompletions(RPCGetCompletionsTests,

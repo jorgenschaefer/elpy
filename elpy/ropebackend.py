@@ -75,7 +75,10 @@ class RopeBackend(object):
         """
         now = time.time()
         if now > self.last_validation + VALIDATE_EVERY_SECONDS:
-            self.project.validate()
+            try:
+                self.project.validate()
+            except rope.base.exceptions.ResourceNotFoundError:
+                pass
             self.last_validation = now
 
     def call_rope(self, rope_function, filename, source, offset,
@@ -90,6 +93,7 @@ class RopeBackend(object):
                                  **kwargs)
         except (rope.base.exceptions.BadIdentifierError,
                 rope.base.exceptions.ModuleSyntaxError,
+                rope.base.exceptions.ResourceNotFoundError,
                 IndentationError,
                 LookupError,
                 AttributeError):

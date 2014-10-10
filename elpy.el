@@ -779,7 +779,8 @@ virtual_env_short"
           (puthash "virtual_env_short" (file-name-nondirectory venv) config)))
       (let ((return-value (ignore-errors
                             (let ((process-environment
-                                   (elpy-rpc--environment)))
+                                   (elpy-rpc--environment))
+                                  (default-directory "/"))
                               (call-process elpy-rpc-python-command
                                             nil
                                             (current-buffer)

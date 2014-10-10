@@ -264,6 +264,17 @@ requests.get(u"https://web.archive.org/save/{}".format(url))
 
         self.rpc(filename, source, offset)
 
+    def test_should_not_fail_if_root_vanishes(self):
+        # Bug #353
+        source, offset = source_and_offset(
+            "import foo\n"
+            "foo._|_"
+        )
+        filename = self.project_file("project.py", source)
+        shutil.rmtree(self.project_root)
+
+        self.rpc(filename, source, offset)
+
     # For some reason, this breaks a lot of other tests. Couldn't
     # figure out why.
     #
@@ -275,7 +286,7 @@ requests.get(u"https://web.archive.org/save/{}".format(url))
     #         "sys.path.index(_|_\n"
     #     )
     #     filename = self.project_file("project.py", source)
-
+    #
     #     self.rpc(filename, source, offset)
 
 

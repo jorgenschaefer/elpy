@@ -260,6 +260,12 @@ def run_with_debug(jedi, name, *args, **kwargs):
                 "__loader__ is None" in str(e)
         ):
             return None
+        # Bug #353
+        if (
+                isinstance(e, OSError) and
+                "No such file or directory" in str(e)
+        ):
+            return None
 
         from jedi import debug
 
