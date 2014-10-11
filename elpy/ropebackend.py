@@ -5,8 +5,10 @@ This backend uses the Rope library:
 http://rope.sourceforge.net/
 
 """
+
 import os
 import time
+import traceback
 
 import rope.contrib.codeassist
 import rope.base.project
@@ -14,6 +16,7 @@ import rope.base.libutils
 import rope.base.exceptions
 import rope.contrib.findit
 
+from elpy import rpc
 import elpy.pydocutils
 
 VALIDATE_EVERY_SECONDS = 5
@@ -98,6 +101,30 @@ class RopeBackend(object):
                 LookupError,
                 AttributeError):
             return None
+        except Exception as e:
+            data = {
+                "traceback": traceback.format_exc(),
+                "rope_debug_info": {
+                    "project_root": self.project_root,
+                    "filename": filename,
+                    "source": source,
+                    "function_name": (rope_function.__module__ +
+                                      "." +
+                                      rope_function.__name__),
+                    "function_args": ", ".join([
+                        "project", "source", str(offset), "resource",
+                        "maxfixes={0}".format(MAXFIXES)
+                    ] + [
+                        u"{}={}".format(k, v)
+                        for (k, v) in kwargs.items()
+                    ])
+                }
+            }
+            raise rpc.Fault(
+                code=500,
+                message=str(e),
+                data=data
+            )
 
     def rpc_get_completions(self, filename, source, offset):
         proposals = self.call_rope(

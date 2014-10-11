@@ -264,6 +264,19 @@ A setting of nil means to block indefinitely."
               (null val)))
   :group 'elpy)
 
+(defcustom elpy-rpc-error-timeout 30
+  "Minimum number of seconds between error popups.
+
+When Elpy encounters an error in the backend, it will display a
+lengthy description of the problem for a bug report. This hangs
+Emacs for a moment, and can be rather annoying if it happens
+repeatedly while editing a source file.
+
+If this variabl is non-nil, Elpy will not display the error
+message again within this amount of seconds."
+  :type 'integer
+  :group 'elpy)
+
 (defcustom elpy-test-runner 'elpy-test-discover-runner
   "The test runner to use to run tests."
   :type '(choice (const :tag "Unittest Discover" elpy-test-discover-runner)
@@ -2262,6 +2275,9 @@ Used to associate responses to callbacks.")
 This maps call IDs to functions.")
 (make-variable-buffer-local 'elpy-rpc--backend-callbacks)
 
+(defvar elpy-rpc--last-error-popup nil
+  "The last time an error popup happened.")
+
 (defun elpy-rpc (method params &optional success error)
   "Call METHOD with PARAMS in the backend.
 
@@ -2536,6 +2552,13 @@ This is usually an error or backtrace."
         (message "Elpy warning: %s" message))
        ((< code 500)
         (error "Elpy error: %s" message))
+       ((and elpy-rpc-error-timeout
+             elpy-rpc--last-error-popup
+             (<= (float-time)
+                 (+ elpy-rpc--last-error-popup
+                    elpy-rpc-error-timeout)))
+        (message "Elpy error popup ignored, see `elpy-rpc-error-timeout': %s"
+                 message))
        (t
         (let ((config (elpy-config--get-config)))
           (elpy-insert--popup "*Elpy Error*"
@@ -2575,8 +2598,7 @@ This is usually an error or backtrace."
                 (insert "\n"
                         "```\n"
                         "\n"
-                        "Reproduction:"
-                        "\n"
+                        "Reproduction:\n"
                         "\n")
                 (let ((method (cdr (assq 'method jedi-info)))
                       (source (cdr (assq 'source jedi-info)))
@@ -2590,9 +2612,40 @@ This is usually an error or backtrace."
                           "\n"
                           "script = jedi.Script(" script-args ")\n"
                           "script." method "()\n"))))
+            (let ((rope-info (cdr (assq 'rope_debug_info data))))
+              (when rope-info
+                (insert "\n")
+                (elpy-insert--header "Rope Debug Information")
+                (insert "```\n"
+                        "\n"
+                        "Reproduction:\n"
+                        "\n")
+                (let ((project-root (cdr (assq 'project_root rope-info)))
+                      (filename (cdr (assq 'filename rope-info)))
+                      (source (cdr (assq 'source rope-info)))
+                      (function-name (cdr (assq 'function_name rope-info)))
+                      (function-args (cdr (assq 'function_args rope-info))))
+                  (insert "```Python\n")
+                  (insert "\n"
+                          "source = '''\n"
+                          source
+                          "'''\n"
+                          "\n")
+                  (insert "project = rope.base.project.Project(\n"
+                          (format "    %S,\n" project-root)
+                          "    ropefolder=None\n"
+                          ")\n")
+                  (insert "resource = rope.base.libutils.path_to_resource(\n"
+                          "    project,\n"
+                          (format "    %S,\n" filename)
+                          "    'file'\n"
+                          ")\n")
+                  (insert (format "%s(\n    %s\n)\n"
+                                  function-name function-args)))))
             (when (not (= 0 (current-column)))
               (insert "\n"))
-            (insert "```"))))))))
+            (insert "```"))
+          (setq elpy-rpc--last-error-popup (float-time))))))))
 
 (defun elpy-rpc--environment ()
   "Return a `process-environment' for the RPC process.

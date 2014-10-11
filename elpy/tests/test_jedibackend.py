@@ -164,6 +164,8 @@ class TestRunWithDebug(unittest.TestCase):
             self.assertEqual(jedi_debug_info["source"], None)
             self.assertEqual(jedi_debug_info["method"], "test_method")
             self.assertEqual(jedi_debug_info["debug_info"], [])
+        else:
+            self.fail("Fault not thrown")
 
     @mock.patch('jedi.Script')
     @mock.patch('jedi.set_debug_function')
@@ -175,6 +177,8 @@ class TestRunWithDebug(unittest.TestCase):
         except rpc.Fault as e:
             self.assertEqual(str(e), str(RuntimeError()))
             self.assertEqual(e.message, str(RuntimeError()))
+        else:
+            self.fail("Fault not thrown")
 
     @mock.patch('jedi.Script')
     @mock.patch('jedi.set_debug_function')
@@ -187,6 +191,8 @@ class TestRunWithDebug(unittest.TestCase):
             self.assertEqual(e.data["jedi_debug_info"]["script_args"],
                              "source=source")
             self.assertEqual(e.data["jedi_debug_info"]["source"], "foo")
+        else:
+            self.fail("Fault not thrown")
 
     @mock.patch('jedi.Script')
     @mock.patch('jedi.set_debug_function')
@@ -212,6 +218,8 @@ class TestRunWithDebug(unittest.TestCase):
                              ["[N] Notice",
                               "[W] Warning",
                               "[?] Other"])
+        else:
+            self.fail("Fault not thrown")
 
     @mock.patch('jedi.set_debug_function')
     @mock.patch('jedi.Script')

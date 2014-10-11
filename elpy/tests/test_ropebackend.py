@@ -7,6 +7,7 @@ import tempfile
 import mock
 
 from elpy import ropebackend
+from elpy import rpc
 from elpy.tests import compat
 from elpy.tests.support import BackendTestCase
 from elpy.tests.support import RPCGetCompletionsTests
@@ -159,3 +160,33 @@ class TestPatchProjectFiles(RopeBackendTestCase):
                      for resource
                      in self.backend.project.get_files())
         self.assertEqual(expected, actual)
+
+
+class TestCallRope(RopeBackendTestCase):
+    def test_should_return_value(self):
+        func = mock.MagicMock()
+        func.return_value = 23
+
+        actual = self.backend.call_rope(
+            func, "foo.py", "", 0
+        )
+
+        self.assertEqual(23, actual)
+
+    def test_should_raise_fault_with_data_on_exception(self):
+        func = mock.MagicMock()
+        func.side_effect = RuntimeError("Stuff!")
+        func.__module__ = "rope.test"
+        func.__name__ = "test_function"
+
+        try:
+            self.backend.call_rope(
+                func, "foo.py", "", 0
+            )
+        except rpc.Fault as e:
+            self.assertEqual(500, e.code)
+            self.assertEqual("Stuff!", e.message)
+            self.assertIn("traceback", e.data)
+            self.assertIn("rope_debug_info", e.data)
+            self.assertEqual("rope.test.test_function",
+                             e.data["rope_debug_info"]["function_name"])
