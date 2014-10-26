@@ -2949,7 +2949,8 @@ here, and return the \"name\" as used by the backend."
                    (elpy-company--cache-completions arg result))
                   ;; Nothing from the backend, try dabbrev-code.
                   ((> (length arg) company-minimum-prefix-length)
-                   (company-dabbrev-code 'candidates arg))
+                   (elpy--sort-and-strip-duplicates
+                    (company-dabbrev-code 'candidates arg)))
                   ;; Well, ok, let's go meh.
                   (t
                    nil))))))))
@@ -2994,6 +2995,20 @@ here, and return the \"name\" as used by the backend."
     ;; match <candidate> => for non-prefix based backends
     ;; post-completion <candidate> => after insertion, for snippets
     ))
+
+(defun elpy--sort-and-strip-duplicates (seq)
+  "Sort SEQ and remove any duplicates."
+  (let* ((seq (sort seq (lambda (a b)
+                          (not (string< a b)))))
+         (last (car seq))
+         (res (list (car seq))))
+    (setq seq (cdr seq))
+    (while seq
+      (when (not (equal last (car seq)))
+        (setq res (cons (car seq) res)
+              last (car seq)))
+      (setq seq (cdr seq)))
+    res))
 
 ;;;;;;;;;;;;;;;;;
 ;;; Module: ElDoc
