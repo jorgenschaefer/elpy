@@ -2652,8 +2652,8 @@ This is usually an error or backtrace."
 
 This includes `elpy-rpc-pythonpath' in the PYTHONPATH, if set."
   (if (or (not elpy-rpc-pythonpath)
-          (not (file-exists-p (format "%s/elpy/__init__.py"
-                                      elpy-rpc-pythonpath))))
+          (not (file-exists-p (expand-file-name "elpy/__init__.py"
+                                                elpy-rpc-pythonpath))))
       process-environment
     (let* ((old-pythonpath (getenv "PYTHONPATH"))
            (new-pythonpath (if old-pythonpath
