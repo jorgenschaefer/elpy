@@ -2657,7 +2657,9 @@ This includes `elpy-rpc-pythonpath' in the PYTHONPATH, if set."
       process-environment
     (let* ((old-pythonpath (getenv "PYTHONPATH"))
            (new-pythonpath (if old-pythonpath
-                               (concat elpy-rpc-pythonpath ":" old-pythonpath)
+                               (concat elpy-rpc-pythonpath
+                                       path-separator
+                                       old-pythonpath)
                              elpy-rpc-pythonpath)))
       (cons (concat "PYTHONPATH=" new-pythonpath)
             process-environment))))
