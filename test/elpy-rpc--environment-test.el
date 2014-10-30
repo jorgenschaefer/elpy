@@ -14,3 +14,13 @@
 
       (should (equal (elpy-rpc--environment)
                      '("PYTHONPATH=/foo:/bar"))))))
+
+(ert-deftest elpy-rpc--environment-should-use-correct-sep-on-windows ()
+  (elpy-testcase ()
+    (mletf* ((process-environment '("PYTHONPATH=/foo;/bar"))
+             (path-separator ";")
+             (elpy-rpc-pythonpath "/baz/dir")
+             (file-exists-p (path) t))
+
+      (should (equal (car (elpy-rpc--environment))
+                     "PYTHONPATH=/baz/dir;/foo;/bar")))))
