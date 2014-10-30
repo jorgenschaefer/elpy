@@ -2959,10 +2959,7 @@ here, and return the \"name\" as used by the backend."
      t)
     ;; duplicates => t if there could be duplicates
     (`duplicates
-     ;; While elpy backends won't return duplicates, we are passing
-     ;; this on to `company-dabbrev-code' if we have no completions of
-     ;; our own, so return t just in case.
-     t)
+     nil)
     ;; no-cache <prefix> => t if company shouldn't cache results
     ;; meta <candidate> => short docstring for minibuffer
     (`meta
@@ -2998,17 +2995,18 @@ here, and return the \"name\" as used by the backend."
 
 (defun elpy--sort-and-strip-duplicates (seq)
   "Sort SEQ and remove any duplicates."
-  (let* ((seq (sort seq (lambda (a b)
-                          (not (string< a b)))))
-         (last (car seq))
-         (res (list (car seq))))
-    (setq seq (cdr seq))
-    (while seq
-      (when (not (equal last (car seq)))
-        (setq res (cons (car seq) res)
-              last (car seq)))
-      (setq seq (cdr seq)))
-    res))
+  (when seq
+    (let* ((seq (sort seq (lambda (a b)
+                            (not (string< a b)))))
+           (last (car seq))
+           (res (list (car seq))))
+      (setq seq (cdr seq))
+      (while seq
+        (when (not (equal last (car seq)))
+          (setq res (cons (car seq) res)
+                last (car seq)))
+        (setq seq (cdr seq)))
+      res)))
 
 ;;;;;;;;;;;;;;;;;
 ;;; Module: ElDoc
