@@ -164,12 +164,20 @@ can be inidividually enabled or disabled."
 (defcustom elpy-project-root nil
   "The root of the project the current buffer is in.
 
-The value is automatically set for new buffers using
-`elpy-project-root-finder-functions', which see.
+There is normally no use in setting this variable directly, as
+Elpy tries to detect the project root automatically. See
+`elpy-project-root-finder-functions' for a way of influencing
+this.
+
+Setting this variable globally will override Elpy's automatic
+project detection facilities entirely.
 
 Alternatively, you can set this in file- or directory-local
 variables using \\[add-file-local-variable] or
-\\[add-dir-local-variable]."
+\\[add-dir-local-variable].
+
+Do not use this variable in Emacs Lisp programs. Instead, call
+the `elpy-project-root' function. It will do the right thing."
   :type 'directory
   :safe 'file-directory-p
   :group 'elpy)
