@@ -1,3 +1,30 @@
+New in Elpy 1.6.0
+=================
+
+- When point is on a line with a flymake error, Elpy will now show the
+  error in the echo area.
+- The movement commands (``C-<cursor>``) have been reworked again.
+  Going left and right will now move by indentation levels left of the
+  current indentation, i.e. jump four spaces, and by words right of
+  the current indentation. Going up and down will go to the previous
+  or next line with the indentation level point is at, not the
+  indentation the line has. Try it, it's more difficult to explain
+  than to use.
+- Completion results are now sorted more sensibly, with
+  single-underscore symbols at the end, and double-underscore symbols
+  after normal symbols, but before single-underscore ones.
+- ``M-x elpy-config`` will now point out if there are newer versions
+  available for packages used by Elpy.
+- ``M-x elpy-config`` will now warn if ``~/.local/bin`` is not in
+  ``PATH`` while there is no virtualenv active.
+- The ``M-x elpy-version`` command is back by popular demand.
+- RPC buffers used by Elpy are now hidden by default, having a space
+  at the beginning of the name.
+- When the Rope library throws an error, Elpy will now also attempt to
+  provide reproduction steps. This used to only happen for Jedi.
+- Various bug fixes.
+
+
 New in Elpy 1.5.1
 =================
 
