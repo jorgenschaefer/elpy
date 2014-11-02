@@ -6,7 +6,7 @@
 ;; URL: https://github.com/jorgenschaefer/elpy
 ;; Version: 1.6.1
 ;; Keywords: Python, IDE, Languages, Tools
-;; Package-Requires: ((company "0.8.2") (find-file-in-project "3.3")  (highlight-indentation "0.5.0") (idomenu "0.1") (pyvenv "1.3") (yasnippet "0.8.0"))
+;; Package-Requires: ((company "0.8.2") (find-file-in-project "3.3")  (highlight-indentation "0.5.0") (pyvenv "1.3") (yasnippet "0.8.0"))
 
 ;; This program is free software; you can redistribute it and/or
 ;; modify it under the terms of the GNU General Public License
@@ -313,7 +313,6 @@ message again within this amount of seconds."
     (define-key map (kbd "C-c C-d") 'elpy-doc)
     (define-key map (kbd "C-c C-e") 'elpy-multiedit-python-symbol-at-point)
     (define-key map (kbd "C-c C-f") 'elpy-find-file)
-    (define-key map (kbd "C-c C-j") 'idomenu)
     (define-key map (kbd "C-c C-n") 'elpy-flymake-next-error)
     (define-key map (kbd "C-c C-o") 'elpy-occur-definitions)
     (define-key map (kbd "C-c C-p") 'elpy-flymake-previous-error)
