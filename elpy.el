@@ -1362,7 +1362,7 @@ else:
           "';'.join(__COMPLETER_all_completions('''%s'''))\n"))
    ;; Emacs 24.4
    ((boundp 'python-shell-interpreter-interactive-arg)
-    (setq python-shell-interpreter "python"
+    (setq python-shell-interpreter cpython
           python-shell-interpreter-args "-i"))
    (t
     (error "I don't know how to set ipython settings for this Emacs"))))
