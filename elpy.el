@@ -668,7 +668,7 @@ item in another window.\n\n")
       (elpy-insert--para
        "The Python interpreter could not find the elpy module. "
        "Make sure the module is installed"
-       (if (getenv "virtual_env" config)
+       (if (gethash "virtual_env" config)
            " in the current virtualenv.\n"
          ".\n"))
       (insert "\n")
