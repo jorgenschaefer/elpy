@@ -3141,13 +3141,14 @@ description."
 
 (defun elpy-flymake-error-at-point ()
   "Return the flymake error at point, or nil if there is none."
-  (let* ((lineno (line-number-at-pos))
-         (err-info (car (flymake-find-err-info flymake-err-info
-                                               lineno))))
-    (when err-info
-      (mapconcat #'flymake-ler-text
-                 err-info
-                 ", "))))
+  (when (boundp 'flymake-err-info)
+    (let* ((lineno (line-number-at-pos))
+           (err-info (car (flymake-find-err-info flymake-err-info
+                                                 lineno))))
+      (when err-info
+        (mapconcat #'flymake-ler-text
+                   err-info
+                   ", ")))))
 
 (defun elpy-flymake--standard-value (var)
   "Return the standard value of the given variable."
