@@ -3004,7 +3004,7 @@ here, and return the \"name\" as used by the backend."
   "Sort SEQ and remove any duplicates."
   (sort (delete-dups seq)
         (lambda (a b)
-          (not (string< a b)))))
+          (string< a b))))
 
 ;;;;;;;;;;;;;;;;;
 ;;; Module: ElDoc
