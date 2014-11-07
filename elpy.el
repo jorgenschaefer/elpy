@@ -313,6 +313,8 @@ message again within this amount of seconds."
     (define-key map (kbd "C-c C-d") 'elpy-doc)
     (define-key map (kbd "C-c C-e") 'elpy-multiedit-python-symbol-at-point)
     (define-key map (kbd "C-c C-f") 'elpy-find-file)
+    (define-key map (kbd "C-c C-i") 'elpy-importmagic-add-import)
+    (define-key map (kbd "C-c C-S-i") 'elpy-importmagic-fixup)
     (define-key map (kbd "C-c C-n") 'elpy-flymake-next-error)
     (define-key map (kbd "C-c C-o") 'elpy-occur-definitions)
     (define-key map (kbd "C-c C-p") 'elpy-flymake-previous-error)
@@ -535,6 +537,14 @@ except:
     config['rope_version'] = None
     config['rope_latest'] = latest('rope')
 
+try:
+    if sys.version_info[0] > 2:
+        raise ImportError
+    import importmagic
+    # currently importmagic has no version number, so use the one from setup.py
+    config['importmagic_version'] = '0.1.0'
+except:
+    config['importmagic_version'] = None
 
 json.dump(config, sys.stdout)
 ")
@@ -1955,6 +1965,47 @@ prefix argument is given, prompt for a symbol from the user."
       (if symbol
           (symbol-name symbol)
         nil))))
+
+;;;;;;;;;;;;;;
+;;; Import manipulation
+
+(defun elpy-importmagic--replace-block (spec)
+  "Replace an imports block. SPEC is (startline endline newblock)."
+  (let ((start-line (nth 0 spec))
+        (end-line (nth 1 spec))
+        (new-block (nth 2 spec)))
+    (save-excursion
+      (save-restriction
+        (widen)
+        (goto-char (point-min))
+        (forward-line start-line)
+        (delete-region (point) (progn (forward-line (- end-line start-line)) (point)))
+        (insert new-block)))))
+
+(defun elpy-importmagic--add-import-read-args ()
+  (let* ((sym-at-pt (symbol-at-point))
+         (default-symbol (if sym-at-pt (symbol-name sym-at-pt) ""))
+         (symbol-to-import (read-string "Symbol to import: " default-symbol))
+         (possible-modules (elpy-rpc "get_import_symbols" (list buffer-file-name
+                                                                (elpy-rpc--buffer-contents)
+                                                                symbol-to-import)))
+         (module (completing-read "Module to import it from: " possible-modules)))
+    (list symbol-to-import module)))
+
+(defun elpy-importmagic-add-import (symbol module)
+  (interactive (elpy-importmagic--add-import-read-args))
+  (let* ((res (elpy-rpc "add_import" (list buffer-file-name
+                                           (elpy-rpc--buffer-contents)
+                                           symbol
+                                           module))))
+    (elpy-importmagic--replace-block res)))
+
+(defun elpy-importmagic-fixup ()
+  (interactive)
+  ;; get a new import statement block
+  (let* ((res (elpy-rpc "fixup_imports" (list buffer-file-name
+                                              (elpy-rpc--buffer-contents)))))
+    (elpy-importmagic--replace-block res)))
 
 ;;;;;;;;;;;;;;
 ;;; Multi-Edit
