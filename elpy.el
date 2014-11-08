@@ -794,9 +794,10 @@ virtual_env_short"
                  (executable-find interactive-python)
                  config))
       (let ((venv (getenv "VIRTUAL_ENV")))
-        (when venv
-          (puthash "virtual_env" venv config)
-          (puthash "virtual_env_short" (file-name-nondirectory venv) config)))
+        (puthash "virtual_env" venv config)
+        (if venv
+            (puthash "virtual_env_short" (file-name-nondirectory venv) config)
+          (puthash "virtual_env_short" nil config)))
       (let ((return-value (ignore-errors
                             (let ((process-environment
                                    (elpy-rpc--environment))
