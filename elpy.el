@@ -640,7 +640,7 @@ item in another window.\n\n")
 
     ;; No virtual env
     (when (and (gethash "python_rpc_executable" config)
-               (not (gethash "virtual_env" (elpy-config--get-config))))
+               (not (gethash "virtual_env" config)))
       (elpy-insert--para
        "You have not activated a virtual env. While Elpy supports this, "
        "it is often a good idea to work inside a virtual env. You can use "
