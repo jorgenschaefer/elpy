@@ -9,12 +9,14 @@ cask:
 	EMACS=emacs-24.1 cask
 	EMACS=emacs-24.2 cask
 	EMACS=emacs-24.3 cask
+	EMACS=emacs-24.4 cask
 
 cask-update:
 	cask update
 	EMACS=emacs-24.1 cask update
 	EMACS=emacs-24.2 cask update
 	EMACS=emacs-24.3 cask update
+	EMACS=emacs-24.4 cask update
 
 elisp-test:
 	cask exec ert-runner --quiet
@@ -24,6 +26,7 @@ elisp-test-all:
 	EMACS=emacs-24.1 cask exec ert-runner --quiet
 	EMACS=emacs-24.2 cask exec ert-runner --quiet
 	EMACS=emacs-24.3 cask exec ert-runner --quiet
+	EMACS=emacs-24.4 cask exec ert-runner --quiet
 
 elisp-coverage:
 	@echo "Missing tests:" ; cat elpy.el | sed -ne 's/^(\(defun\|define-minor-mode\|defmacro\|defsubst\) \([^ ]*\).*/\2/p' | while read fun ; do test -f "test/$${fun}-test.el" || echo "- $$fun" ; done
