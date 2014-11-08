@@ -24,7 +24,8 @@ Quick Installation
 
 First, install the required Python packages:::
 
-  pip install rope
+  pip install rope  # and/or
+  pip install jedi
 
 Evaluate this in your ``*scratch*`` buffer:
 
