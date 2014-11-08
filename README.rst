@@ -22,9 +22,10 @@ http://elpy.readthedocs.org/en/latest/index.html
 Quick Installation
 ==================
 
-First, install the required Python packages:::
+First, install the required Python packages::
 
-  pip install rope
+  pip install rope  # or
+  pip install jedi
 
 Evaluate this in your ``*scratch*`` buffer:
 
@@ -48,6 +49,20 @@ Finally, add the following to your ``.emacs``:
 
 Done.
 
+Hacking
+=======
+
+When hacking on elpy, please add tests to the Python and/or Emacs Lisp test
+suites.  To set up the test environment, you can install the dependencies using
+``pip`` and ``cask``, respectively.
+
+* Python dependencies: optionally set up a virtualenv, then run
+  ``pip install -r requirements.txt``
+* Elisp dependencies: install Cask_, then run ``cask install``
+
+When this is done, you can run ``make test`` to run both test suites, or ``make
+python-test`` or ``make elisp-test`` to run just one.
+
 License
 =======
 
@@ -56,3 +71,4 @@ it under the terms of the `GNU General Public License`__, either
 version 3 of the License, or (at your option) any later version.
 
 .. __: LICENSE
+.. _Cask: http://cask.readthedocs.org/en/latest/#user-guide
