@@ -346,8 +346,8 @@ class TestRPCImportMagic(ServerTestCase):
         with mock.patch.object(self.srv, "import_magic") as impmagic:
             self.srv.rpc_get_import_symbols("filename", "source", "os")
             impmagic.get_import_symbols.assert_called_with("os")
-            self.srv.rpc_add_import("filename", "source", "os", "")
-            impmagic.add_import.assert_called_with("source", "os", "")
+            self.srv.rpc_add_import("filename", "source", "import os")
+            impmagic.add_import.assert_called_with("source", "import os")
             self.srv.rpc_fixup_imports("filename", "source")
             impmagic.fixup_imports.assert_called_with("source")
 

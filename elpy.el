@@ -2042,21 +2042,21 @@ prefix argument is given, prompt for a symbol from the user."
         (insert new-block)))))
 
 (defun elpy-importmagic--add-import-read-args ()
-  (let* ((sym-at-pt (symbol-at-point))
-         (default-symbol (if sym-at-pt (symbol-name sym-at-pt) ""))
-         (symbol-to-import (read-string "Symbol to import: " default-symbol))
-         (possible-modules (elpy-rpc "get_import_symbols" (list buffer-file-name
+  (let* ((default-object (save-excursion
+                           (let ((bounds (with-syntax-table python-dotty-syntax-table
+                                           (bounds-of-thing-at-point 'symbol))))
+                             (if bounds (buffer-substring (car bounds) (cdr bounds)) ""))))
+         (object-to-import (read-string "Object to import: " default-object))
+         (possible-imports (elpy-rpc "get_import_symbols" (list buffer-file-name
                                                                 (elpy-rpc--buffer-contents)
-                                                                symbol-to-import)))
-         (module (completing-read "Module to import it from: " possible-modules)))
-    (list symbol-to-import module)))
+                                                                object-to-import))))
+    (completing-read "New import statement: " possible-imports)))
 
-(defun elpy-importmagic-add-import (symbol module)
+(defun elpy-importmagic-add-import (statement)
   (interactive (elpy-importmagic--add-import-read-args))
   (let* ((res (elpy-rpc "add_import" (list buffer-file-name
                                            (elpy-rpc--buffer-contents)
-                                           symbol
-                                           module))))
+                                           statement))))
     (elpy-importmagic--replace-block res)))
 
 (defun elpy-importmagic-fixup ()

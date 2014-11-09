@@ -210,12 +210,12 @@ class ElpyRPCServer(JSONRPCServer):
         self._ensure_import_magic()
         return self.import_magic.get_import_symbols(symbol)
 
-    def rpc_add_import(self, filename, source, symbol, module):
-        """Add an import to the module.
+    def rpc_add_import(self, filename, source, statement):
+        """Add an import statement to the module.
 
         """
         self._ensure_import_magic()
-        return self.import_magic.add_import(source, symbol, module)
+        return self.import_magic.add_import(source, statement)
 
     def rpc_fixup_imports(self, filename, source):
         """Automatically fixup imports in the file, by inserting import
