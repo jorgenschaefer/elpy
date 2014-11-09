@@ -215,6 +215,7 @@ class ElpyRPCServer(JSONRPCServer):
 
         """
         self._ensure_import_magic()
+        source = get_source(source)
         return self.import_magic.add_import(source, statement)
 
     def rpc_fixup_imports(self, filename, source):
@@ -223,6 +224,7 @@ class ElpyRPCServer(JSONRPCServer):
 
         """
         self._ensure_import_magic()
+        source = get_source(source)
         return self.import_magic.fixup_imports(source)
 
 
