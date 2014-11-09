@@ -6,5 +6,5 @@
                (read-string (prompt initial &optional history def inherit-input-method)
                             initial)
                (completing-read (prompt vals &optional func require-match default history)
-                                "mymodule"))
-        (should (equal (elpy-importmagic--add-import-read-args) '("mysymbol" "mymodule")))))))
+                                "import mymodule"))
+        (should (equal (elpy-importmagic--add-import-read-args) (list "import mymodule")))))))

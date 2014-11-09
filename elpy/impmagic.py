@@ -25,8 +25,8 @@ class ImportMagic(object):
         self.symbol_index = None
         self._thread = None
 
-    def _build_symbol_index(self, project_root, custom_path):
-        index = importmagic.index.SymbolIndex()
+    def _build_symbol_index(self, project_root, custom_path, blacklist_re):
+        index = importmagic.index.SymbolIndex(blacklist_re=blacklist_re)
         if os.environ.get('ELPY_TEST'):
             # test suite support: do not index the whole PYTHONPATH, it
             # takes much too long
@@ -37,23 +37,30 @@ class ImportMagic(object):
             index.build_index([project_root] + sys.path)
         self.symbol_index = index
 
-    def build_index(self, project_root, custom_path=None):
+    def build_index(self, project_root, custom_path=None, blacklist_re=None):
         self.project_root = None
         self._thread = threading.Thread(target=self._build_symbol_index,
-                                        args=(project_root, custom_path))
+                                        args=(project_root, custom_path,
+                                              blacklist_re))
         self._thread.setDaemon(True)
         self._thread.start()
 
     def get_import_symbols(self, symbol):
         scores = self.symbol_index.symbol_scores(symbol)
-        return [e[2] and e[1] or "<standalone module>" for e in scores]
+        if not scores:
+            # offer some default if there is nothing matching
+            return ["import %s" % symbol]
+        return ["from %s import %s" % (mod, var) if var else "import %s" % mod
+                for (_, mod, var) in scores]
 
-    def add_import(self, source, symbol, module):
+    def add_import(self, source, statement):
         imports = importmagic.importer.Imports(self.symbol_index, source)
-        if not module or module == "<standalone module>":
-            imports.add_import(symbol)
+        if statement.startswith('import '):
+            imports.add_import(statement[7:])
         else:
-            imports.add_import_from(module, symbol)
+            sep = statement.find(' import ')
+            if sep > -1:
+                imports.add_import_from(statement[5:sep], statement[sep+8:])
         start_line, end_line, import_block = imports.get_update()
         return start_line, end_line, import_block
 
