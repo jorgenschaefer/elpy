@@ -574,13 +574,12 @@ except:
     config['rope_latest'] = latest('rope')
 
 try:
-    if sys.version_info[0] > 2:
-        raise ImportError
     import importmagic
-    # currently importmagic has no version number, so use the one from setup.py
-    config['importmagic_version'] = '0.1.0'
+    config['importmagic_version'] = importmagic.__version__
+    config['importmagic_latest'] = latest('importmagic', config['importmagic_version'])
 except:
     config['importmagic_version'] = None
+    config['importmagic_latest'] = latest('importmagic')
 
 json.dump(config, sys.stdout)
 ")
@@ -881,6 +880,8 @@ virtual_env_short"
         (jedi-latest (gethash "jedi_latest" config))
         (rope-version (gethash "rope_version" config))
         (rope-latest (gethash "rope_latest" config))
+        (importmagic-version (gethash "importmagic_version" config))
+        (importmagic-latest (gethash "importmagic_latest" config))
         (virtual-env (gethash "virtual_env" config))
         (virtual-env-short (gethash "virtual_env_short" config))
         table maxwidth)
@@ -929,6 +930,9 @@ virtual_env_short"
             ("Rope" . ,(elpy-config--package-link "rope"
                                                   rope-version
                                                   rope-latest))
+            ("Importmagic" . ,(elpy-config--package-link "importmagic"
+                                                  importmagic-version
+                                                  importmagic-latest))
             ("Syntax checker" . ,(let ((syntax-checker
                                         (executable-find
                                          python-check-command)))
