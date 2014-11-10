@@ -7,4 +7,4 @@
                             initial)
                (completing-read (prompt vals &optional func require-match default history)
                                 "import mymodule"))
-        (should (equal (elpy-importmagic--add-import-read-args) "import mymodule"))))))
+        (should (equal (elpy-importmagic--add-import-read-args) '("import mymodule")))))))

@@ -2050,21 +2050,28 @@ prefix argument is given, prompt for a symbol from the user."
          (possible-imports (elpy-rpc "get_import_symbols" (list buffer-file-name
                                                                 (elpy-rpc--buffer-contents)
                                                                 object-to-import))))
-    (completing-read "New import statement: " possible-imports)))
+    ;; An elpy warning (i.e. index not ready) is returned as a string.
+    (if (stringp possible-imports)
+        (list "")
+      (let ((first-choice (car possible-imports))
+            (user-choice (completing-read "New import statement: " possible-imports)))
+        (list (if (equal user-choice "") first-choice user-choice))))))
 
 (defun elpy-importmagic-add-import (statement)
   (interactive (elpy-importmagic--add-import-read-args))
-  (let* ((res (elpy-rpc "add_import" (list buffer-file-name
-                                           (elpy-rpc--buffer-contents)
-                                           statement))))
-    (elpy-importmagic--replace-block res)))
+  (unless (equal statement "")
+    (let* ((res (elpy-rpc "add_import" (list buffer-file-name
+                                             (elpy-rpc--buffer-contents)
+                                             statement))))
+      (elpy-importmagic--replace-block res))))
 
 (defun elpy-importmagic-fixup ()
   (interactive)
   ;; get a new import statement block
   (let* ((res (elpy-rpc "fixup_imports" (list buffer-file-name
                                               (elpy-rpc--buffer-contents)))))
-    (elpy-importmagic--replace-block res)))
+    (unless (stringp res)
+      (elpy-importmagic--replace-block res))))
 
 ;;;;;;;;;;;;;;
 ;;; Multi-Edit
