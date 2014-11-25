@@ -16,11 +16,22 @@
 
       (should (equal command "ls foo")))))
 
-(ert-deftest elpy-test-run-should-escape-arguments ()
+(ert-deftest elpy-test-run-should-escape-arguments-on-unix ()
   (elpy-testcase ()
     (mletf* ((command nil)
-             (compile (arg) (setq command arg)))
+             (compile (arg) (setq command arg))
+             (system-type 'gnu))
 
       (elpy-test-run "/" "ls" "foo bar")
 
       (should (equal command "ls foo\\ bar")))))
+
+(ert-deftest elpy-test-run-should-not-escape-arguments-on-windows ()
+  (elpy-testcase ()
+    (mletf* ((command nil)
+             (compile (arg) (setq command arg))
+             (system-type 'windows-nt))
+
+      (elpy-test-run "/" "ls" "foo bar")
+
+      (should (equal command "ls foo bar")))))

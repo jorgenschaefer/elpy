@@ -1827,8 +1827,11 @@ This uses the `elpy-test-runner-p' symbol property."
 
 (defun elpy-test-run (working-directory command &rest args)
   "Run COMMAND with ARGS in WORKING-DIRECTORY as a test command."
-  (let ((default-directory working-directory))
-    (compile (mapconcat #'shell-quote-argument
+  (let ((default-directory working-directory)
+        (quote-fun (if (eq system-type 'windows-nt)
+                       #'identity
+                     #'shell-quote-argument)))
+    (compile (mapconcat quote-fun
                         (cons command args)
                         " "))))
 
