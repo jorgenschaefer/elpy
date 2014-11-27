@@ -1827,13 +1827,11 @@ This uses the `elpy-test-runner-p' symbol property."
 
 (defun elpy-test-run (working-directory command &rest args)
   "Run COMMAND with ARGS in WORKING-DIRECTORY as a test command."
-  (let ((default-directory working-directory)
-        (quote-fun (if (eq system-type 'windows-nt)
-                       #'identity
-                     #'shell-quote-argument)))
-    (compile (mapconcat quote-fun
-                        (cons command args)
-                        " "))))
+  (let ((default-directory working-directory))
+    (compile (concat command " "
+                     (if args
+                         (shell-quote-argument (car args))
+                       "")))))
 
 (defun elpy-test-discover-runner (top file module test)
   "Test the project using the python unittest discover runner.
