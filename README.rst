@@ -24,6 +24,8 @@ Quick Installation
 
 First, install the required Python packages:::
 
+  pip install pyflakes
+  
   pip install rope  # and/or
   pip install jedi
 
