@@ -290,7 +290,8 @@ message again within this amount of seconds."
   :type '(choice (const :tag "Unittest Discover" elpy-test-discover-runner)
                  (const :tag "Django Discover" elpy-test-django-runner)
                  (const :tag "Nose" elpy-test-nose-runner)
-                 (const :tag "py.test" elpy-test-pytest-runner))
+                 (const :tag "py.test" elpy-test-pytest-runner)
+                 (const :tag "Twisted Trial" elpy-test-trial-runner))
   :safe 'elpy-test-runner-p
   :group 'elpy)
 
@@ -1873,6 +1874,20 @@ This requires the nose package to be installed."
     (elpy-test-run top
                    "nosetests")))
 (put 'elpy-test-nose-runner 'elpy-test-runner-p t)
+
+(defun elpy-test-trial-runner (top file module test)
+  "Test the project using Twisted's Trial test runner.
+
+This requires the twisted-core package to be installed."
+  (interactive (elpy-test-at-point))
+  (if module
+      (elpy-test-run top
+                     "trial" (if test
+                                     (format "%s.%s" module test)
+                                   module))
+    (elpy-test-run top
+                   "trial")))
+(put 'elpy-test-trial-runner 'elpy-test-runner-p t)
 
 (defun elpy-test-pytest-runner (top file module test)
   "Test the project using the py.test test runner.
