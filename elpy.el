@@ -285,6 +285,15 @@ message again within this amount of seconds."
   :type 'integer
   :group 'elpy)
 
+(defcustom elpy-eldoc-show-current-function t
+  "If true, show the current function if no calltip is available.
+
+When Elpy can not find the calltip of the function call at point,
+it can show the name of the function or class and method being
+edited instead. Setting this variable to nil disables this feature."
+  :type 'boolean
+  :group 'elpy)
+
 (defcustom elpy-test-runner 'elpy-test-discover-runner
   "The test runner to use to run tests."
   :type '(choice (const :tag "Unittest Discover" elpy-test-discover-runner)
@@ -3055,9 +3064,10 @@ display the current class and method instead."
          (eldoc-message
           (cond
            ((not calltip)
-            (let ((current-defun (python-info-current-defun)))
-              (when current-defun
-                (format "In: %s()" current-defun))))
+            (when elpy-eldoc-show-current-function
+              (let ((current-defun (python-info-current-defun)))
+                (when current-defun
+                  (format "In: %s()" current-defun)))))
            ((stringp calltip)
             calltip)
            (t
