@@ -24,8 +24,12 @@ Quick Installation
 
 First, install the required Python packages:::
 
-  pip install rope  # and/or
+  # Either of these
+  pip install rope
   pip install jedi
+  # And flake8 for code checks
+  pip install flake8
+
 
 Evaluate this in your ``*scratch*`` buffer:
 

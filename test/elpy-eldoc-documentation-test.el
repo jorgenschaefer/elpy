@@ -17,6 +17,18 @@
 
       (should (equal calltip "In: FooClass.method()")))))
 
+(ert-deftest elpy-eldoc-documentation-should-not-display-current-defun-if-no-calltip-and-show-defun-disabled ()
+  (elpy-testcase ()
+    (mletf* ((elpy-rpc-get-calltip (callback) (funcall callback nil))
+             (calltip nil)
+             (eldoc-message (tip) (setq calltip tip))
+             (python-info-current-defun () "FooClass.method")
+             (elpy-eldoc-show-current-function nil))
+
+      (elpy-eldoc-documentation)
+
+      (should (null calltip)))))
+
 (ert-deftest elpy-eldoc-documentation-should-return-nil-without-defun ()
   (elpy-testcase ()
     (mletf* ((elpy-rpc-get-calltip (callback) (funcall callback nil))
