@@ -50,7 +50,7 @@ something wrong.
 
 """
 
-import xmlrpclib
+from elpy.rpc import Fault
 
 try:
     from rope.base.exceptions import RefactoringError
@@ -249,8 +249,7 @@ class Refactor(object):
         try:
             refactor = Rename(self.project, self.resource, offset)
         except RefactoringError as e:
-            raise xmlrpclib.Fault(str(e),
-                                  code=400)
+            raise Fault(str(e), code=400)
         changes = refactor.get_changes(new_name, in_hierarchy=in_hierarchy,
                                        docs=docs)
         return translate_changes(changes)
