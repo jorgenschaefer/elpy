@@ -50,7 +50,10 @@ something wrong.
 
 """
 
+import xmlrpclib
+
 try:
+    from rope.base.exceptions import RefactoringError
     from rope.base.project import Project
     from rope.base.libutils import path_to_resource
     from rope.base import change as rope_change
@@ -243,7 +246,11 @@ class Refactor(object):
              available=ROPE_AVAILABLE)
     def refactor_rename_at_point(self, offset, new_name, in_hierarchy, docs):
         """Rename the symbol at point."""
-        refactor = Rename(self.project, self.resource, offset)
+        try:
+            refactor = Rename(self.project, self.resource, offset)
+        except RefactoringError as e:
+            raise xmlrpclib.Fault(str(e),
+                                  code=400)
         changes = refactor.get_changes(new_name, in_hierarchy=in_hierarchy,
                                        docs=docs)
         return translate_changes(changes)
