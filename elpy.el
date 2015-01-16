@@ -2058,7 +2058,8 @@ overlays, too."
 
 This updates all other overlays."
   (when (and after-change
-             (not undo-in-progress))
+             (not undo-in-progress)
+             (overlay-buffer ov))
     (let ((text (buffer-substring (overlay-start ov)
                                   (overlay-end ov)))
           (inhibit-modification-hooks t))
