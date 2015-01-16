@@ -304,6 +304,32 @@ edited instead. Setting this variable to nil disables this feature."
   :safe 'elpy-test-runner-p
   :group 'elpy)
 
+(defcustom elpy-test-discover-runner-command '("python" "-m" "unittest")
+  "The command to use for `elpy-test-discover-runner'."
+  :type '(repeat string)
+  :group 'elpy)
+
+(defcustom elpy-test-django-runner-command '("django-admin.py" "test"
+                                             "--noinput")
+  "The command to use for `elpy-test-django-runner'."
+  :type '(repeat string)
+  :group 'elpy)
+
+(defcustom elpy-test-nose-runner-command '("nosetests")
+  "The command to use for `elpy-test-django-runner'."
+  :type '(repeat string)
+  :group 'elpy)
+
+(defcustom elpy-test-trial-runner-command '("trial")
+  "The command to use for `elpy-test-django-runner'."
+  :type '(repeat string)
+  :group 'elpy)
+
+(defcustom elpy-test-pytest-runner-command '("py.test")
+  "The command to use for `elpy-test-django-runner'."
+  :type '(repeat string)
+  :group 'elpy)
+
 ;;;;;;;;;;;;;
 ;;; Elpy Mode
 
@@ -1851,8 +1877,10 @@ This requires Python 2.7 or later."
                (test (format "%s.%s" module test))
                (module module)
                (t "discover"))))
-    (elpy-test-run top
-                   "python" "-m" "unittest" test)))
+    (apply #'elpy-test-run
+           top
+           (append elpy-test-discover-runner-command
+                   (list test)))))
 (put 'elpy-test-discover-runner 'elpy-test-runner-p t)
 
 (defun elpy-test-django-runner (top file module test)
@@ -1861,13 +1889,15 @@ This requires Python 2.7 or later."
 This requires Django 1.6 or the django-discover-runner package."
   (interactive (elpy-test-at-point))
   (if module
-      (elpy-test-run top
-                     "django-admin.py" "test" "--noinput"
-                     (if test
-                         (format "%s.%s" module test)
-                       module))
-    (elpy-test-run top
-                   "django-admin.py" "test" "--noinput")))
+      (apply #'elpy-test-run
+             top
+             (append elpy-test-django-runner-command
+                     (list (if test
+                               (format "%s.%s" module test)
+                             module))))
+    (apply #'elpy-test-run
+           top
+           elpy-test-django-runner-command)))
 (put 'elpy-test-django-runner 'elpy-test-runner-p t)
 
 (defun elpy-test-nose-runner (top file module test)
@@ -1876,12 +1906,15 @@ This requires Django 1.6 or the django-discover-runner package."
 This requires the nose package to be installed."
   (interactive (elpy-test-at-point))
   (if module
-      (elpy-test-run top
-                     "nosetests" (if test
-                                     (format "%s:%s" module test)
-                                   module))
-    (elpy-test-run top
-                   "nosetests")))
+      (apply #'elpy-test-run
+             top
+             (append elpy-test-nose-runner-command
+                     (list (if test
+                               (format "%s:%s" module test)
+                             module))))
+    (apply #'elpy-test-run
+           top
+           elpy-test-nose-runner-command)))
 (put 'elpy-test-nose-runner 'elpy-test-runner-p t)
 
 (defun elpy-test-trial-runner (top file module test)
@@ -1890,12 +1923,13 @@ This requires the nose package to be installed."
 This requires the twisted-core package to be installed."
   (interactive (elpy-test-at-point))
   (if module
-      (elpy-test-run top
-                     "trial" (if test
-                                     (format "%s.%s" module test)
-                                   module))
-    (elpy-test-run top
-                   "trial")))
+      (apply #'elpy-test-run
+             top
+             (append elpy-test-trial-runner-command
+                     (list (if test
+                               (format "%s.%s" module test)
+                             module))))
+    (apply #'elpy-test-run top elpy-test-trial-runner-command)))
 (put 'elpy-test-trial-runner 'elpy-test-runner-p t)
 
 (defun elpy-test-pytest-runner (top file module test)
@@ -1906,16 +1940,17 @@ This requires the pytest package to be installed."
   (cond
    (test
     (let ((test-list (split-string test "\\.")))
-      (elpy-test-run top
-                     "py.test" (mapconcat #'identity
-                                          (cons file test-list)
-                                          "::"))))
+      (apply #'elpy-test-run
+             top
+             (append elpy-test-pytest-runner-command
+                     (list (mapconcat #'identity
+                                      (cons file test-list)
+                                      "::"))))))
    (module
-    (elpy-test-run top
-                   "py.test" file))
+    (apply #'elpy-test-run top (append elpy-test-pytest-runner-command
+                                       (list file))))
    (t
-    (elpy-test-run top
-                   "py.test"))))
+    (apply #'elpy-test-run top elpy-test-pytest-runner-command))))
 (put 'elpy-test-pytest-runner 'elpy-test-runner-p t)
 
 ;;;;;;;;;;;;;;;;;
