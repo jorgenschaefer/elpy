@@ -48,7 +48,7 @@ operations.
 
 In addition to the above, Emacs also supports moving up or down inside
 nested parentheses groups. :kbd:`C-M-d` will move *down* into the next
-enclosed grouo pf parentheses, while :kbd:`C-M-u` will move *up* to
+enclosed group of parentheses, while :kbd:`C-M-u` will move *up* to
 the directly enclosing group of parentheses.
 
 Finally, a lot of Elpy's commands change their behavir when the
