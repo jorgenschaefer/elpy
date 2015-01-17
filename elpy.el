@@ -1438,7 +1438,7 @@ code is executed."
 (defun elpy-shell-switch-to-shell ()
   "Switch to inferior Python process buffer."
   (interactive)
-  (pop-to-buffer (process-buffer (elpy-shell-get-or-create-process)) t))
+  (pop-to-buffer (process-buffer (elpy-shell-get-or-create-process))))
 
 (defun elpy-shell-get-or-create-process ()
   "Get or create an inferior Python process for current buffer and return it."
