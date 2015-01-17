@@ -349,6 +349,8 @@ edited instead. Setting this variable to nil disables this feature."
     (define-key map (kbd "C-c C-d") 'elpy-doc)
     (define-key map (kbd "C-c C-e") 'elpy-multiedit-python-symbol-at-point)
     (define-key map (kbd "C-c C-f") 'elpy-find-file)
+    (define-key map (kbd "C-c C-m") 'elpy-importmagic-add-import)
+    (define-key map (kbd "C-c C-S-m") 'elpy-importmagic-fixup)
     (define-key map (kbd "C-c C-n") 'elpy-flymake-next-error)
     (define-key map (kbd "C-c C-o") 'elpy-occur-definitions)
     (define-key map (kbd "C-c C-p") 'elpy-flymake-previous-error)
@@ -571,6 +573,14 @@ except:
     config['rope_version'] = None
     config['rope_latest'] = latest('rope')
 
+try:
+    import importmagic
+    # currently importmagic has no version number, so use the one from setup.py
+    config['importmagic_version'] = importmagic.__version__
+    config['importmagic_latest'] = latest('importmagic', config['importmagic_version'])
+except:
+    config['importmagic_version'] = None
+    config['importmagic_latest'] = latest('importmagic')
 
 json.dump(config, sys.stdout)
 ")
@@ -871,6 +881,8 @@ virtual_env_short"
         (jedi-latest (gethash "jedi_latest" config))
         (rope-version (gethash "rope_version" config))
         (rope-latest (gethash "rope_latest" config))
+        (importmagic-version (gethash "importmagic_version" config))
+        (importmagic-latest (gethash "importmagic_latest" config))
         (virtual-env (gethash "virtual_env" config))
         (virtual-env-short (gethash "virtual_env_short" config))
         table maxwidth)
@@ -919,6 +931,9 @@ virtual_env_short"
             ("Rope" . ,(elpy-config--package-link "rope"
                                                   rope-version
                                                   rope-latest))
+            ("Importmagic" . ,(elpy-config--package-link "importmagic"
+                                                  importmagic-version
+                                                  importmagic-latest))
             ("Syntax checker" . ,(let ((syntax-checker
                                         (executable-find
                                          python-check-command)))
@@ -2014,6 +2029,54 @@ prefix argument is given, prompt for a symbol from the user."
       (if symbol
           (symbol-name symbol)
         nil))))
+
+;;;;;;;;;;;;;;
+;;; Import manipulation
+
+(defun elpy-importmagic--replace-block (spec)
+  "Replace an imports block. SPEC is (startline endline newblock)."
+  (let ((start-line (nth 0 spec))
+        (end-line (nth 1 spec))
+        (new-block (nth 2 spec)))
+    (save-excursion
+      (save-restriction
+        (widen)
+        (goto-char (point-min))
+        (forward-line start-line)
+        (delete-region (point) (progn (forward-line (- end-line start-line)) (point)))
+        (insert new-block)))))
+
+(defun elpy-importmagic--add-import-read-args ()
+  (let* ((default-object (save-excursion
+                           (let ((bounds (with-syntax-table python-dotty-syntax-table
+                                           (bounds-of-thing-at-point 'symbol))))
+                             (if bounds (buffer-substring (car bounds) (cdr bounds)) ""))))
+         (object-to-import (read-string "Object to import: " default-object))
+         (possible-imports (elpy-rpc "get_import_symbols" (list buffer-file-name
+                                                                (elpy-rpc--buffer-contents)
+                                                                object-to-import))))
+    ;; An elpy warning (i.e. index not ready) is returned as a string.
+    (if (stringp possible-imports)
+        (list "")
+      (let ((first-choice (car possible-imports))
+            (user-choice (completing-read "New import statement: " possible-imports)))
+        (list (if (equal user-choice "") first-choice user-choice))))))
+
+(defun elpy-importmagic-add-import (statement)
+  (interactive (elpy-importmagic--add-import-read-args))
+  (unless (equal statement "")
+    (let* ((res (elpy-rpc "add_import" (list buffer-file-name
+                                             (elpy-rpc--buffer-contents)
+                                             statement))))
+      (elpy-importmagic--replace-block res))))
+
+(defun elpy-importmagic-fixup ()
+  (interactive)
+  ;; get a new import statement block
+  (let* ((res (elpy-rpc "fixup_imports" (list buffer-file-name
+                                              (elpy-rpc--buffer-contents)))))
+    (unless (stringp res)
+      (elpy-importmagic--replace-block res))))
 
 ;;;;;;;;;;;;;;
 ;;; Multi-Edit

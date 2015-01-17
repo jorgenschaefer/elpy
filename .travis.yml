@@ -30,6 +30,7 @@ install:
       pip install rope_py3k ;
     fi
   - pip install coveralls
+  - pip install https://github.com/alecthomas/importmagic/archive/master.zip
 script:
   - nosetests
   - PYTHONPATH="`pwd`" cask exec ert-runner

@@ -11,6 +11,8 @@ import pydoc
 
 from elpy.pydocutils import get_pydoc_completions
 from elpy.rpc import JSONRPCServer, Fault
+from elpy.impmagic import ImportMagic
+
 
 try:
     from elpy import jedibackend
@@ -32,6 +34,7 @@ class ElpyRPCServer(JSONRPCServer):
     def __init__(self):
         super(ElpyRPCServer, self).__init__()
         self.backend = None
+        self.import_magic = ImportMagic()
         self.project_root = None
 
     def _call_backend(self, method, default, *args, **kwargs):
@@ -55,6 +58,9 @@ class ElpyRPCServer(JSONRPCServer):
 
     def rpc_init(self, options):
         self.project_root = options["project_root"]
+
+        if self.import_magic.is_enabled:
+            self.import_magic.build_index(self.project_root)
 
         if ropebackend and options["backend"] == "rope":
             self.backend = ropebackend.RopeBackend(self.project_root)
@@ -189,6 +195,37 @@ class ElpyRPCServer(JSONRPCServer):
         else:
             raise Fault("get_usages not implemented by current backend",
                         code=400)
+
+    def _ensure_import_magic(self):  # pragma: no cover
+        if not self.import_magic.is_enabled:
+            raise Fault("fixup_imports not enabled; install importmagic module",
+                        code=400)
+        if not self.import_magic.symbol_index:
+            raise Fault("symbol index is not yet ready", code=200)  # XXX code?
+
+    def rpc_get_import_symbols(self, filename, source, symbol):
+        """Return a list of modules from which the given symbol can be imported.
+
+        """
+        self._ensure_import_magic()
+        return self.import_magic.get_import_symbols(symbol)
+
+    def rpc_add_import(self, filename, source, statement):
+        """Add an import statement to the module.
+
+        """
+        self._ensure_import_magic()
+        source = get_source(source)
+        return self.import_magic.add_import(source, statement)
+
+    def rpc_fixup_imports(self, filename, source):
+        """Automatically fixup imports in the file, by inserting import
+        statements.
+
+        """
+        self._ensure_import_magic()
+        source = get_source(source)
+        return self.import_magic.fixup_imports(source)
 
 
 def get_source(fileobj):
