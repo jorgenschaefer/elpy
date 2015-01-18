@@ -304,6 +304,32 @@ edited instead. Setting this variable to nil disables this feature."
   :safe 'elpy-test-runner-p
   :group 'elpy)
 
+(defcustom elpy-test-discover-runner-command '("python" "-m" "unittest")
+  "The command to use for `elpy-test-discover-runner'."
+  :type '(repeat string)
+  :group 'elpy)
+
+(defcustom elpy-test-django-runner-command '("django-admin.py" "test"
+                                             "--noinput")
+  "The command to use for `elpy-test-django-runner'."
+  :type '(repeat string)
+  :group 'elpy)
+
+(defcustom elpy-test-nose-runner-command '("nosetests")
+  "The command to use for `elpy-test-django-runner'."
+  :type '(repeat string)
+  :group 'elpy)
+
+(defcustom elpy-test-trial-runner-command '("trial")
+  "The command to use for `elpy-test-django-runner'."
+  :type '(repeat string)
+  :group 'elpy)
+
+(defcustom elpy-test-pytest-runner-command '("py.test")
+  "The command to use for `elpy-test-django-runner'."
+  :type '(repeat string)
+  :group 'elpy)
+
 ;;;;;;;;;;;;;
 ;;; Elpy Mode
 
@@ -323,8 +349,8 @@ edited instead. Setting this variable to nil disables this feature."
     (define-key map (kbd "C-c C-d") 'elpy-doc)
     (define-key map (kbd "C-c C-e") 'elpy-multiedit-python-symbol-at-point)
     (define-key map (kbd "C-c C-f") 'elpy-find-file)
-    (define-key map (kbd "C-c C-i") 'elpy-importmagic-add-import)
-    (define-key map (kbd "C-c C-S-i") 'elpy-importmagic-fixup)
+    (define-key map (kbd "C-c C-m") 'elpy-importmagic-add-import)
+    (define-key map (kbd "C-c C-S-m") 'elpy-importmagic-fixup)
     (define-key map (kbd "C-c C-n") 'elpy-flymake-next-error)
     (define-key map (kbd "C-c C-o") 'elpy-occur-definitions)
     (define-key map (kbd "C-c C-p") 'elpy-flymake-previous-error)
@@ -548,13 +574,12 @@ except:
     config['rope_latest'] = latest('rope')
 
 try:
-    if sys.version_info[0] > 2:
-        raise ImportError
     import importmagic
-    # currently importmagic has no version number, so use the one from setup.py
-    config['importmagic_version'] = '0.1.0'
+    config['importmagic_version'] = importmagic.__version__
+    config['importmagic_latest'] = latest('importmagic', config['importmagic_version'])
 except:
     config['importmagic_version'] = None
+    config['importmagic_latest'] = latest('importmagic')
 
 json.dump(config, sys.stdout)
 ")
@@ -855,6 +880,8 @@ virtual_env_short"
         (jedi-latest (gethash "jedi_latest" config))
         (rope-version (gethash "rope_version" config))
         (rope-latest (gethash "rope_latest" config))
+        (importmagic-version (gethash "importmagic_version" config))
+        (importmagic-latest (gethash "importmagic_latest" config))
         (virtual-env (gethash "virtual_env" config))
         (virtual-env-short (gethash "virtual_env_short" config))
         table maxwidth)
@@ -903,6 +930,9 @@ virtual_env_short"
             ("Rope" . ,(elpy-config--package-link "rope"
                                                   rope-version
                                                   rope-latest))
+            ("Importmagic" . ,(elpy-config--package-link "importmagic"
+                                                  importmagic-version
+                                                  importmagic-latest))
             ("Syntax checker" . ,(let ((syntax-checker
                                         (executable-find
                                          python-check-command)))
@@ -1422,7 +1452,7 @@ code is executed."
 (defun elpy-shell-switch-to-shell ()
   "Switch to inferior Python process buffer."
   (interactive)
-  (pop-to-buffer (process-buffer (elpy-shell-get-or-create-process)) t))
+  (pop-to-buffer (process-buffer (elpy-shell-get-or-create-process))))
 
 (defun elpy-shell-get-or-create-process ()
   "Get or create an inferior Python process for current buffer and return it."
@@ -1861,8 +1891,10 @@ This requires Python 2.7 or later."
                (test (format "%s.%s" module test))
                (module module)
                (t "discover"))))
-    (elpy-test-run top
-                   "python" "-m" "unittest" test)))
+    (apply #'elpy-test-run
+           top
+           (append elpy-test-discover-runner-command
+                   (list test)))))
 (put 'elpy-test-discover-runner 'elpy-test-runner-p t)
 
 (defun elpy-test-django-runner (top file module test)
@@ -1871,13 +1903,15 @@ This requires Python 2.7 or later."
 This requires Django 1.6 or the django-discover-runner package."
   (interactive (elpy-test-at-point))
   (if module
-      (elpy-test-run top
-                     "django-admin.py" "test" "--noinput"
-                     (if test
-                         (format "%s.%s" module test)
-                       module))
-    (elpy-test-run top
-                   "django-admin.py" "test" "--noinput")))
+      (apply #'elpy-test-run
+             top
+             (append elpy-test-django-runner-command
+                     (list (if test
+                               (format "%s.%s" module test)
+                             module))))
+    (apply #'elpy-test-run
+           top
+           elpy-test-django-runner-command)))
 (put 'elpy-test-django-runner 'elpy-test-runner-p t)
 
 (defun elpy-test-nose-runner (top file module test)
@@ -1886,12 +1920,15 @@ This requires Django 1.6 or the django-discover-runner package."
 This requires the nose package to be installed."
   (interactive (elpy-test-at-point))
   (if module
-      (elpy-test-run top
-                     "nosetests" (if test
-                                     (format "%s:%s" module test)
-                                   module))
-    (elpy-test-run top
-                   "nosetests")))
+      (apply #'elpy-test-run
+             top
+             (append elpy-test-nose-runner-command
+                     (list (if test
+                               (format "%s:%s" module test)
+                             module))))
+    (apply #'elpy-test-run
+           top
+           elpy-test-nose-runner-command)))
 (put 'elpy-test-nose-runner 'elpy-test-runner-p t)
 
 (defun elpy-test-trial-runner (top file module test)
@@ -1900,12 +1937,13 @@ This requires the nose package to be installed."
 This requires the twisted-core package to be installed."
   (interactive (elpy-test-at-point))
   (if module
-      (elpy-test-run top
-                     "trial" (if test
-                                     (format "%s.%s" module test)
-                                   module))
-    (elpy-test-run top
-                   "trial")))
+      (apply #'elpy-test-run
+             top
+             (append elpy-test-trial-runner-command
+                     (list (if test
+                               (format "%s.%s" module test)
+                             module))))
+    (apply #'elpy-test-run top elpy-test-trial-runner-command)))
 (put 'elpy-test-trial-runner 'elpy-test-runner-p t)
 
 (defun elpy-test-pytest-runner (top file module test)
@@ -1916,16 +1954,17 @@ This requires the pytest package to be installed."
   (cond
    (test
     (let ((test-list (split-string test "\\.")))
-      (elpy-test-run top
-                     "py.test" (mapconcat #'identity
-                                          (cons file test-list)
-                                          "::"))))
+      (apply #'elpy-test-run
+             top
+             (append elpy-test-pytest-runner-command
+                     (list (mapconcat #'identity
+                                      (cons file test-list)
+                                      "::"))))))
    (module
-    (elpy-test-run top
-                   "py.test" file))
+    (apply #'elpy-test-run top (append elpy-test-pytest-runner-command
+                                       (list file))))
    (t
-    (elpy-test-run top
-                   "py.test"))))
+    (apply #'elpy-test-run top elpy-test-pytest-runner-command))))
 (put 'elpy-test-pytest-runner 'elpy-test-runner-p t)
 
 ;;;;;;;;;;;;;;;;;
@@ -2015,21 +2054,28 @@ prefix argument is given, prompt for a symbol from the user."
          (possible-imports (elpy-rpc "get_import_symbols" (list buffer-file-name
                                                                 (elpy-rpc--buffer-contents)
                                                                 object-to-import))))
-    (completing-read "New import statement: " possible-imports)))
+    ;; An elpy warning (i.e. index not ready) is returned as a string.
+    (if (stringp possible-imports)
+        (list "")
+      (let ((first-choice (car possible-imports))
+            (user-choice (completing-read "New import statement: " possible-imports)))
+        (list (if (equal user-choice "") first-choice user-choice))))))
 
 (defun elpy-importmagic-add-import (statement)
   (interactive (elpy-importmagic--add-import-read-args))
-  (let* ((res (elpy-rpc "add_import" (list buffer-file-name
-                                           (elpy-rpc--buffer-contents)
-                                           statement))))
-    (elpy-importmagic--replace-block res)))
+  (unless (equal statement "")
+    (let* ((res (elpy-rpc "add_import" (list buffer-file-name
+                                             (elpy-rpc--buffer-contents)
+                                             statement))))
+      (elpy-importmagic--replace-block res))))
 
 (defun elpy-importmagic-fixup ()
   (interactive)
   ;; get a new import statement block
   (let* ((res (elpy-rpc "fixup_imports" (list buffer-file-name
                                               (elpy-rpc--buffer-contents)))))
-    (elpy-importmagic--replace-block res)))
+    (unless (stringp res)
+      (elpy-importmagic--replace-block res))))
 
 ;;;;;;;;;;;;;;
 ;;; Multi-Edit
@@ -2074,7 +2120,8 @@ overlays, too."
 
 This updates all other overlays."
   (when (and after-change
-             (not undo-in-progress))
+             (not undo-in-progress)
+             (overlay-buffer ov))
     (let ((text (buffer-substring (overlay-start ov)
                                   (overlay-end ov)))
           (inhibit-modification-hooks t))

@@ -145,11 +145,15 @@ class RopeBackend(object):
         prefixlen = offset - starting_offset
         self.completions = dict((proposal.name, proposal)
                                 for proposal in proposals)
-        return [{'name': proposal.name,
-                 'suffix': proposal.name[prefixlen:],
-                 'annotation': proposal.type,
-                 'meta': str(proposal)}
-                for proposal in proposals]
+        try:
+            return [{'name': proposal.name,
+                     'suffix': proposal.name[prefixlen:],
+                     'annotation': proposal.type,
+                     'meta': str(proposal)}
+                    for proposal in proposals]
+        except rope.base.exceptions.ModuleSyntaxError:
+            # Bug#406
+            return []
 
     def rpc_get_completion_docstring(self, completion):
         proposal = self.completions.get(completion)
