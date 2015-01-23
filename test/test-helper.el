@@ -168,3 +168,6 @@ for that file."
   `(buffer-contents-differ ,(apply #'source-string lines)
                            ,(buffer-string-with-point)))
 (put 'buffer-be 'ert-explainer 'buffer-be-explainer)
+
+(setq yas-verbosity 0)
+(setq yas-snippet-dirs ())
