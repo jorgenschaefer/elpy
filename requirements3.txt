@@ -1,2 +1,3 @@
 jedi==0.8.1-final0
 rope_py3k==0.9.4-1
+importmagic==0.1.0
