@@ -8,8 +8,6 @@ import threading
 
 
 try:
-    if sys.version_info[0] > 2:  # currently not Python 3 compatible
-        raise ImportError
     import importmagic.index
     import importmagic.symbols
     import importmagic.importer
