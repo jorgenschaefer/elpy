@@ -794,6 +794,26 @@ item in another window.\n\n")
                      :package "jedi" :upgrade t)
       (insert "\n\n"))
 
+    ;; No importmagic available
+    (when (not (gethash "importmagic_version" config))
+      (elpy-insert--para
+       "The importmagic package is not available. Commands using this will "
+       "not work.\n")
+      (insert "\n")
+      (widget-create 'elpy-insert--pip-button
+                     :package "importmagic")
+      (insert "\n\n"))
+
+    ;; Newer version of importmagic available
+    (when (and (gethash "importmagic_version" config)
+               (gethash "importmagic_latest" config))
+      (elpy-insert--para
+       "There is a newer version of the importmagic package available.\n")
+      (insert "\n")
+      (widget-create 'elpy-insert--pip-button
+                     :package "importmagic" :upgrade t)
+      (insert "\n\n"))
+
     ;; flake8, the default syntax checker, not found
     (when (not (executable-find "flake8"))
       (elpy-insert--para
@@ -931,8 +951,8 @@ virtual_env_short"
                                                   rope-version
                                                   rope-latest))
             ("Importmagic" . ,(elpy-config--package-link "importmagic"
-                                                  importmagic-version
-                                                  importmagic-latest))
+                                                         importmagic-version
+                                                         importmagic-latest))
             ("Syntax checker" . ,(let ((syntax-checker
                                         (executable-find
                                          python-check-command)))
