@@ -5,6 +5,7 @@
       (mletf* ((called-prompt nil)
                (read-string (prompt initial &optional history def inherit-input-method)
                             initial)
+               (elpy-rpc (call args) '("import mymodule"))
                (completing-read (prompt vals &optional func require-match default history)
                                 "import mymodule"))
         (should (equal (elpy-importmagic--add-import-read-args) '("import mymodule")))))))

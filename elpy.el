@@ -2074,12 +2074,19 @@ prefix argument is given, prompt for a symbol from the user."
          (possible-imports (elpy-rpc "get_import_symbols" (list buffer-file-name
                                                                 (elpy-rpc--buffer-contents)
                                                                 object-to-import))))
-    ;; An elpy warning (i.e. index not ready) is returned as a string.
-    (if (stringp possible-imports)
-        (list "")
+    (cond
+     ;; An elpy warning (i.e. index not ready) is returned as a string.
+     ((stringp possible-imports)
+      (list ""))
+     ;; If there is no candidate, we exit immediately.
+     ((null possible-imports)
+      (message "No import candidate found")
+      (list ""))
+     ;; We have some candidates, let the user choose one.
+     (t
       (let ((first-choice (car possible-imports))
             (user-choice (completing-read "New import statement: " possible-imports)))
-        (list (if (equal user-choice "") first-choice user-choice))))))
+        (list (if (equal user-choice "") first-choice user-choice)))))))
 
 (defun elpy-importmagic-add-import (statement)
   (interactive (elpy-importmagic--add-import-read-args))
