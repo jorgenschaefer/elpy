@@ -27,8 +27,10 @@ First, install the required Python packages:::
   # Either of these
   pip install rope
   pip install jedi
-  # And flake8 for code checks
+  # flake8 for code checks
   pip install flake8
+  # and importmagic for automatic imports
+  pip install importmagic
 
 
 Evaluate this in your ``*scratch*`` buffer:
