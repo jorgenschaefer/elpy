@@ -56,3 +56,7 @@ add the following to your .emacs:
    (elpy-enable)
 
 Congratulations, Elpy is now successfully installed!
+
+In order to use all the features (such as navigation with ``M-.``),
+you'll need to install some python libraries.  You can do that easily
+by typing ``M-x elpy-config RET``, and following the instructions.
