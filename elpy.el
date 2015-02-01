@@ -2068,15 +2068,16 @@ prefix argument is given, prompt for a symbol from the user."
         (delete-region (point) (progn (forward-line (- end-line start-line)) (point)))
         (insert new-block)))))
 
-(defun elpy-importmagic--add-import-read-args ()
+(defun elpy-importmagic--add-import-read-args (&optional object prompt)
   (let* ((default-object (save-excursion
                            (let ((bounds (with-syntax-table python-dotty-syntax-table
                                            (bounds-of-thing-at-point 'symbol))))
                              (if bounds (buffer-substring (car bounds) (cdr bounds)) ""))))
-         (object-to-import (read-string "Object to import: " default-object))
+         (object-to-import (or object (read-string "Object to import: " default-object)))
          (possible-imports (elpy-rpc "get_import_symbols" (list buffer-file-name
                                                                 (elpy-rpc--buffer-contents)
-                                                                object-to-import))))
+                                                                object-to-import)))
+         (statement-prompt (or prompt "New import statement: ")))
     (cond
      ;; An elpy warning (i.e. index not ready) is returned as a string.
      ((stringp possible-imports)
@@ -2088,7 +2089,7 @@ prefix argument is given, prompt for a symbol from the user."
      ;; We have some candidates, let the user choose one.
      (t
       (let ((first-choice (car possible-imports))
-            (user-choice (completing-read "New import statement: " possible-imports)))
+            (user-choice (completing-read statement-prompt possible-imports)))
         (list (if (equal user-choice "") first-choice user-choice)))))))
 
 (defun elpy-importmagic-add-import (statement)
@@ -2100,10 +2101,21 @@ prefix argument is given, prompt for a symbol from the user."
       (elpy-importmagic--replace-block res))))
 
 (defun elpy-importmagic-fixup ()
+  "Query for new imports of unresolved symbols, and remove unreferenced imports.
+
+Also sort the imports in the import statement blocks."
   (interactive)
-  ;; get a new import statement block
-  (let* ((res (elpy-rpc "fixup_imports" (list buffer-file-name
-                                              (elpy-rpc--buffer-contents)))))
+  ;; get all unresolved names, and interactively add imports for them
+  (let* ((res (elpy-rpc "get_unresolved_symbols" (list buffer-file-name
+                                                       (elpy-rpc--buffer-contents)))))
+    (unless (stringp res)
+      (dolist (object res)
+        (let* ((prompt (format "How to import \"%s\": " object))
+               (choice (elpy-importmagic--add-import-read-args object prompt)))
+          (elpy-importmagic-add-import (car choice))))))
+  ;; now get a new import statement block (this also sorts)
+  (let* ((res (elpy-rpc "remove_unreferenced_imports" (list buffer-file-name
+                                                            (elpy-rpc--buffer-contents)))))
     (unless (stringp res)
       (elpy-importmagic--replace-block res))))
 

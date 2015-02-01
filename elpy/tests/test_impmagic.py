@@ -10,9 +10,11 @@ from elpy.tests.support import BackendTestCase
 
 TEST_SOURCE = '''# test file
 
-import sys
+import time
+import logging
 
 os.getcwd()
+time.sleep(1)
 '''
 
 
@@ -43,19 +45,26 @@ class ImportMagicTestCase(BackendTestCase):
         start, end, newblock = self.importmagic.add_import(
             TEST_SOURCE, 'from mymod import AnUncommonName')
         self.assertEqual(start, 2)
-        self.assertEqual(end, 4)
+        self.assertEqual(end, 5)
         self.assertEqual(newblock.strip(),
-                         'import sys\n\nfrom mymod import AnUncommonName')
+                         'import logging\nimport time\n\nfrom mymod import AnUncommonName')
 
         start, end, newblock = self.importmagic.add_import(
             TEST_SOURCE, 'import mymod')
         self.assertEqual(start, 2)
-        self.assertEqual(end, 4)
-        self.assertEqual(newblock.strip(), 'import sys\n\nimport mymod')
+        self.assertEqual(end, 5)
+        self.assertEqual(newblock.strip(),
+                         'import logging\nimport time\n\nimport mymod')
 
-    def test_fixup(self):
+    def test_get_unresolved_symbols(self):
         self.build_index()
-        start, end, newblock = self.importmagic.fixup_imports(TEST_SOURCE)
+        symbols = self.importmagic.get_unresolved_symbols('x = a + b\ny = c.d')
+        self.assertEqual(sorted(symbols), ['a', 'b', 'c.d'])
+
+    def test_remove_unreferenced_imports(self):
+        self.build_index()
+        start, end, newblock = \
+            self.importmagic.remove_unreferenced_imports(TEST_SOURCE)
         self.assertEqual(start, 2)
-        self.assertEqual(end, 4)
-        self.assertEqual(newblock.strip(), 'import os')
+        self.assertEqual(end, 5)
+        self.assertEqual(newblock.strip(), 'import time')
