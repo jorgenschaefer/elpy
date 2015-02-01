@@ -21,6 +21,7 @@ class ImportMagic(object):
         self.is_enabled = bool(importmagic)
         self.project_root = None
         self.symbol_index = None
+        self.favorites = set()
         self._thread = None
 
     def _build_symbol_index(self, project_root, custom_path, blacklist_re):
@@ -45,16 +46,28 @@ class ImportMagic(object):
 
     def get_import_symbols(self, symbol):
         scores = self.symbol_index.symbol_scores(symbol)
+
+        def sort_key(item):
+            score, mod, var = item
+            if mod in self.favorites:
+                return 2 + score, mod, var
+            return score, mod, var
+
+        scores.sort(key=sort_key, reverse=True)
         return ["from %s import %s" % (mod, var) if var else "import %s" % mod
                 for (_, mod, var) in scores]
 
     def add_import(self, source, statement):
         imports = importmagic.importer.Imports(self.symbol_index, source)
         if statement.startswith('import '):
-            imports.add_import(statement[7:])
+            modname = statement[7:]
+            imports.add_import(modname)
+            self.favorites.add(modname)
         else:
             sep = statement.find(' import ')
+            modname = statement[5:sep]
             if sep > -1:
+                self.favorites.add(modname)
                 imports.add_import_from(statement[5:sep], statement[sep+8:])
         start_line, end_line, import_block = imports.get_update()
         return start_line, end_line, import_block
