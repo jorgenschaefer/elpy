@@ -568,7 +568,10 @@ except:
 try:
     import rope
     config['rope_version'] = rope.VERSION
-    config['rope_latest'] = latest('rope', config['rope_version'])
+    if sys.version_info[0] <= 2:
+        config['rope_latest'] = latest('rope', config['rope_version'])
+    else:
+        config['rope_latest'] = latest('rope_py3k', config['rope_version'])
 except:
     config['rope_version'] = None
     config['rope_latest'] = latest('rope')
