@@ -348,8 +348,10 @@ class TestRPCImportMagic(ServerTestCase):
             impmagic.get_import_symbols.assert_called_with("os")
             self.srv.rpc_add_import("filename", "source", "import os")
             impmagic.add_import.assert_called_with("source", "import os")
-            self.srv.rpc_fixup_imports("filename", "source")
-            impmagic.fixup_imports.assert_called_with("source")
+            self.srv.rpc_get_unresolved_symbols("filename", "source")
+            impmagic.get_unresolved_symbols.assert_called_with("source")
+            self.srv.rpc_remove_unreferenced_imports("filename", "source")
+            impmagic.remove_unreferenced_imports.assert_called_with("source")
 
 
 class TestGetSource(unittest.TestCase):

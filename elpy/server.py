@@ -218,14 +218,21 @@ class ElpyRPCServer(JSONRPCServer):
         source = get_source(source)
         return self.import_magic.add_import(source, statement)
 
-    def rpc_fixup_imports(self, filename, source):
-        """Automatically fixup imports in the file, by inserting import
-        statements.
+    def rpc_get_unresolved_symbols(self, filename, source):
+        """Return a list of unreferenced symbols in the module.
 
         """
         self._ensure_import_magic()
         source = get_source(source)
-        return self.import_magic.fixup_imports(source)
+        return self.import_magic.get_unresolved_symbols(source)
+
+    def rpc_remove_unreferenced_imports(self, filename, source):
+        """Remove unused import statements.
+
+        """
+        self._ensure_import_magic()
+        source = get_source(source)
+        return self.import_magic.remove_unreferenced_imports(source)
 
 
 def get_source(fileobj):

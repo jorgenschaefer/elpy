@@ -59,9 +59,17 @@ class ImportMagic(object):
         start_line, end_line, import_block = imports.get_update()
         return start_line, end_line, import_block
 
-    def fixup_imports(self, source):
+    def get_unresolved_symbols(self, source):
         scope = importmagic.symbols.Scope.from_source(source)
-        unref, unres = scope.find_unresolved_and_unreferenced_symbols()
+        unres, unref = scope.find_unresolved_and_unreferenced_symbols()
+        return list(unres)
+
+    def remove_unreferenced_imports(self, source):
+        scope = importmagic.symbols.Scope.from_source(source)
+        unres, unref = scope.find_unresolved_and_unreferenced_symbols()
+        # Note: we do not supply "unres" to the call below, since we do
+        # not want to add imports without querying the user from which
+        # module symbols should be imported.
         start_line, end_line, import_block = importmagic.importer.get_update(
-            source, self.symbol_index, unref, unres)
+            source, self.symbol_index, set(), unref)
         return start_line, end_line, import_block
