@@ -2065,8 +2065,12 @@ prefix argument is given, prompt for a symbol from the user."
         (widen)
         (goto-char (point-min))
         (forward-line start-line)
-        (delete-region (point) (progn (forward-line (- end-line start-line)) (point)))
-        (insert new-block)))))
+        (let ((beg (point))
+              (end (progn (forward-line (- end-line start-line)) (point))))
+          ;; Avoid deleting and re-inserting when the blocks are equal.
+          (unless (string-equal (buffer-substring beg end) new-block)
+            (delete-region beg end)
+            (insert new-block)))))))
 
 (defun elpy-importmagic--add-import-read-args (&optional object prompt)
   (let* ((default-object (save-excursion
