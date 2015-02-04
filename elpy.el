@@ -2113,6 +2113,7 @@ Also sort the imports in the import statement blocks."
   (let* ((res (elpy-rpc "get_unresolved_symbols" (list buffer-file-name
                                                        (elpy-rpc--buffer-contents)))))
     (unless (stringp res)
+      (if (null res) (message "No imports to add."))
       (dolist (object res)
         (let* ((prompt (format "How to import \"%s\": " object))
                (choice (elpy-importmagic--add-import-read-args object prompt)))
