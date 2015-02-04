@@ -58,6 +58,17 @@ class JediBackend(object):
         else:
             return (proposal.module_path, proposal.line)
 
+    def rpc_get_docstring(self, filename, source, offset):
+        line, column = pos_to_linecol(source, offset)
+        try:
+            locations = run_with_debug(jedi, 'goto_definitions',
+                                       source=source, line=line, column=column,
+                                       path=filename, encoding='utf-8',
+                                       re_raise=jedi.NotFoundError)
+        except jedi.NotFoundError:
+            return ''
+        return locations[-1].docstring()
+
     def rpc_get_definition(self, filename, source, offset):
         line, column = pos_to_linecol(source, offset)
         try:
