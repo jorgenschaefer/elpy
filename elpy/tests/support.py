@@ -661,7 +661,7 @@ class RPCGetDocstringTests(GenericRPCTests):
             return s[:s.index("\n")]
 
         self.assertEqual(first_line(docstring),
-                         'Thread.join(self, timeout=None):')
+                         self.THREAD_JOIN_DOCSTRING)
 
     def test_should_return_none_for_bad_identifier(self):
         source, offset = source_and_offset(

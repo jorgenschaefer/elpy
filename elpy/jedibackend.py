@@ -66,8 +66,11 @@ class JediBackend(object):
                                        path=filename, encoding='utf-8',
                                        re_raise=jedi.NotFoundError)
         except jedi.NotFoundError:
-            return ''
-        return locations[-1].docstring()
+            return None
+        if locations:
+            return locations[-1].docstring()
+        else:
+            return None
 
     def rpc_get_definition(self, filename, source, offset):
         line, column = pos_to_linecol(source, offset)

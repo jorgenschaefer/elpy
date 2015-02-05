@@ -12,6 +12,7 @@ from elpy.tests.support import BackendTestCase
 from elpy.tests.support import RPCGetCompletionsTests
 from elpy.tests.support import RPCGetCompletionDocstringTests
 from elpy.tests.support import RPCGetCompletionLocationTests
+from elpy.tests.support import RPCGetDocstringTests
 from elpy.tests.support import RPCGetDefinitionTests
 from elpy.tests.support import RPCGetCalltipTests
 from elpy.tests.support import RPCGetUsagesTests
@@ -41,6 +42,11 @@ class TestRPCGetCompletionDocstring(RPCGetCompletionDocstringTests,
 class TestRPCGetCompletionLocation(RPCGetCompletionLocationTests,
                                    JediBackendTestCase):
     pass
+
+
+class TestRPCGetDocstring(RPCGetDocstringTests,
+                          JediBackendTestCase):
+    THREAD_JOIN_DOCSTRING = 'join(self, timeout = None)'
 
 
 class TestRPCGetDefinition(RPCGetDefinitionTests,

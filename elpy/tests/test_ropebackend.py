@@ -125,7 +125,7 @@ class TestRPCGetCalltip(RPCGetCalltipTests,
 class TestRPCGetDocstring(RPCGetDocstringTests,
                           ShouldCallValidateTest,
                           RopeBackendTestCase):
-    pass
+    THREAD_JOIN_DOCSTRING = 'Thread.join(self, timeout=None):'
 
 
 class TestGetPythonProjectFiles(RopeBackendTestCase):
