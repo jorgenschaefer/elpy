@@ -3,7 +3,7 @@
 ;; (source "melpa-stable" "http://hiddencameras.milkbox.net/packages/")
 (source melpa)
 
-(package "elpy" "1.6.1" "Emacs Python Development Environment")
+(package "elpy" "1.6.50" "Emacs Python Development Environment")
 
 (depends-on "company" "0.8.0")
 (depends-on "find-file-in-project" "3.3")
