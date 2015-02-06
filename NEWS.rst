@@ -1,3 +1,28 @@
+New in Elpy 1.7.0
+=================
+
+- Elpy now can add missing import directives automatically, by using
+  Alec Thomas' excellent importmagic_ library. Use ``C-c C-m`` to add
+  a single import statement, or ``C-c C-S-m`` to include all missing
+  import statements. Many thanks to Georg Brandl for doing a lot of
+  work to bring this feature to Elpy!
+- The Jedi backend now also supports ``C-c C-d`` to display a
+  docstring. Thanks again to Georg Brandl for the patch.
+- It is now possible to disable the display of the current function in
+  the echo area by setting ``elpy-eldoc-show-current-function`` to
+  ``nil``.
+- idomenu was removed.
+- Twisted's Trial test runner is now supported. Thanks to Elric Milon
+  for the patch!
+- All test runners now use a variable to decide which command to run,
+  which for example allows using ``manage.py`` for the Django test
+  runner, or your own test script which sets up the environment
+  correctly.
+- Emacs 24.4 is now officially supported.
+- Various bugfixes.
+
+.. _importmagic: https://github.com/alecthomas/importmagic
+
 New in Elpy 1.6.0
 =================
 
