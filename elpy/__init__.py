@@ -37,5 +37,5 @@ This package is unlikely to be useful on its own.
 """
 
 __author__ = "Jorgen Schaefer"
-__version__ = "1.6.50"
+__version__ = "1.7.0"
 __license__ = "GPL"
