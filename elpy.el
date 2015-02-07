@@ -3005,8 +3005,10 @@ time. Honestly."
    ((eq mode-name 'eldoc-minor-mode)
     (setq eldoc-minor-mode-string nil))
    (t
-    (setcdr (assq mode-name minor-mode-alist)
-            (list "")))))
+    (let ((cell (assq mode-name minor-mode-alist)))
+      (when cell
+        (setcdr cell
+                (list "")))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Module: Sane Defaults
