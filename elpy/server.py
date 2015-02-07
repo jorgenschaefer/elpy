@@ -201,7 +201,7 @@ class ElpyRPCServer(JSONRPCServer):
             raise Fault("fixup_imports not enabled; install importmagic module",
                         code=400)
         if not self.import_magic.symbol_index:
-            raise Fault("symbol index is not yet ready", code=200)  # XXX code?
+            raise Fault(self.import_magic.fail_message, code=200)  # XXX code?
 
     def rpc_get_import_symbols(self, filename, source, symbol):
         """Return a list of modules from which the given symbol can be imported.

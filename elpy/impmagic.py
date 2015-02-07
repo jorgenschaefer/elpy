@@ -19,21 +19,28 @@ class ImportMagic(object):
 
     def __init__(self):
         self.is_enabled = bool(importmagic)
+        # fail_message is reported to the user when symbol_index
+        # is (still) None
+        self.fail_message = "symbol index is not yet ready"
         self.project_root = None
         self.symbol_index = None
         self._thread = None
 
     def _build_symbol_index(self, project_root, custom_path, blacklist_re):
-        index = importmagic.index.SymbolIndex(blacklist_re=blacklist_re)
-        if os.environ.get('ELPY_TEST'):
-            # test suite support: do not index the whole PYTHONPATH, it
-            # takes much too long
-            index.build_index([])
-        elif custom_path:
-            index.build_index(custom_path)
+        try:
+            index = importmagic.index.SymbolIndex(blacklist_re=blacklist_re)
+            if os.environ.get('ELPY_TEST'):
+                # test suite support: do not index the whole PYTHONPATH, it
+                # takes much too long
+                index.build_index([])
+            elif custom_path:
+                index.build_index(custom_path)
+            else:
+                index.build_index([project_root] + sys.path)
+        except Exception as e:
+            self.fail_message = "symbol index failed to build: %s" % e
         else:
-            index.build_index([project_root] + sys.path)
-        self.symbol_index = index
+            self.symbol_index = index
 
     def build_index(self, project_root, custom_path=None, blacklist_re=None):
         self.project_root = None
