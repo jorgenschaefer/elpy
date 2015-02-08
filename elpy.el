@@ -2052,6 +2052,12 @@ prefix argument is given, prompt for a symbol from the user."
           (symbol-name symbol)
         nil))))
 
+(when (require 'popwin nil t)
+  ;; display help buffer in a popup window using popwin
+  (add-to-list 'display-buffer-alist
+               '("*Python Doc*" popwin:special-display-popup-window)))
+
+
 ;;;;;;;;;;;;;;
 ;;; Import manipulation
 
