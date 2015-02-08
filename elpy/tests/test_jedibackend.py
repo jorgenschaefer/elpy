@@ -48,6 +48,11 @@ class TestRPCGetDocstring(RPCGetDocstringTests,
                           JediBackendTestCase):
     THREAD_JOIN_DOCSTRING = 'join(self, timeout = None)'
 
+    def check_docstring(self, docstring):
+        lines = docstring.splitlines()
+        self.assertEqual(lines[0], 'Documentation for threading.Thread.join:')
+        self.assertEqual(lines[2], self.THREAD_JOIN_DOCSTRING)
+
 
 class TestRPCGetDefinition(RPCGetDefinitionTests,
                            JediBackendTestCase):
