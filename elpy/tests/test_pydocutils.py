@@ -14,7 +14,6 @@ class TestGetPydocCompletions(unittest.TestCase):
         modules = elpy.pydocutils.get_pydoc_completions("")
         self.assertIn('sys', modules)
         self.assertIn('json', modules)
-        self.assertIn('elpy', modules)
 
     def test_should_return_submodules(self):
         modules = elpy.pydocutils.get_pydoc_completions("elpy")
@@ -63,7 +62,6 @@ class TestGetModules(unittest.TestCase):
         modules = elpy.pydocutils.get_modules()
         self.assertIn('sys', modules)
         self.assertIn('json', modules)
-        self.assertIn('elpy', modules)
 
     def test_should_return_submodules(self):
         modules = elpy.pydocutils.get_modules("elpy")
