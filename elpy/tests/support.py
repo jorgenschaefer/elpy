@@ -649,6 +649,14 @@ class RPCGetCalltipTests(GenericRPCTests):
 class RPCGetDocstringTests(GenericRPCTests):
     METHOD = "rpc_get_docstring"
 
+    def check_docstring(self, docstring):
+
+        def first_line(s):
+            return s[:s.index("\n")]
+
+        self.assertEqual(first_line(docstring),
+                         self.THREAD_JOIN_DOCSTRING)
+
     def test_should_get_docstring(self):
         source, offset = source_and_offset(
             "import threading\nthreading.Thread.join_|_(")
@@ -656,12 +664,7 @@ class RPCGetDocstringTests(GenericRPCTests):
         docstring = self.backend.rpc_get_docstring(filename,
                                                    source,
                                                    offset)
-
-        def first_line(s):
-            return s[:s.index("\n")]
-
-        self.assertEqual(first_line(docstring),
-                         self.THREAD_JOIN_DOCSTRING)
+        self.check_docstring(docstring)
 
     def test_should_return_none_for_bad_identifier(self):
         source, offset = source_and_offset(
