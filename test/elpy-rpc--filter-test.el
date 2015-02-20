@@ -55,7 +55,7 @@
     (mletf* ((process-buffer (proc) (current-buffer))
              (unexpected-called nil)
              (elpy-rpc--handle-unexpected-line
-              ()
+              (line)
               (setq unexpected-called t)))
 
       (elpy-rpc--filter 'process "Beware the Jubjub bird\n")
