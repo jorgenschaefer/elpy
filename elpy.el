@@ -3315,7 +3315,9 @@ description."
 (defun elpy-flymake-show-error ()
   "Show the flymake error message at point."
   (interactive)
-  (message "%s" (elpy-flymake-error-at-point)))
+  (let ((error-message (elpy-flymake-error-at-point)))
+    (when error-message
+      (message "%s" error-message))))
 
 (defun elpy-flymake-error-at-point ()
   "Return the flymake error at point, or nil if there is none."
