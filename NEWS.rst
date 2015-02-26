@@ -1,3 +1,12 @@
+New in Elpy 1.7.1
+=================
+
+- Do not fail on errors from importmagic.
+- Handle new minor mode behavior of new versions of yasnippet.
+- Do use the argument to ``elpy-use-ipython`` correctly.
+- Handle unexpected data from the backend more gracefully.
+
+
 New in Elpy 1.7.0
 =================
 
