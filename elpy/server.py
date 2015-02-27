@@ -31,8 +31,8 @@ class ElpyRPCServer(JSONRPCServer):
     See the rpc_* methods for exported method documentation.
 
     """
-    def __init__(self):
-        super(ElpyRPCServer, self).__init__()
+    def __init__(self, *args, **kwargs):
+        super(ElpyRPCServer, self).__init__(*args, **kwargs)
         self.backend = None
         self.import_magic = ImportMagic()
         self.project_root = None
