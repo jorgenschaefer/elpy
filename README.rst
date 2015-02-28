@@ -55,6 +55,15 @@ Finally, add the following to your ``.emacs``:
 
 Done.
 
+Contact
+=======
+
+For questions regarding Elpy, do not hesitate to open an `issue on
+github`_ or visit us on IRC, channel ``#emacs-elpy`` on
+``irc.freenode.net``.
+
+.. _issue on github: https://github.com/jorgenschaefer/elpy/issues/new
+
 License
 =======
 
