@@ -474,9 +474,6 @@ virtualenv using \\[pyvenv-workon], you can use
 \\[elpy-rpc-restart] to make the elpy Python process use your
 virtualenv.
 
-See https://github.com/jorgenschaefer/elpy/wiki/Keybindings for a
-more structured list.
-
 \\{elpy-mode-map}"
   :lighter " Elpy"
   (when (not (eq major-mode 'python-mode))
