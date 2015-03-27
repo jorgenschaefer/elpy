@@ -230,7 +230,7 @@ it is sent via a temporary file."
   :safe #'integerp
   :group 'elpy)
 
-(defcustom elpy-rpc-python-command (if (eq window-system 'w32)
+(defcustom elpy-rpc-python-command (if (equal system-type "windows-nt")
                                        "pythonw"
                                      "python")
   "The Python interpreter for the RPC backend.
