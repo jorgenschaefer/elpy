@@ -1558,7 +1558,8 @@ with a prefix argument)."
   (let ((buffer (find-file filename)))
     (with-current-buffer buffer
       (with-selected-window (get-buffer-window buffer)
-        (goto-char (1+ offset))))))
+        (goto-char (1+ offset))
+        (recenter-top-bottom 0)))))
 
 (defun elpy-nav-forward-block ()
   "Move to the next line indented like point.
