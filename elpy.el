@@ -196,6 +196,17 @@ it is sent via a temporary file."
   :safe #'integerp
   :group 'elpy)
 
+(defcustom elpy-rpc-ignored-buffer-size 102400
+  "Size for a source buffer over which Elpy completion will not work.
+
+To provide completion, Elpy's backends have to parse the whole
+file every time. For very large files, this is slow, and can make
+Emacs laggy. Elpy will simply not work on buffers larger than
+this to prevent this from happening."
+  :type 'integer
+  :safe #'integerp
+  :group 'elpy)
+
 (defcustom elpy-rpc-python-command (if (equal system-type "windows-nt")
                                        "pythonw"
                                      "python")
@@ -2863,24 +2874,26 @@ able to respond to other calls."
   "Call the get_calltip API function.
 
 Returns a calltip string for the function call at point."
-  (elpy-rpc "get_calltip"
-            (list buffer-file-name
-                  (elpy-rpc--buffer-contents)
-                  (- (point)
-                     (point-min)))
-            success error))
+  (when (< (buffer-size) elpy-rpc-ignored-buffer-size)
+    (elpy-rpc "get_calltip"
+              (list buffer-file-name
+                    (elpy-rpc--buffer-contents)
+                    (- (point)
+                       (point-min)))
+              success error)))
 
 (defun elpy-rpc-get-completions (&optional success error)
   "Call the get_completions API function.
 
 Returns a list of possible completions for the Python symbol at
 point."
-  (elpy-rpc "get_completions"
-            (list buffer-file-name
-                  (elpy-rpc--buffer-contents)
-                  (- (point)
-                     (point-min)))
-            success error))
+  (when (< (buffer-size) elpy-rpc-ignored-buffer-size)
+    (elpy-rpc "get_completions"
+              (list buffer-file-name
+                    (elpy-rpc--buffer-contents)
+                    (- (point)
+                       (point-min)))
+              success error)))
 
 (defun elpy-rpc-get-completion-docstring (completion &optional success error)
   "Call the get_completion_docstring API function.
