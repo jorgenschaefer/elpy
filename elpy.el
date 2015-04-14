@@ -1350,7 +1350,15 @@ With prefix arg, prompt for the command to use."
    ;; Emacs 24.4
    ((boundp 'python-shell-interpreter-interactive-arg)
     (setq python-shell-interpreter ipython
-          python-shell-interpreter-args "-i"))
+          python-shell-interpreter-args "-i")
+    ;; Windows requires some special handling here, see #422
+    (let ((exe "C:\\Python27\\python.exe")
+          (ipython_py "C:\\Python27\\Scripts\\ipython-script.py"))
+      (when (and (eq system-type 'windows-nt)
+                 (file-exists-p exe)
+                 (file-exists-p ipython_py))
+        (setq python-shell-interpreter exe
+              python-shell-interpreter-args "-i " + ipython_py))))
    (t
     (error "I don't know how to set ipython settings for this Emacs"))))
 
