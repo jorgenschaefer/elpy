@@ -185,6 +185,20 @@ have any external requirements."
           (member val '("rope" "jedi" "native" nil)))
   :group 'elpy)
 
+(defcustom elpy-rpc-maximum-buffer-age (* 5 60)
+  "Seconds after which Elpy automatically closes an unused RPC buffer.
+
+Elpy creates RPC buffers over time, depending on python interpreters
+and the project root. When there are many projects being worked on,
+these can accumulate. Setting this variable to an integer will close
+buffers and processes when they have not been used for this amount of
+seconds.
+
+Setting this variable to nil will disable the behavior."
+  :type '(choice (const :tag "Never" nil)
+                 integer)
+  :group 'elpy)
+
 (defcustom elpy-rpc-large-buffer-size 4096
   "Size for a source buffer up to which it will be sent directly.
 
@@ -2437,6 +2451,10 @@ Used to associate responses to callbacks.")
 This maps call IDs to functions.")
 (make-variable-buffer-local 'elpy-rpc--backend-callbacks)
 
+(defvar elpy-rpc--last-call nil
+  "The time of the last RPC call issued for this backend.")
+(make-variable-buffer-local 'elpy-rpc--last-call)
+
 (defvar elpy-rpc--last-error-popup nil
   "The last time an error popup happened.")
 
@@ -2487,7 +2505,8 @@ called with the error list.
 Returns a PROMISE object."
   (let ((promise (elpy-promise success error)))
     (with-current-buffer (elpy-rpc--get-rpc-buffer)
-      (setq elpy-rpc--call-id (1+ elpy-rpc--call-id))
+      (setq elpy-rpc--call-id (1+ elpy-rpc--call-id)
+            elpy-rpc--last-call (float-time))
       (elpy-rpc--register-callback elpy-rpc--call-id promise)
       (process-send-string
        (get-buffer-process (current-buffer))
@@ -2556,10 +2575,10 @@ died, this will kill the process and buffer."
 
 (defun elpy-rpc--open (library-root python-command)
   "Start a new RPC process and return the associated buffer."
-  ;; Prevent configuration errors
   (when (and elpy-rpc-backend
              (not (stringp elpy-rpc-backend)))
     (error "`elpy-rpc-backend' should be nil or a string."))
+  (elpy-rpc--cleanup-buffers)
   (let* ((full-python-command (executable-find python-command))
          (name (format " *elpy-rpc [project:%s python:%s]*"
                        library-root
@@ -2596,6 +2615,21 @@ died, this will kill the process and buffer."
                             "Can't set backend %s, using %s instead"
                             elpy-rpc-backend backend))))))
     new-elpy-rpc-buffer))
+
+(defun elpy-rpc--cleanup-buffers ()
+  "Close RPC buffers that have not been used in five minutes."
+  (when elpy-rpc-maximum-buffer-age
+    (let ((old (- (float-time)
+                  elpy-rpc-maximum-buffer-age)))
+      (dolist (buffer (buffer-list))
+        (when (and (elpy-rpc--process-buffer-p buffer)
+                   (< (or (buffer-local-value 'elpy-rpc--last-call buffer)
+                          old)
+                      old))
+          (ignore-errors
+            (kill-process (get-buffer-process buffer)))
+          (ignore-errors
+            (kill-buffer buffer)))))))
 
 (defun elpy-rpc--sentinel (process event)
   "The sentinel for the RPC process.
