@@ -1869,13 +1869,20 @@ directory is not nil."
     (let* ((top (elpy-library-root))
            (file buffer-file-name)
            (module (elpy-test--module-name-for-file top file))
-           (test (python-info-current-defun)))
+           (test (elpy-test--current-test-name)))
       (if (and file (string-match "/test[^/]*$" file))
           (progn
             (save-buffer)
             (list top file module test))
         (save-some-buffers)
         (list top nil nil nil)))))
+
+(defun elpy-test--current-test-name ()
+  (let ((name (python-info-current-defun)))
+    (if (and name
+             (string-match "\\`\\([^.]+\\.[^.]+\\)\\." name))
+        (match-string 1 name)
+      name)))
 
 (defun elpy-test--module-name-for-file (top-level module-file)
   "Return the module name relative to TOP-LEVEL for MODULE-FILE.
