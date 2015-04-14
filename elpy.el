@@ -1431,6 +1431,8 @@ code is executed."
         (let ((region (elpy-shell--region-without-indentation
                        (region-beginning) (region-end))))
           (setq has-if-main (string-match if-main-regex region))
+          (when (string-match "\t" region)
+            (message "Region contained tabs, this might cause weird errors"))
           (python-shell-send-string region))
       (save-excursion
         (goto-char (point-min))
