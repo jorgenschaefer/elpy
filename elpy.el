@@ -1353,6 +1353,8 @@ With prefix arg, prompt for the command to use."
                        (read-file-name "IPython command: "))))
   (when (not ipython)
     (setq ipython "ipython"))
+  (when (not (executable-find ipython))
+    (error "Command %S not found" ipython))
   (cond
    ;; Emacs 24 until 24.3
    ((boundp 'python-python-command)
@@ -1395,6 +1397,8 @@ With prefix arg, prompt for the command to use."
                        (read-file-name "Python command: "))))
   (when (not cpython)
     (setq cpython "python"))
+  (when (not (executable-find cpython))
+    (error "Command %S not found" cpython))
   (cond
    ;; Emacs 24 until 24.3
    ((boundp 'python-python-command)
@@ -1407,7 +1411,7 @@ With prefix arg, prompt for the command to use."
           python-shell-prompt-regexp ">>> "
           python-shell-prompt-output-regexp ""
           python-shell-completion-setup-code
-"try:
+          "try:
     import readline
 except ImportError:
     def __COMPLETER_all_completions(text): []
