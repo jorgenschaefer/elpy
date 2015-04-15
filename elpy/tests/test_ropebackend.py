@@ -47,8 +47,9 @@ class TestInit(RopeBackendTestCase):
         self.assertEqual([os.path.join(self.project_root, "foo.txt")],
                          actual)
 
-    def test_should_not_fail_for_inexisting_project_root(self):
-        ropebackend.RopeBackend("/does/not/exist/")
+    def test_should_fail_for_inexisting_project_root(self):
+        with self.assertRaises(rpc.Fault):
+            ropebackend.RopeBackend("/does/not/exist/")
 
 
 class TestValidate(RopeBackendTestCase):
