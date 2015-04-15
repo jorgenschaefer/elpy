@@ -57,32 +57,6 @@
   :prefix "elpy-"
   :group 'languages)
 
-(defcustom elpy-interactive-python-command "python"
-  "Command to use for the interactive shell.
-
-Customize this option to use a different interactive shell. If
-the value starts with \"ipython\", it will set up python.el so
-that it deals with ipytohon's particular prompt and features.
-
-From your .emacs, you can use `elpy-use-ipython' and
-`elpy-use-cpython' instead."
-  :type '(choice (const :tag "Standard Python (python)" "python")
-                 (const :tag "Standard Python 2 (python2)" "python2")
-                 (const :tag "Standard Python 3 (python3)" "python3")
-                 (const :tag "IPython" "ipython")
-                 (string :tag "Other"))
-  :set (lambda (var val)
-         (set-default var val)
-         (if (string-match "ipython" val)
-             (elpy-use-ipython val)
-           (elpy-use-cpython val)))
-  ;; Don't use the default function because the default values are
-  ;; correct, and `elpy-use-cpython' is not available yet.
-  :initialize #'set-default
-  :safe (lambda (val)
-          (member val '("python" "python2" "python3" "ipython")))
-  :group 'elpy)
-
 (defcustom elpy-mode-hook nil
   "Hook run when `elpy-mode' is enabled.
 
