@@ -281,17 +281,17 @@ edited instead. Setting this variable to nil disables this feature."
   :group 'elpy)
 
 (defcustom elpy-test-nose-runner-command '("nosetests")
-  "The command to use for `elpy-test-django-runner'."
+  "The command to use for `elpy-test-nose-runner'."
   :type '(repeat string)
   :group 'elpy)
 
 (defcustom elpy-test-trial-runner-command '("trial")
-  "The command to use for `elpy-test-django-runner'."
+  "The command to use for `elpy-test-trial-runner'."
   :type '(repeat string)
   :group 'elpy)
 
 (defcustom elpy-test-pytest-runner-command '("py.test")
-  "The command to use for `elpy-test-django-runner'."
+  "The command to use for `elpy-test-pytest-runner'."
   :type '(repeat string)
   :group 'elpy)
 
