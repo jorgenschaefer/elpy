@@ -535,6 +535,21 @@ class RPCGetDefinitionTests(GenericRPCTests):
         # class or class name
         self.assertIn(location[1], (0, 6))
 
+    def test_should_return_none_location_different_package(self):
+        self.project_file("project/__init__.py", "")
+        source, offset = source_and_offset(
+            "from project.add import Add\n"
+            "class Calculator:\n"
+            "    def add(self, a, b):\n"
+            "        return Sub_|_().add(a, b)\n")
+        file = self.project_file("project/calculator.py", source)
+
+        location = self.backend.rpc_get_definition(file,
+                                                   source,
+                                                   offset)
+
+        self.assertIsNone(location)
+
     def test_should_find_variable_definition(self):
         source, offset = source_and_offset("SOME_VALUE = 1\n"
                                            "\n"
