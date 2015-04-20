@@ -26,46 +26,12 @@
 ;; The Emacs Lisp Python Environment in Emacs
 
 ;; Elpy is an Emacs package to bring powerful Python editing to Emacs.
-;; It combines a number of existing Emacs packages, and uses one of a
-;; selection of Python packages for code introspection.
+;; It combines a number of existing Emacs packages, both written in
+;; Emacs Lisp as well as Python.
 
-;; To use, you need to install not only this package, but a few Python
-;; packages as well. See the installation instructions on the wiki.
+;; For more information, read the Elpy manual:
 
-;; Documentation is available there as well.
-
-;; https://github.com/jorgenschaefer/elpy/wiki
-
-;;; Writing Elpy Modules:
-
-;; A module is a function which is called with one or more arguments.
-;; This first argument is the command specifier symbol, which can be
-;; one of the following:
-
-;; global-init:
-;; - Called once, when Elpy is enabled using `elpy-enable'.
-
-;; global-stop:
-;; - Called once, when Elpy is disabled using `elpy-disable'.
-
-;; buffer-init:
-;; - Called in a buffer when elpy-mode is enabled.
-
-;; buffer-stop:
-;; - Called in a buffer when elpy-mode is disabled.
-
-;;; Writing test runners:
-
-;; A test runner is a function that receives four arguments, described
-;; in the docstring of `elpy-test-at-point'. If only the first
-;; argument is given, the test runner should find tests under this
-;; directory and run them. If the others are given, the test runner
-;; should run the specified test only, or as few as it can.
-
-;; Test runners should use an interactive spec of (interactive
-;; (elpy-test-at-point)) so they can be called directly by the user.
-;; For their main work, they can simply call `elpy-test-run'. See the
-;; `elpy-test-discover-runner' for an example.
+;; http://elpy.readthedocs.org/en/latest/index.html
 
 ;;; Code:
 
@@ -90,32 +56,6 @@
   "The Emacs Lisp Python Environment."
   :prefix "elpy-"
   :group 'languages)
-
-(defcustom elpy-interactive-python-command "python"
-  "Command to use for the interactive shell.
-
-Customize this option to use a different interactive shell. If
-the value starts with \"ipython\", it will set up python.el so
-that it deals with ipytohon's particular prompt and features.
-
-From your .emacs, you can use `elpy-use-ipython' and
-`elpy-use-cpython' instead."
-  :type '(choice (const :tag "Standard Python (python)" "python")
-                 (const :tag "Standard Python 2 (python2)" "python2")
-                 (const :tag "Standard Python 3 (python3)" "python3")
-                 (const :tag "IPython" "ipython")
-                 (string :tag "Other"))
-  :set (lambda (var val)
-         (set-default var val)
-         (if (string-match "ipython" val)
-             (elpy-use-ipython val)
-           (elpy-use-cpython val)))
-  ;; Don't use the default function because the default values are
-  ;; correct, and `elpy-use-cpython' is not available yet.
-  :initialize #'set-default
-  :safe (lambda (val)
-          (member val '("python" "python2" "python3" "ipython")))
-  :group 'elpy)
 
 (defcustom elpy-mode-hook nil
   "Hook run when `elpy-mode' is enabled.
@@ -219,6 +159,20 @@ have any external requirements."
           (member val '("rope" "jedi" "native" nil)))
   :group 'elpy)
 
+(defcustom elpy-rpc-maximum-buffer-age (* 5 60)
+  "Seconds after which Elpy automatically closes an unused RPC buffer.
+
+Elpy creates RPC buffers over time, depending on python interpreters
+and the project root. When there are many projects being worked on,
+these can accumulate. Setting this variable to an integer will close
+buffers and processes when they have not been used for this amount of
+seconds.
+
+Setting this variable to nil will disable the behavior."
+  :type '(choice (const :tag "Never" nil)
+                 integer)
+  :group 'elpy)
+
 (defcustom elpy-rpc-large-buffer-size 4096
   "Size for a source buffer up to which it will be sent directly.
 
@@ -226,6 +180,17 @@ The Elpy RPC protocol uses JSON as the serialization format.
 Large buffers take a long time to encode, so Elpy can transmit
 them via temporary files. If a buffer is larger than this value,
 it is sent via a temporary file."
+  :type 'integer
+  :safe #'integerp
+  :group 'elpy)
+
+(defcustom elpy-rpc-ignored-buffer-size 102400
+  "Size for a source buffer over which Elpy completion will not work.
+
+To provide completion, Elpy's backends have to parse the whole
+file every time. For very large files, this is slow, and can make
+Emacs laggy. Elpy will simply not work on buffers larger than
+this to prevent this from happening."
   :type 'integer
   :safe #'integerp
   :group 'elpy)
@@ -316,17 +281,17 @@ edited instead. Setting this variable to nil disables this feature."
   :group 'elpy)
 
 (defcustom elpy-test-nose-runner-command '("nosetests")
-  "The command to use for `elpy-test-django-runner'."
+  "The command to use for `elpy-test-nose-runner'."
   :type '(repeat string)
   :group 'elpy)
 
 (defcustom elpy-test-trial-runner-command '("trial")
-  "The command to use for `elpy-test-django-runner'."
+  "The command to use for `elpy-test-trial-runner'."
   :type '(repeat string)
   :group 'elpy)
 
 (defcustom elpy-test-pytest-runner-command '("py.test")
-  "The command to use for `elpy-test-django-runner'."
+  "The command to use for `elpy-test-pytest-runner'."
   :type '(repeat string)
   :group 'elpy)
 
@@ -368,10 +333,10 @@ edited instead. Setting this variable to nil disables this feature."
     (define-key map (kbd "<C-left>") 'elpy-nav-backward-indent)
     (define-key map (kbd "<C-right>") 'elpy-nav-forward-indent)
 
-    (define-key map (kbd "<M-down>") 'elpy-nav-move-iblock-down)
-    (define-key map (kbd "<M-up>") 'elpy-nav-move-iblock-up)
-    (define-key map (kbd "<M-left>") 'elpy-nav-move-iblock-left)
-    (define-key map (kbd "<M-right>") 'elpy-nav-move-iblock-right)
+    (define-key map (kbd "<M-down>") 'elpy-nav-move-line-or-region-down)
+    (define-key map (kbd "<M-up>") 'elpy-nav-move-line-or-region-up)
+    (define-key map (kbd "<M-left>") 'elpy-nav-move-region-or-line-left)
+    (define-key map (kbd "<M-right>") 'elpy-nav-move-region-or-line-right)
 
     (define-key map (kbd "M-.")     'elpy-goto-definition)
     (define-key map (kbd "M-TAB")   'elpy-company-backend)
@@ -424,16 +389,16 @@ edited instead. Setting this variable to nil disables this feature."
      ["Previous Error" elpy-flymake-previous-error
       :help "Go to the previous inline error, if any"])
     ("Indentation Blocks"
-     ["Dedent" elpy-nav-move-iblock-left
+     ["Dedent" elpy-nav-move-region-or-line-left
       :help "Dedent current block or region"
       :suffix (if (use-region-p) "Region" "Block")]
-     ["Indent" elpy-nav-move-iblock-right
+     ["Indent" elpy-nav-move-region-or-line-right
       :help "Indent current block or region"
       :suffix (if (use-region-p) "Region" "Block")]
-     ["Up" elpy-nav-move-iblock-up
+     ["Up" elpy-nav-move-line-or-region-up
       :help "Move current block or region up"
       :suffix (if (use-region-p) "Region" "Block")]
-     ["Down" elpy-nav-move-iblock-down
+     ["Down" elpy-nav-move-line-or-region-down
       :help "Move current block or region down"
       :suffix (if (use-region-p) "Region" "Block")])
     "---"
@@ -1362,6 +1327,8 @@ With prefix arg, prompt for the command to use."
                        (read-file-name "IPython command: "))))
   (when (not ipython)
     (setq ipython "ipython"))
+  (when (not (executable-find ipython))
+    (error "Command %S not found" ipython))
   (cond
    ;; Emacs 24 until 24.3
    ((boundp 'python-python-command)
@@ -1384,7 +1351,15 @@ With prefix arg, prompt for the command to use."
    ;; Emacs 24.4
    ((boundp 'python-shell-interpreter-interactive-arg)
     (setq python-shell-interpreter ipython
-          python-shell-interpreter-args "-i"))
+          python-shell-interpreter-args "-i")
+    ;; Windows requires some special handling here, see #422
+    (let ((exe "C:\\Python27\\python.exe")
+          (ipython_py "C:\\Python27\\Scripts\\ipython-script.py"))
+      (when (and (eq system-type 'windows-nt)
+                 (file-exists-p exe)
+                 (file-exists-p ipython_py))
+        (setq python-shell-interpreter exe
+              python-shell-interpreter-args "-i " + ipython_py))))
    (t
     (error "I don't know how to set ipython settings for this Emacs"))))
 
@@ -1396,6 +1371,8 @@ With prefix arg, prompt for the command to use."
                        (read-file-name "Python command: "))))
   (when (not cpython)
     (setq cpython "python"))
+  (when (not (executable-find cpython))
+    (error "Command %S not found" cpython))
   (cond
    ;; Emacs 24 until 24.3
    ((boundp 'python-python-command)
@@ -1408,7 +1385,7 @@ With prefix arg, prompt for the command to use."
           python-shell-prompt-regexp ">>> "
           python-shell-prompt-output-regexp ""
           python-shell-completion-setup-code
-"try:
+          "try:
     import readline
 except ImportError:
     def __COMPLETER_all_completions(text): []
@@ -1457,6 +1434,8 @@ code is executed."
         (let ((region (elpy-shell--region-without-indentation
                        (region-beginning) (region-end))))
           (setq has-if-main (string-match if-main-regex region))
+          (when (string-match "\t" region)
+            (message "Region contained tabs, this might cause weird errors"))
           (python-shell-send-string region))
       (save-excursion
         (goto-char (point-min))
@@ -1559,7 +1538,7 @@ with a prefix argument)."
     (with-current-buffer buffer
       (with-selected-window (get-buffer-window buffer)
         (goto-char (1+ offset))
-        (recenter-top-bottom 0)))))
+        (recenter 0)))))
 
 (defun elpy-nav-forward-block ()
   "Move to the next line indented like point.
@@ -1627,159 +1606,99 @@ indentation levels."
                       next)))
     (backward-word)))
 
-(defun elpy-nav--iblock (direction skip)
-  "Move point forward, skipping lines indented more than the current one.
-
-DIRECTION should be 1 or -1 for forward or backward.
-
-SKIP should be #'> to skip lines with larger indentation or #'<
-to skip lines with smaller indentation."
-  (let ((start-indentation (current-indentation)))
-    (python-nav-forward-statement direction)
-    (while (and (not (eobp))
-                (not (bobp))
-                (or (looking-at "^\\s-*$")
-                    (funcall skip
-                             (current-indentation)
-                             start-indentation)))
-      (python-nav-forward-statement direction))))
-
-(defun elpy-nav-move-iblock-down (&optional beg end)
-  "Move the current indentation block below the next one.
-
-With an active region, move that instead of the current block.
-
-An indentation block is a block indented further than the current
-one."
+(defun elpy-nav-move-line-or-region-down (&optional beg end)
+  "Move the current line or active region down."
   (interactive "r")
-  (let ((use-region (use-region-p))
-        (startm (make-marker))
-        (starti nil)
-        (midm (make-marker))
-        (midi nil)
-        (endm (make-marker))
-        (deactivate-mark nil))
-    (save-excursion
-      (when use-region
-        (goto-char beg))
-      (set-marker startm (line-beginning-position))
-      (setq starti (current-indentation))
-      (if use-region
-          (progn
-            (goto-char end)
-            (when (> (current-column)
-                     0)
-              (forward-line 1)))
-        (elpy-nav--iblock 1 #'>))
-      (set-marker midm (line-beginning-position))
-      (setq midi (current-indentation))
-      (elpy-nav--iblock 1 #'>)
-      (goto-char (line-beginning-position))
-      (when (<= (current-indentation)
-                starti)
-        (when (/= (skip-chars-backward "[:space:]\n") 0)
-          (forward-line 1)))
-      (when (and (= midm (point))
-                 (/= (point)
-                     (line-end-position))
-                 (= (line-end-position)
-                    (point-max)))
-        (goto-char (point-max))
-        (insert "\n"))
-      (set-marker endm (line-beginning-position)))
-    (when (and (/= startm midm)
-               (/= midm endm)
-               (/= startm endm)
-               (= starti midi))
-      (goto-char endm)
-      (insert (buffer-substring startm midm))
-      (when use-region
-        (set-mark (point)))
-      (delete-region startm midm)
-      (goto-char endm)
-      (back-to-indentation))))
+  (if (use-region-p)
+      (elpy--nav-move-region-vertically beg end 1)
+    (elpy--nav-move-line-vertically 1)))
 
-(defun elpy-nav-move-iblock-up (&optional beg end)
-  "Move the current indentation block below the next one.
-
-With an active region, move that instead of the current block.
-
-An indentation block is a block indented further than the current
-one."
+(defun elpy-nav-move-line-or-region-up (&optional beg end)
+  "Move the current line or active region down."
   (interactive "r")
-  (let ((use-region (use-region-p))
-        (startm (make-marker))
-        (starti nil)
-        (midm (make-marker))
-        (midi nil)
-        (endm (make-marker))
-        (deactivate-mark nil))
-    (save-excursion
-      (when use-region
-        (goto-char beg))
-      (set-marker startm (line-beginning-position))
-      (setq starti (current-indentation))
-      (if use-region
-          (progn
-            (goto-char end)
-            (when (> (current-column)
-                     0)
-              (forward-line 1)))
-        (elpy-nav--iblock 1 #'>)
-        (cond
-         ((and (save-excursion
-                 (goto-char (line-end-position))
-                 (and (> (current-column) 0)
-                      (= (point-max) (point)))))
-          (goto-char (line-end-position))
-          (insert "\n"))
-         ((< (current-indentation)
-             starti)
-          (when (/= (skip-chars-backward "[:space:]\n") 0)
-            (forward-line 1)))))
-      (set-marker midm (line-beginning-position))
-      (goto-char startm)
-      (elpy-nav--iblock -1 #'>)
-      (goto-char (line-beginning-position))
-      (set-marker endm (line-beginning-position))
-      (setq midi (current-indentation)))
-    (when (and (/= startm midm)
-               (/= midm endm)
-               (/= startm endm)
-               (= starti midi))
-      (goto-char endm)
-      (insert (buffer-substring startm midm))
-      (when use-region
-        (set-mark (point)))
-      (delete-region startm midm)
-      (goto-char endm)
-      (back-to-indentation))))
+  (if (use-region-p)
+      (elpy--nav-move-region-vertically beg end -1)
+    (elpy--nav-move-line-vertically -1)))
 
-(defun elpy-nav-move-iblock-left ()
+(defun elpy--nav-move-line-vertically (dir)
+  (let* ((beg (point-at-bol))
+         (end (point-at-bol 2))
+         (col (current-column))
+         (region (delete-and-extract-region beg end)))
+    (forward-line dir)
+    (save-excursion
+      (insert region))
+    (goto-char (+ (point) col))))
+
+(defun elpy--nav-move-region-vertically (beg end dir)
+  (let* ((point-before-mark (< (point) (mark)))
+         (beg (save-excursion
+                (goto-char beg)
+                (point-at-bol)))
+         (end (save-excursion
+                (goto-char end)
+                (if (bolp)
+                    (point)
+                  (point-at-bol 2))))
+         (region (delete-and-extract-region beg end)))
+    (goto-char beg)
+    (forward-line dir)
+    (save-excursion
+      (insert region))
+    (if point-before-mark
+        (set-mark (+ (point)
+                     (length region)))
+      (set-mark (point))
+      (goto-char (+ (point)
+                    (length region))))
+    (setq deactivate-mark nil)))
+
+(defun elpy-nav-move-region-or-line-left ()
   "Dedent the current indentation block, or the active region."
   (interactive)
-  (let (beg end)
-    (if (use-region-p)
-        (setq beg (region-beginning)
-              end (region-end))
-      (save-excursion
-        (setq beg (line-beginning-position))
-        (elpy-nav--iblock 1 #'>)
-        (setq end (line-beginning-position))))
-    (python-indent-shift-left beg end)))
+  (if (use-region-p)
+      (elpy--nav-move-region-left)
+    (elpy--nav-move-line-left)))
 
-(defun elpy-nav-move-iblock-right ()
+(defun elpy-nav-move-region-or-line-right ()
   "Indent the current indentation block, or the active region."
   (interactive)
-  (let (beg end)
-    (if (use-region-p)
-        (setq beg (region-beginning)
-              end (region-end))
-      (save-excursion
-        (setq beg (line-beginning-position))
-        (elpy-nav--iblock 1 #'>)
-        (setq end (line-beginning-position))))
-    (python-indent-shift-right beg end)))
+  (if (use-region-p)
+      (elpy--nav-move-region-right)
+    (elpy--nav-move-line-right )))
+
+(defun elpy--nav-move-line-left ()
+  (save-excursion
+    (goto-char (point-at-bol))
+    (when (looking-at (format "^ \\{%i\\}" python-indent))
+      (replace-match ""))))
+
+(defun elpy--nav-move-line-right ()
+  (save-excursion
+    (goto-char (point-at-bol))
+    (insert (make-string python-indent ?\s))))
+
+(defun elpy--nav-move-region-left ()
+  (save-excursion
+    (let ((beg (region-beginning))
+          (end (region-end)))
+      (goto-char beg)
+      (goto-char (point-at-bol))
+      (while (< (point) end)
+        (elpy--nav-move-line-left)
+        (forward-line 1)))
+    (setq deactivate-mark nil)))
+
+(defun elpy--nav-move-region-right ()
+  (save-excursion
+    (let ((beg (region-beginning))
+          (end (region-end)))
+      (goto-char beg)
+      (goto-char (point-at-bol))
+      (while (< (point) end)
+        (elpy--nav-move-line-right)
+        (forward-line 1)))
+    (setq deactivate-mark nil)))
 
 (defun elpy-open-and-indent-line-below ()
   "Open a line below the current one, move there, and indent."
@@ -1868,13 +1787,20 @@ directory is not nil."
     (let* ((top (elpy-library-root))
            (file buffer-file-name)
            (module (elpy-test--module-name-for-file top file))
-           (test (python-info-current-defun)))
+           (test (elpy-test--current-test-name)))
       (if (and file (string-match "/test[^/]*$" file))
           (progn
             (save-buffer)
             (list top file module test))
         (save-some-buffers)
         (list top nil nil nil)))))
+
+(defun elpy-test--current-test-name ()
+  (let ((name (python-info-current-defun)))
+    (if (and name
+             (string-match "\\`\\([^.]+\\.[^.]+\\)\\." name))
+        (match-string 1 name)
+      name)))
 
 (defun elpy-test--module-name-for-file (top-level module-file)
   "Return the module name relative to TOP-LEVEL for MODULE-FILE.
@@ -2450,6 +2376,10 @@ Used to associate responses to callbacks.")
 This maps call IDs to functions.")
 (make-variable-buffer-local 'elpy-rpc--backend-callbacks)
 
+(defvar elpy-rpc--last-call nil
+  "The time of the last RPC call issued for this backend.")
+(make-variable-buffer-local 'elpy-rpc--last-call)
+
 (defvar elpy-rpc--last-error-popup nil
   "The last time an error popup happened.")
 
@@ -2500,7 +2430,8 @@ called with the error list.
 Returns a PROMISE object."
   (let ((promise (elpy-promise success error)))
     (with-current-buffer (elpy-rpc--get-rpc-buffer)
-      (setq elpy-rpc--call-id (1+ elpy-rpc--call-id))
+      (setq elpy-rpc--call-id (1+ elpy-rpc--call-id)
+            elpy-rpc--last-call (float-time))
       (elpy-rpc--register-callback elpy-rpc--call-id promise)
       (process-send-string
        (get-buffer-process (current-buffer))
@@ -2569,10 +2500,10 @@ died, this will kill the process and buffer."
 
 (defun elpy-rpc--open (library-root python-command)
   "Start a new RPC process and return the associated buffer."
-  ;; Prevent configuration errors
   (when (and elpy-rpc-backend
              (not (stringp elpy-rpc-backend)))
     (error "`elpy-rpc-backend' should be nil or a string."))
+  (elpy-rpc--cleanup-buffers)
   (let* ((full-python-command (executable-find python-command))
          (name (format " *elpy-rpc [project:%s python:%s]*"
                        library-root
@@ -2609,6 +2540,21 @@ died, this will kill the process and buffer."
                             "Can't set backend %s, using %s instead"
                             elpy-rpc-backend backend))))))
     new-elpy-rpc-buffer))
+
+(defun elpy-rpc--cleanup-buffers ()
+  "Close RPC buffers that have not been used in five minutes."
+  (when elpy-rpc-maximum-buffer-age
+    (let ((old (- (float-time)
+                  elpy-rpc-maximum-buffer-age)))
+      (dolist (buffer (buffer-list))
+        (when (and (elpy-rpc--process-buffer-p buffer)
+                   (< (or (buffer-local-value 'elpy-rpc--last-call buffer)
+                          old)
+                      old))
+          (ignore-errors
+            (kill-process (get-buffer-process buffer)))
+          (ignore-errors
+            (kill-buffer buffer)))))))
 
 (defun elpy-rpc--sentinel (process event)
   "The sentinel for the RPC process.
@@ -2887,24 +2833,26 @@ able to respond to other calls."
   "Call the get_calltip API function.
 
 Returns a calltip string for the function call at point."
-  (elpy-rpc "get_calltip"
-            (list buffer-file-name
-                  (elpy-rpc--buffer-contents)
-                  (- (point)
-                     (point-min)))
-            success error))
+  (when (< (buffer-size) elpy-rpc-ignored-buffer-size)
+    (elpy-rpc "get_calltip"
+              (list buffer-file-name
+                    (elpy-rpc--buffer-contents)
+                    (- (point)
+                       (point-min)))
+              success error)))
 
 (defun elpy-rpc-get-completions (&optional success error)
   "Call the get_completions API function.
 
 Returns a list of possible completions for the Python symbol at
 point."
-  (elpy-rpc "get_completions"
-            (list buffer-file-name
-                  (elpy-rpc--buffer-contents)
-                  (- (point)
-                     (point-min)))
-            success error))
+  (when (< (buffer-size) elpy-rpc-ignored-buffer-size)
+    (elpy-rpc "get_completions"
+              (list buffer-file-name
+                    (elpy-rpc--buffer-contents)
+                    (- (point)
+                       (point-min)))
+              success error)))
 
 (defun elpy-rpc-get-completion-docstring (completion &optional success error)
   "Call the get_completion_docstring API function.
