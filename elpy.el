@@ -1582,7 +1582,7 @@ indentation levels."
 
 (defun elpy-nav-forward-indent ()
   "Move forward to the next indent level, or over the next word."
-  (interactive)
+  (interactive "^")
   (if (< (current-column) (current-indentation))
       (let* ((current (current-column))
              (next (* (1+ (/ current python-indent-offset))
@@ -1596,7 +1596,7 @@ indentation levels."
 
 (defun elpy-nav-backward-indent ()
   "Move backward to the previous indent level, or over the previous word."
-  (interactive)
+  (interactive "^")
   (if (and (<= (current-column) (current-indentation))
            (/= (current-column) 0))
       (let* ((current (current-column))
