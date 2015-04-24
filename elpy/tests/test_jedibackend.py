@@ -56,8 +56,25 @@ class TestRPCGetDocstring(RPCGetDocstringTests,
 
 class TestRPCGetDefinition(RPCGetDefinitionTests,
                            JediBackendTestCase):
-    pass
+    @mock.patch("jedi.Script")
+    def test_should_not_fail_if_module_path_is_none(self, Script):
+        """Do not fail if loc.module_path is None.
 
+        This can happen under some circumstances I am unsure about.
+        See #537 for the issue that reported this.
+
+        """
+        locations = [
+            mock.Mock(module_path=None)
+        ]
+        script = Script.return_value
+        script.goto_definitions.return_value = locations
+        script.goto_assignments.return_value = locations
+
+        location = self.rpc("", "", 0)
+
+        self.assertIsNone(location)
+        
 
 class TestRPCGetCalltip(RPCGetCalltipTests,
                         JediBackendTestCase):

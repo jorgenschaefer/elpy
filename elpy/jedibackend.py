@@ -108,6 +108,8 @@ class JediBackend(object):
                             offset = linecol_to_pos(f.read(),
                                                     loc.line,
                                                     loc.column)
+                else:
+                    return None
             except IOError:
                 return None
             return (loc.module_path, offset)
