@@ -100,6 +100,7 @@ class RopeBackend(object):
         except (rope.base.exceptions.BadIdentifierError,
                 rope.base.exceptions.ModuleSyntaxError,
                 rope.base.exceptions.ResourceNotFoundError,
+                rope.base.exceptions.NameNotFoundError,
                 IndentationError,
                 LookupError,
                 AttributeError):
