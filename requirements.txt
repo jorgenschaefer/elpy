@@ -1,3 +1,4 @@
+flake8==2.4.0
 jedi==0.8.1
 rope==0.10.2
-importmagic==0.1.2
+importmagic==0.1.3
