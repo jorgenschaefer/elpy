@@ -208,8 +208,9 @@ x._|_
 
         self.rpc(filename, source, offset)
 
+    @unittest.skip("Broken in Jedi 0.9.0")
     def test_should_not_fail_on_lambda(self):
-        # Bug #272 / jedi#431
+        # Bug #272 / jedi#431, jedi#572
         source, offset = source_and_offset(
             "map(lambda_|_"
         )
