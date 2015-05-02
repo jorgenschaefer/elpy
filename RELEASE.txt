@@ -13,7 +13,7 @@ $ bumpversion minor
 MELPA release:
 
 $ git checkout release
-$ git merge master
+$ git merge --strategy-option theirs master
 $ git checkout master
 
 Elpy ELPA release:
