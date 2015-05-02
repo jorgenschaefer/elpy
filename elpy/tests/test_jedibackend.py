@@ -46,7 +46,7 @@ class TestRPCGetCompletionLocation(RPCGetCompletionLocationTests,
 
 class TestRPCGetDocstring(RPCGetDocstringTests,
                           JediBackendTestCase):
-    THREAD_JOIN_DOCSTRING = 'join(self, timeout = None)'
+    THREAD_JOIN_DOCSTRING = 'join(self, timeout=None)'
 
     def check_docstring(self, docstring):
         lines = docstring.splitlines()
@@ -74,7 +74,7 @@ class TestRPCGetDefinition(RPCGetDefinitionTests,
         location = self.rpc("", "", 0)
 
         self.assertIsNone(location)
-        
+
 
 class TestRPCGetCalltip(RPCGetCalltipTests,
                         JediBackendTestCase):
@@ -89,21 +89,21 @@ class TestRPCGetCalltip(RPCGetCalltipTests,
                    'name': u'add'}
     if compat.PYTHON3:
         THREAD_CALLTIP = {"name": "Thread",
-                          "params": ["group = None",
-                                     "target = None",
-                                     "name = None",
-                                     "args = ()",
-                                     "kwargs = None",
-                                     "daemon = None"],
+                          "params": ["group=None",
+                                     "target=None",
+                                     "name=None",
+                                     "args=()",
+                                     "kwargs=None",
+                                     "daemon=None"],
                           "index": 0}
     else:
         THREAD_CALLTIP = {"name": "Thread",
-                          "params": ["group = None",
-                                     "target = None",
-                                     "name = None",
-                                     "args = ()",
-                                     "kwargs = None",
-                                     "verbose = None"],
+                          "params": ["group=None",
+                                     "target=None",
+                                     "name=None",
+                                     "args=()",
+                                     "kwargs=None",
+                                     "verbose=None"],
                           "index": 0}
 
 
