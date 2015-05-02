@@ -1,3 +1,19 @@
+New in Elpy 1.8.0
+=================
+
+- Emacs 24.5 is now officially supported
+- The new configuration option ``elpy-rpc-ignored-buffer-size`` defines a maximum buffer size to be handle completion in, to avoid laggy interaction in unusually large files
+- Indentation block movement was replaced with code that just moves the marked block or the current line; this should be a lot less magical and more predictable
+- Running the test at point now correctly ignores any inner methods
+- Jedi docstrings now show the full name of the object
+- The RPC interpreter is now chosen correctly on cygwin
+- ``elpy-shell-send-region-or-buffer`` now warns of tabs in the data being sent
+- Elpy now binds stdout and stderr to ``/dev/null`` to avoid being confused by spurious output from other libraries
+- RPC buffers (and processes) are removed after some time to avoid them piling up endlessly
+- It is not possibly anymore to use customize alone to use ipython, because of some bad interaction between custom options in Elpy and python.el
+- And lots of bugfixes (50 issues closed!)
+
+
 New in Elpy 1.7.1
 =================
 
