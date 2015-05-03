@@ -114,6 +114,7 @@ class GenericRPCTests(object):
 
         self.rpc(filename, source, offset)
 
+    @unittest.skip("bug in jedi 0.9.0")
     def test_should_not_fail_for_relative_import(self):
         # Bug in Rope: rope#81 and rope#82
         source, offset = source_and_offset(
@@ -347,6 +348,7 @@ class RPCGetCompletionsTests(GenericRPCTests):
         self.assertEqual([cand['suffix'] for cand in completions],
                          [])
 
+    @unittest.skip("Jedi 0.9.0 bug")
     def test_should_not_fail_for_short_module(self):
         source, offset = source_and_offset("from .. import foo_|_")
         filename = self.project_file("test.py", source)
@@ -656,11 +658,11 @@ class RPCGetDocstringTests(GenericRPCTests):
             return s[:s.index("\n")]
 
         self.assertEqual(first_line(docstring),
-                         self.THREAD_JOIN_DOCSTRING)
+                         self.JSON_LOADS_DOCSTRING)
 
     def test_should_get_docstring(self):
         source, offset = source_and_offset(
-            "import threading\nthreading.Thread.join_|_(")
+            "import json\njson.loads_|_(")
         filename = self.project_file("test.py", source)
         docstring = self.backend.rpc_get_docstring(filename,
                                                    source,

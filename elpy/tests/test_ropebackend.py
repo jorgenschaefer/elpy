@@ -2,6 +2,7 @@
 
 import os
 import shutil
+import sys
 import tempfile
 
 import mock
@@ -126,7 +127,18 @@ class TestRPCGetCalltip(RPCGetCalltipTests,
 class TestRPCGetDocstring(RPCGetDocstringTests,
                           ShouldCallValidateTest,
                           RopeBackendTestCase):
-    THREAD_JOIN_DOCSTRING = 'Thread.join(self, timeout=None):'
+    if sys.version_info < (2, 7):
+        JSON_LOADS_DOCSTRING = (
+            'loads(s, encoding=None, cls=None, object_hook=None, '
+            'parse_float=None, parse_int=None, parse_constant=None, '
+            '**kw):'
+        )
+    else:
+        JSON_LOADS_DOCSTRING = (
+            'loads(s, encoding=None, cls=None, object_hook=None, '
+            'parse_float=None, parse_int=None, parse_constant=None, '
+            'object_pairs_hook=None, **kw):'
+        )
 
 
 class TestGetPythonProjectFiles(RopeBackendTestCase):
