@@ -780,7 +780,7 @@ item in another window.\n\n")
       (insert "\n\n"))
 
     ;; flake8, the default syntax checker, not found
-    (when (not (executable-find "flake8"))
+    (when (not (executable-find python-check-command))
       (elpy-insert--para
        "The configured syntax checker could not be found. Elpy uses this "
        "program to provide syntax checks of your programs, so you might "
