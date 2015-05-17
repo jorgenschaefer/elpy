@@ -441,7 +441,7 @@ virtualenv.
 
 \\{elpy-mode-map}"
   :lighter " Elpy"
-  (when (not (derived-mode-p 'python-mode)
+  (when (not (derived-mode-p 'python-mode))
     (error "Elpy only works with `python-mode'"))
   (cond
    (elpy-mode
