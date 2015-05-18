@@ -310,7 +310,6 @@ edited instead. Setting this variable to nil disables this feature."
     ;; (define-key map (kbd "C-c <")   'python-indent-shift-left)
     ;; (define-key map (kbd "C-c >")   'python-indent-shift-right)
     (define-key map (kbd "C-c C-c") 'elpy-shell-send-region-or-buffer)
-    (define-key map (kbd "C-c C-z") 'elpy-shell-switch-to-shell)
     (define-key map (kbd "C-c C-d") 'elpy-doc)
     (define-key map (kbd "C-c C-e") 'elpy-multiedit-python-symbol-at-point)
     (define-key map (kbd "C-c C-f") 'elpy-find-file)
@@ -323,7 +322,7 @@ edited instead. Setting this variable to nil disables this feature."
     (define-key map (kbd "C-c C-s") 'elpy-rgrep-symbol)
     (define-key map (kbd "C-c C-t") 'elpy-test)
     (define-key map (kbd "C-c C-v") 'elpy-check)
-    ;; (define-key map (kbd "C-c C-z") 'python-shell-switch-to-shell)
+    (define-key map (kbd "C-c C-z") 'elpy-shell-switch-to-shell)
 
     (define-key map (kbd "<S-return>") 'elpy-open-and-indent-line-below)
     (define-key map (kbd "<C-S-return>") 'elpy-open-and-indent-line-above)
@@ -422,6 +421,7 @@ edited instead. Setting this variable to nil disables this feature."
                      "Elpy only works with python.el from "
                      "Emacs 24 and above"))))
   (elpy-modules-global-init)
+  (define-key inferior-python-mode-map (kbd "C-c C-z") 'elpy-shell-switch-to-buffer)
   (add-hook 'python-mode-hook 'elpy-mode))
 
 (defun elpy-disable ()
@@ -1452,6 +1452,11 @@ code is executed."
   "Switch to inferior Python process buffer."
   (interactive)
   (pop-to-buffer (process-buffer (elpy-shell-get-or-create-process))))
+
+(defun elpy-shell-switch-to-buffer ()
+  "Switch from inferior Python process buffer to recent Python buffer."
+  (interactive)
+  (pop-to-buffer (other-buffer (current-buffer) 1)))
 
 (defun elpy-shell-get-or-create-process ()
   "Get or create an inferior Python process for current buffer and return it."
