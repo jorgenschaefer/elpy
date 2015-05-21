@@ -1689,9 +1689,10 @@ indentation levels."
           (end (region-end)))
       (goto-char beg)
       (goto-char (point-at-bol))
-      (while (< (point) end)
+      (while (<= (point) end)
         (elpy--nav-move-line-left)
-        (forward-line 1)))
+        (forward-line 1)
+        (setq end (- end python-indent))))
     (setq deactivate-mark nil)))
 
 (defun elpy--nav-move-region-right ()
@@ -1700,8 +1701,9 @@ indentation levels."
           (end (region-end)))
       (goto-char beg)
       (goto-char (point-at-bol))
-      (while (< (point) end)
+      (while (<= (point) end)
         (elpy--nav-move-line-right)
+        (setq end (+ end python-indent))
         (forward-line 1)))
     (setq deactivate-mark nil)))
 
