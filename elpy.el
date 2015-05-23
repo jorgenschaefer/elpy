@@ -3389,9 +3389,7 @@ description."
 (defun elpy-autopep8-fix-code ()
   "Automatically formats Python code to conform to the PEP 8 style guide."
   (interactive)
-  (message "call fix code")
-  (let* ((new-block (elpy-rpc "fix_code" (list buffer-file-name
-                                         (elpy-rpc--buffer-contents)))))
+  (let* ((new-block (elpy-rpc "fix_code" (list (elpy-rpc--buffer-contents)))))
 
     (let ((beg (point-min)) (end (point-max)))
       (unless (string-equal (buffer-substring beg end) new-block)

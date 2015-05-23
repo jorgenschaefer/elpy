@@ -3,7 +3,7 @@
 """
 try:
     import autopep8
-except ImportError:
+except ImportError:  # pragma: no cover
     autopep8 = None
 
 
