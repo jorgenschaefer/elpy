@@ -295,6 +295,11 @@ edited instead. Setting this variable to nil disables this feature."
   :type '(repeat string)
   :group 'elpy)
 
+(defcustom elpy-rgrep-file-pattern "*.py"
+  "FILES to use for `elpy-rgrep-symbol'."
+  :type 'string
+  :group 'elpy)
+
 ;;;;;;;;;;;;;
 ;;; Elpy Mode
 
@@ -1178,7 +1183,7 @@ for."
   (let ((grep-find-ignored-directories (append elpy-project-ignored-directories
                                                grep-find-ignored-directories)))
     (rgrep regexp
-           "*.py"
+           elpy-rgrep-file-pattern
            (or (elpy-project-root)
                default-directory)))
   (with-current-buffer next-error-last-buffer
