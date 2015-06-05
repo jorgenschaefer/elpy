@@ -65,13 +65,13 @@ These are blocks defined by their indentation level, the natural block
 of Python code. They are manipulated with the cursor keys in
 combination with either the control or meta keys (but not both).
 
-.. command:: elpy-nav-next-iblock
+.. command:: elpy-nav-forward-block
    :kbd: C-down
 .. command:: elpy-nav-previous-iblock
    :kbd: C-up
-.. command:: elpy-nav-backward-iblock
+.. command:: elpy-nav-backward-indent
    :kbd: C-left
-.. command:: elpy-nav-forward-iblock
+.. command:: elpy-nav-forward-indent
    :kbd: C-right
 
    The control key allows navigation. Up and down will skip between
@@ -80,13 +80,13 @@ combination with either the control or meta keys (but not both).
    closest preceding or following occurrence of a higher or lower
    indentation level.
 
-.. command:: elpy-nav-move-iblock-down
+.. command:: elpy-nav-move-line-or-region-down
    :kbd: M-down
-.. command:: elpy-nav-move-iblock-up
+.. command:: elpy-nav-move-line-or-region-up
    :kbd: M-up
-.. command:: elpy-nav-move-iblock-left
+.. command:: elpy-nav-move-line-or-region-left
    :kbd: M-left
-.. command:: elpy-nav-move-iblock-right
+.. command:: elpy-nav-move-line-or-region-right
    :kbd: M-right
 
    With meta, the cursor keys will move indentation blocks. Up and down
