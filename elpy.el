@@ -314,6 +314,7 @@ edited instead. Setting this variable to nil disables this feature."
     (define-key map (kbd "C-c C-d") 'elpy-doc)
     (define-key map (kbd "C-c C-e") 'elpy-multiedit-python-symbol-at-point)
     (define-key map (kbd "C-c C-f") 'elpy-find-file)
+    (define-key map (kbd "C-c C-l") 'elpy-code-cleanup)
     (define-key map (kbd "C-c C-n") 'elpy-flymake-next-error)
     (define-key map (kbd "C-c C-o") 'elpy-occur-definitions)
     (define-key map (kbd "C-c C-p") 'elpy-flymake-previous-error)
@@ -3515,6 +3516,12 @@ which we're looking."
      ((and (<= on-or-off 0)
            highlight-indent-active)
       (highlight-indentation)))))
+
+
+(defun elpy-code-cleanup ()
+  "Cleans the code in current buffer."
+    (elpy-importmagic-fixup)
+    (elpy-autopep8-fix-code))
 
 (provide 'elpy)
 ;;; elpy.el ends here
