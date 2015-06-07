@@ -2020,7 +2020,7 @@ prefix argument is given, prompt for a symbol from the user."
 ;;; Buffer manipulation
 
 (defun elpy-buffer--replace-block (spec)
-  "Replace an imports block. SPEC is (startline endline newblock)."
+  "Replace a block.  SPEC is (startline endline newblock)."
   (let ((start-line (nth 0 spec))
         (end-line (nth 1 spec))
         (new-block (nth 2 spec)))
@@ -2035,6 +2035,15 @@ prefix argument is given, prompt for a symbol from the user."
           (unless (string-equal (buffer-substring beg end) new-block)
             (delete-region beg end)
             (insert new-block)))))))
+
+(defun elpy-buffer--replace-region (beg end rep)
+  "Replace text in BUFFER in region (BEG END) with REP."
+  (unless (string-equal (buffer-substring beg end) rep)
+    (save-excursion
+      (goto-char end)
+      (insert rep)
+      (delete-region beg end))))
+
 
 ;;;;;;;;;;;;;;
 ;;; Import manipulation
@@ -2847,6 +2856,11 @@ protocol if the buffer is larger than
       `((filename . ,file-name)
         (delete_after_use . t)))))
 
+(defun elpy-rpc--region-contents ()
+  "Return the selected region as a string."
+  (if (use-region-p)
+      (buffer-substring (region-beginning) (region-end))))
+
 ;; RPC API functions
 
 (defun elpy-rpc-restart ()
@@ -3389,12 +3403,13 @@ description."
 (defun elpy-autopep8-fix-code ()
   "Automatically formats Python code to conform to the PEP 8 style guide."
   (interactive)
-  (let* ((new-block (elpy-rpc "fix_code" (list (elpy-rpc--buffer-contents)))))
-
-    (let ((beg (point-min)) (end (point-max)))
-      (unless (string-equal (buffer-substring beg end) new-block)
-        (delete-region beg end)
-        (insert new-block)))))
+  (if (use-region-p)
+    (let ((new-block (elpy-rpc "fix_code" (list (elpy-rpc--region-contents))))
+          (beg (region-beginning)) (end (region-end)))
+      (elpy-buffer--replace-region beg end new-block))
+    (let ((new-block (elpy-rpc "fix_code" (list (elpy-rpc--buffer-contents))))
+          (beg (point-min)) (end (point-max)))
+      (elpy-buffer--replace-region beg end new-block))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Backwards compatibility
