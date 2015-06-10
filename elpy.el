@@ -309,12 +309,11 @@ edited instead. Setting this variable to nil disables this feature."
     ;; (define-key map (kbd "C-M-x")   'python-shell-send-defun)
     ;; (define-key map (kbd "C-c <")   'python-indent-shift-left)
     ;; (define-key map (kbd "C-c >")   'python-indent-shift-right)
-    (define-key map (kbd "C-c C-a") 'elpy-autopep8-fix-code)
+    (define-key map (kbd "C-c RET") 'elpy-importmagic-add-import)
     (define-key map (kbd "C-c C-c") 'elpy-shell-send-region-or-buffer)
     (define-key map (kbd "C-c C-d") 'elpy-doc)
     (define-key map (kbd "C-c C-e") 'elpy-multiedit-python-symbol-at-point)
     (define-key map (kbd "C-c C-f") 'elpy-find-file)
-    (define-key map (kbd "C-c C-l") 'elpy-code-cleanup)
     (define-key map (kbd "C-c C-n") 'elpy-flymake-next-error)
     (define-key map (kbd "C-c C-o") 'elpy-occur-definitions)
     (define-key map (kbd "C-c C-p") 'elpy-flymake-previous-error)
@@ -323,9 +322,8 @@ edited instead. Setting this variable to nil disables this feature."
     (define-key map (kbd "C-c C-t") 'elpy-test)
     (define-key map (kbd "C-c C-v") 'elpy-check)
     (define-key map (kbd "C-c C-z") 'elpy-shell-switch-to-shell)
-
-    (define-key map (kbd "C-c RET") 'elpy-importmagic-add-import)
-    (define-key map (kbd "C-c <S-return>") 'elpy-importmagic-fixup)
+    (define-key map (kbd "C-c C-l f") 'elpy-autopep8-fix-code)
+    (define-key map (kbd "C-c C-l i") 'elpy-importmagic-fixup)
 
     (define-key map (kbd "<S-return>") 'elpy-open-and-indent-line-below)
     (define-key map (kbd "<C-S-return>") 'elpy-open-and-indent-line-above)
@@ -3517,11 +3515,6 @@ which we're looking."
            highlight-indent-active)
       (highlight-indentation)))))
 
-
-(defun elpy-code-cleanup ()
-  "Cleans the code in current buffer."
-    (elpy-importmagic-fixup)
-    (elpy-autopep8-fix-code))
 
 (provide 'elpy)
 ;;; elpy.el ends here
