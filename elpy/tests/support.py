@@ -289,6 +289,16 @@ requests.get(u"https://web.archive.org/save/{}".format(url))
     #
     #     self.rpc(filename, source, offset)
 
+    def test_should_not_fail_for_key_error(self):
+        # Bug #561, #564, #570, #588, #593, #599 / jedi#572, jedi#579,
+        # jedi#590
+        source, offset = source_and_offset(
+            "map(lambda_|_"
+        )
+        filename = self.project_file("project.py", source)
+
+        self.rpc(filename, source, offset)
+
 
 class RPCGetCompletionsTests(GenericRPCTests):
     METHOD = "rpc_get_completions"

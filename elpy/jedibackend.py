@@ -283,6 +283,9 @@ def run_with_debug(jedi, name, *args, **kwargs):
                 "No such file or directory" in str(e)
         ):
             return None
+        # Bug #561, #564, #570, #588, #593, #599 / jedi#572, jedi#579, jedi#590
+        if isinstance(e, KeyError):
+            return None
 
         from jedi import debug
 
