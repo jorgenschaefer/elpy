@@ -45,7 +45,11 @@ class BackendTestCase(unittest.TestCase):
             os.makedirs(os.path.dirname(full_name))
         except OSError:
             pass
-        with open(full_name, "w") as f:
+        if compat.PYTHON3:
+            fobj = open(full_name, "w", encoding="utf-8")
+        else:
+            fobj = open(full_name, "w")
+        with fobj as f:
             f.write(contents)
         return full_name
 
