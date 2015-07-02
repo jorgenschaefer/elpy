@@ -1,6 +1,13 @@
 New in Elpy 1.8.0
 =================
 
+- Ignore a ``KeyError`` from Jedi 0.9.0 which occurs a lot in normal
+  code.
+
+
+New in Elpy 1.8.0
+=================
+
 - Emacs 24.5 is now officially supported
 - The new configuration option ``elpy-rpc-ignored-buffer-size`` defines a maximum buffer size to be handle completion in, to avoid laggy interaction in unusually large files
 - Indentation block movement was replaced with code that just moves the marked block or the current line; this should be a lot less magical and more predictable
