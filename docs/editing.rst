@@ -57,13 +57,8 @@ command. In Elpy, the prefix argument often disables any attempt by
 the command at being smart, in case it would get it wrong.
 
 
-Indentation Blocks
-==================
-
-Elpy adds a new concept to Emacs, called :index:`indentation blocks`.
-These are blocks defined by their indentation level, the natural block
-of Python code. They are manipulated with the cursor keys in
-combination with either the control or meta keys (but not both).
+Moving By Indentation
+=====================
 
 .. command:: elpy-nav-forward-block
    :kbd: C-down
@@ -74,21 +69,25 @@ combination with either the control or meta keys (but not both).
 .. command:: elpy-nav-forward-indent
    :kbd: C-right
 
-   The control key allows navigation. Up and down will skip between
-   blocks of the same indentation level, allowing you to quickly find
-   the end of a long for loop, for example. Left and right jump to the
-   closest preceding or following occurrence of a higher or lower
-   indentation level.
+   Using the cursor keys in combination with the control key allows
+   moving by indentation level. Left and right will jump between
+   current indentation levels, while up and down will jump to the
+   previous or next line with the same indentation as the current one.
+         
 
+Moving the Current Region
+=========================  
+   
 .. command:: elpy-nav-move-line-or-region-down
    :kbd: M-down
 .. command:: elpy-nav-move-line-or-region-up
    :kbd: M-up
-.. command:: elpy-nav-move-line-or-region-left
+.. command:: python-indent-shift-left
    :kbd: M-left
-.. command:: elpy-nav-move-line-or-region-right
+.. command:: python-indent-shift-right
    :kbd: M-right
 
-   With meta, the cursor keys will move indentation blocks. Up and down
-   will swap the position of the current block with the one above or
-   below it. Left and right will change the indentation level.
+   Elpy can move the selected region (or the current line if no region is
+   selected) by using the cursor keys with meta. Left and right will
+   dedent or indent the code, while up and down will move it line-wise up
+   or down, respectively.

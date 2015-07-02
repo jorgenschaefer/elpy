@@ -334,8 +334,8 @@ edited instead. Setting this variable to nil disables this feature."
 
     (define-key map (kbd "<M-down>") 'elpy-nav-move-line-or-region-down)
     (define-key map (kbd "<M-up>") 'elpy-nav-move-line-or-region-up)
-    (define-key map (kbd "<M-left>") 'elpy-nav-move-region-or-line-left)
-    (define-key map (kbd "<M-right>") 'elpy-nav-move-region-or-line-right)
+    (define-key map (kbd "<M-left>") 'python-indent-shift-left)
+    (define-key map (kbd "<M-right>") 'python-indent-shift-right)
 
     (define-key map (kbd "M-.")     'elpy-goto-definition)
     (define-key map (kbd "M-TAB")   'elpy-company-backend)
@@ -388,10 +388,10 @@ edited instead. Setting this variable to nil disables this feature."
      ["Previous Error" elpy-flymake-previous-error
       :help "Go to the previous inline error, if any"])
     ("Indentation Blocks"
-     ["Dedent" elpy-nav-move-region-or-line-left
+     ["Dedent" python-indent-shift-left
       :help "Dedent current block or region"
       :suffix (if (use-region-p) "Region" "Block")]
-     ["Indent" elpy-nav-move-region-or-line-right
+     ["Indent" python-indent-shift-right
       :help "Indent current block or region"
       :suffix (if (use-region-p) "Region" "Block")]
      ["Up" elpy-nav-move-line-or-region-up
@@ -1656,53 +1656,6 @@ indentation levels."
       (set-mark (point))
       (goto-char (+ (point)
                     (length region))))
-    (setq deactivate-mark nil)))
-
-(defun elpy-nav-move-region-or-line-left ()
-  "Dedent the current indentation block, or the active region."
-  (interactive)
-  (if (use-region-p)
-      (elpy--nav-move-region-left)
-    (elpy--nav-move-line-left)))
-
-(defun elpy-nav-move-region-or-line-right ()
-  "Indent the current indentation block, or the active region."
-  (interactive)
-  (if (use-region-p)
-      (elpy--nav-move-region-right)
-    (elpy--nav-move-line-right )))
-
-(defun elpy--nav-move-line-left ()
-  (save-excursion
-    (goto-char (point-at-bol))
-    (when (looking-at (format "^ \\{%i\\}" python-indent))
-      (replace-match ""))))
-
-(defun elpy--nav-move-line-right ()
-  (save-excursion
-    (goto-char (point-at-bol))
-    (insert (make-string python-indent ?\s))))
-
-(defun elpy--nav-move-region-left ()
-  (save-excursion
-    (let ((beg (region-beginning))
-          (end (region-end)))
-      (goto-char beg)
-      (goto-char (point-at-bol))
-      (while (< (point) end)
-        (elpy--nav-move-line-left)
-        (forward-line 1)))
-    (setq deactivate-mark nil)))
-
-(defun elpy--nav-move-region-right ()
-  (save-excursion
-    (let ((beg (region-beginning))
-          (end (region-end)))
-      (goto-char beg)
-      (goto-char (point-at-bol))
-      (while (< (point) end)
-        (elpy--nav-move-line-right)
-        (forward-line 1)))
     (setq deactivate-mark nil)))
 
 (defun elpy-open-and-indent-line-below ()
