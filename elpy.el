@@ -309,6 +309,7 @@ edited instead. Setting this variable to nil disables this feature."
     ;; (define-key map (kbd "C-M-x")   'python-shell-send-defun)
     ;; (define-key map (kbd "C-c <")   'python-indent-shift-left)
     ;; (define-key map (kbd "C-c >")   'python-indent-shift-right)
+    (define-key map (kbd "C-c C-b") 'elpy-nav-expand-to-indentation)
     (define-key map (kbd "C-c C-c") 'elpy-shell-send-region-or-buffer)
     (define-key map (kbd "C-c C-d") 'elpy-doc)
     (define-key map (kbd "C-c C-e") 'elpy-multiedit-python-symbol-at-point)
@@ -1671,6 +1672,18 @@ indentation levels."
   (save-excursion
     (insert "\n"))
   (indent-according-to-mode))
+
+(defun elpy-nav-expand-to-indentation ()
+  "Select surrounding lines with current indentation."
+  (interactive)
+  (let ((indentation (current-indentation)))
+    (while (<= indentation (current-indentation))
+      (forward-line -1))
+    (forward-line 1)
+    (push-mark (point) nil t)
+    (while (<= indentation (current-indentation))
+      (forward-line 1))
+    (backward-char)))
 
 ;;;;;;;;;;;;;;;;
 ;;; Test running
