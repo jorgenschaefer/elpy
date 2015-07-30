@@ -281,5 +281,17 @@ The user can review the changes and confirm them with
             (list (buffer-file-name)
                   method args)))
 
+(defun elpy-refactor-options (option)
+  "Show available refactor options and let user choose one."
+  (interactive "c[i]: importmagic-fixup [p]: autopep8-fix-code [r]: refactor")
+  (let ((choice (char-to-string option)))
+    (cond
+     ((string-equal choice "i")
+      (elpy-importmagic-fixup))
+     ((string-equal choice "p")
+      (elpy-autopep8-fix-code))
+     ((string-equal choice "r")
+      (elpy-refactor)))))
+
 (provide 'elpy-refactor)
 ;;; elpy-refactor.el ends here
