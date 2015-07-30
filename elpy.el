@@ -4,7 +4,7 @@
 
 ;; Author: Jorgen Schaefer <contact@jorgenschaefer.de>
 ;; URL: https://github.com/jorgenschaefer/elpy
-;; Version: 1.8.0
+;; Version: 1.8.1
 ;; Keywords: Python, IDE, Languages, Tools
 ;; Package-Requires: ((company "0.8.2") (find-file-in-project "3.3")  (highlight-indentation "0.5.0") (pyvenv "1.3") (yasnippet "0.8.0"))
 
@@ -46,7 +46,7 @@
 (require 'elpy-refactor)
 (require 'pyvenv)
 
-(defconst elpy-version "1.8.0"
+(defconst elpy-version "1.8.1"
   "The version of the Elpy lisp code.")
 
 ;;;;;;;;;;;;;;;;;;;;;;
@@ -309,7 +309,7 @@ edited instead. Setting this variable to nil disables this feature."
     ;; (define-key map (kbd "C-M-x")   'python-shell-send-defun)
     ;; (define-key map (kbd "C-c <")   'python-indent-shift-left)
     ;; (define-key map (kbd "C-c >")   'python-indent-shift-right)
-    (define-key map (kbd "C-c RET") 'elpy-importmagic-add-import)
+    (define-key map (kbd "C-c C-b") 'elpy-nav-expand-to-indentation)
     (define-key map (kbd "C-c C-c") 'elpy-shell-send-region-or-buffer)
     (define-key map (kbd "C-c C-d") 'elpy-doc)
     (define-key map (kbd "C-c C-e") 'elpy-multiedit-python-symbol-at-point)
@@ -323,7 +323,6 @@ edited instead. Setting this variable to nil disables this feature."
     (define-key map (kbd "C-c C-z") 'elpy-shell-switch-to-shell)
     (define-key map (kbd "C-c C-r i") 'elpy-importmagic-fixup)
     (define-key map (kbd "C-c C-r p") 'elpy-autopep8-fix-code)
-    (define-key map (kbd "C-c C-r r") 'elpy-refactor)
 
     (define-key map (kbd "<S-return>") 'elpy-open-and-indent-line-below)
     (define-key map (kbd "<C-S-return>") 'elpy-open-and-indent-line-above)
@@ -335,8 +334,8 @@ edited instead. Setting this variable to nil disables this feature."
 
     (define-key map (kbd "<M-down>") 'elpy-nav-move-line-or-region-down)
     (define-key map (kbd "<M-up>") 'elpy-nav-move-line-or-region-up)
-    (define-key map (kbd "<M-left>") 'elpy-nav-move-region-or-line-left)
-    (define-key map (kbd "<M-right>") 'elpy-nav-move-region-or-line-right)
+    (define-key map (kbd "<M-left>") 'python-indent-shift-left)
+    (define-key map (kbd "<M-right>") 'python-indent-shift-right)
 
     (define-key map (kbd "M-.")     'elpy-goto-definition)
     (define-key map (kbd "M-TAB")   'elpy-company-backend)
@@ -389,10 +388,10 @@ edited instead. Setting this variable to nil disables this feature."
      ["Previous Error" elpy-flymake-previous-error
       :help "Go to the previous inline error, if any"])
     ("Indentation Blocks"
-     ["Dedent" elpy-nav-move-region-or-line-left
+     ["Dedent" python-indent-shift-left
       :help "Dedent current block or region"
       :suffix (if (use-region-p) "Region" "Block")]
-     ["Indent" elpy-nav-move-region-or-line-right
+     ["Indent" python-indent-shift-right
       :help "Indent current block or region"
       :suffix (if (use-region-p) "Region" "Block")]
      ["Up" elpy-nav-move-line-or-region-up
@@ -1692,53 +1691,6 @@ indentation levels."
                     (length region))))
     (setq deactivate-mark nil)))
 
-(defun elpy-nav-move-region-or-line-left ()
-  "Dedent the current indentation block, or the active region."
-  (interactive)
-  (if (use-region-p)
-      (elpy--nav-move-region-left)
-    (elpy--nav-move-line-left)))
-
-(defun elpy-nav-move-region-or-line-right ()
-  "Indent the current indentation block, or the active region."
-  (interactive)
-  (if (use-region-p)
-      (elpy--nav-move-region-right)
-    (elpy--nav-move-line-right )))
-
-(defun elpy--nav-move-line-left ()
-  (save-excursion
-    (goto-char (point-at-bol))
-    (when (looking-at (format "^ \\{%i\\}" python-indent))
-      (replace-match ""))))
-
-(defun elpy--nav-move-line-right ()
-  (save-excursion
-    (goto-char (point-at-bol))
-    (insert (make-string python-indent ?\s))))
-
-(defun elpy--nav-move-region-left ()
-  (save-excursion
-    (let ((beg (region-beginning))
-          (end (region-end)))
-      (goto-char beg)
-      (goto-char (point-at-bol))
-      (while (< (point) end)
-        (elpy--nav-move-line-left)
-        (forward-line 1)))
-    (setq deactivate-mark nil)))
-
-(defun elpy--nav-move-region-right ()
-  (save-excursion
-    (let ((beg (region-beginning))
-          (end (region-end)))
-      (goto-char beg)
-      (goto-char (point-at-bol))
-      (while (< (point) end)
-        (elpy--nav-move-line-right)
-        (forward-line 1)))
-    (setq deactivate-mark nil)))
-
 (defun elpy-open-and-indent-line-below ()
   "Open a line below the current one, move there, and indent."
   (interactive)
@@ -1752,6 +1704,18 @@ indentation levels."
   (save-excursion
     (insert "\n"))
   (indent-according-to-mode))
+
+(defun elpy-nav-expand-to-indentation ()
+  "Select surrounding lines with current indentation."
+  (interactive)
+  (let ((indentation (current-indentation)))
+    (while (<= indentation (current-indentation))
+      (forward-line -1))
+    (forward-line 1)
+    (push-mark (point) nil t)
+    (while (<= indentation (current-indentation))
+      (forward-line 1))
+    (backward-char)))
 
 ;;;;;;;;;;;;;;;;
 ;;; Test running
