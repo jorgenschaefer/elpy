@@ -8,7 +8,7 @@ Configuration
 =============
 
 You can easily configure Elpy to your own preferences. All *Customize
-Options* below are accessible via this interface. Emacs builds heavily
+Options* below are accessible via this interface. Elpy builds heavily
 upon existing extensions for Emacs. The configuration interface tries
 to include the options for those as well.
 
