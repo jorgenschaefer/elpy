@@ -51,7 +51,7 @@ nested parentheses groups. :kbd:`C-M-d` will move *down* into the next
 enclosed group of parentheses, while :kbd:`C-M-u` will move *up* to
 the directly enclosing group of parentheses.
 
-Finally, a lot of Elpy's commands change their behavir when the
+Finally, a lot of Elpy's commands change their behavior when the
 :index:`prefix argument` is given. That is, hit :kbd:`C-u` before the
 command. In Elpy, the prefix argument often disables any attempt by
 the command at being smart, in case it would get it wrong.
