@@ -314,17 +314,16 @@ edited instead. Setting this variable to nil disables this feature."
     ;; (define-key map (kbd "C-M-x")   'python-shell-send-defun)
     ;; (define-key map (kbd "C-c <")   'python-indent-shift-left)
     ;; (define-key map (kbd "C-c >")   'python-indent-shift-right)
+    (define-key map (kbd "C-c RET") 'elpy-importmagic-add-import)
     (define-key map (kbd "C-c C-b") 'elpy-nav-expand-to-indentation)
     (define-key map (kbd "C-c C-c") 'elpy-shell-send-region-or-buffer)
     (define-key map (kbd "C-c C-d") 'elpy-doc)
     (define-key map (kbd "C-c C-e") 'elpy-multiedit-python-symbol-at-point)
     (define-key map (kbd "C-c C-f") 'elpy-find-file)
-    (define-key map (kbd "C-c RET") 'elpy-importmagic-add-import)
-    (define-key map (kbd "C-c <S-return>") 'elpy-importmagic-fixup)
     (define-key map (kbd "C-c C-n") 'elpy-flymake-next-error)
     (define-key map (kbd "C-c C-o") 'elpy-occur-definitions)
     (define-key map (kbd "C-c C-p") 'elpy-flymake-previous-error)
-    (define-key map (kbd "C-c C-r") 'elpy-refactor)
+    (define-key map (kbd "C-c C-r") 'elpy-refactor-options)
     (define-key map (kbd "C-c C-s") 'elpy-rgrep-symbol)
     (define-key map (kbd "C-c C-t") 'elpy-test)
     (define-key map (kbd "C-c C-v") 'elpy-check)
@@ -553,6 +552,14 @@ try:
 except:
     config['importmagic_version'] = None
     config['importmagic_latest'] = latest('importmagic')
+
+try:
+    import autopep8
+    config['autopep8_version'] = autopep8.__version__
+    config['autopep8_latest'] = latest('autopep8', config['autopep8_version'])
+except:
+    config['autopep8_version'] = None
+    config['autopep8_latest'] = latest('autopep8')
 
 json.dump(config, sys.stdout)
 ")
@@ -787,6 +794,26 @@ item in another window.\n\n")
                      :package "importmagic" :upgrade t)
       (insert "\n\n"))
 
+    ;; No autopep8 available
+    (when (not (gethash "autopep8_version" config))
+      (elpy-insert--para
+       "The autopep8 package is not available. Commands using this will "
+       "not work.\n")
+      (insert "\n")
+      (widget-create 'elpy-insert--pip-button
+                     :package "autopep8")
+      (insert "\n\n"))
+
+    ;; Newer version of autopep8 available
+    (when (and (gethash "autopep8_version" config)
+               (gethash "autopep8_latest" config))
+      (elpy-insert--para
+       "There is a newer version of the autopep8 package available.\n")
+      (insert "\n")
+      (widget-create 'elpy-insert--pip-button
+                     :package "autopep8" :upgrade t)
+      (insert "\n\n"))
+
     ;; flake8, the default syntax checker, not found
     (when (not (executable-find python-check-command))
       (elpy-insert--para
@@ -875,6 +902,8 @@ virtual_env_short"
         (rope-latest (gethash "rope_latest" config))
         (importmagic-version (gethash "importmagic_version" config))
         (importmagic-latest (gethash "importmagic_latest" config))
+        (autopep8-version (gethash "importmagic_version" config))
+        (autopep8-latest (gethash "importmagic_latest" config))
         (virtual-env (gethash "virtual_env" config))
         (virtual-env-short (gethash "virtual_env_short" config))
         table maxwidth)
@@ -926,6 +955,9 @@ virtual_env_short"
             ("Importmagic" . ,(elpy-config--package-link "importmagic"
                                                          importmagic-version
                                                          importmagic-latest))
+            ("Autopep8" . ,(elpy-config--package-link "autopep8"
+                                                         autopep8-version
+                                                         autopep8-latest))
             ("Syntax checker" . ,(let ((syntax-checker
                                         (executable-find
                                          python-check-command)))
@@ -1970,10 +2002,10 @@ prefix argument is given, prompt for a symbol from the user."
         nil))))
 
 ;;;;;;;;;;;;;;
-;;; Import manipulation
+;;; Buffer manipulation
 
-(defun elpy-importmagic--replace-block (spec)
-  "Replace an imports block. SPEC is (startline endline newblock)."
+(defun elpy-buffer--replace-block (spec)
+  "Replace a block.  SPEC is (startline endline newblock)."
   (let ((start-line (nth 0 spec))
         (end-line (nth 1 spec))
         (new-block (nth 2 spec)))
@@ -1988,6 +2020,18 @@ prefix argument is given, prompt for a symbol from the user."
           (unless (string-equal (buffer-substring beg end) new-block)
             (delete-region beg end)
             (insert new-block)))))))
+
+(defun elpy-buffer--replace-region (beg end rep)
+  "Replace text in BUFFER in region (BEG END) with REP."
+  (unless (string-equal (buffer-substring beg end) rep)
+    (save-excursion
+      (goto-char end)
+      (insert rep)
+      (delete-region beg end))))
+
+
+;;;;;;;;;;;;;;
+;;; Import manipulation
 
 (defun elpy-importmagic--add-import-read-args (&optional object prompt)
   (let* ((default-object (save-excursion
@@ -2019,7 +2063,7 @@ prefix argument is given, prompt for a symbol from the user."
     (let* ((res (elpy-rpc "add_import" (list buffer-file-name
                                              (elpy-rpc--buffer-contents)
                                              statement))))
-      (elpy-importmagic--replace-block res))))
+      (elpy-buffer--replace-block res))))
 
 (defun elpy-importmagic-fixup ()
   "Query for new imports of unresolved symbols, and remove unreferenced imports.
@@ -2039,7 +2083,7 @@ Also sort the imports in the import statement blocks."
   (let* ((res (elpy-rpc "remove_unreferenced_imports" (list buffer-file-name
                                                             (elpy-rpc--buffer-contents)))))
     (unless (stringp res)
-      (elpy-importmagic--replace-block res))))
+      (elpy-buffer--replace-block res))))
 
 ;;;;;;;;;;;;;;
 ;;; Multi-Edit
@@ -2797,6 +2841,11 @@ protocol if the buffer is larger than
       `((filename . ,file-name)
         (delete_after_use . t)))))
 
+(defun elpy-rpc--region-contents ()
+  "Return the selected region as a string."
+  (if (use-region-p)
+      (buffer-substring (region-beginning) (region-end))))
+
 ;; RPC API functions
 
 (defun elpy-rpc-restart ()
@@ -3333,6 +3382,20 @@ description."
     (`buffer-stop
      (yas-minor-mode -1))))
 
+;;;;;;;;;;;;;;;;;;
+;;; Module: autopep8
+
+(defun elpy-autopep8-fix-code ()
+  "Automatically formats Python code to conform to the PEP 8 style guide."
+  (interactive)
+  (if (use-region-p)
+    (let ((new-block (elpy-rpc "fix_code" (list (elpy-rpc--region-contents))))
+          (beg (region-beginning)) (end (region-end)))
+      (elpy-buffer--replace-region beg end new-block))
+    (let ((new-block (elpy-rpc "fix_code" (list (elpy-rpc--buffer-contents))))
+          (beg (point-min)) (end (point-max)))
+      (elpy-buffer--replace-region beg end new-block))))
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Backwards compatibility
 
@@ -3437,6 +3500,7 @@ which we're looking."
      ((and (<= on-or-off 0)
            highlight-indent-active)
       (highlight-indentation)))))
+
 
 (provide 'elpy)
 ;;; elpy.el ends here
