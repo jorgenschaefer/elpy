@@ -333,6 +333,8 @@ edited instead. Setting this variable to nil disables this feature."
     (define-key map (kbd "<S-return>") 'elpy-open-and-indent-line-below)
     (define-key map (kbd "<C-S-return>") 'elpy-open-and-indent-line-above)
 
+    (define-key map (kbd "<C-return>") 'elpy-shell-send-current-statement)
+
     (define-key map (kbd "<C-down>") 'elpy-nav-forward-block)
     (define-key map (kbd "<C-up>") 'elpy-nav-backward-block)
     (define-key map (kbd "<C-left>") 'elpy-nav-backward-indent)
@@ -1421,6 +1423,12 @@ else:
    (t
     (error "I don't know how to set ipython settings for this Emacs"))))
 
+(defun elpy-shell-display-buffer ()
+  "Display inferior Python process buffer."
+  (display-buffer (process-buffer (elpy-shell-get-or-create-process))
+                  nil
+                  'visible))
+
 (defun elpy-shell-send-region-or-buffer (&optional arg)
   "Send the active region or the buffer to the Python shell.
 
@@ -1447,12 +1455,20 @@ code is executed."
         (goto-char (point-min))
         (setq has-if-main (re-search-forward if-main-regex nil t)))
       (python-shell-send-buffer arg))
-    (display-buffer (process-buffer (elpy-shell-get-or-create-process))
-                    nil
-                    'visible)
+    (elpy-shell-display-buffer)
     (when has-if-main
       (message (concat "Removed if __main__ == '__main__' construct, "
                        "use a prefix argument to evaluate.")))))
+
+(defun elpy-shell-send-current-statement ()
+  "Send current statement to Python shell."
+  (interactive)
+  (let ((beg (python-nav-beginning-of-statement))
+        (end (python-nav-end-of-statement)))
+    (elpy-shell-get-or-create-process)
+    (python-shell-send-string (buffer-substring beg end)))
+  (elpy-shell-display-buffer)
+  (python-nav-forward-statement))
 
 (defun elpy-shell-switch-to-shell ()
   "Switch to inferior Python process buffer."
