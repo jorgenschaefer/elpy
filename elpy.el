@@ -1494,7 +1494,8 @@ code is executed."
   (if (= beg end)
       ""
     (let ((region (buffer-substring beg end))
-          (indent-level nil))
+          (indent-level nil)
+          (indent-tabs-mode nil))
       (with-temp-buffer
         (insert region)
         (goto-char (point-min))

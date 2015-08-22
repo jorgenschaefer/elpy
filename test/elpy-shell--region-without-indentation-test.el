@@ -47,4 +47,13 @@
               "\n"
               "meh\n")
       (should-error (elpy-shell--region-without-indentation (point-min)
-                                                            (point-max))))))
+                                                            (point-max))))
+
+    (with-temp-buffer
+      (insert "if True:\n"
+              "    if True:\n"
+              "        pass\n")
+      (should (equal (let ((indent-tabs-mode t))
+                       (elpy-shell--region-without-indentation (point-min)
+                                                               (point-max)))
+                     (buffer-string))))))
