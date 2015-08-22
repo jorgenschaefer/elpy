@@ -99,6 +99,7 @@ class RopeBackend(object):
                                  **kwargs)
         except (rope.base.exceptions.BadIdentifierError,
                 rope.base.exceptions.ModuleSyntaxError,
+                rope.base.exceptions.RefactoringError,
                 rope.base.exceptions.ResourceNotFoundError,
                 rope.base.exceptions.NameNotFoundError,
                 IndentationError,
