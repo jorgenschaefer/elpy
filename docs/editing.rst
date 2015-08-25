@@ -82,9 +82,9 @@ Moving the Current Region
    :kbd: M-down
 .. command:: elpy-nav-move-line-or-region-up
    :kbd: M-up
-.. command:: python-indent-shift-left
+.. command:: elpy-nav-indent-shift-left
    :kbd: M-left
-.. command:: python-indent-shift-right
+.. command:: elpy-nav-indent-shift-right
    :kbd: M-right
 
    Elpy can move the selected region (or the current line if no region is
