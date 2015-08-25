@@ -12,6 +12,7 @@ import pydoc
 from elpy.pydocutils import get_pydoc_completions
 from elpy.rpc import JSONRPCServer, Fault
 from elpy.impmagic import ImportMagic
+from elpy.auto_pep8 import fix_code
 
 
 try:
@@ -233,6 +234,13 @@ class ElpyRPCServer(JSONRPCServer):
         self._ensure_import_magic()
         source = get_source(source)
         return self.import_magic.remove_unreferenced_imports(source)
+
+    def rpc_fix_code(self, source):
+        """Formats Python code to conform to the PEP 8 style guide.
+
+        """
+        source = get_source(source)
+        return fix_code(source)
 
 
 def get_source(fileobj):

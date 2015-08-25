@@ -36,7 +36,7 @@ elisp-coverage:
 
 python-test:
 	# python -Qwarnall -tt -W error -m unittest discover elpy
-	python -Qwarnall -tt -m unittest discover elpy
+	python -tt -m unittest discover elpy
 
 python-test-all:
 	tox
