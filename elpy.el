@@ -1699,13 +1699,15 @@ indentation levels."
   "Select surrounding lines with current indentation."
   (interactive)
   (let ((indentation (current-indentation)))
-    (while (<= indentation (current-indentation))
-      (forward-line -1))
-    (forward-line 1)
-    (push-mark (point) nil t)
-    (while (<= indentation (current-indentation))
-      (forward-line 1))
-    (backward-char)))
+    (if (= indentation 0)
+        (mark-whole-buffer)
+      (while (<= indentation (current-indentation))
+        (forward-line -1))
+      (forward-line 1)
+      (push-mark (point) nil t)
+      (while (<= indentation (current-indentation))
+        (forward-line 1))
+      (backward-char))))
 
 ;;;;;;;;;;;;;;;;
 ;;; Test running
