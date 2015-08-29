@@ -308,7 +308,8 @@ edited instead. Setting this variable to nil disables this feature."
     ;; Alphabetical order to make it easier to find free C-c C-X
     ;; bindings in the future. Heh.
 
-    ;; (define-key map (kbd "<backspace>") 'python-indent-dedent-line-backspace)
+
+    (define-key map (kbd "<backspace>") 'elpy-indent-dedent-line-backspace)
     ;; (define-key map (kbd "<backtab>")   'python-indent-dedent-line)
 
     ;; (define-key map (kbd "C-M-x")   'python-shell-send-defun)
@@ -1714,6 +1715,16 @@ indentation levels."
       (goto-char (+ (point)
                     (length region))))
     (setq deactivate-mark nil)))
+
+(defun elpy-indent-dedent-line-backspace (arg)
+  "De-indent current line.
+Argument ARG is passed to `backward-delete-char-untabify' when
+point is not in between the indentation or when a region
+was selected."
+  (interactive "*p")
+  (when (or (not transient-mark-mode) (region-active-p) (not (python-indent-dedent-line)))
+    (backward-delete-char-untabify arg)))
+(put 'elpy-indent-dedent-line-backspace 'delete-selection 'supersede)
 
 (defun elpy-open-and-indent-line-below ()
   "Open a line below the current one, move there, and indent."
