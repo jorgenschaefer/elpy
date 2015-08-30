@@ -157,6 +157,16 @@ easier to send code snippets over.
    you want this to be evaluated, pass a prefix argument with
    :kbd:`C-u`.
 
+.. command:: elpy-shell-send-current-statement
+   :kbd: C-c RET
+
+   Send current statement to Python shell.
+
+   This command sends statements to shell without indentation. If you
+   send nested statements, shell will trow ``IndentationError``. To send
+   nested statements, it is recommended to select region and run
+   ``elpy-shell-send-region-or-buffer``
+
 .. command:: python-shell-send-defun
    :kbd: C-M-x
 
