@@ -1,4 +1,25 @@
-New in Elpy 1.8.0
+New in Elpy 1.9.0
+=================
+
+- Elpy now supports the ``autopep8`` library for automatically
+  formatting Python code. All refactoring-related code is now grouped
+  under ``C-c C-r``. Use ``C-c C-r i`` to fix up imports using
+  importmagic, ``C-c C-r p`` to fix up Python code with autopep8, and
+  ``C-c C-r r`` to bring up the old Rope refactoring menu.
+- ``C-c C-b`` will now select a region containing surrounding lines of
+  the current indentation or more.
+- ``C-c C-z`` in a Python shell will now switch back to the last
+  Python buffer, allowing to use the key to cycle back and forth
+  between the Python buffer and shell.
+- The pattern used for ``C-c C-s`` is now customizeable in
+  ``elpy-rgrep-file-pattern``.
+- ``<C-return>`` now can be used to send the current statement to the
+  Python shell. Be careful, this can break with nested statements.
+- The Elpy minor mode now also works in modes derived from
+  ``python-mode``, not just in the mode itself.
+
+
+New in Elpy 1.8.1
 =================
 
 - Ignore a ``KeyError`` from Jedi 0.9.0 which occurs a lot in normal
