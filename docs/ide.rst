@@ -295,7 +295,7 @@ your last compile command whenever you save a file.
 Refactoring
 ===========
 
-Elpy supports two forms of refactoring Python code.
+Elpy supports various forms of refactoring Python code.
 
 .. command:: elpy-multiedit-python-symbol-at-point
    :kbd: C-c C-e
@@ -315,9 +315,31 @@ Elpy supports two forms of refactoring Python code.
    occurrences of the text in the region.
 
 
-Elpy also supports a more complex form of refactoring.
+.. command:: elpy-importmagic-fixup
+   :kbd: C-c C-r i
+
+   Query for new imports of unresolved symbols, and remove unreferenced
+   imports. Also sort the imports in the import statement blocks.
+
+.. command:: elpy-autopep8-fix-code
+   :kbd: C-c C-r p
+
+   Automatically formats Python code to conform to the PEP 8 style guide.
+
+   This command uses `autopep8`_ package to format the code. If a region
+   is selected, only that region is formatted. Otherwise current buffer is
+   formatted.
+
+.. _autopep8: https://github.com/hhatto/autopep8
+
 
 .. command:: elpy-refactor
-   :kbd: C-c C-r
+   :kbd: C-c C-r r
 
-   FIXME!
+   Run the Elpy refactoring interface for Python code.
+
+   This command uses `rope`_ package and provides various refactoring
+   options depending on the context.
+
+.. _rope: https://github.com/python-rope/rope
+
