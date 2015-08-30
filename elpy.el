@@ -343,8 +343,8 @@ edited instead. Setting this variable to nil disables this feature."
 
     (define-key map (kbd "<M-down>") 'elpy-nav-move-line-or-region-down)
     (define-key map (kbd "<M-up>") 'elpy-nav-move-line-or-region-up)
-    (define-key map (kbd "<M-left>") 'python-indent-shift-left)
-    (define-key map (kbd "<M-right>") 'python-indent-shift-right)
+    (define-key map (kbd "<M-left>") 'elpy-nav-indent-shift-left)
+    (define-key map (kbd "<M-right>") 'elpy-nav-indent-shift-right)
 
     (define-key map (kbd "M-.")     'elpy-goto-definition)
     (define-key map (kbd "M-TAB")   'elpy-company-backend)
@@ -1740,6 +1740,41 @@ indentation levels."
     (while (<= indentation (current-indentation))
       (forward-line 1))
     (backward-char)))
+
+(defun elpy-nav-normalize-region ()
+  "If the first or last line are not fully selected, select them completely."
+  (let ((beg (region-beginning))
+        (end (region-end)))
+    (goto-char beg)
+    (beginning-of-line)
+    (push-mark (point) nil t)
+    (goto-char end)
+    (end-of-line)))
+
+(defun elpy-nav-indent-shift-right (&optional count)
+  "Shift current line by COUNT columns to the right.
+
+COUNT defaults to `python-indent-offset'.
+If region is active, normalize the region and shift."
+  (interactive)
+  (if (use-region-p)
+      (progn
+        (elpy-nav-normalize-region)
+        (python-indent-shift-right (region-beginning) (region-end) current-prefix-arg))
+    (python-indent-shift-right (line-beginning-position) (line-end-position) current-prefix-arg)))
+
+(defun elpy-nav-indent-shift-left (&optional count)
+  "Shift current line by COUNT columns to the left.
+
+COUNT defaults to `python-indent-offset'.
+If region is active, normalize the region and shift."
+  (interactive)
+  (if (use-region-p)
+      (progn
+        (elpy-nav-normalize-region)
+        (python-indent-shift-left (region-beginning) (region-end) current-prefix-arg))
+    (python-indent-shift-left (line-beginning-position) (line-end-position) current-prefix-arg)))
+
 
 ;;;;;;;;;;;;;;;;
 ;;; Test running
@@ -3443,6 +3478,12 @@ description."
 
 (when (not (fboundp 'python-shell-send-string))
   (defalias 'python-shell-send-string 'python-send-string))
+
+(when (not (fboundp 'python-indent-shift-right))
+  (defalias 'python-indent-shift-right 'python-shift-right))
+
+(when (not (fboundp 'python-indent-shift-left))
+  (defalias 'python-indent-shift-left 'python-shift-left))
 
 ;; Emacs 24.2 made `locate-dominating-file' accept a predicate instead
 ;; of a string. Simply overwrite the current one, it's
