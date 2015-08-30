@@ -2060,6 +2060,7 @@ prefix argument is given, prompt for a symbol from the user."
         (list (if (equal user-choice "") first-choice user-choice)))))))
 
 (defun elpy-importmagic-add-import (statement)
+  "Prompt to import thing at point, show possbile imports and add selected import."
   (interactive (elpy-importmagic--add-import-read-args))
   (unless (equal statement "")
     (let* ((res (elpy-rpc "add_import" (list buffer-file-name
