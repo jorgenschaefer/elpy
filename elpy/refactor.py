@@ -101,8 +101,8 @@ class Refactor(object):
             self.project = Project(project_root, ropefolder=None)
             self.resource = path_to_resource(self.project, filename)
         else:
-            self.project = None
-            self.resource = FakeResource(filename)
+            raise Fault('rope not installed, cannot refactor code.',
+                        code=400)
 
     def get_refactor_options(self, start, end=None):
         """Return a list of options for refactoring at the given position.
