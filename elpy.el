@@ -1749,7 +1749,8 @@ indentation levels."
     (beginning-of-line)
     (push-mark (point) nil t)
     (goto-char end)
-    (end-of-line)))
+    (when (not (= (point) (line-beginning-position)))
+      (end-of-line))))
 
 (defun elpy-nav-indent-shift-right (&optional count)
   "Shift current line by COUNT columns to the right.
