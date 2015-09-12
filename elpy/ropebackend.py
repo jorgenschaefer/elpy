@@ -15,6 +15,7 @@ import rope.base.project
 import rope.base.libutils
 import rope.base.exceptions
 import rope.contrib.findit
+from rope.base.exceptions import RopeError
 
 from elpy import rpc
 import elpy.pydocutils
@@ -97,11 +98,7 @@ class RopeBackend(object):
                                  resource,
                                  maxfixes=MAXFIXES,
                                  **kwargs)
-        except (rope.base.exceptions.BadIdentifierError,
-                rope.base.exceptions.ModuleSyntaxError,
-                rope.base.exceptions.RefactoringError,
-                rope.base.exceptions.ResourceNotFoundError,
-                rope.base.exceptions.NameNotFoundError,
+        except (RopeError,
                 IndentationError,
                 LookupError,
                 AttributeError):
