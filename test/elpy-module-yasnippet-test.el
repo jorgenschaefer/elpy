@@ -22,10 +22,7 @@
 
     (elpy-module-yasnippet 'buffer-init)
 
-    (should yas-minor-mode)
-    (should (-any-p (lambda (template)
-                      (string-match "/elpy" (yas--template-file template)))
-                    (yas--all-templates (yas--get-snippet-tables))))))
+    (should yas-minor-mode)))
 
 (ert-deftest elpy-module-yasnippet-buffer-stop ()
   (elpy-testcase ()
