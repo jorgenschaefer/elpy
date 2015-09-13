@@ -3427,13 +3427,17 @@ description."
 (defun elpy-autopep8-fix-code ()
   "Automatically formats Python code to conform to the PEP 8 style guide."
   (interactive)
-  (if (use-region-p)
-    (let ((new-block (elpy-rpc "fix_code" (list (elpy-rpc--region-contents))))
-          (beg (region-beginning)) (end (region-end)))
-      (elpy-buffer--replace-region beg end new-block))
-    (let ((new-block (elpy-rpc "fix_code" (list (elpy-rpc--buffer-contents))))
-          (beg (point-min)) (end (point-max)))
-      (elpy-buffer--replace-region beg end new-block))))
+  (let ((line (line-number-at-pos))
+        (col (current-column)))
+    (if (use-region-p)
+        (let ((new-block (elpy-rpc "fix_code" (list (elpy-rpc--region-contents))))
+              (beg (region-beginning)) (end (region-end)))
+          (elpy-buffer--replace-region beg end new-block))
+      (let ((new-block (elpy-rpc "fix_code" (list (elpy-rpc--buffer-contents))))
+            (beg (point-min)) (end (point-max)))
+        (elpy-buffer--replace-region beg end new-block)))
+    (forward-line (1- line))
+    (forward-char col)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Backwards compatibility
