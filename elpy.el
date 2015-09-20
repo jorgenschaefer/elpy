@@ -431,7 +431,8 @@ edited instead. Setting this variable to nil disables this feature."
                      "Emacs 24 and above"))))
   (elpy-modules-global-init)
   (define-key inferior-python-mode-map (kbd "C-c C-z") 'elpy-shell-switch-to-buffer)
-  (add-hook 'python-mode-hook 'elpy-mode))
+  (add-hook 'python-mode-hook 'elpy-mode)
+  (add-hook 'post-command-hook 'elpy-nav--restore-initial-position))
 
 (defun elpy-disable ()
   "Disable Elpy in all future Python buffers."
@@ -1585,6 +1586,10 @@ with a prefix argument)."
 ;;;;;;;;;;;;;;
 ;;; Navigation
 
+(defvar elpy-nav-expand--initial-position nil
+  "Initial position before expanding to indentation.")
+(make-variable-buffer-local 'elpy-nav-expand--initial-position)
+
 (defun elpy-goto-definition ()
   "Go to the definition of the symbol at point, if found."
   (interactive)
@@ -1729,9 +1734,14 @@ indentation levels."
     (insert "\n"))
   (indent-according-to-mode))
 
+(defun elpy-nav--restore-initial-position ()
+  (when (eq this-command 'keyboard-quit)
+    (goto-char elpy-nav-expand--initial-pos)))
+
 (defun elpy-nav-expand-to-indentation ()
   "Select surrounding lines with current indentation."
   (interactive)
+  (setq elpy-nav-expand--initial-position (point))
   (let ((indentation (current-indentation)))
     (while (<= indentation (current-indentation))
       (forward-line -1))
