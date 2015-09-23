@@ -1585,6 +1585,10 @@ with a prefix argument)."
 ;;;;;;;;;;;;;;
 ;;; Navigation
 
+(defvar elpy-nav-expand--initial-position nil
+  "Initial position before expanding to indentation.")
+(make-variable-buffer-local 'elpy-nav-expand--initial-position)
+
 (defun elpy-goto-definition ()
   "Go to the definition of the symbol at point, if found."
   (interactive)
@@ -1732,6 +1736,7 @@ indentation levels."
 (defun elpy-nav-expand-to-indentation ()
   "Select surrounding lines with current indentation."
   (interactive)
+  (setq elpy-nav-expand--initial-position (point))
   (let ((indentation (current-indentation)))
     (while (<= indentation (current-indentation))
       (forward-line -1))
@@ -1740,6 +1745,10 @@ indentation levels."
     (while (<= indentation (current-indentation))
       (forward-line 1))
     (backward-char)))
+
+(defadvice keyboard-quit (before collapse-region activate)
+  (when (eq last-command 'elpy-nav-expand-to-indentation)
+    (goto-char elpy-nav-expand--initial-position)))
 
 (defun elpy-nav-normalize-region ()
   "If the first or last line are not fully selected, select them completely."
