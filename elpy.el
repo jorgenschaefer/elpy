@@ -2675,10 +2675,13 @@ RPC calls with the event."
                 (did-read-json nil))
             (goto-char (point-min))
             (condition-case err
-                (setq json (let ((json-array-type 'list))
-                             (json-read))
-                      line-end (1+ (point))
-                      did-read-json t)
+                (progn
+                  (setq json (let ((json-array-type 'list))
+                               (json-read)))
+                  (if (listp json)
+                      (setq  line-end (1+ (point))
+                             did-read-json t)
+                    (goto-char (point-min))))
               (error
                (goto-char (point-min))))
             (cond

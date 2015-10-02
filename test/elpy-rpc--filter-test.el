@@ -61,3 +61,15 @@
       (elpy-rpc--filter 'process "Beware the Jubjub bird\n")
 
       (should unexpected-called))))
+
+(ert-deftest elpy-rpc--filter-should-not-be-confused-by-bogus-json ()
+  (elpy-testcase ()
+    (mletf* ((process-buffer (proc) (current-buffer))
+             (unexpected-called nil)
+             (elpy-rpc--handle-unexpected-line
+              (line)
+              (setq unexpected-called t)))
+
+      (elpy-rpc--filter 'process "2015 08 15 Eek\n")
+
+      (should unexpected-called))))
