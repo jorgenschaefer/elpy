@@ -18,4 +18,4 @@ def fix_code(code):
     if not autopep8:
         raise Fault('autopep8 not installed, cannot fix code.',
                     code=400)
-    return autopep8.fix_code(code)
+    return autopep8.fix_code(code, apply_config=True)
