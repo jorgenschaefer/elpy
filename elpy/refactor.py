@@ -50,6 +50,8 @@ something wrong.
 
 """
 
+import os
+
 from elpy.rpc import Fault
 
 try:
@@ -97,12 +99,16 @@ class Refactor(object):
     """
     def __init__(self, project_root, filename):
         self.project_root = project_root
-        if ROPE_AVAILABLE:
-            self.project = Project(project_root, ropefolder=None)
-            self.resource = path_to_resource(self.project, filename)
-        else:
+        if not ROPE_AVAILABLE:
             raise Fault('rope not installed, cannot refactor code.',
                         code=400)
+        if not os.path.exists(project_root):
+            raise Fault(
+                "cannot do refactoring without a local project root",
+                code=400
+            )
+        self.project = Project(project_root, ropefolder=None)
+        self.resource = path_to_resource(self.project, filename)
 
     def get_refactor_options(self, start, end=None):
         """Return a list of options for refactoring at the given position.
