@@ -431,7 +431,8 @@ edited instead. Setting this variable to nil disables this feature."
                      "Emacs 24 and above"))))
   (elpy-modules-global-init)
   (define-key inferior-python-mode-map (kbd "C-c C-z") 'elpy-shell-switch-to-buffer)
-  (add-hook 'python-mode-hook 'elpy-mode))
+  (add-hook 'python-mode-hook 'elpy-mode)
+  (add-hook 'pyvenv-post-activate-hooks 'elpy-rpc--disconnect))
 
 (defun elpy-disable ()
   "Disable Elpy in all future Python buffers."
@@ -2898,6 +2899,13 @@ protocol if the buffer is larger than
   "Return the selected region as a string."
   (if (use-region-p)
       (buffer-substring (region-beginning) (region-end))))
+
+(defun elpy-rpc--disconnect ()
+  "Disconnect rpc process from elpy buffers."
+  (dolist (buf (buffer-list))
+    (with-current-buffer buf
+      (when (memq 'elpy-mode minor-mode-list)
+        (setq elpy-rpc--buffer nil)))))
 
 ;; RPC API functions
 
