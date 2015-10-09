@@ -40,8 +40,6 @@ class ImportMagicTestCase(BackendTestCase):
         candidates = self.importmagic.get_import_symbols('mymod')
         self.assertEqual(candidates, ['import mymod'])
 
-    @unittest.skipIf(impmagic.importmagic.__version__ == '0.1.3',
-                     "Import ordering is random, see #479")
     def test_add_import(self):
         self.build_index()
         start, end, newblock = self.importmagic.add_import(
@@ -49,7 +47,10 @@ class ImportMagicTestCase(BackendTestCase):
         self.assertEqual(start, 2)
         self.assertEqual(end, 5)
         self.assertEqual(newblock.strip(),
-                         'import logging\nimport time\n\nfrom mymod import AnUncommonName')
+                         'import logging\n'
+                         'import time\n'
+                         '\n'
+                         'from mymod import AnUncommonName')
 
         start, end, newblock = self.importmagic.add_import(
             TEST_SOURCE, 'import mymod')
