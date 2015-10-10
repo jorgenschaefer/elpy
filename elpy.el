@@ -959,8 +959,8 @@ virtual_env_short"
                                                          importmagic-version
                                                          importmagic-latest))
             ("Autopep8" . ,(elpy-config--package-link "autopep8"
-                                                         autopep8-version
-                                                         autopep8-latest))
+                                                      autopep8-version
+                                                      autopep8-latest))
             ("Syntax checker" . ,(let ((syntax-checker
                                         (executable-find
                                          python-check-command)))
@@ -3000,8 +3000,8 @@ Returns a possible multi-line docstring for the symbol at point."
   "Get the Pydoc documentation for SYMBOL.
 
 Returns a possible multi-line docstring."
-    (elpy-rpc "get_pydoc_documentation" (list symbol)
-              success error))
+  (elpy-rpc "get_pydoc_documentation" (list symbol)
+            success error))
 
 (defun elpy-rpc-get-usages (&optional success error)
   (elpy-rpc "get_usages"
