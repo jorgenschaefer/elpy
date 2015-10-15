@@ -1,25 +1,22 @@
 language: python
+sudo: no
 python:
   - 2.6
   - 2.7
   - 3.3
   - 3.4
 env:
-  - EVM_EMACS=emacs-24.1-bin
-  - EVM_EMACS=emacs-24.2-bin
-  - EVM_EMACS=emacs-24.3-bin
-  - EVM_EMACS=emacs-24.4-bin
-  - EVM_EMACS=emacs-24.5-bin
+  - EVM_EMACS=emacs-24.1-travis
+  - EVM_EMACS=emacs-24.2-travis
+  - EVM_EMACS=emacs-24.3-travis
+  - EVM_EMACS=emacs-24.4-travis
+  - EVM_EMACS=emacs-24.5-travis
   # - EVM_EMACS=emacs-git-snapshot
-install:
-  - sudo mkdir /usr/local/evm
-  - sudo chown $(id -u):$(id -g) /usr/local/evm
-  - curl -fsSkL https://raw.github.com/rejeep/evm/master/go | bash
-  - export PATH="$HOME/.evm/bin:$PATH"
-  - evm install $EVM_EMACS --use
-  - curl -fsSkL https://raw.github.com/cask/cask/master/go | python
-  - export PATH="$HOME/.cask/bin:$PATH"
+before_install:
+  - curl -fsSkL https://gist.github.com/rejeep/ebcd57c3af83b049833b/raw > travis.sh && source ./travis.sh
+  - evm install $EVM_EMACS --use --skip
   - cask
+install:
   - pip install jedi
   - if [[ "$TRAVIS_PYTHON_VERSION" == 2.6 ]] ; then
       pip install unittest2 ;
