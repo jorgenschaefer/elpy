@@ -14,6 +14,7 @@ discovery would find them there and try to run them, which would fail.
 
 import os
 import shutil
+import sys
 import tempfile
 import unittest
 
@@ -320,6 +321,11 @@ class RPCGetCompletionsTests(GenericRPCTests):
         for candidate in expected:
             self.assertIn(candidate, actual)
 
+    if sys.version_info >= (3, 5):
+        JSON_COMPLETIONS = ["SONDecoder", "SONEncoder", "SONDecodeError"]
+    else:
+        JSON_COMPLETIONS = ["SONDecoder", "SONEncoder"]
+
     def test_should_complete_imports(self):
         source, offset = source_and_offset("import json\n"
                                            "json.J_|_")
@@ -329,7 +335,7 @@ class RPCGetCompletionsTests(GenericRPCTests):
                                                        offset)
         self.assertEqual(
             sorted([cand['suffix'] for cand in completions]),
-            sorted(["SONDecoder", "SONEncoder"]))
+            sorted(self.JSON_COMPLETIONS))
 
     def test_should_complete_top_level_modules_for_import(self):
         source, offset = source_and_offset("import multi_|_")
@@ -414,18 +420,18 @@ class RPCGetCompletionsTests(GenericRPCTests):
 class RPCGetCompletionDocstringTests(object):
     def test_should_return_docstring(self):
         source, offset = source_and_offset("import json\n"
-                                           "json.J_|_")
+                                           "json.JSONEnc_|_")
         filename = self.project_file("test.py", source)
         completions = self.backend.rpc_get_completions(filename,
                                                        source,
                                                        offset)
         completions.sort(key=lambda p: p["name"])
         prop = completions[0]
-        self.assertEqual(prop["name"], "JSONDecoder")
+        self.assertEqual(prop["name"], "JSONEncoder")
 
-        docs = self.backend.rpc_get_completion_docstring("JSONDecoder")
+        docs = self.backend.rpc_get_completion_docstring("JSONEncoder")
 
-        self.assertIn("Simple JSON", docs)
+        self.assertIn("Extensible JSON", docs)
 
     def test_should_return_none_if_unknown(self):
         docs = self.backend.rpc_get_completion_docstring("Foo")

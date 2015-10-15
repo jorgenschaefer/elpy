@@ -3,6 +3,7 @@ import tempfile
 import shutil
 import os
 import mock
+import sys
 
 from elpy import refactor
 from textwrap import dedent
@@ -461,6 +462,7 @@ class TestExtractMethod(RefactorTestCase):
                     return y
             """)
 
+    @unittest.skipIf(sys.version_info >= (3, 5), "Python 3.5 not supported")
     def test_should_refactor_local(self):
         ref = refactor.Refactor(self.project_root, self.filename)
         (change,) = ref.refactor_extract_method(self.offset, 104,
@@ -487,6 +489,7 @@ class TestExtractMethod(RefactorTestCase):
         else:
             self.assertSourceEqual(change['contents'], expected)
 
+    @unittest.skipIf(sys.version_info >= (3, 5), "Python 3.5 not supported")
     def test_should_refactor_global(self):
         ref = refactor.Refactor(self.project_root, self.filename)
         (change,) = ref.refactor_extract_method(self.offset, 104,

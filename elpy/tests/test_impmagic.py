@@ -3,6 +3,7 @@
 """Tests for the elpy.impmagic module"""
 
 import re
+import sys
 import unittest
 
 from elpy import impmagic
@@ -18,8 +19,8 @@ time.sleep(1)
 '''
 
 
+@unittest.skipIf(sys.version_info >= (3, 5), "importmagic fails in 3.5")
 class ImportMagicTestCase(BackendTestCase):
-
     def setUp(self):
         if not impmagic.importmagic:
             raise unittest.SkipTest
