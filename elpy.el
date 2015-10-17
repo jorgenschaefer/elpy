@@ -2600,6 +2600,8 @@ died, this will kill the process and buffer."
                        full-python-command))
          (new-elpy-rpc-buffer (generate-new-buffer name))
          (proc nil))
+    (when (not full-python-command)
+      (error "Can't find Python command, configure `elpy-rpc-python-command'"))
     (with-current-buffer new-elpy-rpc-buffer
       (setq elpy-rpc--buffer-p t
             elpy-rpc--buffer (current-buffer)
