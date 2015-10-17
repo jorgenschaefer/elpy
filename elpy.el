@@ -2252,7 +2252,9 @@ name."
                              "symbol at point were found by the backend."))
           (message "No occurrences of the symbol at point found")))
        (t
-        (elpy-multiedit--usages usages))))))
+        (save-restriction
+          (widen)
+          (elpy-multiedit--usages usages)))))))
 
 (defun elpy-multiedit--usages (usages)
   "Mark the usages in USAGES for editing."
