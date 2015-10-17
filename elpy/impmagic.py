@@ -15,6 +15,10 @@ except ImportError:  # pragma: no cover
     importmagic = None
 
 
+class ImportMagicError(Exception):
+    """Used to pass defined errors from importmagic to the RPC layer."""
+
+
 class ImportMagic(object):
 
     def __init__(self):
@@ -80,12 +84,20 @@ class ImportMagic(object):
         return start_line, end_line, import_block
 
     def get_unresolved_symbols(self, source):
-        scope = importmagic.symbols.Scope.from_source(source)
+        try:
+            scope = importmagic.symbols.Scope.from_source(source)
+        except SyntaxError:
+            raise ImportMagicError('cannot find unresolved names in '
+                                   'incomplete file')
         unres, unref = scope.find_unresolved_and_unreferenced_symbols()
         return list(unres)
 
     def remove_unreferenced_imports(self, source):
-        scope = importmagic.symbols.Scope.from_source(source)
+        try:
+            scope = importmagic.symbols.Scope.from_source(source)
+        except SyntaxError:
+            raise ImportMagicError('cannot find unreferenced imports in '
+                                   'incomplete file')
         unres, unref = scope.find_unresolved_and_unreferenced_symbols()
         # Note: we do not supply "unres" to the call below, since we do
         # not want to add imports without querying the user from which
