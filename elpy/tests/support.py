@@ -376,13 +376,13 @@ class RPCGetCompletionsTests(GenericRPCTests):
                          sorted(expected))
 
     def test_should_complete_packages_for_import(self):
-        source, offset = source_and_offset("import elpy.tes_|_")
+        source, offset = source_and_offset("import email.mi_|_")
         filename = self.project_file("test.py", source)
         completions = self.backend.rpc_get_completions(filename,
                                                        source,
                                                        offset)
         self.assertEqual([cand['suffix'] for cand in completions],
-                         ["ts"])
+                         ["me"])
 
     def test_should_not_complete_for_import(self):
         source, offset = source_and_offset("import foo.Conf_|_")
