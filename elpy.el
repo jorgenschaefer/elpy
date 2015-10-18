@@ -269,6 +269,13 @@ edited instead. Setting this variable to nil disables this feature."
   :safe 'elpy-test-runner-p
   :group 'elpy)
 
+(defcustom elpy-test-do-at-point-p 'elpy-any-has-test-p
+  "Predicate that decides whether the module/class/test name
+information should be used to run a specific test or not"
+  :type '(choice (const :tag "Any of module/class/function name has test" elpy-any-has-test-p)
+                 (const :tag "All of module/class/function name have test" elpy-all-have-test-p))
+  :group 'elpy)
+
 (defcustom elpy-test-discover-runner-command '("python" "-m" "unittest")
   "The command to use for `elpy-test-discover-runner'."
   :type '(repeat string)
@@ -1871,7 +1878,7 @@ directory is not nil."
            (file buffer-file-name)
            (module (elpy-test--module-name-for-file top file))
            (test (elpy-test--current-test-name)))
-      (if (and file (string-match "/test[^/]*$" file))
+      (if (funcall elpy-test-do-at-point-p top file module test)
           (progn
             (save-buffer)
             (list top file module test))
@@ -1996,6 +2003,23 @@ This requires the pytest package to be installed."
    (t
     (apply #'elpy-test-run top elpy-test-pytest-runner-command))))
 (put 'elpy-test-pytest-runner 'elpy-test-runner-p t)
+
+(defun elpy-module-class-and-function-strings (module test)
+  (cons module (when (stringp test) (split-string test "\\."))))
+
+(defun elpy-string-and-contains-test (incoming)
+  (and (stringp incoming)
+       (s-contains-p "test" (s-downcase incoming))))
+
+(defun elpy-any-has-test-p (top file module test)
+  "Any of module/class/function name has test."
+  (cl-loop for item in (elpy-module-class-and-function-strings module test)
+           thereis (elpy-string-and-contains-test item)))
+
+(defun elpy-all-have-test-p (top file module test)
+  "All of module/class/function name have test."
+  (cl-loop for item in (elpy-module-class-and-function-strings module test)
+           always (elpy-string-and-contains-test item)))
 
 ;;;;;;;;;;;;;;;;;
 ;;; Documentation
