@@ -1,5 +1,6 @@
 """Tests for the elpy.jedibackend module."""
 
+import sys
 import unittest
 
 import jedi
@@ -84,9 +85,14 @@ class TestRPCGetCalltip(RPCGetCalltipTests,
     KEYS_CALLTIP = {'index': 0,
                     'params': [''],
                     'name': u'keys'}
-    RADIX_CALLTIP = {'index': None,
-                     'params': [],
-                     'name': u'radix'}
+    if sys.version_info >= (3, 5):
+        RADIX_CALLTIP = {'index': 0,
+                         'params': ['10'],
+                         'name': u'radix'}
+    else:
+        RADIX_CALLTIP = {'index': None,
+                         'params': [],
+                         'name': u'radix'}
     ADD_CALLTIP = {'index': 0,
                    'params': [u'a', u'b'],
                    'name': u'add'}
