@@ -3339,7 +3339,8 @@ display the current class and method instead."
          (set (make-local-variable 'flymake-warning-predicate) "^W[0-9]")
        (set (make-local-variable 'flymake-warning-re) "^W[0-9]"))
 
-     (flymake-mode 1))
+     (when (buffer-file-name)
+       (flymake-mode 1)))
     (`buffer-stop
      (flymake-mode -1)
      (kill-local-variable 'flymake-no-changes-timeout)
