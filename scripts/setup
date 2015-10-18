@@ -1,0 +1,21 @@
+#!/bin/bash
+
+set -e
+cd "$(dirname "$0")/.."
+
+if [ -z "$VIRTUAL_ENV" ]
+then
+    echo "Please run this script in a Python virtualenv" >&2
+    exit 1
+fi
+
+if python -c 'import sys ; exit(not sys.version_info >= (3, 0))'
+then
+    pip install -r requirements3.txt --upgrade
+else
+    pip install -r requirements.txt --upgrade
+fi
+pip install -r requirements-dev.txt --upgrade
+
+cask
+cask update

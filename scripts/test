@@ -1,0 +1,21 @@
+#!/bin/bash
+
+set -e
+cd "$(dirname "$0")/.."
+
+if [ -z "$1" -o "$1" = "elisp" ]
+then
+    cask exec ert-runner --quiet
+fi
+
+if [ -z "$1" -o "$1" = "python" ]
+then
+    python -tt -m unittest discover elpy
+fi
+
+if [ "$1" = "coverage" ]
+then
+    coverage run -m unittest discover
+    coverage html -d ~/Public/elpy-coverage.html
+    coverage report -m --fail-under=95
+fi

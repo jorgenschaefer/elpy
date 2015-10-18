@@ -1,0 +1,15 @@
+#!/bin/bash
+
+set -e
+cd "$(dirname "$0")/.."
+
+VERSION="$(sed -ne 's/^;; Version: \(.*\)/\1/p' elpy.el)"
+
+mkdir -p dist/
+tar -c elpy.el elpy-refactor.el elpy-pkg.el LICENSE README.rst \
+    snippets/ elpy/ \
+    --exclude "elpy/tests" --exclude '*.pyc' \
+    --transform "s,^,elpy-${VERSION}/," \
+    > "dist/elpy-${VERSION}.tar"
+
+echo "Created dist/elpy-${VERSION}.tar"
