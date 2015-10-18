@@ -270,7 +270,8 @@ def get_source(fileobj):
         return fileobj
     else:
         try:
-            with io.open(fileobj["filename"], encoding="utf-8") as f:
+            with io.open(fileobj["filename"], encoding="utf-8",
+                         errors="ignore") as f:
                 return f.read()
         finally:
             if fileobj.get('delete_after_use'):
