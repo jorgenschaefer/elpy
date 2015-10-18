@@ -21,7 +21,9 @@
                     flymake-allowed-file-name-masks))))
 
 (ert-deftest elpy-module-flymake-buffer-init ()
-  (elpy-testcase ()
+  (elpy-testcase ((:project project-root
+                            "test.py"))
+    (find-file (f-join project-root "test.py"))
     (elpy-module-flymake 'buffer-init)
 
     (should flymake-mode)
