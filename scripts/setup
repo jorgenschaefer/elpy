@@ -9,6 +9,8 @@ then
     exit 1
 fi
 
+pip install --upgrade pip setuptools
+
 if python -c 'import sys ; exit(not sys.version_info >= (3, 0))'
 then
     pip install -r requirements3.txt --upgrade
