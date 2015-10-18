@@ -292,6 +292,12 @@ def run_with_debug(jedi, name, *args, **kwargs):
                 "maximum recursion depth exceeded" in str(e)
         ):
             return None
+        # Bug #563 / jedi#589
+        if (
+                isinstance(e, AttributeError) and
+                "MergedNamesDict" in str(e)
+        ):
+            return None
 
         from jedi import debug
 

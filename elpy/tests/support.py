@@ -322,6 +322,15 @@ def funct2():
 
         self.rpc(filename, source, offset)
 
+    def test_should_not_fail_with_mergednamesdict(self):
+        # Bug #563 / jedi#589
+        source, offset = source_and_offset(
+            u'from email import message_|_'
+        )
+        filename = self.project_file("project.py", source)
+
+        self.rpc(filename, source, offset)
+
 
 class RPCGetCompletionsTests(GenericRPCTests):
     METHOD = "rpc_get_completions"
