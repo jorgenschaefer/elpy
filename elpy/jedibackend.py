@@ -286,6 +286,12 @@ def run_with_debug(jedi, name, *args, **kwargs):
         # Bug #561, #564, #570, #588, #593, #599 / jedi#572, jedi#579, jedi#590
         if isinstance(e, KeyError):
             return None
+        # Bug #519 / jedi#610
+        if (
+                isinstance(e, RuntimeError) and
+                "maximum recursion depth exceeded" in str(e)
+        ):
+            return None
 
         from jedi import debug
 

@@ -306,6 +306,22 @@ requests.get(u"https://web.archive.org/save/{}".format(url))
 
         self.rpc(filename, source, offset)
 
+    def test_should_not_fail_for_badly_defined_global_variable(self):
+        # Bug #519 / jedi#610
+        source, offset = source_and_offset(
+            """\
+def funct1():
+    global global_dict_var
+    global_dict_var = dict()
+
+def funct2():
+    global global_dict_var
+    q = global_dict_var.copy_|_()
+    print(q)""")
+        filename = self.project_file("project.py", source)
+
+        self.rpc(filename, source, offset)
+
 
 class RPCGetCompletionsTests(GenericRPCTests):
     METHOD = "rpc_get_completions"
