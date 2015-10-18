@@ -125,6 +125,14 @@ class JediBackend(object):
             call = None
         if not call:
             return None
+        # Bug #627 / jedi#573
+        try:
+            call.index
+        except AttributeError as e:
+            if "get_definition" in str(e):
+                return None
+            else:
+                raise
         return {"name": call.name,
                 "index": call.index,
                 "params": [param.description for param in call.params]}

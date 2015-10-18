@@ -79,7 +79,6 @@ class TestRPCGetDefinition(RPCGetDefinitionTests,
         self.assertIsNone(location)
 
 
-@unittest.skip("Broken in Jedi 0.9.0")
 class TestRPCGetCalltip(RPCGetCalltipTests,
                         JediBackendTestCase):
     KEYS_CALLTIP = {'index': 0,

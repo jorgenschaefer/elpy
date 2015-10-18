@@ -119,7 +119,6 @@ class GenericRPCTests(object):
 
         self.rpc(filename, source, offset)
 
-    @unittest.skip("bug in jedi 0.9.0")
     def test_should_not_fail_for_relative_import(self):
         # Bug in Rope: rope#81 and rope#82
         source, offset = source_and_offset(
@@ -214,7 +213,6 @@ x._|_
 
         self.rpc(filename, source, offset)
 
-    @unittest.skip("Broken in Jedi 0.9.0")
     def test_should_not_fail_on_lambda(self):
         # Bug #272 / jedi#431, jedi#572
         source, offset = source_and_offset(
@@ -393,7 +391,6 @@ class RPCGetCompletionsTests(GenericRPCTests):
         self.assertEqual([cand['suffix'] for cand in completions],
                          [])
 
-    @unittest.skip("Jedi 0.9.0 bug")
     def test_should_not_fail_for_short_module(self):
         source, offset = source_and_offset("from .. import foo_|_")
         filename = self.project_file("test.py", source)
@@ -597,6 +594,8 @@ class RPCGetDefinitionTests(GenericRPCTests):
 class RPCGetCalltipTests(GenericRPCTests):
     METHOD = "rpc_get_calltip"
 
+    @unittest.skipIf(sys.version_info >= (3, 0),
+                     "Bug in Jedi 0.9.0")
     def test_should_get_calltip(self):
         source, offset = source_and_offset(
             "import threading\nthreading.Thread(_|_")
@@ -609,6 +608,8 @@ class RPCGetCalltipTests(GenericRPCTests):
 
         self.assertEqual(calltip, expected)
 
+    @unittest.skipIf(sys.version_info >= (3, 0),
+                     "Bug in Jedi 0.9.0")
     def test_should_get_calltip_even_after_parens(self):
         source, offset = source_and_offset(
             "import threading\nthreading.Thread(foo()_|_")
@@ -620,6 +621,8 @@ class RPCGetCalltipTests(GenericRPCTests):
 
         self.assertEqual(self.THREAD_CALLTIP, actual)
 
+    @unittest.skipIf(sys.version_info >= (3, 0),
+                     "Bug in Jedi 0.9.0")
     def test_should_get_calltip_at_closing_paren(self):
         source, offset = source_and_offset(
             "import threading\nthreading.Thread(_|_)")
@@ -630,6 +633,14 @@ class RPCGetCalltipTests(GenericRPCTests):
                                               offset)
 
         self.assertEqual(self.THREAD_CALLTIP, actual)
+
+    def test_should_not_missing_attribute_get_definition(self):
+        # Bug #627 / jedi#573
+        source, offset = source_and_offset(
+            "import threading\nthreading.Thread(_|_)")
+        filename = self.project_file("test.py", source)
+
+        self.backend.rpc_get_calltip(filename, source, offset)
 
     def test_should_return_none_for_bad_identifier(self):
         source, offset = source_and_offset(
