@@ -684,11 +684,11 @@ item in another window.\n\n")
                         (member (expand-file-name "~/.local/bin/")
                                 exec-path))))
       (elpy-insert--para
-       "The directory ~/.local/bin/ is not in your PATH, even though you "
-       "do not have an active virtualenv. Installing Python packages "
-       "locally will create executables in that directory, so Emacs "
-       "won't find them. If you are missing some commands, do add this "
-       "directory to your PATH.\n\n"))
+       "The directory ~/.local/bin/ is not in your PATH. As there is "
+       "no active virtualenv, installing Python packages locally will "
+       "place executables in that directory, so Emacs won't find them. "
+       "If you are missing some commands, do add this directory to your "
+       "PATH.\n\n"))
 
     ;; Python found, but can't find the elpy module
     (when (and (gethash "python_rpc_executable" config)
