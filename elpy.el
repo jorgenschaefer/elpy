@@ -1880,7 +1880,7 @@ directory is not nil."
            (file buffer-file-name)
            (module (elpy-test--module-name-for-file top file))
            (test (elpy-test--current-test-name)))
-      (if (and file (string-match "/test[^/]*$" file))
+      (if (and file (string-match "test" (or module test "")))
           (progn
             (save-buffer)
             (list top file module test))
