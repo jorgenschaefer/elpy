@@ -3339,7 +3339,8 @@ display the current class and method instead."
          (set (make-local-variable 'flymake-warning-predicate) "^W[0-9]")
        (set (make-local-variable 'flymake-warning-re) "^W[0-9]"))
 
-     (when (buffer-file-name)
+     (when (and (buffer-file-name)
+                (executable-find python-check-command))
        (flymake-mode 1)))
     (`buffer-stop
      (flymake-mode -1)
