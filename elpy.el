@@ -144,6 +144,15 @@ These will be checked in turn. The first directory found is used."
                      elpy-project-find-svn-root))
   :group 'elpy)
 
+(defcustom elpy-company-hide-modeline t
+  "Non-nil if Elpy should remove company-mode's mode line display.
+
+Company shows the current backend there. For Elpy, this is mostly
+uninteresting information, but if you use company in other modes,
+you might want to keep it."
+  :type 'boolean
+  :group 'elpy)
+
 (defcustom elpy-rpc-backend nil
   "Your preferred backend.
 
@@ -3099,7 +3108,8 @@ time. Honestly."
   (pcase command
     (`global-init
      (require 'company)
-     (elpy-modules-remove-modeline-lighter 'company-mode)
+     (when elpy-company-hide-modeline
+       (elpy-modules-remove-modeline-lighter 'company-mode))
      (define-key company-active-map (kbd "C-d")
        'company-show-doc-buffer))
     (`buffer-init
