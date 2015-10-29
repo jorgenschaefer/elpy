@@ -154,7 +154,10 @@ class RopeBackend(object):
                      'meta': str(proposal)}
                     for proposal in proposals]
         except rope.base.exceptions.ModuleSyntaxError:
-            # Bug#406, #699
+            # Bug#406
+            return []
+        except AttributeError:
+            # Bug#699
             return []
 
     def rpc_get_completion_docstring(self, completion):
