@@ -125,11 +125,14 @@ class JediBackend(object):
             call = None
         if not call:
             return None
-        # Bug #627 / jedi#573
         try:
             call.index
         except AttributeError as e:
             if "get_definition" in str(e):
+                # Bug #627 / jedi#573
+                return None
+            elif "get_subscope_by_name" in str(e):
+                # Bug #677 / jedi#628
                 return None
             else:
                 raise

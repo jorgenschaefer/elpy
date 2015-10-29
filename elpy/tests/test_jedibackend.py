@@ -115,6 +115,19 @@ class TestRPCGetCalltip(RPCGetCalltipTests,
                                      "verbose=None"],
                           "index": 0}
 
+    def test_should_not_fail_with_get_subscope_by_name(self):
+        # Bug #677 / jedi#628
+        source = (
+            u"my_lambda = lambda x: x+1\n"
+            u"my_lambda(1)"
+        )
+        filename = self.project_file("project.py", source)
+        offset = 37
+
+        sigs = self.backend.rpc_get_calltip(filename, source, offset)
+        if sigs is not None:
+            sigs[0].index
+
 
 class TestRPCGetUsages(RPCGetUsagesTests,
                        JediBackendTestCase):
