@@ -3479,7 +3479,9 @@ description."
         (let ((new-block (elpy-rpc "fix_code" (list (elpy-rpc--region-contents))))
               (beg (region-beginning)) (end (region-end)))
           (elpy-buffer--replace-region beg end new-block))
-      (let ((new-block (elpy-rpc "fix_code" (list (elpy-rpc--buffer-contents))))
+      ;; Vector instead of list, json.el in Emacs 24.3 and before
+      ;; breaks for single-element lists of alists.
+      (let ((new-block (elpy-rpc "fix_code" (vector (elpy-rpc--buffer-contents))))
             (beg (point-min)) (end (point-max)))
         (elpy-buffer--replace-region beg end new-block)))
     (forward-line (1- line))
