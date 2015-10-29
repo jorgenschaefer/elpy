@@ -38,8 +38,8 @@ class JediBackend(object):
             return []
         self.completions = dict((proposal.name, proposal)
                                 for proposal in proposals)
-        return [{'name': proposal.name,
-                 'suffix': proposal.complete,
+        return [{'name': proposal.name.rstrip("="),
+                 'suffix': proposal.complete.rstrip("="),
                  'annotation': proposal.type,
                  'meta': proposal.description}
                 for proposal in proposals]
