@@ -1610,7 +1610,8 @@ with a prefix argument)."
 (defun elpy-goto-location (filename offset)
   "Show FILENAME at OFFSET to the user."
   (ring-insert find-tag-marker-ring (point-marker))
-  (let ((buffer (find-file filename)))
+  (find-file filename)
+  (let ((buffer (get-file-buffer filename)))
     (with-current-buffer buffer
       (with-selected-window (get-buffer-window buffer)
         (goto-char (1+ offset))
