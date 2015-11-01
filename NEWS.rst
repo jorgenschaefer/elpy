@@ -1,3 +1,30 @@
+New in Elpy 1.10.0
+==================
+
+- Marking the current indentation level at the top level will now mark
+  the whole buffer.
+- The region will be normalized before re-indenting it, making the
+  behavior more predictable for partially marked lines.
+- Using autopep8 on the whole buffer will now keep point (roughly) at
+  the same location as it was.
+- The autopep8 code now also uses the same configuration options as
+  the command line tool.
+- Malformed JSON data from the backend is now handled better.
+- RPC processes are restarted when the current virtualenv changes.
+- Python 3.5 is now officially supported.
+- Flymake will now not be enabled in buffers without file name, where
+  it can't run anyhow, or when the checker program does not exist in
+  the first place.
+- It is now possible to ask Elpy not to remove the mode line lighter
+  of company mode, which can be useful if you use company in other
+  modes.
+- Test discovery now also allows file names without "test" in them to
+  be tested. Classes and methods still require the substring, though.
+- Spurious equals signs at the end of completions from Jedi will now
+  be ignored.
+- Various other bug fixes.
+
+
 New in Elpy 1.9.0
 =================
 
