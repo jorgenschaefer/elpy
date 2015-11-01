@@ -309,6 +309,12 @@ def run_with_debug(jedi, name, *args, **kwargs):
                 "MergedNamesDict" in str(e)
         ):
             return None
+        # Bug #615 / jedi#592
+        if (
+                isinstance(e, AttributeError) and
+                "ListComprehension" in str(e)
+        ):
+            return None
         # Bug #569 / jedi#593
         if (
                 isinstance(e, AttributeError) and
