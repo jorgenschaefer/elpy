@@ -30,6 +30,7 @@ install:
     fi
   - pip install importmagic
   - pip install autopep8
+  - pip install yapf
   - pip install coveralls
 script:
   - nosetests

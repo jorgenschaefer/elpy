@@ -13,6 +13,7 @@ from elpy.pydocutils import get_pydoc_completions
 from elpy.rpc import JSONRPCServer, Fault
 from elpy.impmagic import ImportMagic, ImportMagicError
 from elpy.auto_pep8 import fix_code
+from elpy.yapfutil import fix_code as fix_code_with_yapf
 
 
 try:
@@ -253,6 +254,13 @@ class ElpyRPCServer(JSONRPCServer):
         """
         source = get_source(source)
         return fix_code(source)
+
+    def rpc_fix_code_with_yapf(self, source):
+        """Formats Python code to conform to the PEP 8 style guide.
+
+        """
+        source = get_source(source)
+        return fix_code_with_yapf(source)
 
 
 def get_source(fileobj):

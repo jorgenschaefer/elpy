@@ -3467,25 +3467,38 @@ description."
     (`buffer-stop
      (yas-minor-mode -1))))
 
+
+(defun elpy--fix-code-with-formatter (method)
+  "Common routine for formatting python code."
+  (let ((line (line-number-at-pos))
+        (col (current-column)))
+    (if (use-region-p)
+        (let ((new-block (elpy-rpc method (list (elpy-rpc--region-contents))))
+              (beg (region-beginning)) (end (region-end)))
+          (elpy-buffer--replace-region beg end new-block))
+      ;; Vector instead of list, json.el in Emacs 24.3 and before
+      ;; breaks for single-element lists of alists.
+      (let ((new-block (elpy-rpc method (vector (elpy-rpc--buffer-contents))))
+            (beg (point-min)) (end (point-max)))
+        (elpy-buffer--replace-region beg end new-block)))
+    (forward-line (1- line))
+    (forward-char col)))
+
 ;;;;;;;;;;;;;;;;;;
 ;;; Module: autopep8
 
 (defun elpy-autopep8-fix-code ()
   "Automatically formats Python code to conform to the PEP 8 style guide."
   (interactive)
-  (let ((line (line-number-at-pos))
-        (col (current-column)))
-    (if (use-region-p)
-        (let ((new-block (elpy-rpc "fix_code" (list (elpy-rpc--region-contents))))
-              (beg (region-beginning)) (end (region-end)))
-          (elpy-buffer--replace-region beg end new-block))
-      ;; Vector instead of list, json.el in Emacs 24.3 and before
-      ;; breaks for single-element lists of alists.
-      (let ((new-block (elpy-rpc "fix_code" (vector (elpy-rpc--buffer-contents))))
-            (beg (point-min)) (end (point-max)))
-        (elpy-buffer--replace-region beg end new-block)))
-    (forward-line (1- line))
-    (forward-char col)))
+  (elpy--fix-code-with-formatter "fix_code"))
+
+;;;;;;;;;;;;;;;;;;
+;;; Module: yapf
+
+(defun elpy-yapf-fix-code ()
+  "Automatically formats Python code with yapf."
+  (interactive)
+  (elpy--fix-code-with-formatter "fix_code_with_yapf"))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Backwards compatibility

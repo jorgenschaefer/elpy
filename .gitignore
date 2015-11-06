@@ -9,3 +9,4 @@ build/
 .tox/
 elpy.egg-info/
 _build
+.cache

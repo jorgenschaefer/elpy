@@ -33,6 +33,8 @@ First, install the required Python packages:::
   pip install importmagic
   # and autopep8 for automatic PEP8 formatting
   pip install autopep8
+  # and yapf for code formatting
+  pip install yapf
 
 
 Evaluate this in your ``*scratch*`` buffer:
