@@ -325,22 +325,24 @@ Elpy supports various forms of refactoring Python code.
    occurrences of the text in the region.
 
 
+.. command:: elpy-format-code
+   :kbd: C-c C-r f
+
+   Format code using the available formatter.
+
+   This command formats code using `yapf`_ or `autopep8`_ formatter. If a
+   region is selected, only that region is formatted. Otherwise current
+   buffer is formatted.
+
+.. _autopep8: https://github.com/hhatto/autopep8
+.. _yapf: https://github.com/google/yapf
+
 .. command:: elpy-importmagic-fixup
    :kbd: C-c C-r i
 
    Query for new imports of unresolved symbols, and remove unreferenced
    imports. Also sort the imports in the import statement blocks.
 
-.. command:: elpy-autopep8-fix-code
-   :kbd: C-c C-r p
-
-   Automatically formats Python code to conform to the PEP 8 style guide.
-
-   This command uses `autopep8`_ package to format the code. If a region
-   is selected, only that region is formatted. Otherwise current buffer is
-   formatted.
-
-.. _autopep8: https://github.com/hhatto/autopep8
 
 
 .. command:: elpy-refactor
@@ -352,4 +354,3 @@ Elpy supports various forms of refactoring Python code.
    options depending on the context.
 
 .. _rope: https://github.com/python-rope/rope
-
