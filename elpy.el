@@ -337,7 +337,7 @@ edited instead. Setting this variable to nil disables this feature."
     (define-key map (kbd "C-c C-v") 'elpy-check)
     (define-key map (kbd "C-c C-z") 'elpy-shell-switch-to-shell)
     (define-key map (kbd "C-c C-r i") 'elpy-importmagic-fixup)
-    (define-key map (kbd "C-c C-r p") 'elpy-autopep8-fix-code)
+    (define-key map (kbd "C-c C-r f") 'elpy-format-code)
     (define-key map (kbd "C-c C-r r") 'elpy-refactor)
 
     (define-key map (kbd "<S-return>") 'elpy-open-and-indent-line-below)
@@ -3516,6 +3516,17 @@ description."
         (elpy-buffer--replace-region beg end new-block)))
     (forward-line (1- line))
     (forward-char col)))
+
+(defun elpy-format-code ()
+  "Format code using the available formatter."
+  (interactive)
+  (cond
+   ((executable-find "yapf")
+    (elpy-yapf-fix-code))
+   ((executable-find "autopep8")
+    (elpy-autopep8-fix-code))
+   (t
+    (message "Install yapf/autopep8 to format code."))))
 
 ;;;;;;;;;;;;;;;;;;
 ;;; Module: autopep8
