@@ -153,8 +153,9 @@ class RopeBackend(object):
                      'annotation': proposal.type,
                      'meta': str(proposal)}
                     for proposal in proposals]
-        except rope.base.exceptions.ModuleSyntaxError:
-            # Bug#406
+        except (rope.base.exceptions.AttributeNotFoundError,
+                rope.base.exceptions.ModuleSyntaxError):
+            # Bug#406, Bug#715
             return []
         except AttributeError:
             # Bug#699
