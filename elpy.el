@@ -573,6 +573,14 @@ except:
     config['autopep8_version'] = None
     config['autopep8_latest'] = latest('autopep8')
 
+try:
+    import yapf
+    config['yapf_version'] = yapf.__version__
+    config['yapf_latest'] = latest('yapf', config['yapf_version'])
+except:
+    config['yapf_version'] = None
+    config['yapf_latest'] = latest('yapf')
+
 json.dump(config, sys.stdout)
 ")
 
@@ -826,6 +834,26 @@ item in another window.\n\n")
                      :package "autopep8" :upgrade t)
       (insert "\n\n"))
 
+    ;; No yapf available
+    (when (not (gethash "yapf_version" config))
+      (elpy-insert--para
+       "The yapf package is not available. Commands using this will "
+       "not work.\n")
+      (insert "\n")
+      (widget-create 'elpy-insert--pip-button
+                     :package "yapf")
+      (insert "\n\n"))
+
+    ;; Newer version of yapf available
+    (when (and (gethash "yapf_version" config)
+               (gethash "yapf_latest" config))
+      (elpy-insert--para
+       "There is a newer version of the yapf package available.\n")
+      (insert "\n")
+      (widget-create 'elpy-insert--pip-button
+                     :package "yapf" :upgrade t)
+      (insert "\n\n"))
+
     ;; flake8, the default syntax checker, not found
     (when (not (executable-find python-check-command))
       (elpy-insert--para
@@ -916,6 +944,8 @@ virtual_env_short"
         (importmagic-latest (gethash "importmagic_latest" config))
         (autopep8-version (gethash "autopep8_version" config))
         (autopep8-latest (gethash "autopep8_latest" config))
+        (yapf-version (gethash "yapf_version" config))
+        (yapf-latest (gethash "yapf_latest" config))
         (virtual-env (gethash "virtual_env" config))
         (virtual-env-short (gethash "virtual_env_short" config))
         table maxwidth)
@@ -970,6 +1000,9 @@ virtual_env_short"
             ("Autopep8" . ,(elpy-config--package-link "autopep8"
                                                       autopep8-version
                                                       autopep8-latest))
+            ("Yapf" . ,(elpy-config--package-link "yapf"
+                                                  yapf-version
+                                                  yapf-latest))
             ("Syntax checker" . ,(let ((syntax-checker
                                         (executable-find
                                          python-check-command)))
