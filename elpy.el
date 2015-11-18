@@ -1312,7 +1312,8 @@ file is <name>.py, and is either in the same directors or a
         (elpy-find-file nil))))
    (t
     (let ((ffip-prune-patterns elpy-project-ignored-directories)
-          (ffip-project-root (elpy-project-root))
+          (ffip-project-root (or (elpy-project-root)
+                                 default-directory))
           ;; Set up ido to use vertical file lists.
           (ido-decorations '("\n" "" "\n" "\n..."
                              "[" "]" " [No match]" " [Matched]"
