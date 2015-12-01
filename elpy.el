@@ -1655,7 +1655,7 @@ with a prefix argument)."
 
 This will skip over lines and statements with different
 indentation levels."
-  (interactive)
+  (interactive "^")
   (let ((indent (current-column))
         (start (point))
         (cur nil))
@@ -1679,7 +1679,7 @@ indentation levels."
 
 This will skip over lines and statements with different
 indentation levels."
-  (interactive)
+  (interactive "^")
   (let ((indent (current-column))
         (start (point))
         (cur nil))
