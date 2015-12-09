@@ -111,7 +111,7 @@ Elpy has full support for Python's virtual envs. Every RPC process is
 associated with a specific virtual env and completions are done based
 on that environment.
 
-Outside of RPC processes, though, it is not easy to more than one
+Outside of RPC processes, though, it is not easy to have more than one
 virtual env active at the same time. Elpy allows you to set a single
 global virtual env and change it whenever you like, though.
 
