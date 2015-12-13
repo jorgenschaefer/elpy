@@ -144,11 +144,12 @@ These will be checked in turn. The first directory found is used."
                      elpy-project-find-svn-root))
   :group 'elpy)
 
-(defcustom elpy-company-hide-modeline t
-  "Non-nil if Elpy should remove company-mode's mode line display.
+(make-obsolete-variable 'elpy-company-hide-modeline 'elpy-remove-modeline-lighter)
+(defcustom elpy-remove-modeline-lighter t
+  "Non-nil if Elpy should remove most mode line display.
 
-Company shows the current backend there. For Elpy, this is mostly
-uninteresting information, but if you use company in other modes,
+Modeline shows many minor modes currently active. For Elpy, this is mostly
+uninteresting information, but if you rely on your modeline in other modes,
 you might want to keep it."
   :type 'boolean
   :group 'elpy)
@@ -3107,17 +3108,22 @@ Make sure global-init is called first."
 (defun elpy-modules-remove-modeline-lighter (mode-name)
   "Remove the lighter for MODE-NAME.
 
-It's not necessary to see (Python Elpy yas company ElDoc) all the
-time. Honestly."
+It should not be necessary to see (Python Elpy yas company ElDoc) all the
+time. 
+
+If you need your modeline, you can set the variable `elpy-remove-modeline-lighter' to nil
+"
+
   (interactive)
-  (cond
-   ((eq mode-name 'eldoc-minor-mode)
-    (setq eldoc-minor-mode-string nil))
-   (t
-    (let ((cell (assq mode-name minor-mode-alist)))
-      (when cell
-        (setcdr cell
-                (list "")))))))
+  (when elpy-remove-modeline-lighter
+    (cond
+     ((eq mode-name 'eldoc-minor-mode)
+      (setq eldoc-minor-mode-string nil))
+     (t
+      (let ((cell (assq mode-name minor-mode-alist)))
+	(when cell
+	  (setcdr cell
+		  (list ""))))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Module: Sane Defaults
@@ -3142,8 +3148,7 @@ time. Honestly."
   (pcase command
     (`global-init
      (require 'company)
-     (when elpy-company-hide-modeline
-       (elpy-modules-remove-modeline-lighter 'company-mode))
+     (elpy-modules-remove-modeline-lighter 'company-mode)
      (define-key company-active-map (kbd "C-d")
        'company-show-doc-buffer))
     (`buffer-init
