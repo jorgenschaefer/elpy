@@ -1565,8 +1565,15 @@ code is executed."
          (proc (get-buffer-process bufname)))
     (if proc
         proc
-      (run-python (python-shell-parse-command))
-      (get-buffer-process bufname))))
+      (run-python
+       (if (get-buffer-process bufname)
+	   (get-buffer-process bufname)
+	 "")
+       (python-shell-parse-command)
+       )
+      )
+    )
+)
 
 (defun elpy-shell--region-without-indentation (beg end)
   "Return the current region as a string, but without indentation."
