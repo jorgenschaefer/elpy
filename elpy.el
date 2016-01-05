@@ -260,6 +260,24 @@ message again within this amount of seconds."
   :type 'integer
   :group 'elpy)
 
+(defcustom elpy-company-post-completion-function
+  'elpy-company-post-complete-parens
+  "Your preferred Company post completion function.
+
+The post completion function in Elpy appends parentheses after callables
+leaving point between them, so that you can delete them with a single
+keystroke in case you enabled a minor mode facilitating insertion of
+matching delimiters such as `auto-pair-mode', `electric-pair-mode', or
+`smartparens-mode'.
+In case you did not enable such a minor mode, you may can either set the
+post completion function to `ignore' (effectively disabling it) or set it
+to any other function accepting the post completion function arguments."
+  :type '(choice (const :tag "Ignore post complete" ignore)
+                 (const :tag "Complete callables with parens"
+                        elpy-company-post-complete-parens)
+                 (function :tag "Other function"))
+  :group 'elpy)
+
 (defcustom elpy-eldoc-show-current-function t
   "If true, show the current function if no calltip is available.
 
@@ -3233,6 +3251,105 @@ here, and return the \"name\" as used by the backend."
               name))
           result))
 
+(defun elpy-company--python-exception-p (name)
+  "Check whether NAME is a Python exception."
+  (member name '("ArithmeticError"
+                 "AssertionError"
+                 "AttributeError"
+                 "BlockingIOError"
+                 "BrokenPipeError"
+                 "BufferError"
+                 "BytesWarning"
+                 "ChildProcessError"
+                 "ConnectionAbortedError"
+                 "ConnectionError"
+                 "ConnectionRefusedError"
+                 "ConnectionResetError"
+                 "DeprecationWarning"
+                 "EOFError"
+                 "EnvironmentError"
+                 "Exception"
+                 "FileExistsError"
+                 "FileNotFoundError"
+                 "FloatingPointError"
+                 "FutureWarning"
+                 "IOError"
+                 "ImportError"
+                 "ImportWarning"
+                 "IndentationError"
+                 "IndexError"
+                 "InterruptedError"
+                 "IsADirectoryError"
+                 "KeyError"
+                 "LookupError"
+                 "MemoryError"
+                 "NameError"
+                 "NotADirectoryError"
+                 "NotImplementedError"
+                 "OSError"
+                 "OverflowError"
+                 "PendingDeprecationWarning"
+                 "PermissionError"
+                 "ProcessLookupError"
+                 "RecursionError"
+                 "ReferenceError"
+                 "ResourceWarning"
+                 "RuntimeError"
+                 "RuntimeWarning"
+                 "StandardError"
+                 "StopAsyncIteration"
+                 "StopIteration"
+                 "SyntaxError"
+                 "SyntaxWarning"
+                 "SystemError"
+                 "TabError"
+                 "TimeoutError"
+                 "TypeError"
+                 "UnboundLocalError"
+                 "UnicodeDecodeError"
+                 "UnicodeEncodeError"
+                 "UnicodeError"
+                 "UnicodeTranslateError"
+                 "UnicodeWarning"
+                 "UserWarning"
+                 "ValueError"
+                 "Warning"
+                 "ZeroDivisionError")))
+
+(defun elpy-company-post-complete-parens (annotation name)
+  "Complete functions, classes, and callable instances with parentheses.
+
+Add parentheses in case ANNOTATION is \"class\", \"function\", or \"instance\",
+unless the completion is already looking at a left parenthesis,
+or unless NAME is a Python exception outside a reasonably formed raise statement,
+or unless NAME is no callable instance."
+  (when (not (looking-at-p "\("))
+    (cond ((string= annotation "function")
+           (insert "()")
+           (backward-char 1))
+          ((string= annotation "class")
+           (cond ((elpy-company--python-exception-p name)
+                  (when (save-excursion
+                          (backward-word 2)
+                          (looking-at "\\_<raise\\_>"))
+                    (insert "()")
+                    (backward-char 1)))
+                 (t
+                  (insert "()")
+                  (backward-char 1))))
+          ((string= annotation "instance")
+           ;; The jedi backend annotates some callables as instances (e.g. numpy
+           ;; and scipy) and `elpy-company--cache' does not allow to identify
+           ;; callable instances.
+           ;; It looks easy to modify `elpy-company--cache' cheaply for the jedi
+           ;; backend to eliminate the `elpy-rpc-get-calltip' call below, but
+           ;; not for the rope backend.
+           (insert "()")
+           (backward-char 1)
+           (when (not (elpy-rpc-get-calltip))
+             (backward-char 1)
+             (delete-char 2))))))
+
 (defun elpy-company-backend (command &optional arg &rest ignored)
   "A company-mode backend for Elpy."
   (interactive (list 'interactive))
@@ -3302,7 +3419,10 @@ here, and return the \"name\" as used by the backend."
                (cadr loc)))))
     ;; match <candidate> => for non-prefix based backends
     ;; post-completion <candidate> => after insertion, for snippets
-    ))
+    (`post-completion
+     (funcall elpy-company-post-completion-function
+              (elpy-company--cache-annotation arg)
+              (elpy-company--cache-name arg)))))
 
 (defun elpy--sort-and-strip-duplicates (seq)
   "Sort SEQ and remove any duplicates."
