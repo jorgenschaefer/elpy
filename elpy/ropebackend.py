@@ -8,7 +8,6 @@ http://rope.sourceforge.net/
 
 import os
 import time
-import traceback
 
 import rope.contrib.codeassist
 import rope.base.project
@@ -98,35 +97,8 @@ class RopeBackend(object):
                                  resource,
                                  maxfixes=MAXFIXES,
                                  **kwargs)
-        except (RopeError,
-                IndentationError,
-                LookupError,
-                AttributeError):
+        except Exception:
             return None
-        except Exception as e:
-            data = {
-                "traceback": traceback.format_exc(),
-                "rope_debug_info": {
-                    "project_root": self.project_root,
-                    "filename": filename,
-                    "source": source,
-                    "function_name": (rope_function.__module__ +
-                                      "." +
-                                      rope_function.__name__),
-                    "function_args": ", ".join([
-                        "project", "source", str(offset), "resource",
-                        "maxfixes={0}".format(MAXFIXES)
-                    ] + [
-                        u"{}={}".format(k, v)
-                        for (k, v) in kwargs.items()
-                    ])
-                }
-            }
-            raise rpc.Fault(
-                code=500,
-                message=str(e),
-                data=data
-            )
 
     def rpc_get_completions(self, filename, source, offset):
         proposals = self.call_rope(
@@ -138,11 +110,7 @@ class RopeBackend(object):
         try:
             starting_offset = rope.contrib.codeassist.starting_offset(source,
                                                                       offset)
-        except (rope.base.exceptions.BadIdentifierError,
-                rope.base.exceptions.ModuleSyntaxError,
-                IndentationError,
-                LookupError,
-                AttributeError):
+        except Exception:
             return []
         prefixlen = offset - starting_offset
         try:
@@ -153,12 +121,7 @@ class RopeBackend(object):
                      'annotation': proposal.type,
                      'meta': str(proposal)}
                     for proposal in proposals]
-        except (rope.base.exceptions.AttributeNotFoundError,
-                rope.base.exceptions.ModuleSyntaxError):
-            # Bug#406, Bug#715
-            return []
-        except AttributeError:
-            # Bug#699
+        except Exception:
             return []
 
     def rpc_get_completion_docstring(self, completion):
