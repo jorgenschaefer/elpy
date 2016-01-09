@@ -310,6 +310,11 @@ edited instead. Setting this variable to nil disables this feature."
   :type 'string
   :group 'elpy)
 
+(defcustom elpy-disable-backend-error-display nil
+  "Non-nil if Elpy should disable backed error display."
+  :type 'boolean
+  :group 'elpy)
+
 ;;;;;;;;;;;;;
 ;;; Elpy Mode
 
@@ -2832,7 +2837,7 @@ This is usually an error or backtrace."
                     elpy-rpc-error-timeout)))
         (message "Elpy error popup ignored, see `elpy-rpc-error-timeout': %s"
                  message))
-       (t
+       ((not elpy-disable-backend-error-display)
         (let ((config (elpy-config--get-config)))
           (elpy-insert--popup "*Elpy Error*"
             (elpy-insert--header "Elpy Error")
