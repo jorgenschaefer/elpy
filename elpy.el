@@ -1647,6 +1647,16 @@ with a prefix argument)."
         (elpy-goto-location (car location) (cadr location))
       (error "No definition found"))))
 
+(defun elpy-goto-definition-or-rgrep ()
+  "Go to the definition of the symbol at point, if found. Otherwise, run `elpy-rgrep-symbol'.
+
+This first tries `elpy-goto-definition' on the symbol. If it fails to find the definition
+it passes the symbol, wrapped in a regexp for class/function definitions, off to `elpy-rgrep-symbol'"
+    (interactive)
+    (condition-case nil (elpy-goto-definition)
+        (error (elpy-rgrep-symbol
+                   (concat "\\(def\\|class\\)\s" (thing-at-point 'symbol) "(")))))
+
 (defun elpy-goto-location (filename offset)
   "Show FILENAME at OFFSET to the user."
   (ring-insert find-tag-marker-ring (point-marker))
