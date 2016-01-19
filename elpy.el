@@ -362,6 +362,7 @@ edited instead. Setting this variable to nil disables this feature."
     (define-key map (kbd "<M-right>") 'elpy-nav-indent-shift-right)
 
     (define-key map (kbd "M-.")     'elpy-goto-definition)
+    (define-key map (kbd "C-x 4 M-.")     'elpy-goto-definition-other-window)
     (define-key map (kbd "M-TAB")   'elpy-company-backend)
 
     map)
@@ -1647,14 +1648,25 @@ with a prefix argument)."
         (elpy-goto-location (car location) (cadr location))
       (error "No definition found"))))
 
-(defun elpy-goto-location (filename offset)
-  "Show FILENAME at OFFSET to the user."
+(defun elpy-goto-definition-other-window ()
+  "Go to the definition of the symbol at point in other window, if found."
+  (interactive)
+  (let ((location (elpy-rpc-get-definition)))
+    (if location
+        (elpy-goto-location (car location) (cadr location) 'other-window)
+      (error "No definition found"))))
+
+(defun elpy-goto-location (filename offset &optional other-window-p)
+  "Show FILENAME at OFFSET to the user.
+
+If other-window-p is non-nil, show the same in other window."
   (ring-insert find-tag-marker-ring (point-marker))
-  (let ((buffer (find-file filename)))
-    (with-current-buffer buffer
-      (with-selected-window (get-buffer-window buffer)
-        (goto-char (1+ offset))
-        (recenter 0)))))
+  (let ((buffer (find-file-noselect filename)))
+    (if other-window-p
+        (pop-to-buffer buffer t)
+      (switch-to-buffer buffer))
+    (goto-char (1+ offset))
+    (recenter 0)))
 
 (defun elpy-nav-forward-block ()
   "Move to the next line indented like point.
@@ -3126,9 +3138,9 @@ If you need your modeline, you can set the variable `elpy-remove-modeline-lighte
       (setq eldoc-minor-mode-string nil))
      (t
       (let ((cell (assq mode-name minor-mode-alist)))
-	(when cell
-	  (setcdr cell
-		  (list ""))))))))
+        (when cell
+          (setcdr cell
+                  (list ""))))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Module: Sane Defaults

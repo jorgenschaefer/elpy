@@ -13,3 +13,10 @@
     (elpy-goto-location (f-join project-root "test.py")
                         4)
     (should (looking-at "bar"))))
+
+(ert-deftest elpy-goto-location-should-open-location-in-other-window ()
+  (elpy-testcase ((:project project-root ("test.py" "foo\nbar")))
+                 (elpy-goto-location (f-join project-root "test.py")
+                                     4
+                                     t)
+                 (should (= (count-windows) 2))))
