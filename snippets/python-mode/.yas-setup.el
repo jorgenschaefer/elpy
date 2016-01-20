@@ -47,13 +47,19 @@
                "")))
 
 (defun elpy-snippet-super-form ()
-  "Return (Class, first-arg).method"
+  "Return (Class, first-arg).method if Py2.
+Else return ().method for Py3."
   (let* ((defun-info (elpy-snippet-current-method-and-args))
          (class (nth 0 defun-info))
          (method (nth 1 defun-info))
          (args (nth 2 defun-info))
-         (first-arg (nth 0 args)))
-    (format "(%s, %s).%s" class first-arg method)))
+         (first-arg (nth 0 args))
+         (py-version-command " -c 'import sys ; print(sys.version_info.major)'")
+         ;; Get the python version. Either 2 or 3
+         (py-version-num (substring (shell-command-to-string (concat elpy-rpc-python-command py-version-command))0 1)))
+    (if (string-match py-version-num "2")
+        (format "(%s, %s).%s" class first-arg method)
+      (format "().%s" method))))
 
 (defun elpy-snippet-super-arguments ()
   "Return the argument list for the current method."
