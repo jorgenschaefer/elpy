@@ -307,7 +307,13 @@ class Refactor(object):
              available=ROPE_AVAILABLE)
     def refactor_use_function(self, offset):
         """Use the function at point wherever possible."""
-        refactor = UseFunction(self.project, self.resource, offset)
+        try:
+            refactor = UseFunction(self.project, self.resource, offset)
+        except RefactoringError as e:
+            raise Fault(
+                'Refactoring error: {}'.format(e),
+                code=400
+            )
         return self._get_changes(refactor)
 
     def _get_changes(self, refactor, *args, **kwargs):
