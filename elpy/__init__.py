@@ -1,6 +1,6 @@
 # Elpy, the Emacs Lisp Python Environment
 
-# Copyright (C) 2013 Jorgen Schaefer
+# Copyright (C) 2013-2016 Jorgen Schaefer
 
 # Author: Jorgen Schaefer <contact@jorgenschaefer.de>
 # URL: http://github.com/jorgenschaefer/elpy
