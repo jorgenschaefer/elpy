@@ -1,3 +1,19 @@
+New in Elpy 1.11.0
+==================
+
+- Elpy now supports yapf to format your code.
+- You can now adjust whether Elpy should hide modes from the mode line
+  or not using ``elpy-remove-modeline-lighter``
+- When the new option ``elpy-disable-backend-error-display`` is set,
+  Elpy will not show its error pop-up anymore. This can be useful if
+  you run into an annoying bug in Jedi, for example.
+- New command ``elpy-goto-definition-other-window`` on ``C-x 4 M-.``.
+- Expanding ``super`` now gives the short form supported in Python 3.
+- All Rope errors are now caught, as the upstream maintainers did not
+  show interest in distinguishing between malformed input and bugs in
+  their library.
+
+
 New in Elpy 1.10.0
 ==================
 
