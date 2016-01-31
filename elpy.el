@@ -1,6 +1,6 @@
 ;;; elpy.el --- Emacs Python Development Environment -*- lexical-binding: t -*-
 
-;; Copyright (C) 2012-2014  Jorgen Schaefer
+;; Copyright (C) 2012-2016  Jorgen Schaefer
 
 ;; Author: Jorgen Schaefer <contact@jorgenschaefer.de>
 ;; URL: https://github.com/jorgenschaefer/elpy
