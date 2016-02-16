@@ -2786,8 +2786,8 @@ RPC calls with the event."
     (elpy-insert--popup "*Elpy Version Mismatch*"
       (elpy-insert--header "Elpy Version Mismatch")
       (elpy-insert--para
-       "You are not using the same version of Elpy in Emacs Lisp"
-       "compared to Python. This can cause random problems. Please"
+       "You are not using the same version of Elpy in Emacs Lisp "
+       "compared to Python. This can cause random problems. Please "
        "do make sure to use compatible versions.\n")
       (insert
        "\n"
