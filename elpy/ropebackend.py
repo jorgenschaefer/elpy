@@ -14,7 +14,6 @@ import rope.base.project
 import rope.base.libutils
 import rope.base.exceptions
 import rope.contrib.findit
-from rope.base.exceptions import RopeError
 
 from elpy import rpc
 import elpy.pydocutils
