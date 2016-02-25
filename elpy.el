@@ -318,6 +318,20 @@ edited instead. Setting this variable to nil disables this feature."
 ;;;;;;;;;;;;;
 ;;; Elpy Mode
 
+(defvar elpy-refactor-map
+  (let ((map (make-sparse-keymap "Refactor")))
+    (define-key map (kbd "i") (cons (format "%smport fixup"
+                                            (propertize "i" 'face 'bold))
+                                    'elpy-importmagic-fixup))
+    (define-key map (kbd "f") (cons (format "%sormat code"
+                                            (propertize "f" 'face 'bold))
+                                    'elpy-format-code))
+    (define-key map (kbd "r") (cons (format "%sefactor"
+                                            (propertize "r" 'face 'bold))
+                                    'elpy-refactor))
+    map)
+  "Key map for the refactor command")
+
 (defvar elpy-mode-map
   (let ((map (make-sparse-keymap)))
     ;; Alphabetical order to make it easier to find free C-c C-X
@@ -342,9 +356,7 @@ edited instead. Setting this variable to nil disables this feature."
     (define-key map (kbd "C-c C-t") 'elpy-test)
     (define-key map (kbd "C-c C-v") 'elpy-check)
     (define-key map (kbd "C-c C-z") 'elpy-shell-switch-to-shell)
-    (define-key map (kbd "C-c C-r i") 'elpy-importmagic-fixup)
-    (define-key map (kbd "C-c C-r f") 'elpy-format-code)
-    (define-key map (kbd "C-c C-r r") 'elpy-refactor)
+    (define-key map (kbd "C-c C-r") elpy-refactor-map)
 
     (define-key map (kbd "<S-return>") 'elpy-open-and-indent-line-below)
     (define-key map (kbd "<C-S-return>") 'elpy-open-and-indent-line-above)
