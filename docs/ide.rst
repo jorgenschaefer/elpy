@@ -120,13 +120,18 @@ projects.
    point. Especially after a few indirections, they have basically no
    hope of guessing right, so they don't.
 
+.. command:: elpy-goto-definition-other-window
+   :kbd: C-x 4 M-.
+
+   Same as `elpy-go-to-definition` (with the same caveats) but goes to
+   the definition of the symbol at point in other window, if defined.
+
 .. command:: pop-tag-mark
    :kbd: M-*
 
    Go back to the last place where :kbd:`M-.` was used, effectively
    turning :kbd:`M-.` and :kbd:`M-*` into a forward and backward
    motion for definition lookups.
-
 
 Interactive Python
 ==================
