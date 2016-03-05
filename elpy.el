@@ -2161,7 +2161,7 @@ prefix argument is given, prompt for a symbol from the user."
       (delete-region beg end))))
 
 
-;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Import manipulation
 
 (defun elpy-importmagic--add-import-read-args (&optional object prompt)
@@ -2216,6 +2216,46 @@ Also sort the imports in the import statement blocks."
                                                             (elpy-rpc--buffer-contents)))))
     (unless (stringp res)
       (elpy-buffer--replace-block res))))
+
+;;;;;;;;;;;;;;;;;;;;;
+;;; Code reformatting
+
+(defun elpy-format-code ()
+  "Format code using the available formatter."
+  (interactive)
+  (cond
+   ((executable-find "yapf")
+    (elpy-yapf-fix-code))
+   ((executable-find "autopep8")
+    (elpy-autopep8-fix-code))
+   (t
+    (message "Install yapf/autopep8 to format code."))))
+
+(defun elpy-yapf-fix-code ()
+  "Automatically formats Python code with yapf."
+  (interactive)
+  (elpy--fix-code-with-formatter "fix_code_with_yapf"))
+
+(defun elpy-autopep8-fix-code ()
+  "Automatically formats Python code to conform to the PEP 8 style guide."
+  (interactive)
+  (elpy--fix-code-with-formatter "fix_code"))
+
+(defun elpy--fix-code-with-formatter (method)
+  "Common routine for formatting python code."
+  (let ((line (line-number-at-pos))
+        (col (current-column)))
+    (if (use-region-p)
+        (let ((new-block (elpy-rpc method (list (elpy-rpc--region-contents))))
+              (beg (region-beginning)) (end (region-end)))
+          (elpy-buffer--replace-region beg end new-block))
+      ;; Vector instead of list, json.el in Emacs 24.3 and before
+      ;; breaks for single-element lists of alists.
+      (let ((new-block (elpy-rpc method (vector (elpy-rpc--buffer-contents))))
+            (beg (point-min)) (end (point-max)))
+        (elpy-buffer--replace-region beg end new-block)))
+    (forward-line (1- line))
+    (forward-char col)))
 
 ;;;;;;;;;;;;;;
 ;;; Multi-Edit
@@ -3534,50 +3574,6 @@ description."
      (yas-minor-mode 1))
     (`buffer-stop
      (yas-minor-mode -1))))
-
-
-(defun elpy--fix-code-with-formatter (method)
-  "Common routine for formatting python code."
-  (let ((line (line-number-at-pos))
-        (col (current-column)))
-    (if (use-region-p)
-        (let ((new-block (elpy-rpc method (list (elpy-rpc--region-contents))))
-              (beg (region-beginning)) (end (region-end)))
-          (elpy-buffer--replace-region beg end new-block))
-      ;; Vector instead of list, json.el in Emacs 24.3 and before
-      ;; breaks for single-element lists of alists.
-      (let ((new-block (elpy-rpc method (vector (elpy-rpc--buffer-contents))))
-            (beg (point-min)) (end (point-max)))
-        (elpy-buffer--replace-region beg end new-block)))
-    (forward-line (1- line))
-    (forward-char col)))
-
-(defun elpy-format-code ()
-  "Format code using the available formatter."
-  (interactive)
-  (cond
-   ((executable-find "yapf")
-    (elpy-yapf-fix-code))
-   ((executable-find "autopep8")
-    (elpy-autopep8-fix-code))
-   (t
-    (message "Install yapf/autopep8 to format code."))))
-
-;;;;;;;;;;;;;;;;;;
-;;; Module: autopep8
-
-(defun elpy-autopep8-fix-code ()
-  "Automatically formats Python code to conform to the PEP 8 style guide."
-  (interactive)
-  (elpy--fix-code-with-formatter "fix_code"))
-
-;;;;;;;;;;;;;;;;;;
-;;; Module: yapf
-
-(defun elpy-yapf-fix-code ()
-  "Automatically formats Python code with yapf."
-  (interactive)
-  (elpy--fix-code-with-formatter "fix_code_with_yapf"))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Backwards compatibility
