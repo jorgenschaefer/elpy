@@ -50,7 +50,6 @@ class ImportMagicTestCase(BackendTestCase):
         self.assertEqual(newblock.strip(),
                          'import logging\n'
                          'import time\n'
-                         '\n'
                          'from mymod import AnUncommonName')
 
         start, end, newblock = self.importmagic.add_import(
@@ -58,7 +57,7 @@ class ImportMagicTestCase(BackendTestCase):
         self.assertEqual(start, 2)
         self.assertEqual(end, 5)
         self.assertEqual(newblock.strip(),
-                         'import logging\nimport time\n\nimport mymod')
+                         'import logging\nimport mymod\nimport time')
 
     def test_get_unresolved_symbols(self):
         self.build_index()
