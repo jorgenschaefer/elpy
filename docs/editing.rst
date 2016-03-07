@@ -62,22 +62,27 @@ Moving By Indentation
 
 .. command:: elpy-nav-forward-block
    :kbd: C-down
-.. command:: elpy-nav-previous-iblock
+.. command:: elpy-nav-backward-block
    :kbd: C-up
+
+   These commands are used to navigate between lines with same
+   indentation as the current line. Point should be placed on the
+   first non-whitespace character of the line and then use `C-down`
+   to move forward or `C-up` to move backward.
+
 .. command:: elpy-nav-backward-indent
    :kbd: C-left
 .. command:: elpy-nav-forward-indent
    :kbd: C-right
 
-   Using the cursor keys in combination with the control key allows
-   moving by indentation level. Left and right will jump between
-   current indentation levels, while up and down will jump to the
-   previous or next line with the same indentation as the current one.
-         
+   These commands are used to navigate between indentation levels.
+   `C-left` moves point to previous indent level or over previous word.
+   `C-right` moves point to next indent level or over the next word.
+
 
 Moving the Current Region
-=========================  
-   
+=========================
+
 .. command:: elpy-nav-move-line-or-region-down
    :kbd: M-down
 .. command:: elpy-nav-move-line-or-region-up
