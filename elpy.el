@@ -514,8 +514,8 @@ virtualenv.
   (with-current-buffer (get-buffer-create "*Elpy News*")
     (let ((inhibit-read-only t))
       (erase-buffer)
-      (insert-file (concat (file-name-directory (locate-library "elpy"))
-                           "NEWS.rst"))
+      (insert-file-contents (concat (file-name-directory (locate-library "elpy"))
+                                    "NEWS.rst"))
       (help-mode))
     (pop-to-buffer (current-buffer))))
 
