@@ -1130,9 +1130,10 @@ PyPI, or nil if that's VERSION."
                         ""))
 
          (command (cond
-                   ((executable-find "pip")
-                    (format "pip install %s%s%s"
-                            user-option upgrade-option python-package))
+                    ((= (call-process elpy-rpc-python-command
+                          nil nil nil "-m" "pip" "--help") 0)
+                      (format "%s -m pip install %s%s%s" elpy-rpc-python-command
+                        user-option upgrade-option python-package))
                    ((executable-find "easy_install")
                     (format "easy_install %s%s"
                             user-option python-package))
