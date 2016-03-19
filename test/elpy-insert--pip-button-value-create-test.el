@@ -12,8 +12,11 @@
     (mletf* ((executable-find
               (command)
               (cond
-                ((equal command "pip") t)
                 ((equal command "easy_install") t)))
+             (call-process
+              (program &optional infile destination display &rest args)
+               (when (and (equal program "python") (equal args '("-m" "pip"))))
+               0)
              (widget (widget-create 'elpy-insert--pip-button "test-module")))
       (should (string-match "pip" (widget-get widget :command)))
       (should (string-match "pip" (buffer-string))))))
@@ -23,8 +26,11 @@
     (mletf* ((executable-find
               (command)
               (cond
-                ((equal command "pip") nil)
                 ((equal command "easy_install") t)))
+             (call-process
+              (program &optional infile destination display &rest args)
+               (when (and (equal program "python") (equal args '("-m" "pip"))))
+               1)
              (widget (widget-create 'elpy-insert--pip-button "test-module")))
       (should (string-match "easy_install" (widget-get widget :command)))
       (should (string-match "easy_install" (buffer-string))))))
@@ -33,5 +39,9 @@
   (elpy-testcase ()
     (mletf* ((executable-find
               (command)
-              nil))
+               nil)
+             (call-process
+              (program &optional infile destination display &rest args)
+               (when (and (equal program "python") (equal args '("-m" "pip"))))
+               1))
       (should-error (widget-create 'elpy-insert--pip-button "test-module")))))
