@@ -214,7 +214,7 @@ this to prevent this from happening."
   :safe #'integerp
   :group 'elpy)
 
-(defcustom elpy-rpc-python-command (if (equal system-type "windows-nt")
+(defcustom elpy-rpc-python-command (if (equal system-type 'windows-nt)
                                        "pythonw"
                                      "python")
   "The Python interpreter for the RPC backend.
