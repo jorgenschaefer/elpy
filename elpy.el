@@ -269,18 +269,16 @@ message again within this amount of seconds."
   :type 'integer
   :group 'elpy)
 
-(defcustom elpy-company-post-completion-function
-  'elpy-company-post-complete-parens
+(defcustom elpy-company-post-completion-function 'ignore
   "Your preferred Company post completion function.
 
-The post completion function in Elpy appends parentheses after callables
-leaving point between them, so that you can delete them with a single
-keystroke in case you enabled a minor mode facilitating insertion of
-matching delimiters such as `auto-pair-mode', `electric-pair-mode', or
-`smartparens-mode'.
-In case you did not enable such a minor mode, you may can either set the
-post completion function to `ignore' (effectively disabling it) or set it
-to any other function accepting the post completion function arguments."
+Elpy can automatically insert parentheses after completing
+callable objects.
+
+The heuristic on when to insert these parentheses can easily be
+wrong, though, so this is disabled by default. Set this variable
+to the function `elpy-company-post-complete-parens' to enable
+this feature."
   :type '(choice (const :tag "Ignore post complete" ignore)
                  (const :tag "Complete callables with parens"
                         elpy-company-post-complete-parens)
