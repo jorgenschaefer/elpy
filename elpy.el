@@ -335,7 +335,7 @@ edited instead. Setting this variable to nil disables this feature."
   :type 'string
   :group 'elpy)
 
-(defcustom elpy-disable-backend-error-display nil
+(defcustom elpy-disable-backend-error-display t
   "Non-nil if Elpy should disable backed error display."
   :type 'boolean
   :group 'elpy)
