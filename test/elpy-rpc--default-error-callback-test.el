@@ -21,10 +21,11 @@
 
 (ert-deftest elpy-rpc--default-error-callback-code-500-should-pop-up-window ()
   (elpy-testcase ()
-    (elpy-rpc--default-error-callback
-     '((message . "e-message")
-       (code . 500)
-       (data . ((traceback . "e-traceback\n")))))
+    (let ((elpy-disable-backend-error-display nil))
+      (elpy-rpc--default-error-callback
+       '((message . "e-message")
+         (code . 500)
+         (data . ((traceback . "e-traceback\n"))))))
 
     (with-current-buffer "*Elpy Error*"
       (goto-char (point-min))
