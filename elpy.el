@@ -3476,7 +3476,8 @@ or unless NAME is no callable instance."
     ;; doc-buffer <candidate> => put doc buffer in `company-doc-buffer'
     (`doc-buffer
      (let* ((name (elpy-company--cache-name arg))
-            (doc (elpy-rpc-get-completion-docstring name)))
+            (doc (when name
+                   (elpy-rpc-get-completion-docstring name))))
        (when doc
          (company-doc-buffer doc))))
     ;; require-match => Never require a match, even if the user
@@ -3487,7 +3488,8 @@ or unless NAME is no callable instance."
     ;; line-number)
     (`location
      (let* ((name (elpy-company--cache-name arg))
-            (loc (elpy-rpc-get-completion-location name)))
+            (loc (when name
+                   (elpy-rpc-get-completion-location name))))
        (when loc
          (cons (car loc)
                (cadr loc)))))
