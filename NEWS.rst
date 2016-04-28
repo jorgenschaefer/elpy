@@ -226,7 +226,7 @@ New in Elpy 1.5.0
   especially when editing a file in the home directory.
 - And a whole lot of minor bug fixes and little improvements.
 
-.. _manual: http://elpy.readthedocs.org/
+.. _manual: https://elpy.readthedocs.io/
 
 
 New in Elpy 1.4.2

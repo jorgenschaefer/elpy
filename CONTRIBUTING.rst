@@ -17,7 +17,7 @@ You can set up a working environment for Elpy using ``pip`` and
    source ~/.virtualenvs/elpy/bin/activate
    ./scripts/setup
 
-.. _Cask: http://cask.readthedocs.org/en/latest/#user-guide
+.. _Cask: https://cask.readthedocs.io/en/latest/#user-guide
 
 
 You can now run ``./scripts/test`` to run Elpy's test suite.

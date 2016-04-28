@@ -15,9 +15,9 @@ Emacs Lisp as well as Python.
 Documentation
 =============
 
-Elpy is fully documented at readthedocs.org:
+Elpy is fully documented at readthedocs.io:
 
-http://elpy.readthedocs.org/en/latest/index.html
+https://elpy.readthedocs.io/en/latest/index.html
 
 Quick Installation
 ==================

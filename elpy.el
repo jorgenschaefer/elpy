@@ -31,7 +31,7 @@
 
 ;; For more information, read the Elpy manual:
 
-;; http://elpy.readthedocs.org/en/latest/index.html
+;; https://elpy.readthedocs.io/en/latest/index.html
 
 ;;; Code:
 
