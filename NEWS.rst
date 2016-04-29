@@ -1,3 +1,21 @@
+New in Elpy 1.12.0
+==================
+
+- Some symbols can now be completed with parentheses after them,
+  useful for functions. The heuristic for when to add parentheses and
+  not is not optimal, so this is not enabled by default—customize
+  ``elpy-company-post-completion-function`` to enable this feature.
+- Support dedicated Python shells (one per Python file). You can
+  customized ``elpy-dedicated-shells`` to make this the default.
+- Elpy now uses ``python -m pip`` instead of pip directly to improve
+  interaction with virtualenvs.
+- Support for Python 2.6 has been officially dropped.
+- Display for backend errors has been disabled by default. Jedi has
+  not had a release in a long while, and many bugs have been unfixed.
+  These errors have only caused added workload for Elpy maintainers.
+  The option will be reverted once Jedi has had a new release.
+
+
 New in Elpy 1.11.0
 ==================
 
