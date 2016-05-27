@@ -153,7 +153,7 @@ uninteresting information, but if you rely on your modeline in other modes,
 you might want to keep it."
   :type 'boolean
   :group 'elpy)
-  
+
 (defcustom elpy-dedicated-shells nil
   "Non-nil if Elpy should use dedicated shells.
 
@@ -1616,20 +1616,20 @@ code is executed."
 (defun elpy-shell-get-or-create-process ()
   "Get or create an inferior Python process for current buffer and return it."
   (let* ((bufname (format "*%s*" (python-shell-get-process-name nil)))
-	 (dedbufname (format "*%s*" (python-shell-get-process-name t)))
-	 (proc (get-buffer-process bufname))
-	 (dedproc (get-buffer-process dedbufname)))
+         (dedbufname (format "*%s*" (python-shell-get-process-name t)))
+         (proc (get-buffer-process bufname))
+         (dedproc (get-buffer-process dedbufname)))
     (if elpy-dedicated-shells
-	(if dedproc
-	    dedproc
-	  (run-python (python-shell-parse-command) t)
-	  (get-buffer-process dedbufname))
+        (if dedproc
+            dedproc
+          (run-python (python-shell-parse-command) t)
+          (get-buffer-process dedbufname))
       (if dedproc
-	  dedproc
-	(if proc
-	    proc
-	  (run-python (python-shell-parse-command))
-	  (get-buffer-process bufname))))))
+          dedproc
+        (if proc
+            proc
+          (run-python (python-shell-parse-command))
+          (get-buffer-process bufname))))))
 
 (defun elpy-shell--region-without-indentation (beg end)
   "Return the current region as a string, but without indentation."
@@ -3223,7 +3223,7 @@ Make sure global-init is called first."
   "Remove the lighter for MODE-NAME.
 
 It should not be necessary to see (Python Elpy yas company ElDoc) all the
-time. 
+time.
 
 If you need your modeline, you can set the variable `elpy-remove-modeline-lighter' to nil
 "
