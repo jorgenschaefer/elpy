@@ -340,6 +340,11 @@ edited instead. Setting this variable to nil disables this feature."
   :type 'boolean
   :group 'elpy)
 
+(defcustom elpy-syntax-check-command "flake8"
+  "The command to use for `elpy-check'."
+  :type 'string
+  :group 'elpy)
+
 ;;;;;;;;;;;;;
 ;;; Elpy Mode
 
@@ -898,8 +903,8 @@ item in another window.\n\n")
                      :package "yapf" :upgrade t)
       (insert "\n\n"))
 
-    ;; flake8, the default syntax checker, not found
-    (when (not (executable-find python-check-command))
+    ;; Syntax checker not available
+    (when (not (executable-find elpy-syntax-check-command))
       (elpy-insert--para
        "The configured syntax checker could not be found. Elpy uses this "
        "program to provide syntax checks of your programs, so you might "
@@ -1049,14 +1054,14 @@ virtual_env_short"
                                                   yapf-latest))
             ("Syntax checker" . ,(let ((syntax-checker
                                         (executable-find
-                                         python-check-command)))
+                                         elpy-syntax-check-command)))
                                    (if  syntax-checker
                                        (format "%s (%s)"
                                                (file-name-nondirectory
                                                 syntax-checker)
                                                syntax-checker)
                                      (format "Not found (%s)"
-                                             python-check-command))))))
+                                             elpy-syntax-check-command))))))
     (setq maxwidth 0)
     (dolist (row table)
       (when (> (length (car row))
@@ -3571,10 +3576,10 @@ display the current class and method instead."
      (require 'flymake)
      (elpy-modules-remove-modeline-lighter 'flymake-mode)
      ;; Flymake support using flake8, including warning faces.
-     (when (and (executable-find "flake8")
+     (when (and (executable-find elpy-syntax-check-command)
                 (equal python-check-command
                        (elpy-flymake--standard-value 'python-check-command)))
-       (setq python-check-command "flake8"))
+       (setq python-check-command elpy-syntax-check-command))
 
      ;; Add our initializer function
      (add-to-list 'flymake-allowed-file-name-masks
