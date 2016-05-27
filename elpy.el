@@ -1672,10 +1672,13 @@ with a prefix argument)."
                                          (buffer-file-name))
                                    (buffer-file-name))))
         (extra-args (if whole-project-p
-                        (concat " --exclude="
-                                (mapconcat #'identity
-                                           elpy-project-ignored-directories
-                                           ","))
+                        (concat
+                         (if (equal python-check-command "pylint")
+                             " --ignore="
+                           " --exclude=")
+                         (mapconcat #'identity
+                                    elpy-project-ignored-directories
+                                    ","))
                       "")))
     (compilation-start (concat python-check-command
                                " "
