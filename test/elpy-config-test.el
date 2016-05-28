@@ -10,3 +10,15 @@
   (elpy-testcase ()
     (let ((process-environment (cons "VIRTUAL_ENV" process-environment)))
       (elpy-config))))
+
+(ert-deftest elpy-config-should-show-flake8-pip-button-when-no-syntax-checker-available ()
+  (elpy-testcase ()
+                 (mletf* ((python-check-command "/foo/bar/flake8"))
+                         (python-mode)
+                         (elpy-mode)
+                         (elpy-config)
+                         (let ((output (with-current-buffer  "*Elpy Config*"
+                                         (elpy/wait-for-output "Only")
+                                         (buffer-string))))
+                           (should (equal python-check-command "/foo/bar/flake8"))
+                           (should (string-match "python -m pip install flake8" output))))))
