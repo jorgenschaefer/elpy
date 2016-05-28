@@ -3579,10 +3579,7 @@ display the current class and method instead."
      (require 'flymake)
      (elpy-modules-remove-modeline-lighter 'flymake-mode)
      ;; Flymake support using flake8, including warning faces.
-     (when (and (executable-find elpy-syntax-check-command)
-                (equal python-check-command
-                       (elpy-flymake--standard-value 'python-check-command)))
-       (setq python-check-command elpy-syntax-check-command))
+     (setq python-check-command elpy-syntax-check-command)
 
      ;; Add our initializer function
      (add-to-list 'flymake-allowed-file-name-masks
