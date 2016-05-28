@@ -5,14 +5,6 @@
 
       (should (equal python-check-command "flake8")))))
 
-(ert-deftest elpy-module-flymake-global-init-should-not-override-existing-checker ()
-  (elpy-testcase ()
-    (mletf* ((python-check-command "my-test-command")
-             (executable-find (name) t))
-      (elpy-module-flymake 'global-init)
-
-      (should (equal python-check-command "my-test-command")))))
-
 (ert-deftest elpy-module-flymake-global-init ()
   (elpy-testcase ()
     (elpy-module-flymake 'global-init)
