@@ -2296,14 +2296,18 @@ Also sort the imports in the import statement blocks."
     (if (use-region-p)
         (let ((new-block (elpy-rpc method (list (elpy-rpc--region-contents))))
               (beg (region-beginning)) (end (region-end)))
-          (elpy-buffer--replace-region beg end new-block))
+          (elpy-buffer--replace-region
+           beg end
+           (replace-regexp-in-string "\n$" "" new-block))
+          (goto-char end)
+          (deactivate-mark))
       ;; Vector instead of list, json.el in Emacs 24.3 and before
       ;; breaks for single-element lists of alists.
       (let ((new-block (elpy-rpc method (vector (elpy-rpc--buffer-contents))))
             (beg (point-min)) (end (point-max)))
-        (elpy-buffer--replace-region beg end new-block)))
-    (forward-line (1- line))
-    (forward-char col)))
+        (elpy-buffer--replace-region beg end new-block)
+        (forward-line (1- line))
+        (forward-char col)))))
 
 ;;;;;;;;;;;;;;
 ;;; Multi-Edit
