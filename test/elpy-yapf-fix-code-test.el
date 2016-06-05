@@ -39,3 +39,15 @@
                        "z = 3"
                        "_|_x = 3"
                        ))))))
+
+(ert-deftest elpy-yapf-fix-code-should-throw-error-for-invalid-code ()
+  (let* ((pyversion (getenv "TRAVIS_PYTHON_VERSION"))
+         (yapf-not-supported (or (string< pyversion "2.7")
+                                 (and (not (string< pyversion "3.0"))
+                                      (string< pyversion "3.4")))))
+    (unless yapf-not-supported
+      (elpy-testcase ()
+                     (set-buffer-string-with-point
+                      "x =_|_"
+                      )
+                     (should-error (elpy-yapf-fix-code))))))

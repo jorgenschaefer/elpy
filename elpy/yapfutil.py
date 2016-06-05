@@ -26,8 +26,12 @@ def fix_code(code):
     if not yapf_api:
         raise Fault('yapf not installed', code=400)
     style_config = file_resources.GetDefaultStyleForDir(os.getcwd())
-    reformatted_source, _ = yapf_api.FormatCode(code,
-                                                filename='<stdin>',
-                                                style_config=style_config,
-                                                verify=False)
-    return reformatted_source
+    try:
+        reformatted_source, _ = yapf_api.FormatCode(code,
+                                                    filename='<stdin>',
+                                                    style_config=style_config,
+                                                    verify=False)
+        return reformatted_source
+    except Exception as e:
+            raise Fault("Error during formatting: {}".format(e),
+                        code=400)
