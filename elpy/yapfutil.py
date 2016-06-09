@@ -4,10 +4,11 @@
 
 import os
 import sys
+
 from elpy.rpc import Fault
 
 YAPF_NOT_SUPPORTED = sys.version_info < (2, 7) or (
-    sys.version_info >= (3, 0) and sys.version_info <= (3, 3))
+    sys.version_info >= (3, 0) and sys.version_info < (3, 4))
 
 try:
     if YAPF_NOT_SUPPORTED:

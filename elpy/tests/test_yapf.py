@@ -1,7 +1,6 @@
 # coding: utf-8
 """Tests for the elpy.yapf module"""
 
-import sys
 import unittest
 
 from elpy import yapfutil
@@ -13,7 +12,7 @@ from elpy.tests.support import BackendTestCase
                  'yapf not supported for current python version')
 class YAPFTestCase(BackendTestCase):
     def setUp(self):
-        if not yapfutil.YAPF_NOT_SUPPORTED:
+        if yapfutil.YAPF_NOT_SUPPORTED:
             raise unittest.SkipTest
 
     def test_fix_code_should_throw_error_for_invalid_code(self):
