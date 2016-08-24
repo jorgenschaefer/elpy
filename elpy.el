@@ -6,7 +6,7 @@
 ;; URL: https://github.com/jorgenschaefer/elpy
 ;; Version: 1.12.0
 ;; Keywords: Python, IDE, Languages, Tools
-;; Package-Requires: ((company "0.8.2") (find-file-in-project "3.3")  (highlight-indentation "0.5.0") (pyvenv "1.3") (yasnippet "0.8.0"))
+;; Package-Requires: ((company "0.8.2") (find-file-in-project "3.3")  (highlight-indentation "0.5.0") (pyvenv "1.3") (yasnippet "0.8.0") (s "1.10.0")
 
 ;; This program is free software; you can redistribute it and/or
 ;; modify it under the terms of the GNU General Public License
@@ -44,6 +44,7 @@
 (require 'python)
 
 (require 'elpy-refactor)
+(require 'elpy-django)
 (require 'pyvenv)
 
 (defconst elpy-version "1.12.0"
@@ -71,7 +72,8 @@ This can be used to enable minor modes for Python development."
                           elpy-module-flymake
                           elpy-module-highlight-indentation
                           elpy-module-pyvenv
-                          elpy-module-yasnippet)
+                          elpy-module-yasnippet
+                          elpy-module-django)
   "Which Elpy modules to use.
 
 Elpy can use a number of modules for additional features, which
@@ -88,6 +90,8 @@ can be inidividually enabled or disabled."
                      elpy-module-highlight-indentation)
               (const :tag "Expand code snippets (YASnippet)"
                      elpy-module-yasnippet)
+              (const :tag "Django configurations (Elpy-Django)"
+                     elpy-module-django)
               (const :tag "Configure some sane defaults for Emacs"
                      elpy-module-sane-defaults))
   :group 'elpy)
@@ -387,6 +391,7 @@ edited instead. Setting this variable to nil disables this feature."
     (define-key map (kbd "C-c C-v") 'elpy-check)
     (define-key map (kbd "C-c C-z") 'elpy-shell-switch-to-shell)
     (define-key map (kbd "C-c C-r") elpy-refactor-map)
+    (define-key map (kbd "C-c C-x") elpy-django-mode-map)
 
     (define-key map (kbd "<S-return>") 'elpy-open-and-indent-line-below)
     (define-key map (kbd "<C-S-return>") 'elpy-open-and-indent-line-above)
@@ -544,6 +549,7 @@ virtualenv.
     ("Snippets (YASnippet)" yasnippet "yas-")
     ("Directory Grep (rgrep)" grep "grep-")
     ("Search as You Type (ido)" ido "ido-")
+    ("Django Extension" elpy-django "elpy-django-")
     ;; ffip does not use defcustom
     ;; highlight-indent does not use defcustom, either. Its sole face
     ;; is defined in basic-faces.
@@ -3727,6 +3733,17 @@ description."
      (yas-minor-mode 1))
     (`buffer-stop
      (yas-minor-mode -1))))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; Module: Elpy-Django
+
+(defun elpy-module-django (command &rest args)
+  "Module to provide Django support."
+  (pcase command
+    (`buffer-init
+     (elpy-django-setup))
+    (`buffer-stop
+     (elpy-django -1))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Backwards compatibility
