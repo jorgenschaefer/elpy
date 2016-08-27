@@ -51,6 +51,14 @@ Best to set it to full path to 'manage.py' if it's available."
   :group 'elpy)
 (make-variable-buffer-local 'elpy-django-server-port)
 
+(defcustom elpy-django-server-command "runserver"
+  "When executing `elpy-django-runserver' what should be the server
+command to use."
+  :type 'string
+  :safe 'stringp
+  :group 'elpy)
+(make-variable-buffer-local 'elpy-django-server-command)
+
 (defcustom elpy-django-always-prompt nil
   "When non-nil, it will always prompt for extra arguments
 to pass with the chosen command."
@@ -127,7 +135,7 @@ servers running per project.
 
 When called with a prefix (C-u), it will prompt for additional args."
   (interactive "P")
-  (let* ((cmd (concat elpy-django-command " runserver"))
+  (let* ((cmd (concat elpy-django-command " " elpy-django-server-command))
          (proj-root (file-name-base (directory-file-name (elpy-project-root))))
          (buff-name (format "*runserver[%s]*" proj-root)))
     ;; Kill any previous instance of runserver since we might be doing something new
