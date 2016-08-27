@@ -40,14 +40,14 @@ Best to set it to full path to 'manage.py' if it's available."
 (defcustom elpy-django-server-ipaddr "127.0.0.1"
   "What address Django will use when running the dev server."
   :type 'string
-  :type 'stringp
+  :safe 'stringp
   :group 'elpy)
 (make-variable-buffer-local 'elpy-django-server-ipaddr)
 
 (defcustom elpy-django-server-port "8000"
   "What port Django will use when running the dev server."
   :type 'string
-  :type 'stringp
+  :safe 'stringp
   :group 'elpy)
 (make-variable-buffer-local 'elpy-django-server-port)
 
@@ -55,7 +55,7 @@ Best to set it to full path to 'manage.py' if it's available."
   "When non-nil, it will always prompt for extra arguments
 to pass with the chosen command."
   :type 'boolean
-  :type 'booleanp
+  :safe 'booleanp
   :group 'elpy)
 (make-variable-buffer-local 'elpy-django-always-prompt)
 
