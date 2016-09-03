@@ -816,7 +816,8 @@ item in another window.\n\n")
                     (not (gethash "rope_version" config))
                     (not (gethash "jedi_version" config))))
       (elpy-insert--para
-       "There is no backend available. Please install either Rope or Jedi.\n")
+       "There is no backend available. Please install either Rope or Jedi."
+       "See https://github.com/jorgenschaefer/elpy/wiki/FAQ#q-should-i-use-rope-or-jedi for guidance.\n")
       (insert "\n")
       (widget-create 'elpy-insert--pip-button :package rope-pypi-package)
       (insert "\n")
