@@ -47,6 +47,7 @@
 (require 'elpy-django)
 (require 'elpy-profile)
 (require 'pyvenv)
+(require 'find-file-in-project)
 
 (defconst elpy-version "1.14.1"
   "The version of the Elpy lisp code.")
