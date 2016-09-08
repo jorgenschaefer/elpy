@@ -2240,9 +2240,11 @@ prefix argument is given, prompt for a symbol from the user."
   "Prompt to import thing at point, show possbile imports and add selected import."
   (interactive (elpy-importmagic--add-import-read-args))
   (unless (equal statement "")
+    (elpy-project-root)
     (let* ((res (elpy-rpc "add_import" (list buffer-file-name
                                              (elpy-rpc--buffer-contents)
-                                             statement))))
+                                             statement
+                                             elpy-project-root))))
       (elpy-buffer--replace-block res))))
 
 (defun elpy-importmagic-fixup ()
@@ -2260,8 +2262,10 @@ Also sort the imports in the import statement blocks."
                (choice (elpy-importmagic--add-import-read-args object prompt)))
           (elpy-importmagic-add-import (car choice))))))
   ;; now get a new import statement block (this also sorts)
+  (elpy-project-root)
   (let* ((res (elpy-rpc "remove_unreferenced_imports" (list buffer-file-name
-                                                            (elpy-rpc--buffer-contents)))))
+                                                            (elpy-rpc--buffer-contents)
+                                                            elpy-project-root))))
     (unless (stringp res)
       (elpy-buffer--replace-block res))))
 
