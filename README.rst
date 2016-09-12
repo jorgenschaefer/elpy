@@ -36,7 +36,7 @@ First, install the required Python packages:::
   # and yapf for code formatting
   pip install yapf
 
-One-line install: **sudo pip install rope jedi flake8 importmagic autopep8 yapf**
+One-line install: **pip install rope jedi flake8 importmagic autopep8 yapf**
 
 Evaluate this in your ``*scratch*`` buffer:
 
