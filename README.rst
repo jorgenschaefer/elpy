@@ -36,6 +36,7 @@ First, install the required Python packages:::
   # and yapf for code formatting
   pip install yapf
 
+One-line install: **pip install jedi flake8 importmagic autopep8**
 
 Evaluate this in your ``*scratch*`` buffer:
 
