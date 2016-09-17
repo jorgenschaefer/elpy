@@ -2101,19 +2101,24 @@ prefix argument is given, prompt for a symbol from the user."
 (defun elpy-yapf-fix-code ()
   "Automatically formats Python code with yapf."
   (interactive)
-  (elpy--fix-code-with-formatter "fix_code_with_yapf"))
+  (elpy--fix-code-with-formatter "fix_code_with_yapf"
+                                 (or (expand-file-name (elpy-project-root))
+                                     default-directory)))
 
 (defun elpy-autopep8-fix-code ()
   "Automatically formats Python code to conform to the PEP 8 style guide."
   (interactive)
   (elpy--fix-code-with-formatter "fix_code"))
 
-(defun elpy--fix-code-with-formatter (method)
+(defun elpy--fix-code-with-formatter (method directory)
   "Common routine for formatting python code."
   (let ((line (line-number-at-pos))
         (col (current-column)))
     (if (use-region-p)
-        (let ((new-block (elpy-rpc method (list (elpy-rpc--region-contents))))
+        (let ((new-block (elpy-rpc method
+                                   (if directory
+                                       (list (elpy-rpc--region-contents) directory)
+                                     (list (elpy-rpc--region-contents)))))
               (beg (region-beginning)) (end (region-end)))
           (elpy-buffer--replace-region
            beg end
@@ -2122,7 +2127,10 @@ prefix argument is given, prompt for a symbol from the user."
           (deactivate-mark))
       ;; Vector instead of list, json.el in Emacs 24.3 and before
       ;; breaks for single-element lists of alists.
-      (let ((new-block (elpy-rpc method (vector (elpy-rpc--buffer-contents))))
+      (let ((new-block (elpy-rpc method
+                                 (if directory
+                                     (vector (elpy-rpc--buffer-contents) directory)
+                                   (vector (elpy-rpc--buffer-contents)))))
             (beg (point-min))
             (end (point-max)))
         (elpy-buffer--replace-region beg end new-block)

@@ -206,12 +206,12 @@ class ElpyRPCServer(JSONRPCServer):
         source = get_source(source)
         return fix_code(source)
 
-    def rpc_fix_code_with_yapf(self, source):
+    def rpc_fix_code_with_yapf(self, source, directory):
         """Formats Python code to conform to the PEP 8 style guide.
 
         """
         source = get_source(source)
-        return fix_code_with_yapf(source)
+        return fix_code_with_yapf(source, directory)
 
 
 def get_source(fileobj):
