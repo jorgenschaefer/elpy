@@ -2110,7 +2110,7 @@ prefix argument is given, prompt for a symbol from the user."
   (interactive)
   (elpy--fix-code-with-formatter "fix_code"))
 
-(defun elpy--fix-code-with-formatter (method directory)
+(defun elpy--fix-code-with-formatter (method &optional directory)
   "Common routine for formatting python code."
   (let ((line (line-number-at-pos))
         (col (current-column)))
