@@ -2292,7 +2292,7 @@ Also sort the imports in the import statement blocks."
   (interactive)
   (elpy--fix-code-with-formatter "fix_code"))
 
-(defun elpy--fix-code-with-formatter (method directory)
+(defun elpy--fix-code-with-formatter (method &optional directory)
   "Common routine for formatting python code."
   (let ((line (line-number-at-pos))
         (col (current-column)))
