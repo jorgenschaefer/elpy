@@ -347,6 +347,8 @@ edited instead. Setting this variable to nil disables this feature."
 
 ;;;;;;;;;;;;;
 ;;; Elpy Mode
+(defvar elpy--shell-last-py-buffer nil
+  "Help keep track of python buffer when changing to pyshell.")
 
 (defvar elpy-refactor-map
   (let ((map (make-sparse-keymap "Refactor")))
@@ -1606,12 +1608,13 @@ code is executed."
 (defun elpy-shell-switch-to-shell ()
   "Switch to inferior Python process buffer."
   (interactive)
+  (setq elpy--shell-last-py-buffer (buffer-name))
   (pop-to-buffer (process-buffer (elpy-shell-get-or-create-process))))
 
 (defun elpy-shell-switch-to-buffer ()
   "Switch from inferior Python process buffer to recent Python buffer."
   (interactive)
-  (pop-to-buffer (other-buffer (current-buffer) 1)))
+  (pop-to-buffer elpy--shell-last-py-buffer))
 
 (defun elpy-shell-get-or-create-process ()
   "Get or create an inferior Python process for current buffer and return it."
