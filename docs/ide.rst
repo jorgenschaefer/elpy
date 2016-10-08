@@ -133,6 +133,11 @@ projects.
    turning :kbd:`M-.` and :kbd:`M-*` into a forward and backward
    motion for definition lookups.
 
+.. command:: elpy-occur-definitions
+   :kbd: C-c C-o
+
+   Search the buffer for a list of definitions of classes and functions.
+
 Interactive Python
 ==================
 
