@@ -1328,21 +1328,16 @@ With prefix argument, remove the variable."
 REGEXP defaults to the symbol at point, or the current region if
 active.
 
-With a prefix argument, always prompt for a string to search
-for."
+With a prefix argument, always prompt for a string to search for."
   (interactive
    (list
-    (cond
-     (current-prefix-arg
-      (read-from-minibuffer "Search in project for regexp: "))
-     ((use-region-p)
-      (buffer-substring-no-properties (region-beginning)
-                                      (region-end)))
-     (t
+    (if (use-region-p)
+        (buffer-substring-no-properties (region-beginning)
+                                        (region-end))
       (let ((symbol (thing-at-point 'symbol)))
-        (if symbol
-            (format "\\<%s\\>" symbol)
-          (read-from-minibuffer "Search in project for regexp: ")))))))
+        (if (and symbol (not current-prefix-arg))
+            (concat "\\<" symbol "\\>")
+          (read-from-minibuffer "Search in project for regexp: " symbol))))))
   (grep-compute-defaults)
   (let ((grep-find-ignored-directories (append elpy-project-ignored-directories
                                                grep-find-ignored-directories)))
