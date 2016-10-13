@@ -28,7 +28,7 @@ First, install the required Python packages:::
   pip install rope
   pip install jedi
   # flake8 for code checks
-  pip install flake8
+  pip install 'flake8<3'
   # importmagic for automatic imports
   pip install importmagic
   # and autopep8 for automatic PEP8 formatting
@@ -36,7 +36,7 @@ First, install the required Python packages:::
   # and yapf for code formatting
   pip install yapf
 
-One-line install: **pip install jedi flake8 importmagic autopep8**
+One-line install: **pip install jedi 'flake8<3' importmagic autopep8**
 
 Evaluate this in your ``*scratch*`` buffer:
 
