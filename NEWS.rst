@@ -1,3 +1,11 @@
+New in Elpy 1.13.0
+==================
+
+- Fewer surprises with syntax checks, ``C-c C-z``, reformatting
+- Improved behavior for reformatting.
+- Improved documentation for IPython. IPython 5 broke a lot of things with Emacs. Use it at your own risk.
+
+
 New in Elpy 1.12.0
 ==================
 
