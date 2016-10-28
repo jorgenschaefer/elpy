@@ -2,9 +2,9 @@
 
 (ert-deftest elpy-project-find-projectile-root-should-return-root ()
   (elpy-testcase ()
-    (mletf* ((projectile-project-root () "/test/root"))
+    (mletf* ((projectile-project-root () "/tmp"))
       (should (f-equal? (elpy-project-find-projectile-root)
-                        "/test/root")))))
+                        "/tmp")))))
 
 (ert-deftest elpy-project-find-projectile-root-should-ignore-errors ()
   (elpy-testcase ()
