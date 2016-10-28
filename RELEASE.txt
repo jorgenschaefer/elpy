@@ -10,12 +10,6 @@ Update NEWS.rst with the latest changes.
 
 $ bumpversion minor
 
-MELPA release:
-
-$ git checkout release
-$ git merge --strategy-option theirs master
-$ git checkout master
-
 Elpy ELPA release:
 
 $ ./scripts/release
