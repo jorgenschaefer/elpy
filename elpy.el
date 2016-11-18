@@ -42,6 +42,8 @@
 (require 'ido)
 (require 'json)
 (require 'python)
+(require 'cl-extra)             ; for cl-every
+(require 'cl-seq)               ; for cl-union
 
 (require 'elpy-refactor)
 (require 'elpy-django)
@@ -104,8 +106,7 @@ can be inidividually enabled or disabled."
 This is in addition to `vc-directory-exclusion-list'
 and `grep-find-ignored-directories', as appropriate."
   :type '(repeat string)
-  :safe (lambda (val)
-          (cl-every #'stringp val))
+  :safe (lambda (val) (cl-every #'stringp val))
   :group 'elpy)
 
 (defcustom elpy-project-root nil
