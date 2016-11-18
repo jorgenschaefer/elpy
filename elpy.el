@@ -99,9 +99,10 @@ can be inidividually enabled or disabled."
   :group 'elpy)
 
 (defcustom elpy-project-ignored-directories
-  (append '(".tox" "build" "dist" ".cask")
-          vc-directory-exclusion-list)
-  "Directories ignored by functions working on the whole project."
+  '(".tox" "build" "dist" ".cask")
+  "Directories ignored by functions working on the whole project.
+This is in addition to `vc-directory-exclusion-list'
+and `grep-find-ignored-directories', as appropriate."
   :type '(repeat string)
   :safe (lambda (val)
           (cl-every #'stringp val))
@@ -1356,22 +1357,34 @@ With a prefix argument, always prompt for a string to search for."
 ;;;;;;;;;;;;;;;;;;;;;;
 ;;; Find Project Files
 
-(defcustom elpy-ffip-prune-patterns
-  (let ((extras ()))
-    (dolist (dir elpy-project-ignored-directories)
-      (let ((pat (concat "*/" dir "/*")))
-        (unless (member pat ffip-prune-patterns)
-          (push pat extras))))
-    (dolist (ext completion-ignored-extensions)
-      (unless (string-match "/$" ext)
-        (let ((pat (concat "*" ext)))
-          (unless (member pat ffip-prune-patterns)
-            (push pat extras)))))
-    (append extras ffip-prune-patterns))
-  "Elpy-specific extension of `ffip-prune-patterns'."
+(defcustom elpy-ffip-prune-patterns '()
+  "Elpy-specific extension of `ffip-prune-patterns'.
+This is in addition to `elpy-project-ignored-directories'
+and `completion-ignored-extensions'.
+The final value of `ffip-prune-patterns' used is computed
+by the eponymous function `elpy-ffip-prune-patterns'."
   :type '(repeat string)
   :safe (lambda (val) (cl-every #'stringp val))
   :group 'elpy)
+
+(defun elpy-ffip-prune-patterns ()
+  "Compute `ffip-prune-patterns' from other variables.
+This combines
+  `elpy-ffip-prune-patterns'
+  `elpy-project-ignored-directories'
+  `completion-ignored-extensions'
+  `ffip-prune-patterns'."
+  (cl-union
+   (cl-union
+    (mapcar (lambda (dir) (concat "*/" dir "/*"))
+            elpy-project-ignored-directories)
+    (mapcar (lambda (ext) (concat "*" ext))
+            completion-ignored-extensions)
+    :test #'equal)
+   (cl-union elpy-ffip-prune-patterns
+             ffip-prune-patterns
+             :test #'equal)
+   :test #'equal))
 
 (defun elpy-find-file (&optional dwim)
   "Efficiently find a file in the current project.
@@ -1407,7 +1420,7 @@ file is <name>.py, and is either in the same directors or a
           (find-file test-file)
         (elpy-find-file nil))))
    (t
-    (let ((ffip-prune-patterns elpy-ffip-prune-patterns)
+    (let ((ffip-prune-patterns (elpy-ffip-prune-patterns))
           (ffip-project-root (or (elpy-project-root)
                                  default-directory))
           ;; Set up ido to use vertical file lists.
@@ -1779,7 +1792,8 @@ with a prefix argument)."
                              " --ignore="
                            " --exclude=")
                          (mapconcat #'identity
-                                    elpy-project-ignored-directories
+                                    (append elpy-project-ignored-directories
+                                            grep-find-ignored-directories)
                                     ","))
                       "")))
     (compilation-start (concat python-check-command
