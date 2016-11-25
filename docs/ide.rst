@@ -284,8 +284,15 @@ advantages this brings.
 
    This changes the current test runner. Elpy supports the standard
    unittest discovery runner, the Django discovery runner, nose and
-   py.test. You can also write your own, as described in
-   :ref:`Writing Test Runners`.
+   py.test. You can also write your own, as described in :ref:`Writing
+   Test Runners`.
+
+   Note on Django runners: by default, elpy runs Django tests with
+   :kbd:`django-admin.py`. You must set the environnement variable
+   :envvar:`DJANGO_SETTINGS_MODULE` accordingly. Alternatively, you can set
+   **elpy-test-django-with-manage** to **t** in order to use your
+   project's :kbd:`manage.py`. You then don't need to set the environnement
+   variable, but change virtual envs (see `virtualenvwrapper.el`_).
 
 This enables a good workflow. You write a test and use :kbd:`C-c C-t`
 to watch it fail. You then go to your implementation file, for example
@@ -298,6 +305,8 @@ For an even more automated way, you can use `tdd.el`_, which will run
 your last compile command whenever you save a file.
 
 .. _tdd.el: https://github.com/jorgenschaefer/emacs-tdd/
+
+.. _virtualenvwrapper.el: https://github.com/porterjamesj/virtualenvwrapper.el
 
 
 Refactoring
