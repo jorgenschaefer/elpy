@@ -42,8 +42,7 @@
 (require 'ido)
 (require 'json)
 (require 'python)
-(require 'cl-extra)             ; for cl-every
-(require 'cl-seq)               ; for cl-union
+(require 'cl-lib)               ; for `cl-every' and `cl-union'
 
 (require 'elpy-refactor)
 (require 'elpy-django)
