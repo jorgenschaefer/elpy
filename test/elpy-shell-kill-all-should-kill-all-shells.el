@@ -1,0 +1,23 @@
+(ert-deftest elpy-shell-kill-all-should-kill-all-shells ()
+  (elpy-testcase ()
+    (let ((buff1 (generate-new-buffer "buff1"))
+	  (buff2 (generate-new-buffer "buff2"))
+	  (shell-buff1 nil)
+	  (shell-buff2 nil)
+	  (elpy-dedicated-shells t))
+      (with-current-buffer buff1
+	(python-mode)
+	(elpy-mode 1)
+	(setq shell-buff1 (process-buffer (elpy-shell-get-or-create-process))))
+      (with-current-buffer buff2
+	(python-mode)
+	(elpy-mode 1)
+	(setq shell-buff2 (process-buffer (elpy-shell-get-or-create-process))))
+      (defun yes-or-no-p (&rest args)
+	t)
+      (defun y-or-n-p (&rest args)
+	t)
+      (elpy-shell-kill-all)
+    (should (not (and
+		    (get-buffer-process shell-buff1)
+		    (get-buffer-process shell-buff2)))))))

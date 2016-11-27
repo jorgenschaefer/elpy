@@ -183,6 +183,18 @@ easier to send code snippets over.
    Similar to :kbd:`C-c C-c`, this will send the code of the current
    top level class or function to the interactive Python process.
 
+.. command:: elpy-shell-kill
+   :kbd: C-c C-k
+
+   Kill the current python shell.
+   If ``elpy-dedicated-shells`` is non-nil,
+   kill the current buffer dedicated shell.
+
+.. command:: elpy-shell-kill-all
+   :kbd: C-c C-K
+
+   Kill all active python shells.
+
 .. command:: elpy-use-ipython
 .. command:: elpy-use-cpython
 
