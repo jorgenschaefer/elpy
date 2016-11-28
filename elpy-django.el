@@ -125,7 +125,7 @@ it will prompt for other flags/arguments to run."
   (interactive (list (completing-read "Command: " (elpy-django--get-commands) nil nil)))
   ;; Called with C-u or variable is set
   (when (or current-prefix-arg elpy-django-always-prompt)
-    (setq cmd (read-shell-command (concat cmd ": ") "--noinput")))
+    (setq cmd (concat cmd " " (read-shell-command (concat cmd ": ") "--noinput"))))
   (compile (concat elpy-django-command " " cmd)))
 
 (defun elpy-django-runserver (arg)
