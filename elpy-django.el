@@ -67,6 +67,17 @@ to pass with the chosen command."
   :group 'elpy)
 (make-variable-buffer-local 'elpy-django-always-prompt)
 
+(defcustom elpy-django-commands-with-req-arg '("startapp" "startproject"
+                                               "loaddata" "sqlmigrate"
+                                               "sqlsequencereset"
+                                               "squashmigrations")
+  "Used to determine if we should prompt for arguments. Some commands
+require arguments in order for it to work."
+  :type 'list
+  :safe 'listp
+  :group 'elpy)
+(make-variable-buffer-local 'elpy-django-commands-with-req-arg)
+
 ;;;;;;;;;;;;;;;;;;;;;;
 ;; Key map
 
@@ -123,8 +134,10 @@ to pass with the chosen command."
   "Prompt user for Django command. If called with `C-u',
 it will prompt for other flags/arguments to run."
   (interactive (list (completing-read "Command: " (elpy-django--get-commands) nil nil)))
-  ;; Called with C-u or variable is set
-  (when (or current-prefix-arg elpy-django-always-prompt)
+  ;; Called with C-u, variable is set or is a cmd that requires an argument
+  (when (or current-prefix-arg
+            elpy-django-always-prompt
+            (member cmd elpy-django-commands-with-req-arg))
     (setq cmd (concat cmd " " (read-shell-command (concat cmd ": ") "--noinput"))))
   (compile (concat elpy-django-command " " cmd)))
 

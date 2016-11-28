@@ -40,6 +40,13 @@ default to `django-admin.py'."
            (output (elpy-django-command "migrate")))
           (should (string= output "django-admin.py migrate"))))
 
+(ert-deftest elpy-module-django-commands-with-required-arg ()
+  (dolist (cmd elpy-django-commands-with-req-arg)
+    (mletf* ((compile (arg) arg)
+             (read-shell-command (arg1 agr2) "test")
+             (output (elpy-django-command cmd)))
+            (should (string= output (concat "django-admin.py " cmd " test"))))))
+
 ;; Test the parsing. Also, another way of shortening string?
 ;; Already made it shorter but still seems to long
 (ert-deftest elpy-module-django-get-commands ()
