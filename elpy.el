@@ -100,7 +100,7 @@ can be inidividually enabled or disabled."
   :group 'elpy)
 
 (defcustom elpy-project-ignored-directories
-  '(".tox" "build" "dist" ".cask")
+  '(".tox" "build" "dist" ".cask" ".ipynb_checkpoints")
   "Directories ignored by functions working on the whole project.
 This is in addition to `vc-directory-exclusion-list'
 and `grep-find-ignored-directories', as appropriate."
