@@ -361,3 +361,24 @@ Elpy supports various forms of refactoring Python code.
    options depending on the context.
 
 .. _rope: https://github.com/python-rope/rope
+
+
+Django
+======
+
+Elpy has basic Django support such as parsing either `manage.py` or `django-admin.py` (If it
+does not find `manage.py` it falls back to `django-admin.py`) for command completion assistance.
+Can also start `runserver` automatically and you can give an ip address and port.
+
+.. command:: elpy-django-command
+   :kbd: C-c C-x c
+
+   Choose what command you'd like to run via `django-admin.py` or `manage.py`.
+
+.. command:: elpy-django-runserver
+   :kbd: C-c C-x r
+
+
+   Start the development server command, `runserver`. Default arguments are `127.0.0.1` for
+   ip address and `8000` for port. These can be changed via ``elpy-django-server-ipaddr`` and
+   ``elpy-django-server-port``.
