@@ -3697,13 +3697,6 @@ description."
                    err-info
                    ", ")))))
 
-(defun elpy-flymake--standard-value (var)
-  "Return the standard value of the given variable."
-  (let ((sv (get var 'standard-value)))
-    (when (consp sv)
-      (ignore-errors
-        (eval (car sv))))))
-
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Module: Highlight Indentation
 
