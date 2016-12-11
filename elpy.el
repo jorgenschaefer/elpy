@@ -1735,6 +1735,9 @@ If ASK-FOR-EACH-ONE is non-nil, ask before killing each python process.
         (indent-rigidly (point-min)
                         (point-max)
                         (- indent-level))
+        ;; 'indent-rigidly' introduces tabs despite the fact that 'indent-tabs-mode' is nil
+        ;; 'untabify' fix that
+	(untabify (point-min) (point-max))
         (buffer-string)))))
 
 ;;;;;;;;;;;;;;;;;
