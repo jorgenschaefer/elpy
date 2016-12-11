@@ -4,5 +4,6 @@
                   (find-file-in-project "3.3")
                   (highlight-indentation "0.5.0")
                   (pyvenv "1.3")
-                  (yasnippet "0.8.0"))
+                  (yasnippet "0.8.0")
+                  (s "1.10.0"))
                 )
