@@ -68,8 +68,9 @@ class ImportMagic(object):
         return ["from %s import %s" % (mod, var) if var else "import %s" % mod
                 for (_, mod, var) in scores]
 
-    def add_import(self, source, statement):
-        imports = importmagic.importer.Imports(self.symbol_index, source)
+    def add_import(self, source, statement, project_root=None):
+        imports = importmagic.importer.Imports(self.symbol_index,
+                                               source, project_root)
         if statement.startswith('import '):
             modname = statement[7:]
             imports.add_import(modname)
@@ -92,7 +93,7 @@ class ImportMagic(object):
         unres, unref = scope.find_unresolved_and_unreferenced_symbols()
         return list(unres)
 
-    def remove_unreferenced_imports(self, source):
+    def remove_unreferenced_imports(self, source, project_root=None):
         try:
             scope = importmagic.symbols.Scope.from_source(source)
         except SyntaxError:
@@ -103,5 +104,5 @@ class ImportMagic(object):
         # not want to add imports without querying the user from which
         # module symbols should be imported.
         start_line, end_line, import_block = importmagic.importer.get_update(
-            source, self.symbol_index, set(), unref)
+            source, self.symbol_index, set(), unref, project_root)
         return start_line, end_line, import_block

@@ -215,14 +215,15 @@ class ElpyRPCServer(JSONRPCServer):
         except ImportMagicError as err:
             raise Fault(str(err), code=200)
 
-    def rpc_add_import(self, filename, source, statement):
+    def rpc_add_import(self, filename, source, statement, project_root=None):
         """Add an import statement to the module.
 
         """
         self._ensure_import_magic()
         source = get_source(source)
         try:
-            return self.import_magic.add_import(source, statement)
+            return self.import_magic.add_import(source,
+                                                statement, project_root)
         except ImportMagicError as err:
             raise Fault(str(err), code=200)
 
@@ -237,14 +238,16 @@ class ElpyRPCServer(JSONRPCServer):
         except ImportMagicError as err:
             raise Fault(str(err), code=200)
 
-    def rpc_remove_unreferenced_imports(self, filename, source):
+    def rpc_remove_unreferenced_imports(self, filename, source,
+                                        project_root=None):
         """Remove unused import statements.
 
         """
         self._ensure_import_magic()
         source = get_source(source)
         try:
-            return self.import_magic.remove_unreferenced_imports(source)
+            return self.import_magic.remove_unreferenced_imports(
+                source, project_root)
         except ImportMagicError as err:
             raise Fault(str(err), code=200)
 
