@@ -404,6 +404,8 @@ set to t elpy will use `elpy-test-django-runner-manage-command' and set the proj
     (define-key map (kbd "C-c C-t") 'elpy-test)
     (define-key map (kbd "C-c C-v") 'elpy-check)
     (define-key map (kbd "C-c C-z") 'elpy-shell-switch-to-shell)
+    (define-key map (kbd "C-c C-k") 'elpy-shell-kill)
+    (define-key map (kbd "C-c C-K") 'elpy-shell-kill-all)
     (define-key map (kbd "C-c C-r") elpy-refactor-map)
     (define-key map (kbd "C-c C-x") elpy-django-mode-map)
 
@@ -456,7 +458,11 @@ set to t elpy will use `elpy-test-django-runner-manage-command' and set the proj
                "Send Buffer to Python")
       :help "Send the current region or the whole buffer to Python"]
      ["Send Definition" python-shell-send-defun
-      :help "Send current definition to Python"])
+      :help "Send current definition to Python"]
+     ["Kill Python shell" elpy-shell-kill
+      :help "Kill the current Python shell"]
+     ["Kill all Python shells" elpy-shell-kill-all
+      :help "Kill all Python shells"])
     ("Project"
      ["Find File" elpy-find-file
       :help "Interactively find a file in the current project"]
@@ -1634,6 +1640,58 @@ code is executed."
   "Switch from inferior Python process buffer to recent Python buffer."
   (interactive)
   (pop-to-buffer elpy--shell-last-py-buffer))
+
+(defun elpy-shell-kill (&optional kill-buff)
+  "Kill the current python shell.
+
+If `elpy-dedicated-shells' is non-nil,
+kill the current buffer dedicated shell.
+
+If KILL-BUFF is non-nil, also kill the associated buffer."
+  (interactive)
+  (let ((shell-buffer (python-shell-get-buffer)))
+    (cond
+     (shell-buffer
+      (delete-process shell-buffer)
+      (when kill-buff
+	(kill-buffer shell-buffer))
+      (message "Killed %s shell" shell-buffer))
+     (t
+      (message "No python shell to kill")))))
+
+(defun elpy-shell-kill-all (&optional kill-buffers ask-for-each-one)
+  "Kill all active python shells.
+
+If KILL-BUFFERS is non-nil, also kill the associated buffers.
+If ASK-FOR-EACH-ONE is non-nil, ask before killing each python process.
+"
+  (interactive)
+  (let ((python-buffer-list ()))
+    ;; Get active python shell buffers and kill inactive ones (if asked)
+    (loop for buffer being the buffers do
+	  (when (string-match "^\*Python\\\[.*\\]\*$" (buffer-name buffer))
+	    (if (get-buffer-process buffer)
+		(push buffer python-buffer-list)
+	      (when kill-buffers
+		(kill-buffer buffer)))))
+    (cond
+     ;; Ask for each buffers and kill
+     ((and python-buffer-list ask-for-each-one)
+      (loop for buffer in python-buffer-list do
+	    (when (y-or-n-p (format "Kill %s ?" buffer))
+		(delete-process buffer)
+		(when kill-buffers
+		  (kill-buffer buffer)))))
+     ;; Ask and kill every buffers
+     (python-buffer-list
+      (if (y-or-n-p (format "Kill %s python shells ?" (length python-buffer-list)))
+	  (loop for buffer in python-buffer-list do
+		(delete-process buffer)
+		(when kill-buffers
+		  (kill-buffer buffer)))))
+     ;; No shell to close
+     (t
+      (message "No python shell to close")))))
 
 (defun elpy-shell-get-or-create-process ()
   "Get or create an inferior Python process for current buffer and return it."
