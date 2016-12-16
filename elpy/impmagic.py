@@ -71,15 +71,26 @@ class ImportMagic(object):
     def add_import(self, source, statement):
         imports = importmagic.importer.Imports(self.symbol_index, source)
         if statement.startswith('import '):
-            modname = statement[7:]
-            imports.add_import(modname)
+            sepalias = None
+            alias = None
+            if ' as ' in statement:
+                sepalias = statement.find(' as ')
+                alias = statement[sepalias+4:]
+            modname = statement[7:sepalias]
+            imports.add_import(modname, alias)
             self.favorites.add(modname)
         else:
             sep = statement.find(' import ')
+            sepalias = None
+            alias = None
+            if ' as ' in statement:
+                sepalias = statement.find(' as ')
+                alias = statement[sepalias+4:]
             modname = statement[5:sep]
+            name = statement[sep+8:sepalias]
             if sep > -1:
                 self.favorites.add(modname)
-                imports.add_import_from(statement[5:sep], statement[sep+8:])
+                imports.add_import_from(modname, name, alias)
         start_line, end_line, import_block = imports.get_update()
         return start_line, end_line, import_block
 

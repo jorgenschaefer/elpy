@@ -2245,7 +2245,7 @@ prefix argument is given, prompt for a symbol from the user."
 ;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Import manipulation
 
-(defun elpy-importmagic--add-import-read-args (&optional object prompt)
+(defun elpy-importmagic--add-import-read-args (&optional object prompt ask-for-alias)
   (let* ((default-object (save-excursion
                            (let ((bounds (with-syntax-table python-dotty-syntax-table
                                            (bounds-of-thing-at-point 'symbol))))
@@ -2258,24 +2258,29 @@ prefix argument is given, prompt for a symbol from the user."
     (cond
      ;; An elpy warning (i.e. index not ready) is returned as a string.
      ((stringp possible-imports)
-      (list ""))
+      "")
      ;; If there is no candidate, we exit immediately.
      ((null possible-imports)
       (message "No import candidate found")
-      (list ""))
+      "")
      ;; We have some candidates, let the user choose one.
      (t
-      (let ((first-choice (car possible-imports))
-            (user-choice (completing-read statement-prompt possible-imports)))
-        (list (if (equal user-choice "") first-choice user-choice)))))))
+      (let* ((first-choice (car possible-imports))
+	     (user-choice (completing-read statement-prompt possible-imports))
+	     (alias (if ask-for-alias (read-string (format "Import \"%s\" as: " object-to-import)) "")))
+	(concat (if (equal user-choice "") first-choice user-choice)
+		(if (not (or (equal alias "") (equal alias object-to-import))) (concat " as " alias))))))))
 
-(defun elpy-importmagic-add-import (statement)
-  "Prompt to import thing at point, show possbile imports and add selected import."
-  (interactive (elpy-importmagic--add-import-read-args))
-  (unless (equal statement "")
-    (let* ((res (elpy-rpc "add_import" (list buffer-file-name
-                                             (elpy-rpc--buffer-contents)
-                                             statement))))
+(defun elpy-importmagic-add-import (&optional statement ask-for-alias)
+  "Prompt to import thing at point, show possible imports and add selected import.
+
+if ASK-FOR-ALIAS is non-nil, also ask for an alias."
+  (interactive)
+  (let* ((statement (or statement (elpy-importmagic--add-import-read-args nil nil ask-for-alias)))
+	 (res (elpy-rpc "add_import" (list buffer-file-name
+					   (elpy-rpc--buffer-contents)
+					   statement))))
+    (unless (equal statement "")
       (elpy-buffer--replace-block res))))
 
 (defun elpy-importmagic-fixup ()
@@ -2285,13 +2290,24 @@ Also sort the imports in the import statement blocks."
   (interactive)
   ;; get all unresolved names, and interactively add imports for them
   (let* ((res (elpy-rpc "get_unresolved_symbols" (list buffer-file-name
-                                                       (elpy-rpc--buffer-contents)))))
+						       (elpy-rpc--buffer-contents))))
+	 (unresolved-aliases (list)))
     (unless (stringp res)
       (if (null res) (message "No imports to add."))
       (dolist (object res)
         (let* ((prompt (format "How to import \"%s\": " object))
-               (choice (elpy-importmagic--add-import-read-args object prompt)))
-          (elpy-importmagic-add-import (car choice))))))
+               (choice (elpy-importmagic--add-import-read-args object prompt nil)))
+	  (when (equal choice "")
+	    (add-to-list 'unresolved-aliases (car (split-string object "\\."))))
+	  (elpy-importmagic-add-import choice nil))))
+    ;; ask for unresolved aliases real names and add import for them
+    (dolist (alias unresolved-aliases)
+      (let* ((object (read-string (format "Real name of \"%s\" alias: " alias nil)))
+	     (prompt (format "How to import \"%s\": " object))
+	     (choice (concat
+		      (elpy-importmagic--add-import-read-args object prompt nil)
+		      (concat " as " alias))))
+	(elpy-importmagic-add-import choice nil))))
   ;; now get a new import statement block (this also sorts)
   (let* ((res (elpy-rpc "remove_unreferenced_imports" (list buffer-file-name
                                                             (elpy-rpc--buffer-contents)))))
