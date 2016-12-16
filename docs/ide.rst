@@ -390,7 +390,13 @@ Can also start `runserver` automatically and you can give an ip address and port
 .. command:: elpy-django-runserver
    :kbd: C-c C-x r
 
-
    Start the development server command, `runserver`. Default arguments are `127.0.0.1` for
    ip address and `8000` for port. These can be changed via ``elpy-django-server-ipaddr`` and
    ``elpy-django-server-port``.
+
+.. command:: elpy-django-shell
+
+   Start a shell that is pre-loaded with a Django environment. You can choose what shell you'd
+   like such as shell_plus from the django_extensions module by editing `elpy-django-shell-command`.
+   Integration with other shells might work but for better experience default argument of "--plain"
+   is passed. Calling function with prefix (C-u) will prompt for additional args.

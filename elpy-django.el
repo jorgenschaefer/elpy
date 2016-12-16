@@ -59,6 +59,13 @@ command to use."
   :group 'elpy)
 (make-variable-buffer-local 'elpy-django-server-command)
 
+(defcustom elpy-django-shell-command "shell"
+  "Shell command to start a pre-loaded Django environment shell"
+  :type 'string
+  :safe 'stringp
+  :group 'elpy)
+(make-variable-buffer-local 'elpy-django-shell-command)
+
 (defcustom elpy-django-always-prompt nil
   "When non-nil, it will always prompt for extra arguments
 to pass with the chosen command."
@@ -140,6 +147,18 @@ it will prompt for other flags/arguments to run."
             (member cmd elpy-django-commands-with-req-arg))
     (setq cmd (concat cmd " " (read-shell-command (concat cmd ": ") "--noinput"))))
   (compile (concat elpy-django-command " " cmd)))
+
+(defun elpy-django-shell (arg)
+  "Start a Django environment ready shell. If called with a prefix (C-u) will
+prompt for additional args"
+  (interactive "P")
+  ;; Due to formatting, "--plain" argument is you're safest bet
+  (let ((proj-root (file-name-base (directory-file-name (elpy-project-root))))
+        (cmd (format "%s %s %s" elpy-django-command elpy-django-shell-command "--plain")))
+    (when (or arg elpy-django-always-prompt)
+      (setq cmd (read-shell-command "command:" cmd)))
+    (pop-to-buffer (process-buffer (run-python cmd t t)))
+    (rename-buffer (format "*Django Shell[%s]*" proj-root))))
 
 (defun elpy-django-runserver (arg)
   "Start the server and automatically add the ipaddr and port.
