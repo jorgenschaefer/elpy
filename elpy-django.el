@@ -153,12 +153,16 @@ it will prompt for other flags/arguments to run."
 prompt for additional args"
   (interactive "P")
   ;; Due to formatting, "--plain" argument is you're safest bet
-  (let ((proj-root (file-name-base (directory-file-name (elpy-project-root))))
-        (cmd (format "%s %s %s" elpy-django-command elpy-django-shell-command "--plain")))
-    (when (or arg elpy-django-always-prompt)
-      (setq cmd (read-shell-command "command:" cmd)))
-    (pop-to-buffer (process-buffer (run-python cmd t t)))
-    (rename-buffer (format "*Django Shell[%s]*" proj-root))))
+  (let* ((proj-root (file-name-base (directory-file-name (elpy-project-root))))
+         (buff-name (format "*Django Shell[%s]*" proj-root))
+         (cmd (format "%s %s %s" elpy-django-command elpy-django-shell-command "--plain")))
+    ;; Return an existing buffer, else create one
+    (if (get-buffer buff-name)
+        (pop-to-buffer buff-name)
+      (when (or arg elpy-django-always-prompt)
+        (setq cmd (read-shell-command "command:" cmd)))
+      (pop-to-buffer (process-buffer (run-python cmd t t)))
+      (rename-buffer buff-name))))
 
 (defun elpy-django-runserver (arg)
   "Start the server and automatically add the ipaddr and port.
