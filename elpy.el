@@ -2332,8 +2332,8 @@ prefix argument is given, prompt for a symbol from the user."
 (defun elpy-importmagic-add-import (&optional statement ask-for-alias)
   "Prompt to import thing at point, show possible imports and add selected import.
 
-if ASK-FOR-ALIAS is non-nil, also ask for an alias."
-  (interactive)
+With prefix arg, also ask for an import alias."
+  (interactive "i\nP")
   (let* ((statement (or statement (elpy-importmagic--add-import-read-args nil nil ask-for-alias)))
 	 (res (elpy-rpc "add_import" (list buffer-file-name
 					   (elpy-rpc--buffer-contents)
