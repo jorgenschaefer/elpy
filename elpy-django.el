@@ -113,10 +113,10 @@ require arguments in order for it to work."
           (with-temp-buffer
             (progn
               (insert help-output)
-              (beginning-of-buffer)
+              (goto-char (point-min))
               (delete-region (point) (search-forward "Available subcommands:" nil nil nil))
               ;; cleanup [auth] and stuff
-              (beginning-of-buffer)
+              (goto-char (point-min))
               (save-excursion
                 (replace-regexp "\\[.*\\]" ""))
               (buffer-string))))
