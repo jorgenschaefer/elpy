@@ -2891,11 +2891,14 @@ died, this will kill the process and buffer."
             proc (condition-case err
                      (let ((process-connection-type nil)
                            (process-environment (elpy-rpc--environment)))
-                       (start-process name
-                                      (current-buffer)
-                                      full-python-command
-                                      "-W" "ignore"
-                                      "-m" "elpy.__main__"))
+                   (apply #'start-process
+                          (append
+                           `(,name
+                             ,(current-buffer)
+                             ,full-python-command)
+                           (unless (string-prefix-p "ipython" full-python-command)  '("-W" "ignore"))
+                           '("-m" "elpy.__main__")))
+
                    (error
                     (elpy-config-error
                      "Elpy can't start Python (%s: %s)"
