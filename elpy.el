@@ -2356,7 +2356,7 @@ Also sort the imports in the import statement blocks."
         (let* ((prompt (format "How to import \"%s\": " object))
                (choice (elpy-importmagic--add-import-read-args object prompt nil)))
 	  (when (equal choice "")
-	    (add-to-list 'unresolved-aliases (car (split-string object "\\."))))
+	    (push (car (split-string object "\\.")) unresolved-aliases))
 	  (elpy-importmagic-add-import choice nil))))
     ;; ask for unresolved aliases real names and add import for them
     (dolist (alias unresolved-aliases)
