@@ -296,6 +296,14 @@ this feature."
           (const :tag "off" nil))
   :group 'elpy)
 
+(defcustom elpy-company--completion-annotation 'doc
+  "Method to display annotations for elpy company candidates."
+  :type '(choice
+          (const :tag "Description" doc)
+          (const :tag "Documentation" at-full)
+          (const :tag "off" nil))
+  :group 'elpy)
+
 (defcustom elpy-eldoc-show-current-function t
   "If true, show the current function if no calltip is available.
 
@@ -3594,7 +3602,7 @@ or unless NAME is no callable instance."
      (elpy-company--minibuffer-display-documentation arg))
     ;; annotation <candidate> => short docstring for completion buffer
     (`annotation
-     (elpy-company--cache-annotation arg))
+     (elpy-company--display-annotation arg))
     ;; doc-buffer <candidate> => put doc buffer in `company-doc-buffer'
     (`doc-buffer
      (let* ((name (elpy-company--cache-name arg))
@@ -3640,6 +3648,20 @@ or unless NAME is no callable instance."
          nil)
         (t
          (error "Unrecognized option: %S" elpy-company--minibuffer-contents))))
+
+(defun elpy-company--display-annotation (name)
+  "Function to display annotations for candidates."
+  (cond ((eq elpy-company--completion-annotation 'doc)
+         (elpy-company--cache-annotation name))
+        ((eq elpy-company--completion-annotation 'at-full)
+         (let ((meta (elpy-company--cache-meta name)))
+           (when (string-match "\\(statement\\)" meta)
+             (setq meta (match-string 1 meta)))
+           meta))
+        ((eq elpy-company--completion-annotation nil)
+         nil)
+        (t
+         (error "Unrecognized option: %S" elpy-company--completion-annotation))))
 
 ;;;;;;;;;;;;;;;;;
 ;;; Module: ElDoc
