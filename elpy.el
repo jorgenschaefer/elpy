@@ -3641,10 +3641,7 @@ or unless NAME is no callable instance."
   (cond ((eq elpy-company--completion-annotations 'doc)
          (elpy-company--cache-annotation name))
         ((eq elpy-company--completion-annotations 'at-full)
-         (let ((meta (elpy-company--cache-meta name)))
-           (when (string-match "\\(statement\\)" meta)
-             (setq meta (match-string 1 meta)))
-           meta))
+         (elpy-company--cache-meta name))
         ((eq elpy-company--completion-annotations nil)
          nil)
         (t
