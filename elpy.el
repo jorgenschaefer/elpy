@@ -304,6 +304,11 @@ this feature."
           (const :tag "off" nil))
   :group 'elpy)
 
+(defcustom elpy-company--case-insensitive t
+  "Use case insensitive candidates match."
+  :type 'boolean
+  :group 'elpy)
+
 (defcustom elpy-eldoc-show-current-function t
   "If true, show the current function if no calltip is available.
 
@@ -3623,6 +3628,8 @@ or unless NAME is no callable instance."
        (when loc
          (cons (car loc)
                (cadr loc)))))
+    (`ignore-case
+     elpy-company--case-insensitive)
     ;; match <candidate> => for non-prefix based backends
     ;; post-completion <candidate> => after insertion, for snippets
     (`post-completion
