@@ -2632,6 +2632,87 @@ Also, switch to that buffer."
         (select-window window)
       (switch-to-buffer "*Occur*"))))
 
+;;;;;;;;;;;;;;;;;;;;;
+;;; Occur Usages
+
+(define-derived-mode elpy--view-usages-mode special-mode "elpy-usages"
+  (toggle-truncate-lines)
+  (setq next-error-function #'anaconda-mode-next-definition))
+
+(define-button-type 'elpy--usage-button
+  'action #'elpy--view-jump
+  'face nil)
+
+(defun python--insert-button (name file offset)
+  "Insert button with NAME and save FILE and OFFSET."
+  (insert-text-button name
+                      'type 'elpy--usage-button
+                      'file file
+                      'offset offset))
+
+(defun elpy--view-jump (button)
+  "Jump to usage. Location is saved in BUTTON."
+  (let ((file (button-get button 'file))
+        (offset (button-get button 'offset)))
+    (find-file file)
+    (goto-char offset)))
+
+(defmacro elpy--get-usages-buffer-create (&rest body)
+  "Create elpy usages buffer and execute BODY in it."
+  `(let ((buf (get-buffer-create "*Elpy-Usages")))
+     (with-current-buffer buf
+       (setq buffer-read-only nil)
+       (erase-buffer)
+       ,@body
+       (goto-char (point-min))
+       (elpy--view-usages-mode)
+       buf)))
+
+(defun elpy--mode-view (result)
+  "Show RESULT of `elpy-rpc-get-usages'.
+
+Display file and line of usage. Insert button with saved location."
+  (pop-to-buffer
+   (elpy--get-usages-buffer-create
+    (if result 
+        (mapcar (lambda (completion)
+                  (let ((name (cdr (assq 'name completion))) 
+                        (context (cdr (assq 'context completion)))
+                        (path (cdr (assq 'path completion)))
+                        (line (cdr (assq 'line completion)))
+                        (offset (cdr (assq 'offset completion))))
+                    (python--insert-button
+                     (concat (if (eq path nil)
+                                 (buffer-name (current-buffer))
+                               (propertize (nth 0 (reverse (split-string path "\\/")))
+                                           'font-lock-face '(:foreground "DeepSkyBlue")))
+                             ":"
+                             (propertize (int-to-string line) 'font-lock-face '(:foreground "orange"))
+                             ":"
+                             (replace-regexp-in-string
+                              name
+                              (propertize name 'font-lock-face '(:foreground "yellow")) context))
+                     path offset)
+                    (insert "\n")))
+                result)
+      (insert "No usage found")))))
+
+(defun elpy--find-usages ()
+  "Find usages for thing at point."
+  (interactive)
+  (let ((usages (condition-case err
+                    (elpy-rpc-get-usages)
+                  ;; This is quite the stunt, but elisp parses JSON
+                  ;; null as nil, which is indistinguishable from
+                  ;; the empty list, we stick to the error.
+                  (error
+                   (if (and (eq (car err) 'error)
+                            (stringp (cadr err))
+                            (string-match "not implemented" (cadr err)))
+                       'not-supported
+                     (error (cadr err)))))))
+    (elpy--mode-view usages)))
+
 ;;;;;;;;;;;;;;;;;;;
 ;;; Promise objects
 
