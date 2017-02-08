@@ -168,8 +168,8 @@ class JediBackend(object):
                 offset = linecol_to_pos(text, use.line, use.column)
 
             result.append({"name": use.name,
-                           "filename": use.module_path,
-                           'context': use.description.replace('\n', '')
+                           "path": use.module_path,
+                           "context": use.description.replace('\n', '')
                                           if use.type == 'import'
                                           else use.description,
                            "line": use.line,
