@@ -2635,22 +2635,22 @@ Also, switch to that buffer."
 ;;;;;;;;;;;;;;;;;;;;;
 ;;; Occur Usages
 
-(define-derived-mode elpy--view-usages-mode special-mode "elpy-usages"
+(define-derived-mode elpy-usages--view-usages-mode special-mode "elpy-usages"
   (toggle-truncate-lines)
   (setq next-error-function #'anaconda-mode-next-definition))
 
 (define-button-type 'elpy--usage-button
-  'action #'elpy--view-jump
+  'action #'elpy-usages--view-jump
   'face nil)
 
-(defun python--insert-button (name file offset)
+(defun elpy-usages--insert-button (name file offset)
   "Insert button with NAME and save FILE and OFFSET."
   (insert-text-button name
                       'type 'elpy--usage-button
                       'file file
                       'offset offset))
 
-(defun elpy--view-jump (button)
+(defun elpy-usages--view-jump (button)
   "Toggle buffer showing the selected usage in context."
   (let* ((file (button-get button 'file))
          (offset (button-get button 'offset))
@@ -2663,7 +2663,7 @@ Also, switch to that buffer."
           (widen)                  
           (goto-char offset))))))
 
-(defmacro elpy--get-usages-buffer-create (&rest body)
+(defmacro elpy-usages--get-usages-buffer-create (&rest body)
   "Create elpy usages buffer and execute BODY in it."
   `(let ((buf (get-buffer-create "*Elpy-Usages")))
      (with-current-buffer buf
@@ -2671,15 +2671,15 @@ Also, switch to that buffer."
        (erase-buffer)
        ,@body
        (goto-char (point-min))
-       (elpy--view-usages-mode)
+       (elpy-usages--view-usages-mode)
        buf)))
 
-(defun elpy--mode-view (result)
+(defun elpy-usages--mode-view (result)
   "Show RESULT of `elpy-rpc-get-usages'.
 
 Display file and line of usage. Insert button with saved location."
   (pop-to-buffer
-   (elpy--get-usages-buffer-create
+   (elpy-usages--get-usages-buffer-create
     (if result 
         (mapcar (lambda (completion)
                   (let ((name (cdr (assq 'name completion))) 
@@ -2687,7 +2687,7 @@ Display file and line of usage. Insert button with saved location."
                         (path (cdr (assq 'path completion)))
                         (line (cdr (assq 'line completion)))
                         (offset (cdr (assq 'offset completion))))
-                    (python--insert-button
+                    (elpy-usages--insert-button
                      (concat (if (eq path nil)
                                  (buffer-name (current-buffer))
                                (propertize (nth 0 (reverse (split-string path "\\/")))
@@ -2703,7 +2703,7 @@ Display file and line of usage. Insert button with saved location."
                 result)
       (insert "No usage found")))))
 
-(defun elpy--find-usages ()
+(defun elpy-usages--find-usages ()
   "Find usages for thing at point."
   (interactive)
   (let ((usages (condition-case err
@@ -2717,7 +2717,7 @@ Display file and line of usage. Insert button with saved location."
                             (string-match "not implemented" (cadr err)))
                        'not-supported
                      (error (cadr err)))))))
-    (elpy--mode-view usages)))
+    (elpy-usages--mode-view usages)))
 
 ;;;;;;;;;;;;;;;;;;;
 ;;; Promise objects
