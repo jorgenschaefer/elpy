@@ -2651,11 +2651,17 @@ Also, switch to that buffer."
                       'offset offset))
 
 (defun elpy--view-jump (button)
-  "Jump to usage. Location is saved in BUTTON."
-  (let ((file (button-get button 'file))
-        (offset (button-get button 'offset)))
-    (find-file file)
-    (goto-char offset)))
+  "Toggle buffer showing the selected usage in context."
+  (let* ((file (button-get button 'file))
+         (offset (button-get button 'offset))
+         (buffer (or (bufferp file) 
+                     (find-file-noselect file t))))
+    (if (get-buffer-window buffer)
+        (kill-buffer buffer)
+      (with-selected-window (display-buffer buffer t)
+        (save-restriction
+          (widen)                  
+          (goto-char offset))))))
 
 (defmacro elpy--get-usages-buffer-create (&rest body)
   "Create elpy usages buffer and execute BODY in it."
