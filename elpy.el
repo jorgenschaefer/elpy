@@ -3400,10 +3400,10 @@ If you need your modeline, you can set the variable `elpy-remove-modeline-lighte
      (company-mode 1)
      (when (> (buffer-size) elpy-rpc-ignored-buffer-size)
        (message
-	(concat
-	 (format "Buffer larger than elpy-rpc-ignored-buffer-size (%d)."
-		 elpy-rpc-ignored-buffer-size)
-	 " Elpy will turn off completion."))))
+	(format
+	 (concat "Buffer larger than elpy-rpc-ignored-buffer-size (%d)."
+		 " Elpy will turn off completion.")
+	 elpy-rpc-ignored-buffer-size))))
     (`buffer-stop
      (company-mode -1)
      (kill-local-variable 'company-idle-delay)
