@@ -1,6 +1,6 @@
-flake8==2.5.4
-jedi==0.9.0
+flake8==3.3.0
+jedi==0.10.0
 rope_py3k==0.9.4-1
-importmagic==0.1.5
-autopep8==1.2.1
-yapf==0.6.3
+importmagic==0.1.7
+autopep8==1.2.4
+yapf==0.16.0
