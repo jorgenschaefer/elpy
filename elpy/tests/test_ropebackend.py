@@ -86,7 +86,7 @@ class TestValidate(RopeBackendTestCase):
 
 class TestRPCGetCompletions(RPCGetCompletionsTests,
                             RopeBackendTestCase):
-    pass
+    BUILTINS = ["object", "oct", "open", "or", "ord"]
 
 
 class TestRPCGetCompletionDocstring(RPCGetCompletionDocstringTests,

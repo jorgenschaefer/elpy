@@ -32,7 +32,7 @@ class TestInit(JediBackendTestCase):
 
 class TestRPCGetCompletions(RPCGetCompletionsTests,
                             JediBackendTestCase):
-    pass
+    BUILTINS = ['object', 'oct', 'open', 'ord', 'OSError', 'OverflowError']
 
 
 class TestRPCGetCompletionDocstring(RPCGetCompletionDocstringTests,
@@ -83,7 +83,7 @@ class TestRPCGetDefinition(RPCGetDefinitionTests,
 class TestRPCGetCalltip(RPCGetCalltipTests,
                         JediBackendTestCase):
     KEYS_CALLTIP = {'index': 0,
-                    'params': [''],
+                    'params': ['param '],
                     'name': u'keys'}
     if sys.version_info >= (3, 5):
         RADIX_CALLTIP = {'index': 0,
@@ -94,7 +94,7 @@ class TestRPCGetCalltip(RPCGetCalltipTests,
                          'params': [],
                          'name': u'radix'}
     ADD_CALLTIP = {'index': 0,
-                   'params': [u'a', u'b'],
+                   'params': [u'param a', u'param b'],
                    'name': u'add'}
     if compat.PYTHON3:
         THREAD_CALLTIP = {"name": "Thread",
@@ -107,12 +107,12 @@ class TestRPCGetCalltip(RPCGetCalltipTests,
                           "index": 0}
     else:
         THREAD_CALLTIP = {"name": "Thread",
-                          "params": ["group=None",
-                                     "target=None",
-                                     "name=None",
-                                     "args=()",
-                                     "kwargs=None",
-                                     "verbose=None"],
+                          "params": ["param group=None",
+                                     "param target=None",
+                                     "param name=None",
+                                     "param args=()",
+                                     "param kwargs=None",
+                                     "param verbose=None"],
                           "index": 0}
 
     def test_should_not_fail_with_get_subscope_by_name(self):
@@ -125,8 +125,7 @@ class TestRPCGetCalltip(RPCGetCalltipTests,
         offset = 37
 
         sigs = self.backend.rpc_get_calltip(filename, source, offset)
-        if sigs is not None:
-            sigs[0].index
+        sigs["index"]
 
 
 class TestRPCGetUsages(RPCGetUsagesTests,

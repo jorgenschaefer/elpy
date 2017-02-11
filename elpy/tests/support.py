@@ -338,7 +338,7 @@ class RPCGetCompletionsTests(GenericRPCTests):
     def test_should_complete_builtin(self):
         source, offset = source_and_offset("o_|_")
 
-        expected = ["object", "oct", "open", "or", "ord"]
+        expected = self.BUILTINS
         actual = [cand['name'] for cand in
                   self.backend.rpc_get_completions("test.py",
                                                    source, offset)]
