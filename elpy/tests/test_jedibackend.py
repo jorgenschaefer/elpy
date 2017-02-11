@@ -87,7 +87,7 @@ class TestRPCGetCalltip(RPCGetCalltipTests,
                     'name': u'keys'}
     if sys.version_info >= (3, 5):
         RADIX_CALLTIP = {'index': 0,
-                         'params': ['10'],
+                         'params': ['param 10'],
                          'name': u'radix'}
     else:
         RADIX_CALLTIP = {'index': None,
