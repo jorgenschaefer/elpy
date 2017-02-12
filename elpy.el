@@ -3444,8 +3444,8 @@ here, and return the \"name\" as used by the backend."
   "Store RESULT in the candidate cache and return candidates."
   (elpy-company--cache-clear)
   (mapcar (lambda (completion)
-            (let* ((suffix (cdr (assq 'suffix completion)))
-                   (name (concat prefix suffix)))
+            (let* ((suffix (cdr (assq 'name completion)))
+                   (name (concat (s-chop-suffix (company-grab-symbol) prefix) suffix)))
               (puthash name completion elpy-company--cache)
               name))
           result))
