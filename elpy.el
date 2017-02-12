@@ -45,6 +45,7 @@
 
 (require 'elpy-refactor)
 (require 'elpy-django)
+(require 'elpy-profile)
 (require 'pyvenv)
 
 (defconst elpy-version "1.14.1"
