@@ -1783,7 +1783,7 @@ with a prefix argument)."
                                    (buffer-file-name))))
         (extra-args (if whole-project-p
                         (concat
-                         (if (equal python-check-command "pylint")
+                         (if (string-match "pylint$" python-check-command)
                              " --ignore="
                            " --exclude=")
                          (mapconcat #'identity
