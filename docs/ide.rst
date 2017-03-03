@@ -394,3 +394,17 @@ Can also start `runserver` automatically and you can give an ip address and port
    Start the development server command, `runserver`. Default arguments are `127.0.0.1` for
    ip address and `8000` for port. These can be changed via ``elpy-django-server-ipaddr`` and
    ``elpy-django-server-port``.
+
+
+Profiling
+=========
+
+Elpy allows to profile asynchronously python scripts using `cProfile`.
+
+.. command:: elpy-profile-buffer-or-region
+
+   Send the current buffer or region to the profiler and display the result with
+   ``elpy-profile-visualizer``.
+   The default visualizer is `snakeviz`_, a browser-based graphical profile viewer that can be installed with `pip install snakeviz`.
+   If the profiling fails, the python error output is displayed.
+.. _snakeviz: https://jiffyclub.github.io/snakeviz/
