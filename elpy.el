@@ -1632,10 +1632,10 @@ code is executed."
   (python-nav-forward-statement))
 
 (defun elpy-shell-switch-to-shell ()
-  "Switch to inferior Python process buffer."
+  "Switch to project Python process buffer."
   (interactive)
   (setq elpy--shell-last-py-buffer (buffer-name))
-  (pop-to-buffer (process-buffer (elpy-shell-get-or-create-process))))
+  (elpy-shell-switch-to-project-shell))
 
 (defun elpy-shell-switch-to-buffer ()
   "Switch from inferior Python process buffer to recent Python buffer."
