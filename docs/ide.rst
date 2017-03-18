@@ -145,7 +145,6 @@ Emacs can run a Python interpreter in a special buffer, making it much
 easier to send code snippets over.
 
 .. command:: elpy-shell-switch-to-shell
-   :kbd: C-c C-z
 
    Switch to buffer with a Python interpreter running, starting one if
    necessary.
@@ -154,6 +153,13 @@ easier to send code snippets over.
    This process will inherit the current virtual env. If you want to
    start a Python interpreter with a different virtual env, you can
    either kill the existing one, or rename the buffer.
+
+.. command:: elpy-shell-switch-to-project-shell
+   :kbd: C-c C-z
+
+   Switch to a Python interpreter buffer with the current project
+   already loaded into sys.path. Each project can have their own
+   Python interpreter running.
 
 .. command:: elpy-shell-send-region-or-buffer
    :kbd: C-c C-c
