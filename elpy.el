@@ -1888,15 +1888,21 @@ indentation levels."
 
 (defun elpy-nav-move-line-or-region-down (&optional beg end)
   "Move the current line or active region down."
-  (interactive "r")
-  (if (use-region-p)
+  (interactive
+   (if (use-region-p)
+       (list (region-beginning) (region-end))
+     (list nil nil)))
+  (if beg
       (elpy--nav-move-region-vertically beg end 1)
     (elpy--nav-move-line-vertically 1)))
 
 (defun elpy-nav-move-line-or-region-up (&optional beg end)
   "Move the current line or active region down."
-  (interactive "r")
-  (if (use-region-p)
+  (interactive
+   (if (use-region-p)
+       (list (region-beginning) (region-end))
+     (list nil nil)))
+  (if beg
       (elpy--nav-move-region-vertically beg end -1)
     (elpy--nav-move-line-vertically -1)))
 
