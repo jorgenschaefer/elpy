@@ -57,6 +57,16 @@ class TestRPCGetDocstring(RPCGetDocstringTests,
         self.assertEqual(lines[0], 'Documentation for json.loads:')
         self.assertEqual(lines[2], self.JSON_LOADS_DOCSTRING)
 
+    @mock.patch("elpy.jedibackend.run_with_debug")
+    def test_should_not_return_empty_docstring(self, run_with_debug):
+        location = mock.MagicMock()
+        location.full_name = "testthing"
+        location.docstring.return_value = ""
+        run_with_debug.return_value = [location]
+        filename = self.project_file("test.py", "print")
+        docstring = self.backend.rpc_get_docstring(filename, "print", 0)
+        self.assertIsNone(docstring)
+
 
 class TestRPCGetDefinition(RPCGetDefinitionTests,
                            JediBackendTestCase):

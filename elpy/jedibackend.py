@@ -67,7 +67,7 @@ class JediBackend(object):
                                        re_raise=jedi.NotFoundError)
         except jedi.NotFoundError:
             return None
-        if locations:
+        if locations and locations[-1].docstring():
             return ('Documentation for {0}:\n\n'.format(
                 locations[-1].full_name) + locations[-1].docstring())
         else:
