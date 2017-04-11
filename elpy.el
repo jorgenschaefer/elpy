@@ -2163,7 +2163,10 @@ This requires Django 1.6 or the django-discover-runner package."
                       module))))
     (apply #'elpy-test-run
            top
-           elpy-test-django-runner-command)))
+           (append
+            (if elpy-test-django-with-manage
+                elpy-test-django-runner-manage-command
+              elpy-test-django-runner-command)))))
 (put 'elpy-test-django-runner 'elpy-test-runner-p t)
 
 (defun elpy-test-nose-runner (top file module test)
