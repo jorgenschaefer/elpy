@@ -2165,7 +2165,14 @@ This requires Django 1.6 or the django-discover-runner package."
            top
            (append
             (if elpy-test-django-with-manage
-                elpy-test-django-runner-manage-command
+                (append (list (concat (expand-file-name
+                                       (locate-dominating-file
+                                        (if (elpy-project-root)
+                                            (elpy-project-root)
+                                          ".")
+                                        (car elpy-test-django-runner-manage-command)))
+                                      (car elpy-test-django-runner-manage-command)))
+                        (cdr elpy-test-django-runner-manage-command))
               elpy-test-django-runner-command)))))
 (put 'elpy-test-django-runner 'elpy-test-runner-p t)
 
