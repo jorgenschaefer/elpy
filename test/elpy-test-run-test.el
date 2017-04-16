@@ -19,7 +19,8 @@
 (ert-deftest elpy-test-run-should-escape-arguments ()
   (elpy-testcase ()
     (mletf* ((command nil)
-             (compile (arg) (setq command arg)))
+             (compile (arg) (setq command arg))
+             (system-type 'gnu))
 
       (elpy-test-run "/" "ls" "foo bar")
 
