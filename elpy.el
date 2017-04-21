@@ -1670,7 +1670,8 @@ If ASK-FOR-EACH-ONE is non-nil, ask before killing each python process.
   (let ((python-buffer-list ()))
     ;; Get active python shell buffers and kill inactive ones (if asked)
     (loop for buffer being the buffers do
-	  (when (string-match "^\*Python\\\[.*\\]\*$" (buffer-name buffer))
+	  (when (and (buffer-name buffer)
+                     (string-match "^\*Python\\\[.*\\]\*$" (buffer-name buffer)))
 	    (if (get-buffer-process buffer)
 		(push buffer python-buffer-list)
 	      (when kill-buffers
