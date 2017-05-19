@@ -20,13 +20,13 @@ except ImportError:  # pragma: no cover
     yapf_api = None
 
 
-def fix_code(code):
+def fix_code(code, directory=None):
     """Formats Python code to conform to the PEP 8 style guide.
 
     """
     if not yapf_api:
         raise Fault('yapf not installed', code=400)
-    style_config = file_resources.GetDefaultStyleForDir(os.getcwd())
+    style_config = file_resources.GetDefaultStyleForDir(directory or os.getcwd())
     try:
         reformatted_source, _ = yapf_api.FormatCode(code,
                                                     filename='<stdin>',
