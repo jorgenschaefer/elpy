@@ -42,11 +42,13 @@
 (require 'ido)
 (require 'json)
 (require 'python)
+(require 'cl-lib)               ; for `cl-every' and `cl-union'
 
 (require 'elpy-refactor)
 (require 'elpy-django)
 (require 'elpy-profile)
 (require 'pyvenv)
+(require 'find-file-in-project)
 
 (defconst elpy-version "1.15.1"
   "The version of the Elpy lisp code.")
@@ -97,13 +99,13 @@ can be inidividually enabled or disabled."
                      elpy-module-sane-defaults))
   :group 'elpy)
 
-(defcustom elpy-project-ignored-directories ' (".bzr" "CVS" ".git" ".hg" ".svn"
-                                               ".tox"  "build" "dist"
-                                               ".cask")
-  "Directories ignored by functions working on the whole project."
+(defcustom elpy-project-ignored-directories
+  '(".tox" "build" "dist" ".cask" ".ipynb_checkpoints")
+  "Directories ignored by functions working on the whole project.
+This is in addition to `vc-directory-exclusion-list'
+and `grep-find-ignored-directories', as appropriate."
   :type '(repeat string)
-  :safe (lambda (val)
-          (cl-every #'stringp val))
+  :safe (lambda (val) (cl-every #'stringp val))
   :group 'elpy)
 
 (defcustom elpy-project-root nil
@@ -1335,21 +1337,16 @@ With prefix argument, remove the variable."
 REGEXP defaults to the symbol at point, or the current region if
 active.
 
-With a prefix argument, always prompt for a string to search
-for."
+With a prefix argument, always prompt for a string to search for."
   (interactive
    (list
-    (cond
-     (current-prefix-arg
-      (read-from-minibuffer "Search in project for regexp: "))
-     ((use-region-p)
-      (buffer-substring-no-properties (region-beginning)
-                                      (region-end)))
-     (t
+    (if (use-region-p)
+        (buffer-substring-no-properties (region-beginning)
+                                        (region-end))
       (let ((symbol (thing-at-point 'symbol)))
-        (if symbol
-            (format "\\<%s\\>" symbol)
-          (read-from-minibuffer "Search in project for regexp: ")))))))
+        (if (and symbol (not current-prefix-arg))
+            (concat "\\<" symbol "\\>")
+          (read-from-minibuffer "Search in project for regexp: " symbol))))))
   (grep-compute-defaults)
   (let ((grep-find-ignored-directories (append elpy-project-ignored-directories
                                                grep-find-ignored-directories)))
@@ -1367,6 +1364,35 @@ for."
 
 ;;;;;;;;;;;;;;;;;;;;;;
 ;;; Find Project Files
+
+(defcustom elpy-ffip-prune-patterns '()
+  "Elpy-specific extension of `ffip-prune-patterns'.
+This is in addition to `elpy-project-ignored-directories'
+and `completion-ignored-extensions'.
+The final value of `ffip-prune-patterns' used is computed
+by the eponymous function `elpy-ffip-prune-patterns'."
+  :type '(repeat string)
+  :safe (lambda (val) (cl-every #'stringp val))
+  :group 'elpy)
+
+(defun elpy-ffip-prune-patterns ()
+  "Compute `ffip-prune-patterns' from other variables.
+This combines
+  `elpy-ffip-prune-patterns'
+  `elpy-project-ignored-directories'
+  `completion-ignored-extensions'
+  `ffip-prune-patterns'."
+  (cl-union
+   (cl-union
+    (mapcar (lambda (dir) (concat "*/" dir "/*"))
+            elpy-project-ignored-directories)
+    (mapcar (lambda (ext) (concat "*" ext))
+            completion-ignored-extensions)
+    :test #'equal)
+   (cl-union elpy-ffip-prune-patterns
+             ffip-prune-patterns
+             :test #'equal)
+   :test #'equal))
 
 (defun elpy-find-file (&optional dwim)
   "Efficiently find a file in the current project.
@@ -1402,7 +1428,7 @@ file is <name>.py, and is either in the same directors or a
           (find-file test-file)
         (elpy-find-file nil))))
    (t
-    (let ((ffip-prune-patterns elpy-project-ignored-directories)
+    (let ((ffip-prune-patterns (elpy-ffip-prune-patterns))
           (ffip-project-root (or (elpy-project-root)
                                  default-directory))
           ;; Set up ido to use vertical file lists.
@@ -1771,11 +1797,12 @@ with a prefix argument)."
                                    (buffer-file-name))))
         (extra-args (if whole-project-p
                         (concat
-                         (if (equal python-check-command "pylint")
+                         (if (string-match "pylint$" python-check-command)
                              " --ignore="
                            " --exclude=")
                          (mapconcat #'identity
-                                    elpy-project-ignored-directories
+                                    (append elpy-project-ignored-directories
+                                            grep-find-ignored-directories)
                                     ","))
                       "")))
     (compilation-start (concat python-check-command
@@ -2386,7 +2413,7 @@ Also sort the imports in the import statement blocks."
         (let* ((prompt (format "How to import \"%s\": " object))
                (choice (elpy-importmagic--add-import-read-args object prompt nil)))
 	  (when (equal choice "")
-	    (push (car (split-string object "\\.")) unresolved-aliases))
+	    (cl-pushnew (car (split-string object "\\.")) unresolved-aliases))
 	  (elpy-importmagic-add-import choice nil))))
     ;; ask for unresolved aliases real names and add import for them
     (dolist (alias unresolved-aliases)
