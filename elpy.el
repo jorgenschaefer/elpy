@@ -347,6 +347,14 @@ set to t elpy will use `elpy-test-django-runner-manage-command' and set the proj
   :type '(repeat string)
   :group 'elpy)
 
+(defcustom elpy-test-compilation-function 'compile
+  "Function used by `elpy-test-run' to run a test command.
+
+The function should behave similarly to `compile'. Another good
+option is `pdb'."
+  :type 'string
+  :group 'elpy)
+
 (defcustom elpy-rgrep-file-pattern "*.py"
   "FILES to use for `elpy-rgrep-symbol'."
   :type 'string
@@ -2120,7 +2128,8 @@ This uses the `elpy-test-runner-p' symbol property."
 (defun elpy-test-run (working-directory command &rest args)
   "Run COMMAND with ARGS in WORKING-DIRECTORY as a test command."
   (let ((default-directory working-directory))
-    (compile (mapconcat #'shell-quote-argument
+    (funcall elpy-test-compilation-function
+             (mapconcat #'shell-quote-argument
                         (cons command args)
                         " "))))
 
