@@ -169,6 +169,10 @@ class JediBackend(object):
 
             result.append({"name": use.name,
                            "filename": use.module_path,
+                           "context": use.description.replace('\n', '')
+                                          if use.type == 'import'
+                                          else use.description,
+                           "line": use.line,
                            "offset": offset})
 
         return result
