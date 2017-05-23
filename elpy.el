@@ -2642,6 +2642,90 @@ Also, switch to that buffer."
         (select-window window)
       (switch-to-buffer "*Occur*"))))
 
+;;;;;;;;;;;;;;;;;;;;;
+;;; Find Usages
+
+(define-derived-mode elpy-view-usages-mode special-mode "elpy-usages"
+  (toggle-truncate-lines)
+  (setq next-error-function #'anaconda-mode-next-definition))
+
+(define-button-type 'elpy--usage-button
+  'action #'elpy-toggle-usage
+  'face nil)
+
+(defun elpy-insert-usage-button (name file offset)
+  "Insert button with NAME and save FILE and OFFSET."
+  (insert-text-button name
+                      'type 'elpy--usage-button
+                      'file file
+                      'offset offset))
+
+(defun elpy-toggle-usage (button)
+  "Toggle buffer showing the selected usage in context."
+  (let* ((file (button-get button 'file))
+         (offset (button-get button 'offset))
+         (buffer (or (bufferp file)
+                     (find-file-noselect file t))))
+    (if (get-buffer-window buffer)
+        (kill-buffer buffer)
+      (with-selected-window (display-buffer buffer t)
+        (save-restriction
+          (widen) 
+          (goto-char offset))))))
+
+(defmacro elpy-get-usages-buffer-create (&rest body)
+  "Create elpy usages buffer and execute BODY in it."
+  `(let ((buf (get-buffer-create "*Elpy-Usages*")))
+     (with-current-buffer buf
+       (setq buffer-read-only nil)
+       (erase-buffer)
+       ,@body
+       (goto-char (point-min))
+       (elpy-view-usages-mode)
+       buf)))
+
+(defun elpy-usages-mode-view (result)
+  "Show RESULT of `elpy-rpc-get-usages'.
+
+Display file and line of usage. Insert button with saved location."
+  (pop-to-buffer
+   (elpy-get-usages-buffer-create
+    (if result
+        (mapcar (lambda (completion)
+                  (let ((name (cdr (assq 'name completion)))
+                        (context (cdr (assq 'context completion)))
+                        (filename (cdr (assq 'filename completion)))
+                        (line (cdr (assq 'line completion)))
+                        (offset (cdr (assq 'offset completion))))
+                    (elpy-insert-usage-button
+                     (concat (if (eq filename nil)
+                                 (buffer-name (current-buffer))
+                               (propertize (nth 0 (reverse (split-string filename "\\/")))
+                                           'font-lock-face '(:foreground "DeepSkyBlue")))
+                             ":"
+                             (propertize (int-to-string line) 'font-lock-face '(:foreground "orange"))
+                             ":"
+                             (replace-regexp-in-string
+                              name
+                              (propertize name 'font-lock-face '(:foreground "yellow")) context))
+                     filename offset)
+                    (insert "\n")))
+                result)
+      (insert "No usage found")))))
+
+(defun elpy-find-usages ()
+  "Find usages for thing at point."
+  (interactive)
+  (let ((usages (condition-case err
+                    (elpy-rpc-get-usages)
+                  (error
+                   (if (and (eq (car err) 'error)
+                            (stringp (cadr err))
+                            (string-match "not implemented" (cadr err)))
+                       'not-supported
+                     (error (cadr err)))))))
+    (elpy-usages-mode-view usages)))
+
 ;;;;;;;;;;;;;;;;;;;
 ;;; Promise objects
 
