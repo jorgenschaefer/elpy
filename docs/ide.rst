@@ -204,10 +204,13 @@ easier to send code snippets over.
    take care of the right setup for you.
 
    As an IPython user, you might be interested in the `Emacs IPython
-   Notebook`_, too.
+   Notebook`_, too, while users of both IPython and `org-mode` might
+   be interested in the `ob-ipython` package.
 
 .. _IPython: http://ipython.org/
 .. _Emacs IPython Notebook: https://tkf.github.io/emacs-ipython-notebook/
+.. _org-mode: http://orgmode.org/
+.. _ob-ipython: https://github.com/gregsexton/ob-ipython
 
 
 Syntax Checking
