@@ -290,6 +290,26 @@ this feature."
                  (function :tag "Other function"))
   :group 'elpy)
 
+(defcustom elpy-company--completion-annotation 'doc
+  "Method to display annotation for company candidates."
+  :type '(choice
+          (const :tag "Description" doc)
+          (const :tag "Documentation" at-full)
+          (const :tag "off" nil))
+  :group 'elpy)
+
+(defcustom elpy-company--minibuffer-contents 'doc
+  "Method to display documentation for company candidates in the minibuffer."
+  :type '(choice
+          (const :tag "Documentation" doc)
+          (const :tag "off" nil))
+  :group 'elpy)
+
+(defcustom elpy-company--case-insensitive t
+  "Use case insensitive candidates match."
+  :type 'boolean
+  :group 'elpy)
+
 (defcustom elpy-eldoc-show-current-function t
   "If true, show the current function if no calltip is available.
 
@@ -2642,6 +2662,93 @@ Also, switch to that buffer."
         (select-window window)
       (switch-to-buffer "*Occur*"))))
 
+;;;;;;;;;;;;;;;;;;;;;
+;;; Occur Usages
+
+(define-derived-mode elpy-usages--view-usages-mode special-mode "elpy-usages"
+  (toggle-truncate-lines)
+  (setq next-error-function #'anaconda-mode-next-definition))
+
+(define-button-type 'elpy--usage-button
+  'action #'elpy-usages--view-jump
+  'face nil)
+
+(defun elpy-usages--insert-button (name file offset)
+  "Insert button with NAME and save FILE and OFFSET."
+  (insert-text-button name
+                      'type 'elpy--usage-button
+                      'file file
+                      'offset offset))
+
+(defun elpy-usages--view-jump (button)
+  "Toggle buffer showing the selected usage in context."
+  (let* ((file (button-get button 'file))
+         (offset (button-get button 'offset))
+         (buffer (or (bufferp file) 
+                     (find-file-noselect file t))))
+    (if (get-buffer-window buffer)
+        (kill-buffer buffer)
+      (with-selected-window (display-buffer buffer t)
+        (save-restriction
+          (widen)                  
+          (goto-char offset))))))
+
+(defmacro elpy-usages--get-usages-buffer-create (&rest body)
+  "Create elpy usages buffer and execute BODY in it."
+  `(let ((buf (get-buffer-create "*Elpy-Usages")))
+     (with-current-buffer buf
+       (setq buffer-read-only nil)
+       (erase-buffer)
+       ,@body
+       (goto-char (point-min))
+       (elpy-usages--view-usages-mode)
+       buf)))
+
+(defun elpy-usages--mode-view (result)
+  "Show RESULT of `elpy-rpc-get-usages'.
+
+Display file and line of usage. Insert button with saved location."
+  (pop-to-buffer
+   (elpy-usages--get-usages-buffer-create
+    (if result 
+        (mapcar (lambda (completion)
+                  (let ((name (cdr (assq 'name completion))) 
+                        (context (cdr (assq 'context completion)))
+                        (path (cdr (assq 'path completion)))
+                        (line (cdr (assq 'line completion)))
+                        (offset (cdr (assq 'offset completion))))
+                    (elpy-usages--insert-button
+                     (concat (if (eq path nil)
+                                 (buffer-name (current-buffer))
+                               (propertize (nth 0 (reverse (split-string path "\\/")))
+                                           'font-lock-face '(:foreground "DeepSkyBlue")))
+                             ":"
+                             (propertize (int-to-string line) 'font-lock-face '(:foreground "orange"))
+                             ":"
+                             (replace-regexp-in-string
+                              name
+                              (propertize name 'font-lock-face '(:foreground "yellow")) context))
+                     path offset)
+                    (insert "\n")))
+                result)
+      (insert "No usage found")))))
+
+(defun elpy-usages--find-usages ()
+  "Find usages for thing at point."
+  (interactive)
+  (let ((usages (condition-case err
+                    (elpy-rpc-get-usages)
+                  ;; This is quite the stunt, but elisp parses JSON
+                  ;; null as nil, which is indistinguishable from
+                  ;; the empty list, we stick to the error.
+                  (error
+                   (if (and (eq (car err) 'error)
+                            (stringp (cadr err))
+                            (string-match "not implemented" (cadr err)))
+                       'not-supported
+                     (error (cadr err)))))))
+    (elpy-usages--mode-view usages)))
+
 ;;;;;;;;;;;;;;;;;;;
 ;;; Promise objects
 
@@ -3620,14 +3727,10 @@ or unless NAME is no callable instance."
     ;; no-cache <prefix> => t if company shouldn't cache results
     ;; meta <candidate> => short docstring for minibuffer
     (`meta
-     (let ((meta (elpy-company--cache-meta arg)))
-       (when (and meta
-                  (string-match "\\`\\(.*\n.*\\)\n.*" meta))
-         (setq meta (match-string 1 meta)))
-       meta))
+     (elpy-company--minibuffer-display-documentation arg))
     ;; annotation <candidate> => short docstring for completion buffer
     (`annotation
-     (elpy-company--cache-annotation arg))
+     (elpy-company--display-annotation arg))
     ;; doc-buffer <candidate> => put doc buffer in `company-doc-buffer'
     (`doc-buffer
      (let* ((name (elpy-company--cache-name arg))
@@ -3648,6 +3751,8 @@ or unless NAME is no callable instance."
        (when loc
          (cons (car loc)
                (cadr loc)))))
+    (`ignore-case
+     elpy-company--case-insensitive)
     ;; match <candidate> => for non-prefix based backends
     ;; post-completion <candidate> => after insertion, for snippets
     (`post-completion
@@ -3660,6 +3765,34 @@ or unless NAME is no callable instance."
   (sort (delete-dups seq)
         (lambda (a b)
           (string< a b))))
+
+(defun elpy-company--display-annotation (name)
+  "Function to display annotation for candidates."
+  (cond ((eq elpy-company--completion-annotation 'doc)
+         (elpy-company--cache-annotation name))
+        ((eq elpy-company--completion-annotation 'at-full)
+         (let ((meta (elpy-company--cache-meta name)))
+           (when (and meta
+                      (string-match "\\(statement\\)" meta))
+             (setq meta (match-string 1 meta)))
+           meta))
+        ((eq elpy-company--completion-annotation nil)
+         nil)
+        (t
+         (error "Unrecognized option: %S" elpy-company--completion-annotations))))
+
+(defun elpy-company--minibuffer-display-documentation (name)
+  "Temporarily show additional documentation for selected candidate in the minibuffer."
+  (cond ((eq elpy-company--minibuffer-contents 'doc)
+         (let ((meta (elpy-company--cache-meta name)))
+           (when (and meta
+                      (string-match "\\`\\(.*\n.*\\)\n.*" meta))
+             (setq meta (match-string 1 meta)))
+           meta))
+        ((eq elpy-company--minibuffer-contents nil)
+         nil)
+        (t
+         (error "Unrecognized option: %S" elpy-company--minibuffer-contents))))
 
 ;;;;;;;;;;;;;;;;;
 ;;; Module: ElDoc
