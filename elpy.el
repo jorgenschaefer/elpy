@@ -290,6 +290,21 @@ this feature."
                  (function :tag "Other function"))
   :group 'elpy)
 
+(defcustom elpy-company--completion-annotations 'doc
+  "Method to display annotation for company candidates."
+  :type '(choice
+          (const :tag "Description" doc)
+          (const :tag "Documentation" at-full)
+          (const :tag "off" nil))
+  :group 'elpy)
+
+(defcustom elpy-company--minibuffer-contents 'doc
+  "Method to display documentation for company candidates in the minibuffer."
+  :type '(choice
+          (const :tag "Documentation" doc)
+          (const :tag "off" nil))
+  :group 'elpy)
+
 (defcustom elpy-eldoc-show-current-function t
   "If true, show the current function if no calltip is available.
 
@@ -3620,14 +3635,10 @@ or unless NAME is no callable instance."
     ;; no-cache <prefix> => t if company shouldn't cache results
     ;; meta <candidate> => short docstring for minibuffer
     (`meta
-     (let ((meta (elpy-company--cache-meta arg)))
-       (when (and meta
-                  (string-match "\\`\\(.*\n.*\\)\n.*" meta))
-         (setq meta (match-string 1 meta)))
-       meta))
+     (elpy-company--minibuffer-display-documentation arg))
     ;; annotation <candidate> => short docstring for completion buffer
     (`annotation
-     (elpy-company--cache-annotation arg))
+     (elpy-company--display-annotation arg))
     ;; doc-buffer <candidate> => put doc buffer in `company-doc-buffer'
     (`doc-buffer
      (let* ((name (elpy-company--cache-name arg))
@@ -3660,6 +3671,34 @@ or unless NAME is no callable instance."
   (sort (delete-dups seq)
         (lambda (a b)
           (string< a b))))
+
+(defun elpy-company--display-annotation (name)
+  "Function to display annotation for candidates."
+  (cond ((eq elpy-company--completion-annotations 'doc)
+         (elpy-company--cache-annotation name))
+        ((eq elpy-company--completion-annotations 'at-full)
+         (let ((meta (elpy-company--cache-meta name)))
+           (when (and
+                  (string-match "\\(statement\\)" meta))
+             (setq meta (match-string 1 meta)))
+           meta))
+        ((eq elpy-company--completion-annotations nil)
+         nil)
+        (t
+         (error "Unrecognized option: %S" elpy-company--completion-annotations))))
+
+(defun elpy-company--minibuffer-display-documentation (name)
+  "Temporarily show additional documentation for selected candidate in the minibuffer."
+  (cond ((eq elpy-company--minibuffer-contents 'doc)
+         (let ((meta (elpy-company--cache-meta name)))
+           (when (and meta
+                      (string-match "\\`\\(.*\n.*\\)\n.*" meta))
+             (setq meta (match-string 1 meta)))
+           meta))
+        ((eq elpy-company--minibuffer-contents nil)
+         nil)
+        (t
+         (error "Unrecognized option: %S" elpy-company--minibuffer-contents))))
 
 ;;;;;;;;;;;;;;;;;
 ;;; Module: ElDoc
