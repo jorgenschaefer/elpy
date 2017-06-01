@@ -3816,9 +3816,11 @@ description."
     (`global-init
      (require 'highlight-indentation))
     (`buffer-init
-     (highlight-indentation-mode 1))
+     (highlight-indentation-mode 1)
+     (highlight-indentation-current-column-mode 1))
     (`buffer-stop
-     (highlight-indentation-mode -1))))
+     (highlight-indentation-mode -1)
+     (highlight-indentation-current-column-mode -1))))
 
 ;;;;;;;;;;;;;;;;;;
 ;;; Module: pyvenv
