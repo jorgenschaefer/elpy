@@ -173,6 +173,33 @@ class JediBackend(object):
 
         return result
 
+    def rpc_get_names(self, filename, source, offset):
+        """Return the list of possible names"""
+        # Remove form feed characters, they confuse Jedi (jedi#424)
+        source = source.replace("\f", " ")
+        try:
+            names = jedi.api.names(source=source,
+                                   path=filename, encoding='utf-8',
+                                   all_scopes=True,
+                                   definitions=True,
+                                   references=True)
+
+        except jedi.NotFoundError:
+            return []
+        #
+        result = []
+        for name in names:
+            if name.module_path == filename:
+                offset = linecol_to_pos(source, name.line, name.column)
+            elif name.module_path is not None:
+                with open(name.module_path) as f:
+                    text = f.read()
+                offset = linecol_to_pos(text, name.line, name.column)
+            result.append({"name": name.name,
+                           "filename": name.module_path,
+                           "offset": offset})
+        return result
+
 
 # From the Jedi documentation:
 #

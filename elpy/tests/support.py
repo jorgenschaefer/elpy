@@ -739,6 +739,53 @@ class RPCGetDocstringTests(GenericRPCTests):
         self.assertIsNone(docstring)
 
 
+class RPCGetNamesTests(GenericRPCTests):
+    METHOD = "rpc_get_names"
+
+    def test_shouldreturn_names_in_same_file(self):
+        filename = self.project_file("test.py", "")
+        source, offset = source_and_offset(
+            "def foo(x, y):\n"
+            "    return x + y\n"
+            "c = _|_foo(5, 2)\n")
+
+        names = self.backend.rpc_get_names(filename,
+                                           source,
+                                           offset)
+
+        self.assertEqual(names,
+                         [{'name': 'foo',
+                           'filename': filename,
+                           'offset': 4},
+                          {'name': 'x',
+                           'filename': filename,
+                           'offset': 8},
+                          {'name': 'y',
+                           'filename': filename,
+                           'offset': 11},
+                          {'name': 'x',
+                           'filename': filename,
+                           'offset': 26},
+                          {'name': 'y',
+                           'filename': filename,
+                           'offset': 30},
+                          {'name': 'c',
+                           'filename': filename,
+                           'offset': 32},
+                          {'name': 'foo',
+                           'filename': filename,
+                           'offset': 36}])
+
+    def test_should_not_fail_without_symbol(self):
+        filename = self.project_file("test.py", "")
+
+        names = self.backend.rpc_get_names(filename,
+                                           "",
+                                           0)
+
+        self.assertEqual(names, [])
+
+
 class RPCGetUsagesTests(GenericRPCTests):
     METHOD = "rpc_get_usages"
 
