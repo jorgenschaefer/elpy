@@ -1506,6 +1506,8 @@ With prefix arg, prompt for the command to use."
     (setq ipython "ipython"))
   (when (not (executable-find ipython))
     (error "Command %S not found" ipython))
+  ;; Needed for IPython 5+
+  (setenv "IPY_TEST_SIMPLE_PROMPT" "1")
   (cond
    ;; Emacs 24 until 24.3
    ((boundp 'python-python-command)
