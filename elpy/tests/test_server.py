@@ -341,6 +341,16 @@ class TestRPCGetUsages(BackendCallTestCase):
                                                       "offset"))
 
 
+class TestRPCGetNames(BackendCallTestCase):
+    def test_should_call_backend(self):
+        self.assert_calls_backend("rpc_get_names")
+
+    def test_should_handle_no_backend(self):
+        self.srv.backend = None
+        with self.assertRaises(rpc.Fault):
+            self.assertIsNone(self.srv.rpc_get_names("filname", "source", 0))
+
+
 class TestRPCImportMagic(ServerTestCase):
     def test_should_call_importmagic(self):
         with mock.patch.object(self.srv, "import_magic") as impmagic:

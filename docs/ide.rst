@@ -138,6 +138,46 @@ projects.
 
    Search the buffer for a list of definitions of classes and functions.
 
+
+If you use an Emacs version superior to 25, elpy will define the
+necessary backends for the `xref`_ package.
+
+.. command:: xref-find-definitions
+   :kbd: M-.
+
+   Find the definition of the identifier at point.
+
+.. command:: xref-find-definition-other-window
+   :kbd: C-x 4 .
+
+   Like :kbd:`M-.` but switch to the other window.
+
+.. command:: xref-find-definition-other-frame
+   :kbd: C-x 5 .
+
+   Like :kbd:`M-.` but switch to the other frame.
+
+.. command:: xref-pop-marker-stack
+   :kbd: M-,
+
+   Go back to the last place where :kbd:`M-.` was used, effectively
+   turning :kbd:`M-.` and :kbd:`M-,` into a forward and backward
+   motion for definition lookups.
+
+.. command:: xref-find-references
+   :kbd: M-?
+
+   Find references to the identifier at point.
+   With prefix argument, prompt for the identifier.
+
+.. command:: xref-find-apropos
+   :kbd: C-M-.
+
+   Find all meaningful symbols that match a given pattern.
+
+.. _xref: https://www.gnu.org/software/emacs/manual/html_node/emacs/Xref.html
+
+
 Interactive Python
 ==================
 

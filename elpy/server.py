@@ -198,6 +198,17 @@ class ElpyRPCServer(JSONRPCServer):
             raise Fault("get_usages not implemented by current backend",
                         code=400)
 
+    def rpc_get_names(self, filename, source, offset):
+        """Get all possible names
+
+        """
+        source = get_source(source)
+        if hasattr(self.backend, "rpc_get_names"):
+            return self.backend.rpc_get_names(filename, source, offset)
+        else:
+            raise Fault("get_names not implemented by current backend",
+                        code=400)
+
     def _ensure_import_magic(self):  # pragma: no cover
         if not self.import_magic.is_enabled:
             raise Fault("fixup_imports not enabled; install importmagic module",

@@ -17,6 +17,7 @@ from elpy.tests.support import RPCGetDocstringTests
 from elpy.tests.support import RPCGetDefinitionTests
 from elpy.tests.support import RPCGetCalltipTests
 from elpy.tests.support import RPCGetUsagesTests
+from elpy.tests.support import RPCGetNamesTests
 
 
 class JediBackendTestCase(BackendTestCase):
@@ -147,6 +148,11 @@ class TestRPCGetUsages(RPCGetUsagesTests,
         filename = self.project_file("project.py", source)
 
         self.rpc(filename, source, offset)
+
+
+class TestRPCGetNames(RPCGetNamesTests,
+                      JediBackendTestCase):
+    pass
 
 
 class TestPosToLinecol(unittest.TestCase):

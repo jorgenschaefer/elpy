@@ -1,0 +1,17 @@
+(ert-deftest elpy-xref--identifier-at-point-should-return-identifier ()
+  (when (featurep 'xref)
+    (elpy-testcase ()
+        (python-mode)
+        (elpy-mode)
+        (insert "def foo(x, y):\n"
+                "    return x + y\n"
+                "var1 = foo(5, 2)")
+        (goto-char 41)
+        (let ((id (elpy-xref--identifier-at-point)))
+        (should (string-match "foo" (symbol-name id))))
+        (goto-char 33)
+        (let ((id (elpy-xref--identifier-at-point)))
+        (should (string-match "var1" (symbol-name id))))
+        (goto-char 18)
+        (let ((id (elpy-xref--identifier-at-point)))
+        (should (not id))))))
