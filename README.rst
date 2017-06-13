@@ -77,3 +77,15 @@ it under the terms of the `GNU General Public License`__, either
 version 3 of the License, or (at your option) any later version.
 
 .. __: LICENSE
+
+Thank You
+=========
+
+If you would like to support this work, you can become a patreon:
+
+https://www.patreon.com/jorgenschaefer
+
+Please note that this is completely voluntary, and does not make you
+more important than others when it comes to issues, feature requests
+or anything. I appreciate donations, but do not feel compelled to
+spend money, and do not feel bad if you don't.
