@@ -1681,7 +1681,8 @@ If ASK-FOR-EACH-ONE is non-nil, ask before killing each python process.
     ;; Get active python shell buffers and kill inactive ones (if asked)
     (loop for buffer being the buffers do
 	  (when (and (buffer-name buffer)
-                     (string-match "^\*Python\\\[.*\\]\*$" (buffer-name buffer)))
+		     (string-match (rx bol "*Python" (opt "[" (* (not (any "]"))) "]") "*" eol)
+				   (buffer-name buffer)))
 	    (if (get-buffer-process buffer)
 		(push buffer python-buffer-list)
 	      (when kill-buffers
