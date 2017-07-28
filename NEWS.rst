@@ -1,3 +1,16 @@
+New in Elpy 1.16.0
+==================
+
+- You can now change which function is used to run test commands,
+  instead of the default ``compile``, using
+  ``elpy-test-compilation-function``. This allows using ``pdb`` to run
+  tests in a debugger, for example.
+- Elpy now sets ``IPY_TEST_SIMPLE_PROMPT``, which should prevent a
+  number of problems with IPython 5.
+- If you like Elpy, you can now sponsor its development using Patreon
+  at https://www.patreon.com/jorgenschaefer
+
+
 New in Elpy 1.15.0
 ==================
 
