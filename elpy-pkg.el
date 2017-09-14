@@ -6,5 +6,5 @@
                   (pyvenv "1.3")
                   (yasnippet "0.8.0")
                   (s "1.11.0")
-                  (cl-generic "1.0"))
+                  (cl-generic "0.3"))
                 )
