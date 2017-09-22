@@ -60,13 +60,9 @@ class JediBackend(object):
 
     def rpc_get_docstring(self, filename, source, offset):
         line, column = pos_to_linecol(source, offset)
-        try:
-            locations = run_with_debug(jedi, 'goto_definitions',
-                                       source=source, line=line, column=column,
-                                       path=filename, encoding='utf-8',
-                                       re_raise=jedi.NotFoundError)
-        except jedi.NotFoundError:
-            return None
+        locations = run_with_debug(jedi, 'goto_definitions',
+                                   source=source, line=line, column=column,
+                                   path=filename, encoding='utf-8')
         if locations and locations[-1].docstring():
             return ('Documentation for {0}:\n\n'.format(
                 locations[-1].full_name) + locations[-1].docstring())
@@ -75,13 +71,9 @@ class JediBackend(object):
 
     def rpc_get_definition(self, filename, source, offset):
         line, column = pos_to_linecol(source, offset)
-        try:
-            locations = run_with_debug(jedi, 'goto_definitions',
-                                       source=source, line=line, column=column,
-                                       path=filename, encoding='utf-8',
-                                       re_raise=jedi.NotFoundError)
-        except jedi.NotFoundError:
-            return None
+        locations = run_with_debug(jedi, 'goto_definitions',
+                                   source=source, line=line, column=column,
+                                   path=filename, encoding='utf-8')
         # goto_definitions() can return silly stuff like __builtin__
         # for int variables, so we fall back on goto() in those
         # cases. See issue #76.
@@ -148,14 +140,9 @@ class JediBackend(object):
 
         """
         line, column = pos_to_linecol(source, offset)
-        try:
-            uses = run_with_debug(jedi, 'usages',
-                                  source=source, line=line, column=column,
-                                  path=filename, encoding='utf-8',
-                                  re_raise=(jedi.NotFoundError,))
-        except jedi.NotFoundError:
-            return []
-
+        uses = run_with_debug(jedi, 'usages',
+                              source=source, line=line, column=column,
+                              path=filename, encoding='utf-8')
         if uses is None:
             return None
         result = []
@@ -177,16 +164,12 @@ class JediBackend(object):
         """Return the list of possible names"""
         # Remove form feed characters, they confuse Jedi (jedi#424)
         source = source.replace("\f", " ")
-        try:
-            names = jedi.api.names(source=source,
-                                   path=filename, encoding='utf-8',
-                                   all_scopes=True,
-                                   definitions=True,
-                                   references=True)
+        names = jedi.api.names(source=source,
+                               path=filename, encoding='utf-8',
+                               all_scopes=True,
+                               definitions=True,
+                               references=True)
 
-        except jedi.NotFoundError:
-            return []
-        #
         result = []
         for name in names:
             if name.module_path == filename:
