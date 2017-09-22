@@ -42,7 +42,6 @@
 (require 'ido)
 (require 'json)
 (require 'python)
-(require 'cl-generic)
 (require 'xref nil t)
 
 (require 'elpy-refactor)
