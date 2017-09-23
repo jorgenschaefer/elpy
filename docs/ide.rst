@@ -208,7 +208,7 @@ easier to send code snippets over.
    :kbd:`C-u`.
 
 .. command:: elpy-shell-send-current-statement
-   :kbd: C-c RET
+   :kbd: C-RET
 
    Send current statement to Python shell.
 
