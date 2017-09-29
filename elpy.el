@@ -3456,12 +3456,15 @@ This is needed to get information on the identifier with jedi
   (defun elpy-xref--get-completion-table ()
     "Return the completion table for identifiers."
     (let ((id-at-point (elpy-xref--identifier-at-point))
-          (table (mapcar (lambda (ref)
-                           (alist-get 'name ref))
-                         (elpy-rpc-get-names))))
-      (if id-at-point
-          (cons id-at-point table)
-        table)))
+          (table nil))
+      (when id-at-point
+        (push id-at-point table))
+      (cl-loop
+       for ref in (elpy-rpc-get-names)
+       for name = (alist-get 'name ref)
+       unless (member name table)
+       do (push name table))
+      table))
 
   ;; Apropos
   (cl-defmethod xref-backend-apropos ((_backend (eql elpy)) regex)
