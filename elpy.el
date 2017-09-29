@@ -3455,16 +3455,13 @@ This is needed to get information on the identifier with jedi
 
   (defun elpy-xref--get-completion-table ()
     "Return the completion table for identifiers."
-    (let ((table ())
-          (id-at-point (elpy-xref--identifier-at-point))
-          (references (elpy-rpc-get-names)))
-      (when id-at-point
-        (add-to-list 'table id-at-point))
-      (cl-loop
-       for ref in references
-       for name = (alist-get 'name ref)
-       do (add-to-list 'table name t))
-      table))
+    (let ((id-at-point (elpy-xref--identifier-at-point))
+          (table (mapcar (lambda (ref)
+                           (alist-get 'name ref))
+                         (elpy-rpc-get-names))))
+      (if id-at-point
+          (cons id-at-point table)
+        table)))
 
   ;; Apropos
   (cl-defmethod xref-backend-apropos ((_backend (eql elpy)) regex)
