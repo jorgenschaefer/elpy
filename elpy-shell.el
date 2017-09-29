@@ -36,11 +36,47 @@ force the creation of dedicated shells for each buffers."
   :type 'boolean
   :group 'elpy)
 
-;;;;;;;;;;;;;;;;;;;;;
-;;; Interactive Shell
+(defcustom elpy-shell-display-buffer-after-send nil ;
+  "Whether to display the Python shell after sending something to it."
+  :type 'boolean
+  :group 'elpy)
 
-(defvar elpy--shell-last-py-buffer nil
-  "Help keep track of python buffer when changing to pyshell.")
+(defcustom elpy-shell-echo-output 'when-shell-not-visible
+  "Whether to echo the Python shell output in the echo area after input has been sent to the shell.
+
+  Possible choices are nil (=never), when-shell-not-visible, or
+  t (=always)."
+  :type '(choice (const :tag "Never" nil)
+                 (const :tag "When shell not visible" when-shell-not-visible)
+                 (const :tag "Always" t))
+  :group 'elpy)
+
+(defcustom elpy-shell-echo-input t
+  "Whether to echo input sent to the Python shell as input in the
+shell buffer."
+  :type 'boolean
+  :group 'elpy)
+
+(defcustom elpy-shell-echo-input-cont-prompt t
+  "Whether to show a continuation prompt when echoing multi-line
+input to the Python shell."
+  :type 'boolean
+  :group 'elpy)
+
+(defcustom elpy-shell-echo-input-lines-head 10
+  "Maximum number of lines to show before truncating input echoed
+in the Python shell."
+  :type 'integer
+  :group 'elpy)
+
+(defcustom elpy-shell-echo-input-lines-tail 10
+  "Maximum number of lines to show after truncating input echoed
+in the Python shell."
+  :type 'integer
+  :group 'elpy)
+
+;;;;;;;;;;;;;;;
+;;; Shell setup
 
 (defun elpy-use-ipython (&optional ipython)
   "Set defaults to use IPython instead of the standard interpreter.
@@ -140,15 +176,20 @@ else:
    (t
     (error "I don't know how to set ipython settings for this Emacs"))))
 
+
+;;;;;;;;;;;;;;;;;;
+;;; Shell commands
+
+(defvar elpy--shell-last-py-buffer nil
+  "Help keep track of python buffer when changing to pyshell.")
+
 (defun elpy-shell-display-buffer ()
   "Display inferior Python process buffer."
   (display-buffer (process-buffer (elpy-shell-get-or-create-process))
                   nil
                   'visible))
 
-;;;;;;;;;;;;;;;;;;
-;;; Shell commands
-
+;; better name would be pop-to-shell
 (defun elpy-shell-switch-to-shell ()
   "Switch to inferior Python process buffer."
   (interactive)
@@ -159,6 +200,15 @@ else:
   "Switch from inferior Python process buffer to recent Python buffer."
   (interactive)
   (pop-to-buffer elpy--shell-last-py-buffer))
+
+(defun elpy-shell-switch-to-shell-in-current-window ()
+  (interactive)
+  (setq elpy--shell-last-py-buffer (buffer-name))
+  (switch-to-buffer (process-buffer (elpy-shell-get-or-create-process))))
+
+(defun elpy-shell-switch-to-buffer-in-current-window ()
+  (interactive)
+  (switch-to-buffer elpy--shell-last-py-buffer))
 
 (defun elpy-shell-kill (&optional kill-buff)
   "Kill the current python shell.
@@ -214,8 +264,11 @@ If ASK-FOR-EACH-ONE is non-nil, ask before killing each python process.
      (t
       (message "No python shell to close")))))
 
-(defun elpy-shell-get-or-create-process ()
-  "Get or create an inferior Python process for current buffer and return it."
+(defun elpy-shell-get-or-create-process (&optional sit)
+  "Get or create an inferior Python process for current buffer and return it.
+
+If SIT is non-nil, sit for that many seconds after creating a
+Python process. This allows the process to start up."
   (let* ((bufname (format "*%s*" (python-shell-get-process-name nil)))
          (dedbufname (format "*%s*" (python-shell-get-process-name t)))
          (proc (get-buffer-process bufname))
@@ -223,14 +276,26 @@ If ASK-FOR-EACH-ONE is non-nil, ask before killing each python process.
     (if elpy-dedicated-shells
         (if dedproc
             dedproc
-          (run-python (python-shell-parse-command) t)
+          (run-python (python-shell-parse-command) t t)
+          (when sit
+            (sit-for sit))
           (get-buffer-process dedbufname))
       (if dedproc
           dedproc
         (if proc
             proc
-          (run-python (python-shell-parse-command))
+          (run-python (python-shell-parse-command) nil t)
+          (when sit
+            (sit-for sit))
           (get-buffer-process bufname))))))
+
+(defun elpy-shell--ensure-shell-running ()
+  "Ensure that the Python shell for the current buffer is running.
+
+If the shell is not running, waits a while so that the first
+prompt is visible and commands can be sent to the shell."
+  ;; this should be enough time to start the shell and show the first prompt
+  (elpy-shell-get-or-create-process 3))
 
 (defun elpy-shell--region-without-indentation (beg end)
   "Return the current region as a string, but without indentation."
@@ -261,10 +326,454 @@ If ASK-FOR-EACH-ONE is non-nil, ask before killing each python process.
 	(untabify (point-min) (point-max))
         (buffer-string)))))
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Flash input sent to shell
+
+;; functions for flashing a region; only flashes when package eval-sexp-fu is
+;; loaded and its minor mode enabled
+(defun elpy-shell--flash-region (begin end)
+  "Briefly flashes the region from BEGIN to END when
+eval-sexp-fu-flash-mode is active."
+  (when (and (bound-and-true-p eval-sexp-fu-flash-mode)
+             (not (eq begin end)))
+    (multiple-value-bind (bounds hi unhi eflash) (eval-sexp-fu-flash (cons begin end))
+      (eval-sexp-fu-flash-doit (lambda () t) hi unhi))))
+
+;;;;;;;;;;;;;;;;;;;
+;; Helper functions
+
+(defun elpy-shell--current-line-else-p ()
+  (string-match-p "^\\s-*el\\(?:se:\\|if[^\w]\\)" (thing-at-point 'line)))
+
+(defun elpy-shell--current-line-indented-p ()
+  (eq (string-match-p "^\\s-+[^\\s-]+" (thing-at-point 'line)) 0))
+
+(defun elpy-shell--skip-empty-and-comment-lines (&optional backwards)
+  "Move the point to the next non-empty non-comment line.
+
+Point is not moved if it is on a non-empty non-comment line. If
+BACKWARDS is non-nil, go backwards."
+  (if backwards
+      (while (and (or (python-info-current-line-empty-p)
+                      (python-info-current-line-comment-p))
+                  (not (eq (point) (point-min))))
+        (forward-line -1))
+    (while (and (or (python-info-current-line-empty-p)
+                    (python-info-current-line-comment-p))
+                (not (eq (point) (point-max))))
+      (forward-line))))
+
+;;;;;;;;;;
+;; Echoing
+
+(defmacro elpy-shell--with-maybe-echo (body)
+  `(elpy-shell--with-maybe-echo-output
+    (elpy-shell--with-maybe-echo-input
+     ,body)))
+
+(defmacro elpy-shell--with-maybe-echo-input (body)
+  "Run BODY so that it adheres elpy-shell-echo-input and
+elpy/shell-display-buffer."
+  `(progn
+     (elpy-shell--enable-echo)
+     (prog1
+         (if elpy-shell-display-buffer-after-send
+             (prog1 (progn ,body)
+               (elpy-shell-display-buffer))
+           (cl-flet ((elpy-shell-display-buffer () ()))
+             (progn ,body)))
+       (elpy-shell--disable-echo))))
+
+(defmacro elpy-shell--with-maybe-echo-output (body)
+  "Run BODY and grab shell output according to elpy/shell-echo-output."
+  `(let* ((process (elpy-shell--ensure-shell-running))
+          (shell-visible (or elpy-shell-display-buffer-after-send
+                             (get-buffer-window (process-buffer process)))))
+     (if (cond
+          ((null elpy-shell-echo-output) t)
+          ((eq elpy-shell-echo-output 'when-shell-not-visible) shell-visible))
+         (progn ,body)
+       (let ((comint-preoutput-filter-functions
+              '(elpy-shell--shell-output-filter))
+             (python-shell-output-filter-in-progress t)
+             (inhibit-quit t))
+         (or
+          (with-local-quit
+            (progn ,body)
+            (sit-for eval-sexp-fu-flash-duration)
+            (while python-shell-output-filter-in-progress
+              ;; `elpy-shell--shell-output-filter' takes care of setting
+              ;; `python-shell-output-filter-in-progress' to NIL after it
+              ;; detects end of output.
+              (accept-process-output process))
+            (prog1
+                (progn
+                  ;; this is delayed so that the flash overlay stays visible
+                  (run-at-time "1 millisec" nil
+                               (lambda (s)
+                                 (let (message-log-max) ;; no need to log in messages
+                                   (message "%s" s)))
+                               (string-trim python-shell-output-filter-buffer))
+                  python-shell-output-filter-buffer)
+              (setq python-shell-output-filter-buffer nil)))
+          (with-current-buffer (process-buffer process)
+            (comint-interrupt-subjob)))))))
+
+(defun elpy-shell--shell-output-filter (string)
+  "Filter used in `elpy/capture-output' to grab output.
+
+No actual filtering is performed. STRING is the output received
+to this point from the process. This filter saves received output
+from the process in `python-shell-output-filter-buffer' and stops
+receiving it after detecting a prompt at the end of the buffer."
+  (setq
+   string (ansi-color-filter-apply string)
+   python-shell-output-filter-buffer
+   (concat python-shell-output-filter-buffer string))
+  (when (python-shell-comint-end-of-output-p
+         python-shell-output-filter-buffer)
+    ;; Output ends when `python-shell-output-filter-buffer' contains
+    ;; the prompt attached at the end of it.
+    (setq python-shell-output-filter-in-progress nil
+          python-shell-output-filter-buffer
+          (substring python-shell-output-filter-buffer
+                     0 (match-beginning 0))))
+  string)
+
+(defun elpy-shell--insert-and-font-lock (string face &optional no-font-lock)
+  "Inject STRING into the Python shell buffer."
+  (let ((from-point (point)))
+    (insert string)
+    (if (not no-font-lock)
+        (add-text-properties from-point (point)
+                             (list 'front-sticky t 'font-lock-face face)))))
+
+(defun elpy-shell--append-to-shell-output (string &optional no-font-lock prepend-cont-prompt)
+  "Appends the given STRING to the output of the Python shell
+and (unless NO-FONT-LOCK is set) formats it as input. Prepends a
+continuation promt if specified."
+  (let ((buffer (current-buffer)))
+    (set-buffer (process-buffer (elpy-shell-get-or-create-process)))
+    (let ((initial-point (point))
+          (mark-point (process-mark (elpy-shell-get-or-create-process))))
+      (goto-char mark-point)
+      (if prepend-cont-prompt
+          (let* ((column (+ (- (point) (progn (forward-line -1) (end-of-line) (point))) 1))
+                 (prompt (concat (make-string (max 0 (- column 7)) ? ) "...: "))
+                 (lines (split-string string "\n")))
+            (goto-char mark-point)
+            (elpy-shell--insert-and-font-lock (car lines) 'comint-highlight-input no-font-lock)
+            (if (cdr lines)
+                ;; no additional newline at end for multiline
+                (dolist (line (cdr lines))
+                  (insert "\n")
+                  (elpy-shell--insert-and-font-lock prompt 'comint-highlight-prompt no-font-lock)
+                  (elpy-shell--insert-and-font-lock line 'comint-highlight-input no-font-lock))
+              ;; but put one for single line
+              (insert "\n")))
+        (elpy-shell--insert-and-font-lock string 'comint-highlight-input no-font-lock))
+      (set-marker (process-mark (python-shell-get-process)) (point))
+      (goto-char initial-point))
+    (set-buffer buffer)))
+
+(defun elpy-shell--string-head-lines (string n)
+  "Extracts the first N lines from STRING."
+  (let* ((any "\\(?:.\\|\n\\)")
+         (line "\\(?:\\(?:.*\n\\)\\|\\(?:.+\\'\\)\\)")
+         (lines (concat line "\\{" (number-to-string n) "\\}"))
+         (regexp (concat "\\`" "\\(" lines "\\)")))
+    (if (string-match regexp string)
+        (match-string 1 string)
+      string)))
+
+(defun elpy-shell--string-tail-lines (string n)
+  "Extracts the last N lines from STRING."
+  (let* ((any "\\(?:.\\|\n\\)")
+         (line "\\(?:\\(?:.*\n\\)\\|\\(?:.+\\'\\)\\)")
+         (lines (concat line "\\{" (number-to-string n) "\\}"))
+         (regexp (concat "\\(" lines "\\)" "\\'")))
+    (if (string-match regexp string)
+        (match-string 1 string)
+      string)))
+
+(defun elpy-shell--python-shell-send-string-echo-advice (string &optional process msg)
+  "Advice to enable echoing of input in the Python shell."
+  (interactive)
+  (let* ((append-string ; strip setup code from Python shell
+          (if (string-match "import codecs, os.*__pyfile = codecs.open.*$" string)
+              (replace-match "" nil nil string)
+            string))
+         (append-string ; here too
+          (if (string-match "^# -\\*- coding: utf-8 -\\*-\n*$" append-string)
+              (replace-match "" nil nil append-string)
+            append-string))
+         (append-string ; strip newlines from beginning and white space from end
+          (string-trim-right
+           (if (string-match "\\`\n+" append-string)
+               (replace-match "" nil nil append-string)
+             append-string)))
+         (head (elpy-shell--string-head-lines append-string elpy-shell-echo-input-lines-head))
+         (tail (elpy-shell--string-tail-lines append-string elpy-shell-echo-input-lines-tail))
+         (append-string (if (> (length append-string) (+ (length head) (length tail)))
+                            (concat head "...\n" tail)
+                          append-string)))
+
+    ;; append the modified string to the shell output; prepend a newline for
+    ;; multi-line strings
+    (if elpy-shell-echo-input-cont-prompt
+        (elpy-shell--append-to-shell-output append-string nil t)
+      (elpy-shell--append-to-shell-output
+       (concat (if (string-match "\n" append-string) "\n" "")
+               append-string
+               "\n")))))
+
+(defun elpy-shell--enable-echo ()
+  "Enables input echoing when elpy-shell-echo-input is set."
+  (when elpy-shell-echo-input
+    (advice-add 'python-shell-send-string
+                :before 'elpy-shell--python-shell-send-string-echo-advice)))
+
+(defun elpy-shell--disable-echo ()
+  "Disables input echoing."
+  (advice-remove 'python-shell-send-string
+                 'elpy-shell--python-shell-send-string-echo-advice))
+
+;; overwrites python-shell-send-file modified such that: if the file ends with
+;; an expression, it's evaluated separately so that the result is recognized by
+;; the python shell.  This let's use see the output of the last expression in a
+;; multiline statement
+;; TODO: might be better to avoid overwriting but use advices instead
+(defun python-shell-send-file (file-name &optional process temp-file-name
+                                         delete msg)
+  "Send FILE-NAME to inferior Python PROCESS.
+If TEMP-FILE-NAME is passed then that file is used for processing
+instead, while internally the shell will continue to use
+FILE-NAME.  If TEMP-FILE-NAME and DELETE are non-nil, then
+TEMP-FILE-NAME is deleted after evaluation is performed.  When
+optional argument MSG is non-nil, forces display of a
+user-friendly message if there's no process running; defaults to
+t when called interactively."
+  (interactive
+   (list
+    (read-file-name "File to send: ")   ; file-name
+    nil                                 ; process
+    nil                                 ; temp-file-name
+    nil                                 ; delete
+    t))                                 ; msg
+  (let* ((process (or process (python-shell-get-process-or-error msg)))
+         (encoding (with-temp-buffer
+                     (insert-file-contents
+                      (or temp-file-name file-name))
+                     (python-info-encoding)))
+         (file-name (expand-file-name
+                     (or (file-remote-p file-name 'localname)
+                         file-name)))
+         (temp-file-name (when temp-file-name
+                           (expand-file-name
+                            (or (file-remote-p temp-file-name 'localname)
+                                temp-file-name)))))
+    (python-shell-send-string
+     (format
+      (concat
+       "import codecs, os, ast;"
+       "__pyfile = codecs.open('''%s''', encoding='''%s''');"
+       "__code = __pyfile.read().encode('''%s''');"
+       "__pyfile.close();"
+       (when (and delete temp-file-name)
+         (format "os.remove('''%s''');" temp-file-name))
+       "__block = ast.parse(__code, '''%s''', mode='exec');"
+       "__last = __block.body[-1];" ;; the last statement
+       "__isexpr = isinstance(__last,ast.Expr);" ;; is it an expression?
+       "__block.body.pop() if __isexpr else None;" ;; if so, remove it
+       "exec(compile(__block, '''%s''', mode='exec'));" ;; execute everything else
+       "eval(compile(ast.Expression(__last.value), '''%s''', mode='eval')) if __isexpr else None" ;; if it was an expression, it has been removed; now evaluate it
+       )
+      (or temp-file-name file-name) encoding encoding file-name file-name file-name)
+     process)))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Navigation commands for sending
+
+(defun elpy-shell--nav-beginning-of-statement ()
+  "Moves the point to the beginning of the current or next Python statement.
+
+If the current line starts with a statement, behaves exactly like
+python-nav-beginning of statement. If the point is on an empty or
+comment line, skips forward to the first line holding a
+statement. If the line is an else/elif clause,goes backward to
+the beginning of the corresponding if clause.
+  "
+  (elpy-shell--skip-empty-and-comment-lines)
+  (python-nav-beginning-of-statement)
+  (let ((p))
+    (while (and (not (eq p (point)))
+                (elpy-shell--current-line-else-p))
+      (elpy-nav-backward-block)
+      (setq p (point)))))
+
+;; internal; point needs to be exactly at the beginning of the statement
+(defun elpy-shell--nav-end-of-current-statement ()
+  "Moves the point to the end of the current Python statement.
+
+Assumes that the point is precisely at the beginning of a
+statement (e.g., after calling
+elpy-shell--nav-beginning-of-statement). Correctly handles
+if/elif/else statements."
+  (let ((indent (current-column))
+        (continue t)
+        (p))
+    (while (and (not (eq p (point)))
+                continue)
+      ;; check if there is a another block at the same indentation level
+      (setq p (point))
+      (elpy-nav-forward-block)
+
+      ;; if not, go to the end of the block and done
+      (if (eq p (point))
+          (progn
+            (python-nav-end-of-block)
+            (setq continue nil))
+        ;; otherwise check if its an else/elif clause
+        (unless (elpy-shell--current-line-else-p)
+          (forward-line -1)
+          (elpy-shell--skip-empty-and-comment-lines t)
+          (setq continue nil)))))
+  (end-of-line))
+
+(defun elpy-shell--nav-beginning-of-current-defun ()
+  "Move the point to the beginning of the current or next function or top-level statement.
+
+If the point is within a function or top-level statement, move to
+its beginning. Otherwise, move to the beginning of the next
+top-level statement.
+  "
+  (interactive)
+  (elpy-shell--nav-beginning-of-statement)
+  (let ((p))
+    (while (and (not (eq p (point)))
+                (elpy-shell--current-line-indented-p))
+      (forward-line -1)
+      (elpy-shell--skip-empty-and-comment-lines t)
+      (elpy-shell--nav-beginning-of-statement))))
+
 ;;;;;;;;;;;;;;;;;
 ;;; Send commands
 
-(defun elpy-shell-send-region-or-buffer (&optional arg)
+(defun elpy-shell-send-statement-and-step ()
+  "Send current or next statement to Python shell and step.
+
+If the current line starts with a statement, send this statement.
+If the point is on an empty or comment line, send the next
+statement below point. Correctly handles if/else/elif statements.
+  "
+  (interactive)
+  (elpy-shell--ensure-shell-running)
+  (let ((beg (progn (elpy-shell--nav-beginning-of-statement)
+                    (save-excursion
+                      (beginning-of-line)
+                      (point))))
+        (end (progn (elpy-shell--nav-end-of-current-statement) (point))))
+    (unless (eq beg end)
+      (elpy-shell--flash-region beg end)
+      (let ((buffer (current-buffer))
+            (s))
+        ;; remove spurious indentation
+        (with-temp-buffer
+          (insert (with-current-buffer buffer (buffer-substring beg end)))
+          (goto-char (point-min))
+          (while (elpy-shell--current-line-indented-p)
+            (python-indent-shift-left (point-min) (point-max)))
+          (setq s (buffer-string)))
+        ;; and send
+        (elpy-shell--with-maybe-echo
+         (python-shell-send-string s)))))
+  (python-nav-forward-statement))
+
+(defun elpy-shell-send-defun-and-step ()
+  """Send the current function or top-level statement to the Python shell and step.
+
+   If the point is within a function or top-level statement, send
+   this one. Otherwise, send the next one below point.
+  """
+  (interactive)
+  (elpy-shell--ensure-shell-running)
+  (let* ((beg (progn (elpy-shell--nav-beginning-of-current-defun) (point)))
+         (end (progn (elpy-shell--nav-end-of-current-statement) (point))))
+    (elpy-shell--flash-region beg end)
+    (if (string-match-p "\\`[^\n]*\\'" (buffer-substring beg end))
+        ;; single line
+        (elpy-shell-send-statement-and-step)
+      ;; multiple lines
+      (elpy-shell--with-maybe-echo
+       (python-shell-send-region beg end))
+      (setq mark-active nil)
+      (python-nav-forward-statement))))
+
+(defun elpy-shell-send-group-and-step ()
+  """Send the current or next group of top-level statements to the Python shell and step.
+
+   A sequence of top-level statements is a group if they are not
+   separated by empty lines. (Empty lines within each top-level
+   statement are ignored though.)
+
+   If the point is within a top-level statement, send the group
+   around this statement. Otherwise, go to the top-level
+   statement below point and send the group around this
+   statement.
+   """
+  (interactive)
+  (elpy-shell--ensure-shell-running)
+  (let* ((beg (progn
+                ;; go to start of group
+                (elpy-shell--nav-beginning-of-current-defun)
+                (while (not (or (python-info-current-line-empty-p)
+                                (eq (point) (point-min))))
+                  (unless (python-info-current-line-comment-p)
+                    (elpy-shell--nav-beginning-of-current-defun))
+                  (forward-line -1)
+                  (beginning-of-line))
+                (when (python-info-current-line-empty-p)
+                  (forward-line 1)
+                  (beginning-of-line))
+                (point)))
+         (end (progn
+                ;; go forward to end of group
+                (elpy-shell--nav-end-of-current-statement)
+                (let ((p))
+                  (while (not (eq p (point)))
+                    (setq p (point))
+                    (forward-line)
+                    (if (python-info-current-line-empty-p)
+                        (goto-char p)
+                      (elpy-shell--nav-end-of-current-statement))))
+                (point))))
+    (if (> end beg)
+        (progn
+          (elpy-shell--flash-region beg end)
+          ;; send the region and jump to next statement
+          (if (string-match-p "\\`[^\n]*\\'" (buffer-substring beg end))
+              ;; single line
+              (elpy-shell-send-statement-and-step)
+            ;; multiple lines
+            (elpy-shell--with-maybe-echo
+             (python-shell-send-region beg end))
+            (python-nav-forward-statement)))
+      (goto-char (point-max)))
+    (setq mark-active nil)))
+
+(defun elpy-shell-send-region-or-buffer-and-step ()
+  "Send the active region or the buffer to the Python shell."
+  (interactive)
+  (if (use-region-p)
+      (elpy-shell--flash-region (region-beginning) (region-end))
+    (elpy-shell--flash-region (window-start) (window-end)))
+  (elpy-shell--with-maybe-echo
+   (elpy-shell--send-region-or-buffer-internal))
+  (if (use-region-p)
+      (goto-char (region-end))
+    (goto-char (point-max))))
+
+(defun elpy-shell--send-region-or-buffer-internal (&optional arg)
   "Send the active region or the buffer to the Python shell.
 
 If there is an active region, send that. Otherwise, send the
@@ -295,15 +804,91 @@ code is executed."
       (message (concat "Removed if __name__ == '__main__' construct, "
                        "use a prefix argument to evaluate.")))))
 
-(defun elpy-shell-send-current-statement ()
-  "Send current statement to Python shell."
+(defun elpy-shell-send-buffer-and-step ()
+  "Send entire buffer to Python shell"
   (interactive)
-  (let ((beg (python-nav-beginning-of-statement))
-        (end (python-nav-end-of-statement)))
-    (elpy-shell-get-or-create-process)
-    (python-shell-send-string (buffer-substring beg end)))
-  (elpy-shell-display-buffer)
-  (python-nav-forward-statement))
+  (elpy-shell--ensure-shell-running)
+  (elpy-shell--flash-region (window-start) (window-end))
+  (elpy-shell--with-maybe-echo
+   (python-shell-send-buffer))
+  (goto-char (point-max)))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Send command variations (with/without step; with/without go)
+
+(defun elpy-shell--send-with-step-go (fun &optional step go)
+  "Run a function with STEP and/or GO.
+
+When STEP is nil, keeps point position. When GO is non-nil,
+switches focus to Python shell buffer."
+  (interactive)
+  (let ((orig (point)))
+    (call-interactively fun)
+    (when (not step)
+      (goto-char orig)))
+  (when go
+    (elpy-shell-switch-to-shell)))
+
+(defun elpy-shell-send-statement ()
+  (interactive)
+  (elpy-shell--send-with-step-go 'elpy-shell-send-statement-and-step nil nil))
+
+(defun elpy-shell-send-defun ()
+  (interactive)
+  (elpy-shell--send-with-step-go 'elpy-shell-send-defun-and-step nil nil))
+
+(defun elpy-shell-send-group ()
+  (interactive)
+  (elpy-shell--send-with-step-go 'elpy-shell-send-group-and-step nil nil))
+
+(defun elpy-shell-send-region-or-buffer ()
+  (interactive)
+  (elpy-shell--send-with-step-go 'elpy-shell-send-region-or-buffer-and-step nil nil))
+
+(defun elpy-shell-send-buffer ()
+  (interactive)
+  (elpy-shell--send-with-step-go 'elpy-shell-send-buffer-and-step nil nil))
+
+(defun elpy-shell-send-statement-and-go ()
+  (interactive)
+  (elpy-shell--send-with-step-go 'elpy-shell-send-statement-and-step nil t))
+
+(defun elpy-shell-send-defun-and-go ()
+  (interactive)
+  (elpy-shell--send-with-step-go 'elpy-shell-send-defun-and-step nil t))
+
+(defun elpy-shell-send-group-and-go ()
+  (interactive)
+  (elpy-shell--send-with-step-go 'elpy-shell-send-group-and-step nil t))
+
+(defun elpy-shell-send-region-or-buffer-and-go ()
+  (interactive)
+  (elpy-shell--send-with-step-go 'elpy-shell-send-region-or-buffer-and-step nil t))
+
+(defun elpy-shell-send-buffer-and-go ()
+  (interactive)
+  (elpy-shell--send-with-step-go 'elpy-shell-send-buffer-and-step nil t))
+
+(defun elpy-shell-send-statement-and-step-and-go ()
+  (interactive)
+  (elpy-shell--send-with-step-go 'elpy-shell-send-statement-and-step t t))
+
+(defun elpy-shell-send-defun-and-step-and-go ()
+  (interactive)
+  (elpy-shell--send-with-step-go 'elpy-shell-send-defun-and-step t t))
+
+(defun elpy-shell-send-group-and-step-and-go ()
+  (interactive)
+  (elpy-shell--send-with-step-go 'elpy-shell-send-group-and-step t t))
+
+(defun elpy-shell-send-region-or-buffer-and-step-and-go ()
+  (interactive)
+  (elpy-shell--send-with-step-go 'elpy-shell-send-region-or-buffer-and-step t t))
+
+(defun elpy-shell-send-buffer-and-step-and-go ()
+  (interactive)
+  (elpy-shell--send-with-step-go 'elpy-shell-send-buffer-and-step t t))
+
 
 (provide 'elpy-shell)
 ;;; elpy-shell.el ends here
