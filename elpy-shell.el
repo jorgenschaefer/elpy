@@ -640,12 +640,12 @@ if/elif/else statements."
           (setq continue nil)))))
   (end-of-line))
 
-(defun elpy-shell--nav-beginning-of-current-defun ()
-  "Move the point to the beginning of the current or next function or top-level statement.
+(defun elpy-shell--nav-beginning-of-current-top-statement ()
+  "Move the point to the beginning of the current or next top-level statement.
 
-If the point is within a function or top-level statement, move to
-its beginning. Otherwise, move to the beginning of the next
-top-level statement.
+If the point is within a top-level statement, move to its
+beginning. Otherwise, move to the beginning of the next top-level
+statement.
   "
   (interactive)
   (elpy-shell--nav-beginning-of-statement)
@@ -689,15 +689,15 @@ statement below point. Correctly handles if/else/elif statements.
          (python-shell-send-string s)))))
   (python-nav-forward-statement))
 
-(defun elpy-shell-send-defun-and-step ()
-  """Send the current function or top-level statement to the Python shell and step.
+(defun elpy-shell-send-top-statement-and-step ()
+  """Send the current top-level statement to the Python shell and step.
 
-   If the point is within a function or top-level statement, send
-   this one. Otherwise, send the next one below point.
+   If the point is within a top-level statement, send this one.
+   Otherwise, send the next one below point.
   """
   (interactive)
   (elpy-shell--ensure-shell-running)
-  (let* ((beg (progn (elpy-shell--nav-beginning-of-current-defun) (point)))
+  (let* ((beg (progn (elpy-shell--nav-beginning-of-current-top-statement) (point)))
          (end (progn (elpy-shell--nav-end-of-current-statement) (point))))
     (elpy-shell--flash-region beg end)
     (if (string-match-p "\\`[^\n]*\\'" (buffer-substring beg end))
@@ -725,11 +725,11 @@ statement below point. Correctly handles if/else/elif statements.
   (elpy-shell--ensure-shell-running)
   (let* ((beg (progn
                 ;; go to start of group
-                (elpy-shell--nav-beginning-of-current-defun)
+                (elpy-shell--nav-beginning-of-current-top-statement)
                 (while (not (or (python-info-current-line-empty-p)
                                 (eq (point) (point-min))))
                   (unless (python-info-current-line-comment-p)
-                    (elpy-shell--nav-beginning-of-current-defun))
+                    (elpy-shell--nav-beginning-of-current-top-statement))
                   (forward-line -1)
                   (beginning-of-line))
                 (when (python-info-current-line-empty-p)
@@ -833,9 +833,9 @@ switches focus to Python shell buffer."
   (interactive)
   (elpy-shell--send-with-step-go 'elpy-shell-send-statement-and-step nil nil))
 
-(defun elpy-shell-send-defun ()
+(defun elpy-shell-send-top-statement ()
   (interactive)
-  (elpy-shell--send-with-step-go 'elpy-shell-send-defun-and-step nil nil))
+  (elpy-shell--send-with-step-go 'elpy-shell-send-top-statement-and-step nil nil))
 
 (defun elpy-shell-send-group ()
   (interactive)
@@ -853,9 +853,9 @@ switches focus to Python shell buffer."
   (interactive)
   (elpy-shell--send-with-step-go 'elpy-shell-send-statement-and-step nil t))
 
-(defun elpy-shell-send-defun-and-go ()
+(defun elpy-shell-send-top-statement-and-go ()
   (interactive)
-  (elpy-shell--send-with-step-go 'elpy-shell-send-defun-and-step nil t))
+  (elpy-shell--send-with-step-go 'elpy-shell-send-top-statement-and-step nil t))
 
 (defun elpy-shell-send-group-and-go ()
   (interactive)
@@ -873,9 +873,9 @@ switches focus to Python shell buffer."
   (interactive)
   (elpy-shell--send-with-step-go 'elpy-shell-send-statement-and-step t t))
 
-(defun elpy-shell-send-defun-and-step-and-go ()
+(defun elpy-shell-send-top-statement-and-step-and-go ()
   (interactive)
-  (elpy-shell--send-with-step-go 'elpy-shell-send-defun-and-step t t))
+  (elpy-shell--send-with-step-go 'elpy-shell-send-top-statement-and-step t t))
 
 (defun elpy-shell-send-group-and-step-and-go ()
   (interactive)
