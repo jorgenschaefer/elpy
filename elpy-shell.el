@@ -348,17 +348,23 @@ eval-sexp-fu-flash-mode is active."
 (defun elpy-shell--current-line-indented-p ()
   (eq (string-match-p "^\\s-+[^\\s-]+" (thing-at-point 'line)) 0))
 
+(defun elpy-shell--current-line-really-empty-p ()
+  "Whether the current line is really empty.
+
+Whitespace is ignored, but comment lines don't count as empty lines."
+  (eq (string-match-p "^\\s-*$" (thing-at-point 'line)) 0))
+
 (defun elpy-shell--skip-empty-and-comment-lines (&optional backwards)
   "Move the point to the next non-empty non-comment line.
 
 Point is not moved if it is on a non-empty non-comment line. If
 BACKWARDS is non-nil, go backwards."
   (if backwards
-      (while (and (or (python-info-current-line-empty-p)
+      (while (and (or (elpy-shell--current-line-really-empty-p)
                       (python-info-current-line-comment-p))
                   (not (eq (point) (point-min))))
         (forward-line -1))
-    (while (and (or (python-info-current-line-empty-p)
+    (while (and (or (elpy-shell--current-line-really-empty-p)
                     (python-info-current-line-comment-p))
                 (not (eq (point) (point-max))))
       (forward-line))))
@@ -726,26 +732,28 @@ statement below point. Correctly handles if/else/elif statements.
   (let* ((beg (progn
                 ;; go to start of group
                 (elpy-shell--nav-beginning-of-current-top-statement)
-                (while (not (or (python-info-current-line-empty-p)
+                (while (not (or (elpy-shell--current-line-really-empty-p)
                                 (eq (point) (point-min))))
                   (unless (python-info-current-line-comment-p)
                     (elpy-shell--nav-beginning-of-current-top-statement))
                   (forward-line -1)
                   (beginning-of-line))
-                (when (python-info-current-line-empty-p)
+                (when (elpy-shell--current-line-really-empty-p)
                   (forward-line 1)
                   (beginning-of-line))
                 (point)))
          (end (progn
                 ;; go forward to end of group
-                (elpy-shell--nav-end-of-current-statement)
+                (unless (python-info-current-line-comment-p)
+                  (elpy-shell--nav-end-of-current-statement))
                 (let ((p))
                   (while (not (eq p (point)))
                     (setq p (point))
                     (forward-line)
-                    (if (python-info-current-line-empty-p)
-                        (goto-char p)
-                      (elpy-shell--nav-end-of-current-statement))))
+                    (if (elpy-shell--current-line-really-empty-p)
+                        (goto-char p) ;; done
+                      (unless (python-info-current-line-comment-p)
+                        (elpy-shell--nav-end-of-current-statement)))))
                 (point))))
     (if (> end beg)
         (progn
