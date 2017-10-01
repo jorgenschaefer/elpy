@@ -343,16 +343,16 @@ eval-sexp-fu-flash-mode is active."
 ;; Helper functions
 
 (defun elpy-shell--current-line-else-p ()
-  (string-match-p "^\\s-*el\\(?:se:\\|if[^\w]\\)" (thing-at-point 'line)))
+  (eq (string-match-p "\\s-*el\\(?:se:\\|if[^\w]\\)" (thing-at-point 'line)) 0))
 
 (defun elpy-shell--current-line-indented-p ()
-  (eq (string-match-p "^\\s-+[^\\s-]+" (thing-at-point 'line)) 0))
+  (eq (string-match-p "\\s-+[^\\s-]+" (thing-at-point 'line)) 0))
 
 (defun elpy-shell--current-line-really-empty-p ()
   "Whether the current line is really empty.
 
 Whitespace is ignored, but comment lines don't count as empty lines."
-  (eq (string-match-p "^\\s-*$" (thing-at-point 'line)) 0))
+  (eq (string-match-p "\\s-*$" (thing-at-point 'line)) 0))
 
 (defun elpy-shell--skip-empty-and-comment-lines (&optional backwards)
   "Move the point to the next non-empty non-comment line.
@@ -368,6 +368,13 @@ BACKWARDS is non-nil, go backwards."
                     (python-info-current-line-comment-p))
                 (not (eq (point) (point-max))))
       (forward-line))))
+
+(defun elpy-shell--current-line-defun-p ()
+  "Whether a function definition starts at the current line."
+  (eq (string-match-p
+       "\\s-*\\(?:def\\|async\\s-+def\\)\\s\-"
+       (thing-at-point 'line))
+      0))
 
 ;;;;;;;;;;
 ;; Echoing
@@ -618,7 +625,7 @@ the beginning of the corresponding if clause.
       (setq p (point)))))
 
 ;; internal; point needs to be exactly at the beginning of the statement
-(defun elpy-shell--nav-end-of-current-statement ()
+(defun elpy-shell--nav-end-of-statement ()
   "Moves the point to the end of the current Python statement.
 
 Assumes that the point is precisely at the beginning of a
@@ -646,7 +653,7 @@ if/elif/else statements."
           (setq continue nil)))))
   (end-of-line))
 
-(defun elpy-shell--nav-beginning-of-current-top-statement ()
+(defun elpy-shell--nav-beginning-of-top-statement ()
   "Move the point to the beginning of the current or next top-level statement.
 
 If the point is within a top-level statement, move to its
@@ -661,6 +668,50 @@ statement.
       (forward-line -1)
       (elpy-shell--skip-empty-and-comment-lines t)
       (elpy-shell--nav-beginning-of-statement))))
+
+(defun elpy-shell--nav-beginning-of-defun ()
+  "Move point to the beginning of the function definition containing the current line.
+
+If the current line does not contain a function definition, returns nil, else t."
+  (let ((beg-ts (save-excursion (elpy-shell--nav-beginning-of-top-statement) (point)))
+        (orig-p (point))
+        (max-indent (current-indentation))
+        (found))
+    (while (and (not found)
+                (>= (point) beg-ts))
+      (if (and (elpy-shell--current-line-defun-p)
+               (<= (current-indentation) max-indent))
+          (setq found t)
+        (unless (python-info-current-line-empty-p)
+          (setq max-indent (min max-indent
+                                (- (current-indentation) 1))))
+        (forward-line -1)))
+    (if found
+        (python-nav-beginning-of-statement)
+      (goto-char orig-p))
+    found))
+
+(defun elpy-shell--nav-beginning-of-group ()
+  "Move point to the beginning of the current or next group of top-level statements.
+
+A sequence of top-level statements is a group if they are not
+separated by empty lines. (Empty lines within each top-level
+statement are ignored though.)
+
+If the point is within a top-level statement, move to the
+beginning of the group containing this statement. Otherwise, move
+to the first top-level statement below point.
+   "
+  (elpy-shell--nav-beginning-of-top-statement)
+  (while (not (or (elpy-shell--current-line-really-empty-p)
+                  (eq (point) (point-min))))
+    (unless (python-info-current-line-comment-p)
+      (elpy-shell--nav-beginning-of-top-statement))
+    (forward-line -1)
+    (beginning-of-line))
+  (when (elpy-shell--current-line-really-empty-p)
+    (forward-line 1)
+    (beginning-of-line)))
 
 ;;;;;;;;;;;;;;;;;
 ;;; Send commands
@@ -678,7 +729,7 @@ statement below point. Correctly handles if/else/elif statements.
                     (save-excursion
                       (beginning-of-line)
                       (point))))
-        (end (progn (elpy-shell--nav-end-of-current-statement) (point))))
+        (end (progn (elpy-shell--nav-end-of-statement) (point))))
     (unless (eq beg end)
       (elpy-shell--flash-region beg end)
       (let ((buffer (current-buffer))
@@ -696,15 +747,15 @@ statement below point. Correctly handles if/else/elif statements.
   (python-nav-forward-statement))
 
 (defun elpy-shell-send-top-statement-and-step ()
-  """Send the current top-level statement to the Python shell and step.
+  "Send the current top-level statement to the Python shell and step.
 
-   If the point is within a top-level statement, send this one.
-   Otherwise, send the next one below point.
-  """
+If the point is within a top-level statement, send this one.
+Otherwise, send the next one below point.
+  "
   (interactive)
   (elpy-shell--ensure-shell-running)
-  (let* ((beg (progn (elpy-shell--nav-beginning-of-current-top-statement) (point)))
-         (end (progn (elpy-shell--nav-end-of-current-statement) (point))))
+  (let* ((beg (progn (elpy-shell--nav-beginning-of-top-statement) (point)))
+         (end (progn (elpy-shell--nav-end-of-statement) (point))))
     (elpy-shell--flash-region beg end)
     (if (string-match-p "\\`[^\n]*\\'" (buffer-substring beg end))
         ;; single line
@@ -715,37 +766,31 @@ statement below point. Correctly handles if/else/elif statements.
       (setq mark-active nil)
       (python-nav-forward-statement))))
 
+(defun elpy-shell-send-defun-and-step ()
+  "Sends the function that contains the current line to the Python shell and steps."
+  (interactive)
+  (if (elpy-shell--nav-beginning-of-defun)
+      (elpy-shell-send-statement-and-step)
+    (message "There is no function definition that includes the current line.")))
+
 (defun elpy-shell-send-group-and-step ()
-  """Send the current or next group of top-level statements to the Python shell and step.
+  "Send the current or next group of top-level statements to the Python shell and step.
 
-   A sequence of top-level statements is a group if they are not
-   separated by empty lines. (Empty lines within each top-level
-   statement are ignored though.)
+A sequence of top-level statements is a group if they are not
+separated by empty lines. (Empty lines within each top-level
+statement are ignored though.)
 
-   If the point is within a top-level statement, send the group
-   around this statement. Otherwise, go to the top-level
-   statement below point and send the group around this
-   statement.
-   """
+If the point is within a top-level statement, send the group
+around this statement. Otherwise, go to the top-level statement
+below point and send the group around this statement.
+   "
   (interactive)
   (elpy-shell--ensure-shell-running)
-  (let* ((beg (progn
-                ;; go to start of group
-                (elpy-shell--nav-beginning-of-current-top-statement)
-                (while (not (or (elpy-shell--current-line-really-empty-p)
-                                (eq (point) (point-min))))
-                  (unless (python-info-current-line-comment-p)
-                    (elpy-shell--nav-beginning-of-current-top-statement))
-                  (forward-line -1)
-                  (beginning-of-line))
-                (when (elpy-shell--current-line-really-empty-p)
-                  (forward-line 1)
-                  (beginning-of-line))
-                (point)))
+  (let* ((beg (progn (elpy-shell--nav-beginning-of-group) (point)))
          (end (progn
                 ;; go forward to end of group
                 (unless (python-info-current-line-comment-p)
-                  (elpy-shell--nav-end-of-current-statement))
+                  (elpy-shell--nav-end-of-statement))
                 (let ((p))
                   (while (not (eq p (point)))
                     (setq p (point))
@@ -753,7 +798,7 @@ statement below point. Correctly handles if/else/elif statements.
                     (if (elpy-shell--current-line-really-empty-p)
                         (goto-char p) ;; done
                       (unless (python-info-current-line-comment-p)
-                        (elpy-shell--nav-end-of-current-statement)))))
+                        (elpy-shell--nav-end-of-statement)))))
                 (point))))
     (if (> end beg)
         (progn
@@ -845,6 +890,10 @@ switches focus to Python shell buffer."
   (interactive)
   (elpy-shell--send-with-step-go 'elpy-shell-send-top-statement-and-step nil nil))
 
+(defun elpy-shell-send-defun ()
+  (interactive)
+  (elpy-shell--send-with-step-go 'elpy-shell-send-defun-and-step nil nil))
+
 (defun elpy-shell-send-group ()
   (interactive)
   (elpy-shell--send-with-step-go 'elpy-shell-send-group-and-step nil nil))
@@ -865,6 +914,10 @@ switches focus to Python shell buffer."
   (interactive)
   (elpy-shell--send-with-step-go 'elpy-shell-send-top-statement-and-step nil t))
 
+(defun elpy-shell-send-defun-and-go ()
+  (interactive)
+  (elpy-shell--send-with-step-go 'elpy-shell-send-defun-and-step nil t))
+
 (defun elpy-shell-send-group-and-go ()
   (interactive)
   (elpy-shell--send-with-step-go 'elpy-shell-send-group-and-step nil t))
@@ -884,6 +937,10 @@ switches focus to Python shell buffer."
 (defun elpy-shell-send-top-statement-and-step-and-go ()
   (interactive)
   (elpy-shell--send-with-step-go 'elpy-shell-send-top-statement-and-step t t))
+
+(defun elpy-shell-send-defun-and-step-and-go ()
+  (interactive)
+  (elpy-shell--send-with-step-go 'elpy-shell-send-defun-and-step t t))
 
 (defun elpy-shell-send-group-and-step-and-go ()
   (interactive)
