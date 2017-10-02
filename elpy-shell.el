@@ -910,7 +910,6 @@ code is executed."
         (goto-char (point-min))
         (setq has-if-main (re-search-forward if-main-regex nil t)))
       (python-shell-send-buffer arg))
-    (elpy-shell-display-buffer)
     (when has-if-main
       (message (concat "Removed if __name__ == '__main__' construct, "
                        "use a prefix argument to evaluate.")))))
