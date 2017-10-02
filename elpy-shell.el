@@ -331,13 +331,21 @@ prompt is visible and commands can be sent to the shell."
 
 ;; functions for flashing a region; only flashes when package eval-sexp-fu is
 ;; loaded and its minor mode enabled
-(defun elpy-shell--flash-region (begin end)
+(defun elpy-shell--flash-and-message-region (begin end)
   "Briefly flashes the region from BEGIN to END when
-eval-sexp-fu-flash-mode is active."
-  (when (and (bound-and-true-p eval-sexp-fu-flash-mode)
-             (not (eq begin end)))
-    (multiple-value-bind (bounds hi unhi eflash) (eval-sexp-fu-flash (cons begin end))
-      (eval-sexp-fu-flash-doit (lambda () t) hi unhi))))
+eval-sexp-fu-flash-mode is active.
+
+Also diplays a message holding the first line of the region being sent."
+  (when (> end begin)
+    (save-excursion
+      (goto-char begin)
+      (end-of-line)
+      (if (<= end (point))
+          (message "Sent: %s" (string-trim (thing-at-point 'line)))
+        (message "Sent: %s..." (string-trim (thing-at-point 'line)))))
+    (when (bound-and-true-p eval-sexp-fu-flash-mode)
+      (multiple-value-bind (bounds hi unhi eflash) (eval-sexp-fu-flash (cons begin end))
+        (eval-sexp-fu-flash-doit (lambda () t) hi unhi)))))
 
 ;;;;;;;;;;;;;;;;;;;
 ;; Helper functions
@@ -422,11 +430,12 @@ elpy/shell-display-buffer."
             (prog1
                 (progn
                   ;; this is delayed so that the flash overlay stays visible
-                  (run-at-time "1 millisec" nil
-                               (lambda (s)
-                                 (let (message-log-max) ;; no need to log in messages
-                                   (message "%s" s)))
-                               (string-trim python-shell-output-filter-buffer))
+                  (when (not (string-empty-p python-shell-output-filter-buffer))
+                    (run-at-time "1 millisec" nil
+                                 (lambda (s)
+                                   (let (message-log-max) ;; no need to log in messages
+                                     (message "%s" s)))
+                                 (string-trim python-shell-output-filter-buffer)))
                   python-shell-output-filter-buffer)
               (setq python-shell-output-filter-buffer nil)))
           (with-current-buffer (process-buffer process)
@@ -731,7 +740,7 @@ statement below point. Correctly handles if/else/elif statements.
                       (point))))
         (end (progn (elpy-shell--nav-end-of-statement) (point))))
     (unless (eq beg end)
-      (elpy-shell--flash-region beg end)
+      (elpy-shell--flash-and-message-region beg end)
         (elpy-shell--with-maybe-echo
          (python-shell-send-string (elpy-shell--region-without-indentation beg end)))))
   (python-nav-forward-statement))
@@ -746,7 +755,7 @@ Otherwise, send the next one below point.
   (elpy-shell--ensure-shell-running)
   (let* ((beg (progn (elpy-shell--nav-beginning-of-top-statement) (point)))
          (end (progn (elpy-shell--nav-end-of-statement) (point))))
-    (elpy-shell--flash-region beg end)
+    (elpy-shell--flash-and-message-region beg end)
     (if (string-match-p "\\`[^\n]*\\'" (buffer-substring beg end))
         ;; single line
         (elpy-shell-send-statement-and-step)
@@ -792,7 +801,7 @@ below point and send the group around this statement.
                 (point))))
     (if (> end beg)
         (progn
-          (elpy-shell--flash-region beg end)
+          (elpy-shell--flash-and-message-region beg end)
           ;; send the region and jump to next statement
           (if (string-match-p "\\`[^\n]*\\'" (buffer-substring beg end))
               ;; single line
@@ -808,8 +817,8 @@ below point and send the group around this statement.
   "Send the active region or the buffer to the Python shell."
   (interactive)
   (if (use-region-p)
-      (elpy-shell--flash-region (region-beginning) (region-end))
-    (elpy-shell--flash-region (window-start) (window-end)))
+      (elpy-shell--flash-and-message-region (region-beginning) (region-end))
+    (elpy-shell--flash-and-message-region (point-min) (point-max)))
   (elpy-shell--with-maybe-echo
    (elpy-shell--send-region-or-buffer-internal))
   (if (use-region-p)
@@ -851,7 +860,7 @@ code is executed."
   "Send entire buffer to Python shell"
   (interactive)
   (elpy-shell--ensure-shell-running)
-  (elpy-shell--flash-region (window-start) (window-end))
+  (elpy-shell--flash-and-message-region (point-min) (point-max))
   (elpy-shell--with-maybe-echo
    (python-shell-send-buffer))
   (goto-char (point-max)))
