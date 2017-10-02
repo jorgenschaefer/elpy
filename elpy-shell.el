@@ -926,105 +926,50 @@ code is executed."
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Send command variations (with/without step; with/without go)
 
-(defun elpy-shell--send-with-step-go (fun &optional step go)
+(defun elpy-shell--send-with-step-go (step-fun &optional step go)
   "Run a function with STEP and/or GO.
 
-FUN should be a function that sends something to the shell and
-moves point to code position right after what has been sent.
+STEP-FUN should be a function that sends something to the shell
+and moves point to code position right after what has been sent.
 
 When STEP is nil, keeps point position. When GO is non-nil,
 switches focus to Python shell buffer."
   (interactive)
   (let ((orig (point)))
-    (call-interactively fun)
+    (call-interactively step-fun)
     (when (not step)
       (goto-char orig)))
   (when go
     (elpy-shell-switch-to-shell)))
 
-(defun elpy-shell-send-statement ()
-  (interactive)
-  (elpy-shell--send-with-step-go 'elpy-shell-send-statement-and-step nil nil))
+(defmacro elpy-shell--defun-step-go (fun-and-step)
+  "Defines fun, fun-and-go, fun-and-step-and-go for the given FUN-AND-STEP function."
+  (let ((name (string-remove-suffix "-and-step" (symbol-name fun-and-step))))
+    (list
+     'progn
+     (let ((fun (intern name)))
+       `(defun ,fun ()
+          ,(concat "Run `" (symbol-name fun-and-step) "' but retain point position.")
+          (interactive)
+          (elpy-shell--send-with-step-go ',fun-and-step nil nil)))
+     (let ((fun-and-go (intern (concat name "-and-go"))))
+       `(defun ,fun-and-go ()
+          ,(concat "Run `" (symbol-name fun-and-step) "' but retain point position and switch to Python shell.")
+          (interactive)
+          (elpy-shell--send-with-step-go ',fun-and-step nil t)))
+     (let ((fun-and-step-and-go (intern (concat name "-and-step-and-go"))))
+       `(defun ,fun-and-step-and-go ()
+          ,(concat "Run `" (symbol-name fun-and-step) "' and switch to Python shell.")
+          (interactive)
+          (elpy-shell--send-with-step-go ',fun-and-step t t))))))
 
-(defun elpy-shell-send-top-statement ()
-  (interactive)
-  (elpy-shell--send-with-step-go 'elpy-shell-send-top-statement-and-step nil nil))
-
-(defun elpy-shell-send-defun ()
-  (interactive)
-  (elpy-shell--send-with-step-go 'elpy-shell-send-defun-and-step nil nil))
-
-(defun elpy-shell-send-defclass ()
-  (interactive)
-  (elpy-shell--send-with-step-go 'elpy-shell-send-defclass-and-step nil nil))
-
-(defun elpy-shell-send-group ()
-  (interactive)
-  (elpy-shell--send-with-step-go 'elpy-shell-send-group-and-step nil nil))
-
-(defun elpy-shell-send-region-or-buffer ()
-  (interactive)
-  (elpy-shell--send-with-step-go 'elpy-shell-send-region-or-buffer-and-step nil nil))
-
-(defun elpy-shell-send-buffer ()
-  (interactive)
-  (elpy-shell--send-with-step-go 'elpy-shell-send-buffer-and-step nil nil))
-
-(defun elpy-shell-send-statement-and-go ()
-  (interactive)
-  (elpy-shell--send-with-step-go 'elpy-shell-send-statement-and-step nil t))
-
-(defun elpy-shell-send-top-statement-and-go ()
-  (interactive)
-  (elpy-shell--send-with-step-go 'elpy-shell-send-top-statement-and-step nil t))
-
-(defun elpy-shell-send-defun-and-go ()
-  (interactive)
-  (elpy-shell--send-with-step-go 'elpy-shell-send-defun-and-step nil t))
-
-(defun elpy-shell-send-defclass-and-go ()
-  (interactive)
-  (elpy-shell--send-with-step-go 'elpy-shell-send-defclass-and-step nil t))
-
-(defun elpy-shell-send-group-and-go ()
-  (interactive)
-  (elpy-shell--send-with-step-go 'elpy-shell-send-group-and-step nil t))
-
-(defun elpy-shell-send-region-or-buffer-and-go ()
-  (interactive)
-  (elpy-shell--send-with-step-go 'elpy-shell-send-region-or-buffer-and-step nil t))
-
-(defun elpy-shell-send-buffer-and-go ()
-  (interactive)
-  (elpy-shell--send-with-step-go 'elpy-shell-send-buffer-and-step nil t))
-
-(defun elpy-shell-send-statement-and-step-and-go ()
-  (interactive)
-  (elpy-shell--send-with-step-go 'elpy-shell-send-statement-and-step t t))
-
-(defun elpy-shell-send-top-statement-and-step-and-go ()
-  (interactive)
-  (elpy-shell--send-with-step-go 'elpy-shell-send-top-statement-and-step t t))
-
-(defun elpy-shell-send-defun-and-step-and-go ()
-  (interactive)
-  (elpy-shell--send-with-step-go 'elpy-shell-send-defun-and-step t t))
-
-(defun elpy-shell-send-defclass-and-step-and-go ()
-  (interactive)
-  (elpy-shell--send-with-step-go 'elpy-shell-send-defclass-and-step t t))
-
-(defun elpy-shell-send-group-and-step-and-go ()
-  (interactive)
-  (elpy-shell--send-with-step-go 'elpy-shell-send-group-and-step t t))
-
-(defun elpy-shell-send-region-or-buffer-and-step-and-go ()
-  (interactive)
-  (elpy-shell--send-with-step-go 'elpy-shell-send-region-or-buffer-and-step t t))
-
-(defun elpy-shell-send-buffer-and-step-and-go ()
-  (interactive)
-  (elpy-shell--send-with-step-go 'elpy-shell-send-buffer-and-step t t))
+(elpy-shell--defun-step-go elpy-shell-send-statement-and-step)
+(elpy-shell--defun-step-go elpy-shell-send-top-statement-and-step)
+(elpy-shell--defun-step-go elpy-shell-send-defun-and-step)
+(elpy-shell--defun-step-go elpy-shell-send-defclass-and-step)
+(elpy-shell--defun-step-go elpy-shell-send-group-and-step)
+(elpy-shell--defun-step-go elpy-shell-send-region-or-buffer-and-step)
+(elpy-shell--defun-step-go elpy-shell-send-buffer-and-step)
 
 
 (provide 'elpy-shell)
