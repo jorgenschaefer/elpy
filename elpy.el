@@ -411,7 +411,7 @@ option is `pdb'."
     (define-key map (kbd "<S-return>") 'elpy-open-and-indent-line-below)
     (define-key map (kbd "<C-S-return>") 'elpy-open-and-indent-line-above)
 
-    (define-key map (kbd "<C-return>") 'elpy-shell-send-current-statement-and-step)
+    (define-key map (kbd "<C-return>") 'elpy-shell-send-statement-and-step)
 
     (define-key map (kbd "<C-down>") 'elpy-nav-forward-block)
     (define-key map (kbd "<C-up>") 'elpy-nav-backward-block)
