@@ -309,14 +309,14 @@ prompt is visible and commands can be sent to the shell."
         (goto-char (point-min))
         (while (< (point) (point-max))
           (cond
-           ((and (not indent-level)
-                 (not (python-info-current-line-empty-p)))
+           ((or (elpy-shell--current-line-really-empty-p)
+                (python-info-current-line-comment-p)))
+           ((not indent-level)
             (setq indent-level (current-indentation)))
            ((and indent-level
-                 (not (python-info-current-line-empty-p))
-                 (< (current-indentation)
-                    indent-level))
-            (error "Can't adjust indentation, consecutive lines indented less than starting line")))
+                 (< (current-indentation) indent-level))
+            (error (message "X%sX" (thing-at-point 'line)))))
+            ;; (error "Can't adjust indentation, consecutive lines indented less than starting line")))
           (forward-line))
         (indent-rigidly (point-min)
                         (point-max)
@@ -381,6 +381,13 @@ BACKWARDS is non-nil, go backwards."
   "Whether a function definition starts at the current line."
   (eq (string-match-p
        "\\s-*\\(?:def\\|async\\s-+def\\)\\s\-"
+       (thing-at-point 'line))
+      0))
+
+(defun elpy-shell--current-line-defclass-p ()
+  "Whether a class definition starts at the current line."
+  (eq (string-match-p
+       "\\s-*class\\s\-"
        (thing-at-point 'line))
       0))
 
@@ -678,20 +685,24 @@ statement.
       (elpy-shell--skip-empty-and-comment-lines t)
       (elpy-shell--nav-beginning-of-statement))))
 
-(defun elpy-shell--nav-beginning-of-defun ()
-  "Move point to the beginning of the function definition containing the current line.
+(defun elpy-shell--nav-beginning-of-def (def-p)
+  "Move point to the beginning of the definition containing the current line.
 
-If the current line does not contain a function definition, returns nil, else t."
+DEF-P is a predicate function that returns whether the current
+line is a definition. If the current line is not contained in a
+definition, returns nil and retains point position, else returns
+t and moves point."
   (let ((beg-ts (save-excursion (elpy-shell--nav-beginning-of-top-statement) (point)))
         (orig-p (point))
-        (max-indent (current-indentation))
+        (max-indent most-positive-fixnum)
         (found))
     (while (and (not found)
                 (>= (point) beg-ts))
-      (if (and (elpy-shell--current-line-defun-p)
+      (if (and (funcall def-p)
                (<= (current-indentation) max-indent))
           (setq found t)
-        (unless (python-info-current-line-empty-p)
+        (unless (or (elpy-shell--current-line-really-empty-p)
+                    (python-info-current-line-comment-p))
           (setq max-indent (min max-indent
                                 (- (current-indentation) 1))))
         (forward-line -1)))
@@ -699,6 +710,20 @@ If the current line does not contain a function definition, returns nil, else t.
         (python-nav-beginning-of-statement)
       (goto-char orig-p))
     found))
+
+(defun elpy-shell--nav-beginning-of-defun ()
+  "Move point to the beginning of the function definition containing the current line.
+
+If the current line is not contained in a function definition,
+returns nil, else t."
+  (elpy-shell--nav-beginning-of-def 'elpy-shell--current-line-defun-p))
+
+(defun elpy-shell--nav-beginning-of-defclass ()
+  "Move point to the beginning of the class definition containing the current line.
+
+If the current line is not contained in a class definition,
+returns nil, else t."
+  (elpy-shell--nav-beginning-of-def 'elpy-shell--current-line-defclass-p))
 
 (defun elpy-shell--nav-beginning-of-group ()
   "Move point to the beginning of the current or next group of top-level statements.
@@ -766,11 +791,20 @@ Otherwise, send the next one below point.
       (python-nav-forward-statement))))
 
 (defun elpy-shell-send-defun-and-step ()
-  "Sends the function that contains the current line to the Python shell and steps."
+  "Sends the function definition that contains the current line
+to the Python shell and steps."
   (interactive)
   (if (elpy-shell--nav-beginning-of-defun)
       (elpy-shell-send-statement-and-step)
     (message "There is no function definition that includes the current line.")))
+
+(defun elpy-shell-send-defclass-and-step ()
+  "Sends the class definition that contains the current line to
+the Python shell and steps."
+  (interactive)
+  (if (elpy-shell--nav-beginning-of-defclass)
+      (elpy-shell-send-statement-and-step)
+    (message "There is no class definition that includes the current line.")))
 
 (defun elpy-shell-send-group-and-step ()
   "Send the current or next group of top-level statements to the Python shell and step.
@@ -893,6 +927,10 @@ switches focus to Python shell buffer."
   (interactive)
   (elpy-shell--send-with-step-go 'elpy-shell-send-defun-and-step nil nil))
 
+(defun elpy-shell-send-defclass ()
+  (interactive)
+  (elpy-shell--send-with-step-go 'elpy-shell-send-defclass-and-step nil nil))
+
 (defun elpy-shell-send-group ()
   (interactive)
   (elpy-shell--send-with-step-go 'elpy-shell-send-group-and-step nil nil))
@@ -917,6 +955,10 @@ switches focus to Python shell buffer."
   (interactive)
   (elpy-shell--send-with-step-go 'elpy-shell-send-defun-and-step nil t))
 
+(defun elpy-shell-send-defclass-and-go ()
+  (interactive)
+  (elpy-shell--send-with-step-go 'elpy-shell-send-defclass-and-step nil t))
+
 (defun elpy-shell-send-group-and-go ()
   (interactive)
   (elpy-shell--send-with-step-go 'elpy-shell-send-group-and-step nil t))
@@ -940,6 +982,10 @@ switches focus to Python shell buffer."
 (defun elpy-shell-send-defun-and-step-and-go ()
   (interactive)
   (elpy-shell--send-with-step-go 'elpy-shell-send-defun-and-step t t))
+
+(defun elpy-shell-send-defclass-and-step-and-go ()
+  (interactive)
+  (elpy-shell--send-with-step-go 'elpy-shell-send-defclass-and-step t t))
 
 (defun elpy-shell-send-group-and-step-and-go ()
   (interactive)
