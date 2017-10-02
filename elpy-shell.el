@@ -310,10 +310,10 @@ prompt is visible and commands can be sent to the shell."
         (while (< (point) (point-max))
           (cond
            ((and (not indent-level)
-                 (not (looking-at "[ \t]*$")))
+                 (not (python-info-current-line-empty-p)))
             (setq indent-level (current-indentation)))
            ((and indent-level
-                 (not (looking-at "[ \t]*$"))
+                 (not (python-info-current-line-empty-p))
                  (< (current-indentation)
                     indent-level))
             (error "Can't adjust indentation, consecutive lines indented less than starting line")))
@@ -732,18 +732,8 @@ statement below point. Correctly handles if/else/elif statements.
         (end (progn (elpy-shell--nav-end-of-statement) (point))))
     (unless (eq beg end)
       (elpy-shell--flash-region beg end)
-      (let ((buffer (current-buffer))
-            (s))
-        ;; remove spurious indentation
-        (with-temp-buffer
-          (insert (with-current-buffer buffer (buffer-substring beg end)))
-          (goto-char (point-min))
-          (while (elpy-shell--current-line-indented-p)
-            (python-indent-shift-left (point-min) (point-max)))
-          (setq s (buffer-string)))
-        ;; and send
         (elpy-shell--with-maybe-echo
-         (python-shell-send-string s)))))
+         (python-shell-send-string (elpy-shell--region-without-indentation beg end)))))
   (python-nav-forward-statement))
 
 (defun elpy-shell-send-top-statement-and-step ()
