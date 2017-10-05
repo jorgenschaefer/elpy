@@ -220,9 +220,9 @@ this to prevent this from happening."
   :safe #'integerp
   :group 'elpy)
 
-(defcustom elpy-rpc-python-command (if (equal system-type 'windows-nt)
-                                       "pythonw"
-                                     "python")
+(defcustom elpy-rpc-python-command (or (executable-find "py")
+                                       (executable-find "pythonw")
+                                       "python")
   "The Python interpreter for the RPC backend.
 
 This should be the same interpreter the project will be run with,
