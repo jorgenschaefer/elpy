@@ -3925,8 +3925,3 @@ which we're looking."
 
 (provide 'elpy)
 ;;; elpy.el ends here
-
-;;;### (autoloads nil nil ("elpy-django.el" "elpy-pkg.el" "elpy-profile.el"
-;;;;;;  "elpy-refactor.el") (22990 26173 0 0))
-
-;;;***
