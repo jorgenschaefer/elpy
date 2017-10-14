@@ -213,7 +213,7 @@ easier to send code snippets over.
    Send current statement to Python shell.
 
    This command sends statements to shell without indentation. If you
-   send nested statements, shell will trow ``IndentationError``. To send
+   send nested statements, shell will throw ``IndentationError``. To send
    nested statements, it is recommended to select region and run
    ``elpy-shell-send-region-or-buffer``
 
