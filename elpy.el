@@ -220,9 +220,11 @@ this to prevent this from happening."
   :safe #'integerp
   :group 'elpy)
 
-(defcustom elpy-rpc-python-command (or (executable-find "py")
-                                       (executable-find "pythonw")
-                                       "python")
+(defcustom elpy-rpc-python-command (if (equal system-type 'windows-nt)
+                                       (or (executable-find "py")
+                                           (executable-find "pythonw")
+                                           "python")
+                                     "python")
   "The Python interpreter for the RPC backend.
 
 This should be the same interpreter the project will be run with,
@@ -231,6 +233,7 @@ and not an interactive shell like ipython."
                  (const :tag "python2" "python2")
                  (const :tag "python3" "python3")
                  (const :tag "pythonw (Python on Windows)" "pythonw")
+                 (const :tag "py (other Python on Windows)" "py")
                  (string :tag "Other"))
   :safe (lambda (val)
           (member val '("python" "python2" "python3" "pythonw")))
