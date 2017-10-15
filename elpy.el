@@ -1653,6 +1653,105 @@ code is executed."
   (elpy-shell-display-buffer)
   (python-nav-forward-statement))
 
+(defun elpy--line-match-p (regexp)
+  "Return t if current line match REGEXP"
+  (save-excursion
+    (beginning-of-line)
+    (search-forward-regexp regexp (line-end-position) t)))
+
+(defcustom elpy-def-regex "[[:space:]]*\\_<\\(?:def\\|async[[:space:]]+def\\)\\_>[[:space:]]+\\(?9:[_[:alpha:]][_[:word:]]*(.*)\\):"
+  "Regular expression matching a function definition line.
+
+Group 9 is the function signature displayed in the minibuffer by `elpy-shell-send-def'."
+  :type 'regexp
+  :group 'elpy)
+
+(defcustom elpy-class-regex "[[:space:]]*\\_<\\(?:class\\)\\_>[[:space:]]+\\(?9:[_[:alpha:]][_[:word:]]*(.*)\\):"
+  "Regular expression matching a class definition line.
+
+Group 9 is the class signature displayed in the minibuffer by `elpy-shell-send-class'."
+  :type 'regexp
+  :group 'elpy)
+
+(defun elpy--nav-backward-def-or-class (&optional class)
+  "Move to the current function first line.
+
+If CLASS is non nil, move to the current class first line instead.
+Current class and function search takes into account the current line indentation. "
+  (let ((init-pos (point))
+	(failed nil)
+	(regex (if class elpy-class-regex elpy-def-regex)))
+    ;; go backward to the last non-empy line (needed for correct initial indentation level)
+    (while (python-info-current-line-empty-p)
+      (forward-line -1))
+    (let* ((min-indent (current-indentation))
+	   (found nil))
+      ;; Special case if current line is a function definition
+      (when (not (elpy--line-match-p regex))
+	;; search for function (class) definition line with inferior indentation level.
+	(while (and (not found)
+		    (not failed))
+	  (cond ((elpy--line-match-p regex)
+		 (cond ((< (current-indentation) min-indent)
+			(setq found t))
+		       (t
+			(setq failed nil))))
+		((< (current-indentation) min-indent)
+		 (setq min-indent (current-indentation)))
+		((= (line-number-at-pos) 1)
+		 (setq failed t)))
+	  (when (and (not failed) (not found))
+	    (forward-line -1)
+	    (while (and (python-info-current-line-empty-p)
+			(not (= (line-number-at-pos) 1)))
+	      (forward-line -1))))))
+    ;; return
+    (cond (failed (goto-char init-pos) nil)
+	  (t (beginning-of-line) (point)))))
+
+(defun elpy--shell-send-def-or-class (&optional class)
+  "Send the current function definition to the Python shell.
+
+If CLASS is not nil, send the current class definition instead.
+Current class and function search takes into account the current line indentation."
+  (save-excursion
+    (let ((beg (elpy--nav-backward-def-or-class class))
+	  (regex (if class elpy-class-regex elpy-def-regex)))
+      ;; not in a function definition
+      (if (not beg)
+	  (message "Not in a %s definition" (if class "class" "function"))
+	;; get function/class signature
+	(search-forward-regexp regex (line-end-position) t)
+	(let ((name (match-string 9))
+	      (end (progn (python-nav-end-of-defun) (point))))
+	  ;; send function/class to python shell
+	  (elpy-shell-get-or-create-process)
+	  (python-shell-send-string (elpy-shell--region-without-indentation beg end))
+	  (elpy-shell-display-buffer)
+	  (message "Sent function: %s" name))))))
+
+(defun elpy-shell-send-def ()
+  "Send the current function definition to the python shell."
+  (interactive)
+  (elpy--shell-send-def-or-class))
+
+(defun elpy-shell-send-class ()
+  "Send the current class definition to the python shell."
+  (interactive)
+  (elpy--shell-send-def-or-class t))
+
+(defun elpy-shell-send-paragraph ()
+  "Send the current paragraph to the python shell."
+  (interactive)
+  (save-excursion
+    (if (python-info-current-line-empty-p)
+	(message "Not in a paragraph")
+      (let ((beg (progn (backward-paragraph) (point)))
+	    (end (progn (forward-paragraph) (point))))
+	(elpy-shell-get-or-create-process)
+	(python-shell-send-string (elpy-shell--region-without-indentation beg end))
+	(elpy-shell-display-buffer)))))
+
 (defun elpy-shell-switch-to-shell ()
   "Switch to inferior Python process buffer."
   (interactive)
