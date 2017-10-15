@@ -1654,15 +1654,29 @@ code is executed."
   (python-nav-forward-statement))
 
 (defun elpy-shell-switch-to-shell ()
-  "Switch to inferior Python process buffer."
+  "Switch to project Python process buffer."
   (interactive)
   (setq elpy--shell-last-py-buffer (buffer-name))
-  (pop-to-buffer (process-buffer (elpy-shell-get-or-create-process))))
+  (elpy-shell-switch-to-project-shell))
 
 (defun elpy-shell-switch-to-buffer ()
   "Switch from inferior Python process buffer to recent Python buffer."
   (interactive)
   (pop-to-buffer elpy--shell-last-py-buffer))
+
+(defun elpy-shell-switch-to-project-shell ()
+  "Switch to project Python shell with current project root already loaded in sys.path"
+  (interactive)
+  (let* ((buff-name-template "*Project Shell[%s]*")
+         (proj-root (file-name-nondirectory (directory-file-name (elpy-project-root))))
+         (buff-name (format buff-name-template proj-root)))
+    ;; If buffer exists, lets just give it back
+    (if (get-buffer buff-name)
+        (pop-to-buffer buff-name)
+      ;; Prep new project shell
+      (pop-to-buffer (process-buffer (run-python (python-shell-calculate-command) t t)))
+      (rename-buffer buff-name)
+      (python-shell-send-string (format "import sys;sys.path.append('%s')" (elpy-project-root))))))
 
 (defun elpy-shell-kill (&optional kill-buff)
   "Kill the current python shell.
