@@ -344,8 +344,8 @@ BEGIN and END refer to the region of the current buffer containing the code bein
       (goto-char begin)
       (end-of-line)
       (if (<= end (point))
-          (message "Sent: %s" (string-trim (thing-at-point 'line)))
-        (message "Sent: %s..." (string-trim (thing-at-point 'line)))))
+          (message "Sent: %s" (s-trim (thing-at-point 'line)))
+        (message "Sent: %s..." (s-trim (thing-at-point 'line)))))
     (when (bound-and-true-p eval-sexp-fu-flash-mode)
       (multiple-value-bind (bounds hi unhi eflash) (eval-sexp-fu-flash (cons begin end))
         (eval-sexp-fu-flash-doit (lambda () t) hi unhi)))))
@@ -440,12 +440,12 @@ non-nil, skips backwards."
             (prog1
                 (progn
                   ;; this is delayed so that the flash overlay stays visible
-                  (when (not (string-empty-p python-shell-output-filter-buffer))
+                  (when (not (s-blank? python-shell-output-filter-buffer))
                     (run-at-time "1 millisec" nil
                                  (lambda (s)
                                    (let (message-log-max) ;; no need to log in messages
                                      (message "%s" s)))
-                                 (string-trim python-shell-output-filter-buffer)))
+                                 (s-trim python-shell-output-filter-buffer)))
                   python-shell-output-filter-buffer)
               (setq python-shell-output-filter-buffer nil)))
           (with-current-buffer (process-buffer process)
@@ -541,7 +541,7 @@ Prepends a continuation promt if PREPEND-CONT-PROMPT is set."
               (replace-match "" nil nil append-string)
             append-string))
          (append-string ; strip newlines from beginning and white space from end
-          (string-trim-right
+          (s-trim-right
            (if (string-match "\\`\n+" append-string)
                (replace-match "" nil nil append-string)
              append-string)))
@@ -944,7 +944,7 @@ switches focus to Python shell buffer."
 
 (defmacro elpy-shell--defun-step-go (fun-and-step)
   "Defines fun, fun-and-go, fun-and-step-and-go for the given FUN-AND-STEP function."
-  (let ((name (string-remove-suffix "-and-step" (symbol-name fun-and-step))))
+  (let ((name (s-chop-suffix "-and-step" (symbol-name fun-and-step))))
     (list
      'progn
      (let ((fun (intern name)))
