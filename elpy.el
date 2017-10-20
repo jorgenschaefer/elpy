@@ -42,6 +42,7 @@
 (require 'ido)
 (require 'json)
 (require 'python)
+(require 's)
 (require 'xref nil t)
 
 (require 'elpy-refactor)
