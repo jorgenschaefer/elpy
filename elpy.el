@@ -6,7 +6,7 @@
 ;; URL: https://github.com/jorgenschaefer/elpy
 ;; Version: 1.16.1
 ;; Keywords: Python, IDE, Languages, Tools
-;; Package-Requires: ((company "0.9.2") (find-file-in-project "3.3")  (highlight-indentation "0.5.0") (pyvenv "1.3") (yasnippet "0.8.0") (s "1.11.0"))
+;; Package-Requires: ((company "0.9.2") (emacs "24.4") (find-file-in-project "3.3")  (highlight-indentation "0.5.0") (pyvenv "1.3") (yasnippet "0.8.0") (s "1.11.0"))
 
 ;; This program is free software; you can redistribute it and/or
 ;; modify it under the terms of the GNU General Public License
@@ -42,7 +42,7 @@
 (require 'ido)
 (require 'json)
 (require 'python)
-(require 's)
+(require 'subr-x)
 (require 'xref nil t)
 
 (require 'elpy-refactor)
@@ -3805,6 +3805,9 @@ description."
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Backwards compatibility
 
+;; TODO Some/most of this compatibility code can now go, as minimum required
+;; Emacs version is 24.4.
+
 ;; Functions for Emacs 24 before 24.3
 (when (not (fboundp 'python-info-current-defun))
   (defalias 'python-info-current-defun 'python-current-defun))
@@ -3923,13 +3926,6 @@ which we're looking."
       (python-shell-completion-native-get-completions
        (get-buffer-process (current-buffer))
        nil "_"))))
-
-;; python.el in Emacs 24.3 and before does not have functions to determine
-;; buffer encoding. In these versions, we fix the encoding to utf-8 (safe choice
-;; when no encoding is defined since Python 2 uses ASCII and Python 3 UTF-8).
-(when (not (fboundp 'python-info-encoding))
-  (defun python-info-encoding ()
-    'utf-8))
 
 (provide 'elpy)
 ;;; elpy.el ends here
