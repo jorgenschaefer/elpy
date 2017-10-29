@@ -1,3 +1,13 @@
+New in Elpy 1.17.0
+==================
+
+- The xref functionality in newer Emacsen is now supported for
+  following symbols at point.
+- Elpy now supports PEP 397 for Windows executable names.
+- In addition to pylint, Elpy now also supports epylint correctly.
+- Bunch of little bugfixes.
+
+
 New in Elpy 1.16.0
 ==================
 
