@@ -51,6 +51,16 @@ force the creation of dedicated shells for each buffers."
                  (const :tag "Always" t))
   :group 'elpy)
 
+(defcustom elpy-shell-capture-last-multiline-output t
+  "Whether to capture the output of the last Python statement when sending multiple statements to the Python shell.
+
+  If nil, no output is captured (nor echoed in the shell) when
+  sending multiple statements. This is the default behavior of
+  python.el. If non-nil and the last statement is an expression,
+  captures its output so that it is echoed in the shell."
+  :type 'boolean
+  :group 'elpy)
+
 (defcustom elpy-shell-echo-input t
   "Whether to echo input sent to the Python shell as input in the
 shell buffer.
@@ -403,8 +413,7 @@ non-nil, skips backwards."
      ,body)))
 
 (defmacro elpy-shell--with-maybe-echo-input (body)
-  "Run BODY so that it adheres `elpy-shell-echo-input' and
-`elpy-shell-display-buffer'."
+  "Run BODY so that it adheres `elpy-shell-echo-input' and `elpy-shell-display-buffer'."
   `(progn
      (elpy-shell--enable-echo)
      (prog1
@@ -416,40 +425,44 @@ non-nil, skips backwards."
        (elpy-shell--disable-echo))))
 
 (defmacro elpy-shell--with-maybe-echo-output (body)
-  "Run BODY and grab shell output according to `elpy-shell-echo-output'."
-  `(let* ((process (elpy-shell--ensure-shell-running))
-          (shell-visible (or elpy-shell-display-buffer-after-send
-                             (get-buffer-window (process-buffer process)))))
-     (if (cond
-          ((null elpy-shell-echo-output) t)
-          ((eq elpy-shell-echo-output 'when-shell-not-visible) shell-visible))
-         (progn ,body)
-       (let ((comint-preoutput-filter-functions
-              '(elpy-shell--shell-output-filter))
-             (python-shell-output-filter-in-progress t)
-             (inhibit-quit t))
-         (or
-          (with-local-quit
-            (progn ,body)
-            (sit-for eval-sexp-fu-flash-duration)
-            (while python-shell-output-filter-in-progress
-              ;; `elpy-shell--shell-output-filter' takes care of setting
-              ;; `python-shell-output-filter-in-progress' to NIL after it
-              ;; detects end of output.
-              (accept-process-output process))
-            (prog1
-                (progn
-                  ;; this is delayed so that the flash overlay stays visible
-                  (when (not (string-empty-p python-shell-output-filter-buffer))
-                    (run-at-time "1 millisec" nil
-                                 (lambda (s)
-                                   (let (message-log-max) ;; no need to log in messages
-                                     (message "%s" s)))
-                                 (string-trim python-shell-output-filter-buffer)))
-                  python-shell-output-filter-buffer)
-              (setq python-shell-output-filter-buffer nil)))
-          (with-current-buffer (process-buffer process)
-            (comint-interrupt-subjob)))))))
+  "Run BODY and grab shell output according to `elpy-shell-echo-output' and `elpy-shell-capture-last-multiline-output'."
+  `(cl-letf (((symbol-function 'python-shell-send-file)
+              (if elpy-shell-capture-last-multiline-output
+                  (symbol-function 'elpy-shell-send-file)
+                (symbol-function 'python-shell-send-file))))
+     (let* ((process (elpy-shell--ensure-shell-running))
+            (shell-visible (or elpy-shell-display-buffer-after-send
+                               (get-buffer-window (process-buffer process)))))
+       (if (cond
+            ((null elpy-shell-echo-output) t)
+            ((eq elpy-shell-echo-output 'when-shell-not-visible) shell-visible))
+           (progn ,body)
+         (let ((comint-preoutput-filter-functions
+                '(elpy-shell--shell-output-filter))
+               (python-shell-output-filter-in-progress t)
+               (inhibit-quit t))
+           (or
+            (with-local-quit
+              (progn ,body)
+              (sit-for eval-sexp-fu-flash-duration)
+              (while python-shell-output-filter-in-progress
+                ;; `elpy-shell--shell-output-filter' takes care of setting
+                ;; `python-shell-output-filter-in-progress' to NIL after it
+                ;; detects end of output.
+                (accept-process-output process))
+              (prog1
+                  (progn
+                    ;; this is delayed so that the flash overlay stays visible
+                    (when (not (string-empty-p python-shell-output-filter-buffer))
+                      (run-at-time "1 millisec" nil
+                                   (lambda (s)
+                                     (let (message-log-max) ;; no need to log in messages
+                                       (message "%s" s)))
+                                   (string-trim python-shell-output-filter-buffer)))
+                    python-shell-output-filter-buffer)
+                (setq python-shell-output-filter-buffer nil)))
+            (with-current-buffer (process-buffer process)
+              (comint-interrupt-subjob))))))))
 
 (defun elpy-shell--shell-output-filter (string)
   "Filter used in `elpy-shell--with-maybe-echo-output' to grab output.
@@ -571,22 +584,16 @@ Prepends a continuation promt if PREPEND-CONT-PROMPT is set."
   (advice-remove 'python-shell-send-string
                  'elpy-shell--python-shell-send-string-echo-advice))
 
-;; overwrites python-shell-send-file modified such that: if the file ends with
-;; an expression, it's evaluated separately so that the result is recognized by
-;; the python shell.  This let's use see the output of the last expression in a
-;; multiline statement
-;; TODO: might be better to avoid overwriting but use advices instead
-(defun python-shell-send-file (file-name &optional process temp-file-name
+(defun elpy-shell-send-file (file-name &optional process temp-file-name
                                          delete msg)
-  "Send FILE-NAME to inferior Python PROCESS.
+  """Like `python-shell-send-file' but evaluates last expression separately.
 
-If TEMP-FILE-NAME is passed then that file is used for processing
-instead, while internally the shell will continue to use
-FILE-NAME. If TEMP-FILE-NAME and DELETE are non-nil, then
-TEMP-FILE-NAME is deleted after evaluation is performed. When
-optional argument MSG is non-nil, forces display of a
-user-friendly message if there's no process running; defaults to
-t when called interactively."
+  See `python-shell-send-file' for a description of the
+  arguments. This function differs in that it breaks up the
+  Python code in FILE-NAME into statements. If the last statement
+  is a Python expression, it is evaluated separately in 'eval'
+  mode. This way, the interactive python shell can capture (and
+  print) the output of the last expression."""
   (interactive
    (list
     (read-file-name "File to send: ")   ; file-name
