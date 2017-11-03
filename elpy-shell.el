@@ -444,7 +444,8 @@ non-nil, skips backwards."
            (or
             (with-local-quit
               (progn ,body)
-              (sit-for eval-sexp-fu-flash-duration)
+              (when (bound-and-true-p eval-sexp-fu-flash-mode)
+                (sit-for eval-sexp-fu-flash-duration))
               (while python-shell-output-filter-in-progress
                 ;; `elpy-shell--shell-output-filter' takes care of setting
                 ;; `python-shell-output-filter-in-progress' to NIL after it
