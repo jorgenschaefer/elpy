@@ -50,6 +50,7 @@
 (require 'elpy-profile)
 (require 'elpy-shell)
 (require 'pyvenv)
+(require 'find-file-in-project)
 
 (defconst elpy-version "1.17.0"
   "The version of the Elpy lisp code.")
@@ -100,9 +101,9 @@ can be inidividually enabled or disabled."
                      elpy-module-sane-defaults))
   :group 'elpy)
 
-(defcustom elpy-project-ignored-directories ' (".bzr" "CVS" ".git" ".hg" ".svn"
-                                               ".tox"  "build" "dist"
-                                               ".cask")
+(defcustom elpy-project-ignored-directories
+  (append '(".tox" "build" "dist" ".cask" ".ipynb_checkpoints")
+          vc-directory-exclusion-list)
   "Directories ignored by functions working on the whole project."
   :type '(repeat string)
   :safe (lambda (val)
@@ -1400,6 +1401,24 @@ for."
 ;;;;;;;;;;;;;;;;;;;;;;
 ;;; Find Project Files
 
+(defcustom elpy-ffip-prune-patterns
+  (let ((extras ()))
+    (dolist (dir elpy-project-ignored-directories)
+      (let ((pat (concat "*/" dir "/*")))
+        (unless (member pat ffip-prune-patterns)
+          (push pat extras))))
+    (dolist (ext completion-ignored-extensions)
+      (unless (string-match "/$" ext)
+        (let ((pat (concat "*" ext)))
+          (unless (member pat ffip-prune-patterns)
+            (push pat extras)))))
+    (append extras ffip-prune-patterns))
+  "Elpy-specific extension of `ffip-prune-patterns'."
+  :type '(repeat string)
+  :safe (lambda (val)
+          (cl-every #'stringp val))
+  :group 'elpy)
+
 (defun elpy-find-file (&optional dwim)
   "Efficiently find a file in the current project.
 
@@ -1434,7 +1453,7 @@ file is <name>.py, and is either in the same directors or a
           (find-file test-file)
         (elpy-find-file nil))))
    (t
-    (let ((ffip-prune-patterns elpy-project-ignored-directories)
+    (let ((ffip-prune-patterns elpy-ffip-prune-patterns)
           (ffip-project-root (or (elpy-project-root)
                                  default-directory))
           ;; Set up ido to use vertical file lists.
