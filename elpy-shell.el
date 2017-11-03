@@ -293,6 +293,8 @@ Python process. This allows the process to start up."
           (run-python (python-shell-parse-command) t t)
           (when sit
             (sit-for sit))
+          (with-current-buffer dedbufname
+            (add-hook 'comint-output-filter-functions 'elpy-shell--output-filter nil t))
           (get-buffer-process dedbufname))
       (if dedproc
           dedproc
@@ -301,6 +303,8 @@ Python process. This allows the process to start up."
           (run-python (python-shell-parse-command) nil t)
           (when sit
             (sit-for sit))
+          (with-current-buffer bufname
+            (add-hook 'comint-output-filter-functions 'elpy-shell--output-filter nil t))
           (get-buffer-process bufname))))))
 
 (defun elpy-shell--ensure-shell-running ()
@@ -424,6 +428,12 @@ non-nil, skips backwards."
              (progn ,body)))
        (elpy-shell--disable-echo))))
 
+(defvar elpy-shell--capture-output nil
+  "Non-nil when the Python shell should capture output for display in the echo area.")
+
+(defvar elpy-shell--captured-output nil
+  "Current captured output of the Python shell.")
+
 (defmacro elpy-shell--with-maybe-echo-output (body)
   "Run BODY and grab shell output according to `elpy-shell-echo-output' and `elpy-shell-capture-last-multiline-output'."
   `(cl-letf (((symbol-function 'python-shell-send-file)
@@ -433,57 +443,38 @@ non-nil, skips backwards."
      (let* ((process (elpy-shell--ensure-shell-running))
             (shell-visible (or elpy-shell-display-buffer-after-send
                                (get-buffer-window (process-buffer process)))))
-       (if (cond
-            ((null elpy-shell-echo-output) t)
-            ((eq elpy-shell-echo-output 'when-shell-not-visible) shell-visible))
-           (progn ,body)
-         (let ((comint-preoutput-filter-functions
-                '(elpy-shell--shell-output-filter))
-               (python-shell-output-filter-in-progress t)
-               (inhibit-quit t))
-           (or
-            (with-local-quit
-              (progn ,body)
-              (when (bound-and-true-p eval-sexp-fu-flash-mode)
-                (sit-for eval-sexp-fu-flash-duration))
-              (while python-shell-output-filter-in-progress
-                ;; `elpy-shell--shell-output-filter' takes care of setting
-                ;; `python-shell-output-filter-in-progress' to NIL after it
-                ;; detects end of output.
-                (accept-process-output process))
-              (prog1
-                  (progn
-                    ;; this is delayed so that the flash overlay stays visible
-                    (when (not (string-empty-p python-shell-output-filter-buffer))
-                      (run-at-time "1 millisec" nil
-                                   (lambda (s)
-                                     (let (message-log-max) ;; no need to log in messages
-                                       (message "%s" s)))
-                                   (string-trim python-shell-output-filter-buffer)))
-                    python-shell-output-filter-buffer)
-                (setq python-shell-output-filter-buffer nil)))
-            (with-current-buffer (process-buffer process)
-              (comint-interrupt-subjob))))))))
+       (setq elpy-shell--capture-output
+             (and elpy-shell-echo-output
+                  (or (not (eq elpy-shell-echo-output 'when-shell-not-visible))
+                      (not shell-visible))))
+       (progn ,body))))
 
-(defun elpy-shell--shell-output-filter (string)
+(defun elpy-shell--output-filter (string)
   "Filter used in `elpy-shell--with-maybe-echo-output' to grab output.
 
 No actual filtering is performed. STRING is the output received
-to this point from the process. This filter saves received output
-from the process in `python-shell-output-filter-buffer' and stops
-receiving it after detecting a prompt at the end of the buffer."
-  (setq
-   string (ansi-color-filter-apply string)
-   python-shell-output-filter-buffer
-   (concat python-shell-output-filter-buffer string))
-  (when (python-shell-comint-end-of-output-p
-         python-shell-output-filter-buffer)
-    ;; Output ends when `python-shell-output-filter-buffer' contains
-    ;; the prompt attached at the end of it.
-    (setq python-shell-output-filter-in-progress nil
-          python-shell-output-filter-buffer
-          (substring python-shell-output-filter-buffer
-                     0 (match-beginning 0))))
+to this point from the process. If `elpy-shell--capture-output'
+is set, captures and messages shell output in the echo area (once
+complete). Otherwise, does nothing."
+  ;; capture the output and message it when complete
+  (when elpy-shell--capture-output
+    ;; remember the new output
+    (setq elpy-shell--captured-output
+          (concat elpy-shell--captured-output (ansi-color-filter-apply string)))
+
+    ;; Output ends when `elpy-shell--captured-output' contains
+    ;; the prompt attached at the end of it. If so, message it.
+    (when (python-shell-comint-end-of-output-p elpy-shell--captured-output)
+      (let ((output (string-trim
+                     (substring
+                      elpy-shell--captured-output
+                      0 (match-beginning 0)))))
+        (if (string-empty-p output)
+            (message "No output was produced.")
+          (message "%s" output)))
+      (setq elpy-shell--captured-output nil)))
+
+  ;; return input unmodified
   string)
 
 (defun elpy-shell--insert-and-font-lock (string face &optional no-font-lock)
