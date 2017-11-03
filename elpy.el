@@ -50,6 +50,7 @@
 (require 'elpy-profile)
 (require 'elpy-shell)
 (require 'pyvenv)
+(require 'find-file-in-project)
 
 (defconst elpy-version "1.17.0"
   "The version of the Elpy lisp code.")
