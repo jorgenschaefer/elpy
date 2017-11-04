@@ -196,6 +196,11 @@ The Shell Buffer
    Switch to buffer with a Python interpreter running, starting one if
    necessary.
 
+   By default, Elpy tries to find the root directory of the current project
+   (git, svn or hg repository, python package or projectile project) and
+   starts the python interpreter here. This behaviour can be suppressed
+   with the option ``elpy-shell-use-project-root``.
+
 .. option:: elpy-dedicated-shells
 
    By default, Elpy only starts a single interactive Python process. This
