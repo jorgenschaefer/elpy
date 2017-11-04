@@ -502,7 +502,7 @@ Prepends a continuation promt if PREPEND-CONT-PROMPT is set."
   (let ((buffer (current-buffer)))
     (set-buffer (process-buffer (elpy-shell-get-or-create-process)))
     (let ((initial-point (point))
-          (mark-point (process-mark (elpy-shell-get-or-create-process))))
+          (mark-point (process-mark (get-buffer-process (current-buffer)))))
       (goto-char mark-point)
       (if prepend-cont-prompt
           (let* ((column (+ (- (point) (progn (forward-line -1) (end-of-line) (point))) 1))
