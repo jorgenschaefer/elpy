@@ -309,11 +309,14 @@ Python process. This allows the process to start up."
 If the shell is not running, waits until the first prompt is visible and
 commands can be sent to the shell."
   (with-current-buffer (process-buffer (elpy-shell-get-or-create-process))
-    (let ((inhibit-text-field-motion t))
-      (while (progn
-               (goto-char (point-min))
-               (not (re-search-forward "^>>>" nil t)))
-        (sleep-for .1))))
+    (let ((cumtime 0))
+      (while (and (when (boundp 'python-shell--first-prompt-received)
+                    (not python-shell--first-prompt-received))
+                  (< cumtime 3))
+        (sleep-for 0.1)
+        (setq cumtime (+ cumtime 0.1)))
+      (when (>= cumtime 3)
+        (message "Elpy warning: failed to detect receipt of the first prompt (timeout)"))))
   (elpy-shell-get-or-create-process))
 
 (defun elpy-shell--region-without-indentation (beg end)
