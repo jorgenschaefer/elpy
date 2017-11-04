@@ -789,7 +789,7 @@ Otherwise, skips forward to the next code line and sends the
 corresponding statement."
   (interactive)
   (elpy-shell--ensure-shell-running)
-  (elpy-shell--append-to-shell-output "\n")
+  (when (not elpy-shell-echo-input) (elpy-shell--append-to-shell-output "\n"))
   (let ((beg (progn (elpy-shell--nav-beginning-of-statement)
                     (save-excursion
                       (beginning-of-line)
@@ -875,7 +875,8 @@ below point and send the group around this statement."
               ;; single line
               (elpy-shell-send-statement-and-step)
             ;; multiple lines
-            (elpy-shell--append-to-shell-output "\n")
+            (when (not elpy-shell-echo-input)
+              (elpy-shell--append-to-shell-output "\n"))
             (elpy-shell--with-maybe-echo
              (python-shell-send-region beg end))
             (python-nav-forward-statement)))
@@ -907,7 +908,7 @@ code is executed."
   (interactive "P")
   ;; Ensure process exists
   (elpy-shell-get-or-create-process)
-  (elpy-shell--append-to-shell-output "\n")
+  (when (not elpy-shell-echo-input) (elpy-shell--append-to-shell-output "\n"))
   (let ((if-main-regex "^if +__name__ +== +[\"']__main__[\"'] *:")
         (has-if-main nil))
     (if (use-region-p)
