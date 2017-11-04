@@ -306,10 +306,15 @@ Python process. This allows the process to start up."
 (defun elpy-shell--ensure-shell-running ()
   "Ensure that the Python shell for the current buffer is running.
 
-If the shell is not running, waits a while so that the first
-prompt is visible and commands can be sent to the shell."
-  ;; this should be enough time to start the shell and show the first prompt
-  (elpy-shell-get-or-create-process 3))
+If the shell is not running, waits until the first prompt is visible and
+commands can be sent to the shell."
+  (with-current-buffer (process-buffer (elpy-shell-get-or-create-process))
+    (let ((inhibit-text-field-motion t))
+      (while (progn
+               (goto-char (point-min))
+               (not (re-search-forward "^>>>" nil t)))
+        (sleep-for .1))))
+  (elpy-shell-get-or-create-process))
 
 (defun elpy-shell--region-without-indentation (beg end)
   "Return the current region as a string, but without indentation."
