@@ -467,7 +467,8 @@ complete). Otherwise, does nothing."
       (let ((output (string-trim
                      (substring
                       elpy-shell--captured-output
-                      0 (match-beginning 0)))))
+                      0 (match-beginning 0))))
+            (message-log-max))
         (if (string-empty-p output)
             (message "No output was produced.")
           (message "%s" output)))
