@@ -314,9 +314,7 @@ commands can be sent to the shell."
                     (not python-shell--first-prompt-received))
                   (< cumtime 3))
         (sleep-for 0.1)
-        (setq cumtime (+ cumtime 0.1)))
-      (when (>= cumtime 3)
-        (message "Elpy warning: failed to detect receipt of the first prompt (timeout)"))))
+        (setq cumtime (+ cumtime 0.1)))))
   (elpy-shell-get-or-create-process))
 
 (defun elpy-shell--region-without-indentation (beg end)
