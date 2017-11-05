@@ -464,14 +464,13 @@ complete). Otherwise, does nothing."
     ;; Output ends when `elpy-shell--captured-output' contains
     ;; the prompt attached at the end of it. If so, message it.
     (when (python-shell-comint-end-of-output-p elpy-shell--captured-output)
-      (let ((output (string-trim
-                     (substring
-                      elpy-shell--captured-output
-                      0 (match-beginning 0))))
+      (let ((output (substring
+                     elpy-shell--captured-output
+                     0 (match-beginning 0)))
             (message-log-max))
         (if (string-empty-p output)
             (message "No output was produced.")
-          (message "%s" output)))
+          (message "%s" (replace-regexp-in-string "\n\\'" "" output))))
       (setq elpy-shell--captured-output nil)))
 
   ;; return input unmodified
