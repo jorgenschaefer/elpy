@@ -293,8 +293,6 @@ Python process. This allows the process to start up."
           (run-python (python-shell-parse-command) t t)
           (when sit
             (sit-for sit))
-          (with-current-buffer dedbufname
-            (add-hook 'comint-output-filter-functions 'elpy-shell--output-filter nil t))
           (get-buffer-process dedbufname))
       (if dedproc
           dedproc
@@ -303,8 +301,6 @@ Python process. This allows the process to start up."
           (run-python (python-shell-parse-command) nil t)
           (when sit
             (sit-for sit))
-          (with-current-buffer bufname
-            (add-hook 'comint-output-filter-functions 'elpy-shell--output-filter nil t))
           (get-buffer-process bufname))))))
 
 (defun elpy-shell--ensure-shell-running ()
@@ -448,6 +444,9 @@ non-nil, skips backwards."
                   (or (not (eq elpy-shell-echo-output 'when-shell-not-visible))
                       (not shell-visible))))
        (progn ,body))))
+
+(defun elpy-shell--enable-output-filter ()
+    (add-hook 'comint-output-filter-functions 'elpy-shell--output-filter nil t))
 
 (defun elpy-shell--output-filter (string)
   "Filter used in `elpy-shell--with-maybe-echo-output' to grab output.
