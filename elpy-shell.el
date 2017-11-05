@@ -491,29 +491,32 @@ complete). Otherwise, does nothing."
 
 Unless NO-FONT-LOCK is set, formats STRING as shell input.
 Prepends a continuation promt if PREPEND-CONT-PROMPT is set."
-  (let ((buffer (current-buffer)))
-    (set-buffer (process-buffer (elpy-shell-get-or-create-process)))
-    (let ((initial-point (point))
-          (mark-point (process-mark (elpy-shell-get-or-create-process))))
-      (goto-char mark-point)
-      (if prepend-cont-prompt
-          (let* ((column (+ (- (point) (progn (forward-line -1) (end-of-line) (point))) 1))
-                 (prompt (concat (make-string (max 0 (- column 7)) ? ) "...: "))
-                 (lines (split-string string "\n")))
-            (goto-char mark-point)
-            (elpy-shell--insert-and-font-lock (car lines) 'comint-highlight-input no-font-lock)
-            (if (cdr lines)
-                ;; no additional newline at end for multiline
-                (dolist (line (cdr lines))
-                  (insert "\n")
-                  (elpy-shell--insert-and-font-lock prompt 'comint-highlight-prompt no-font-lock)
-                  (elpy-shell--insert-and-font-lock line 'comint-highlight-input no-font-lock))
-              ;; but put one for single line
-              (insert "\n")))
-        (elpy-shell--insert-and-font-lock string 'comint-highlight-input no-font-lock))
-      (set-marker (process-mark (python-shell-get-process)) (point))
-      (goto-char initial-point))
-    (set-buffer buffer)))
+  (let* ((process (elpy-shell-get-or-create-process))
+         (process-buf (process-buffer process))
+         (mark-point (process-mark process)))
+    (with-current-buffer process-buf
+      (save-excursion
+        (goto-char mark-point)
+        (if prepend-cont-prompt
+            (let* ((column (+ (- (point) (progn (forward-line -1) (end-of-line) (point))) 1))
+                   (prompt (concat (make-string (max 0 (- column 7)) ? ) "...: "))
+                   (lines (split-string string "\n")))
+              (goto-char mark-point)
+              (elpy-shell--insert-and-font-lock
+               (car lines) 'comint-highlight-input no-font-lock)
+              (if (cdr lines)
+                  ;; no additional newline at end for multiline
+                  (dolist (line (cdr lines))
+                    (insert "\n")
+                    (elpy-shell--insert-and-font-lock
+                     prompt 'comint-highlight-prompt no-font-lock)
+                    (elpy-shell--insert-and-font-lock
+                     line 'comint-highlight-input no-font-lock))
+                ;; but put one for single line
+                (insert "\n")))
+          (elpy-shell--insert-and-font-lock
+           string 'comint-highlight-input no-font-lock))
+        (set-marker (process-mark process) (point))))))
 
 (defun elpy-shell--string-head-lines (string n)
   "Extract the first N lines from STRING."
