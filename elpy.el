@@ -555,12 +555,14 @@ option is `pdb'."
   (elpy-modules-global-init)
   (define-key inferior-python-mode-map (kbd "C-c C-z") 'elpy-shell-switch-to-buffer)
   (add-hook 'python-mode-hook 'elpy-mode)
-  (add-hook 'pyvenv-post-activate-hooks 'elpy-rpc--disconnect))
+  (add-hook 'pyvenv-post-activate-hooks 'elpy-rpc--disconnect)
+  (add-hook 'inferior-python-mode-hook 'elpy-shell--enable-output-filter))
 
 (defun elpy-disable ()
   "Disable Elpy in all future Python buffers."
   (interactive)
   (remove-hook 'python-mode-hook 'elpy-mode)
+  (remove-hook 'inferior-python-mode-hook 'elpy-shell--enable-output-filter)
   (elpy-modules-global-stop))
 
 ;;;###autoload
