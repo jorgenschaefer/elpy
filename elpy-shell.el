@@ -424,10 +424,10 @@ non-nil, skips backwards."
              (progn ,body)))
        (elpy-shell--disable-echo))))
 
-(defvar elpy-shell--capture-output nil
+(defvar-local elpy-shell--capture-output nil
   "Non-nil when the Python shell should capture output for display in the echo area.")
 
-(defvar elpy-shell--captured-output nil
+(defvar-local elpy-shell--captured-output nil
   "Current captured output of the Python shell.")
 
 (defmacro elpy-shell--with-maybe-echo-output (body)
@@ -437,12 +437,14 @@ non-nil, skips backwards."
                   (symbol-function 'elpy-shell-send-file)
                 (symbol-function 'python-shell-send-file))))
      (let* ((process (elpy-shell--ensure-shell-running))
+            (process-buf (process-buffer process))
             (shell-visible (or elpy-shell-display-buffer-after-send
-                               (get-buffer-window (process-buffer process)))))
-       (setq elpy-shell--capture-output
-             (and elpy-shell-echo-output
-                  (or (not (eq elpy-shell-echo-output 'when-shell-not-visible))
-                      (not shell-visible))))
+                               (get-buffer-window process-buf))))
+       (with-current-buffer process-buf
+         (setq-local elpy-shell--capture-output
+                     (and elpy-shell-echo-output
+                          (or (not (eq elpy-shell-echo-output 'when-shell-not-visible))
+                              (not shell-visible)))))
        (progn ,body))))
 
 (defun elpy-shell--enable-output-filter ()
@@ -458,8 +460,8 @@ complete). Otherwise, does nothing."
   ;; capture the output and message it when complete
   (when elpy-shell--capture-output
     ;; remember the new output
-    (setq elpy-shell--captured-output
-          (concat elpy-shell--captured-output (ansi-color-filter-apply string)))
+    (setq-local elpy-shell--captured-output
+                (concat elpy-shell--captured-output (ansi-color-filter-apply string)))
 
     ;; Output ends when `elpy-shell--captured-output' contains
     ;; the prompt attached at the end of it. If so, message it.
@@ -471,7 +473,7 @@ complete). Otherwise, does nothing."
         (if (string-empty-p output)
             (message "No output was produced.")
           (message "%s" (replace-regexp-in-string "\n\\'" "" output))))
-      (setq elpy-shell--captured-output nil)))
+      (setq-local elpy-shell--captured-output nil)))
 
   ;; return input unmodified
   string)
