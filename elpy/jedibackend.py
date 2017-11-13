@@ -106,6 +106,32 @@ class JediBackend(object):
                 return None
             return (loc.module_path, offset)
 
+    def rpc_get_assignment(self, filename, source, offset):
+        line, column = pos_to_linecol(source, offset)
+        locations = run_with_debug(jedi, 'goto_assignments',
+                                   source=source, line=line, column=column,
+                                   path=filename, encoding='utf-8')
+        if not locations:
+            return None
+        else:
+            loc = locations[-1]
+            try:
+                if loc.module_path:
+                    if loc.module_path == filename:
+                        offset = linecol_to_pos(source,
+                                                loc.line,
+                                                loc.column)
+                    else:
+                        with open(loc.module_path) as f:
+                            offset = linecol_to_pos(f.read(),
+                                                    loc.line,
+                                                    loc.column)
+                else:
+                    return None
+            except IOError:
+                return None
+            return (loc.module_path, offset)
+
     def rpc_get_calltip(self, filename, source, offset):
         line, column = pos_to_linecol(source, offset)
         calls = run_with_debug(jedi, 'call_signatures',

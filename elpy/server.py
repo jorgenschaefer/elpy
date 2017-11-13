@@ -122,6 +122,13 @@ class ElpyRPCServer(JSONRPCServer):
         return self._call_backend("rpc_get_definition", None, filename,
                                   get_source(source), offset)
 
+    def rpc_get_assignment(self, filename, source, offset):
+        """Get the location of the assignment for the symbol at the offset.
+
+        """
+        return self._call_backend("rpc_get_assignment", None, filename,
+                                  get_source(source), offset)
+
     def rpc_get_docstring(self, filename, source, offset):
         """Get the docstring for the symbol at the offset.
 

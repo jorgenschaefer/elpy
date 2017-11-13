@@ -1591,6 +1591,14 @@ with a prefix argument)."
         (elpy-goto-location (car location) (cadr location))
       (error "No definition found"))))
 
+(defun elpy-goto-assignment ()
+  "Go to the assignment of the symbol at point, if found."
+  (interactive)
+  (let ((location (elpy-rpc-get-assignment)))
+    (if location
+        (elpy-goto-location (car location) (cadr location))
+      (error "No assignment found"))))
+
 (defun elpy-goto-definition-other-window ()
   "Go to the definition of the symbol at point in other window, if found."
   (interactive)
@@ -1598,6 +1606,14 @@ with a prefix argument)."
     (if location
         (elpy-goto-location (car location) (cadr location) 'other-window)
       (error "No definition found"))))
+
+(defun elpy-goto-assignment-other-window ()
+  "Go to the assignment of the symbol at point in other window, if found."
+  (interactive)
+  (let ((location (elpy-rpc-get-assignment)))
+    (if location
+        (elpy-goto-location (car location) (cadr location) 'other-window)
+      (error "No assignment found"))))
 
 (defun elpy-goto-location (filename offset &optional other-window-p)
   "Show FILENAME at OFFSET to the user.
@@ -3080,6 +3096,17 @@ Returns a list of file name and line number, or nil"
 
 Returns nil or a list of (filename, point)."
   (elpy-rpc "get_definition"
+            (list buffer-file-name
+                  (elpy-rpc--buffer-contents)
+                  (- (point)
+                     (point-min)))
+            success error))
+
+(defun elpy-rpc-get-assignment (&optional success error)
+  "Call the find_assignment API function.
+
+Returns nil or a list of (filename, point)."
+  (elpy-rpc "get_assignment"
             (list buffer-file-name
                   (elpy-rpc--buffer-contents)
                   (- (point)
