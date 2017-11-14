@@ -15,6 +15,7 @@ from elpy.tests.support import RPCGetCompletionDocstringTests
 from elpy.tests.support import RPCGetCompletionLocationTests
 from elpy.tests.support import RPCGetDocstringTests
 from elpy.tests.support import RPCGetDefinitionTests
+from elpy.tests.support import RPCGetAssignmentTests
 from elpy.tests.support import RPCGetCalltipTests
 from elpy.tests.support import RPCGetUsagesTests
 from elpy.tests.support import RPCGetNamesTests
@@ -84,6 +85,25 @@ class TestRPCGetDefinition(RPCGetDefinitionTests,
         ]
         script = Script.return_value
         script.goto_definitions.return_value = locations
+        script.goto_assignments.return_value = locations
+
+        location = self.rpc("", "", 0)
+
+        self.assertIsNone(location)
+
+
+class TestRPCGetAssignment(RPCGetAssignmentTests,
+                           JediBackendTestCase):
+    @mock.patch("jedi.Script")
+    def test_should_not_fail_if_module_path_is_none(self, Script):
+        """Do not fail if loc.module_path is None.
+
+        """
+        locations = [
+            mock.Mock(module_path=None)
+        ]
+        script = Script.return_value
+        script.goto_assignments.return_value = locations
         script.goto_assignments.return_value = locations
 
         location = self.rpc("", "", 0)
