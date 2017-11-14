@@ -230,6 +230,16 @@ class TestRPCGetDefinition(BackendCallTestCase):
                                                       "offset"))
 
 
+class TestRPCGetAssignment(BackendCallTestCase):
+    def test_should_call_backend(self):
+        self.assert_calls_backend("rpc_get_assignment")
+
+    def test_should_handle_no_backend(self):
+        self.srv.backend = None
+        self.assertIsNone(self.srv.rpc_get_assignment("filname", "source",
+                                                      "offset"))
+
+
 class TestRPCGetDocstring(BackendCallTestCase):
     def test_should_call_backend(self):
         self.assert_calls_backend("rpc_get_docstring")

@@ -595,6 +595,103 @@ class RPCGetDefinitionTests(GenericRPCTests):
                          (filename, 0))
 
 
+class RPCGetAssignmentTests(GenericRPCTests):
+    METHOD = "rpc_get_assignment"
+
+    def test_should_return_assignment_location_same_file(self):
+        source, offset = source_and_offset("import threading\n"
+                                           "class TestClass(object):\n"
+                                           "    def __init__(self, a, b):\n"
+                                           "        self.a = a\n"
+                                           "        self.b = b\n"
+                                           "\n"
+                                           "testclass = TestClass(2, 4)"
+                                           "\n"
+                                           "testcl_|_ass(\n")
+        filename = self.project_file("test.py", source)
+
+        location = self.backend.rpc_get_assignment(filename,
+                                                   source,
+                                                   offset)
+
+        self.assertEqual(location[0], filename)
+        # On def or on the function name
+        self.assertEqual(location[1], 111)
+
+    def test_should_return_location_in_same_file_if_not_saved(self):
+        source, offset = source_and_offset("import threading\n"
+                                           "class TestClass(object):\n"
+                                           "    def __init__(self, a, b):\n"
+                                           "        self.a = a\n"
+                                           "        self.b = b\n"
+                                           "\n"
+                                           "testclass = TestClass(2, 4)"
+                                           "\n"
+                                           "testcl_|_ass(\n")
+        filename = self.project_file("test.py", "")
+
+        location = self.backend.rpc_get_assignment(filename,
+                                                   source,
+                                                   offset)
+
+        self.assertEqual(location[0], filename)
+        # def or function name
+        self.assertEqual(location[1], 111)
+
+    def test_should_return_location_in_different_file(self):
+        source1 = ("class TestClass(object):\n"
+                   "    def __init__(self, a, b):\n"
+                   "        self.a = a\n"
+                   "        self.b = b\n"
+                   "testclass = TestClass(3, 5)\n")
+        file1 = self.project_file("test1.py", source1)
+        source2, offset = source_and_offset("from test1 import testclass\n"
+                                            "testcl_|_ass.a\n")
+        file2 = self.project_file("test2.py", source2)
+        # First jump goes to import statement
+        assignment = self.backend.rpc_get_assignment(file2,
+                                                     source2,
+                                                     offset)
+        # Second jump goes to test1 file
+        self.assertEqual(assignment[0], file2)
+        assignment = self.backend.rpc_get_assignment(file2,
+                                                     source2,
+                                                     assignment[1])
+
+        self.assertEqual(assignment[0], file1)
+        self.assertEqual(assignment[1], 93)
+
+    def test_should_return_none_if_location_not_found(self):
+        source, offset = source_and_offset("test_f_|_unction()\n")
+        filename = self.project_file("test.py", source)
+
+        assignment = self.backend.rpc_get_assignment(filename,
+                                                     source,
+                                                     offset)
+
+        self.assertIsNone(assignment)
+
+    def test_should_return_none_if_outside_of_symbol(self):
+        source, offset = source_and_offset("testcl(_|_)ass\n")
+        filename = self.project_file("test.py", source)
+
+        assignment = self.backend.rpc_get_assignment(filename,
+                                                     source,
+                                                     offset)
+
+        self.assertIsNone(assignment)
+
+    def test_should_find_variable_assignment(self):
+        source, offset = source_and_offset("SOME_VALUE = 1\n"
+                                           "\n"
+                                           "variable = _|_SOME_VALUE\n")
+        filename = self.project_file("test.py", source)
+        self.assertEqual(self.backend.rpc_get_assignment(filename,
+                                                         source,
+                                                         offset),
+                         (filename, 0))
+
+
 class RPCGetCalltipTests(GenericRPCTests):
     METHOD = "rpc_get_calltip"
 
