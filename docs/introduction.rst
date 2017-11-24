@@ -43,7 +43,7 @@ file and restart Emacs:
 
    (require 'package)
    (add-to-list 'package-archives
-                '("elpy" . "http://jorgenschaefer.github.io/packages/"))
+                '("elpy" . "https://jorgenschaefer.github.io/packages/"))
 
 Now you can run `M-x package-refresh-contents` to download a fresh
 copy of the archive contents, and ``M-x package-install RET elpy RET``

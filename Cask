@@ -1,5 +1,5 @@
 (source gnu)
-(source "elpy" "http://jorgenschaefer.github.io/packages/")
+(source "elpy" "https://jorgenschaefer.github.io/packages/")
 ;; (source "melpa-stable" "http://hiddencameras.milkbox.net/packages/")
 (source melpa)
 
