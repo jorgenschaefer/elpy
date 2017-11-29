@@ -899,14 +899,22 @@ below point and send the group around this statement."
       (goto-char (point-max)))
     (setq mark-active nil)))
 
-(defun elpy-shell-send-region-or-buffer-and-step ()
-  "Send the active region or the buffer to the Python shell."
-  (interactive)
+(defun elpy-shell-send-region-or-buffer-and-step (&optional arg)
+  "Send the active region or the buffer to the Python shell.
+
+If there is an active region, send that. Otherwise, send the
+whole buffer.
+
+In Emacs 24.3 and later, without prefix argument and when there
+is no active region, this will escape the Python idiom of if
+__name__ == '__main__' to be false to avoid accidental execution
+of code. With prefix argument, this code is executed."
+  (interactive "P")
   (if (use-region-p)
       (elpy-shell--flash-and-message-region (region-beginning) (region-end))
     (elpy-shell--flash-and-message-region (point-min) (point-max)))
   (elpy-shell--with-maybe-echo
-   (elpy-shell--send-region-or-buffer-internal))
+   (elpy-shell--send-region-or-buffer-internal arg))
   (if (use-region-p)
       (goto-char (region-end))
     (goto-char (point-max))))
@@ -917,44 +925,49 @@ below point and send the group around this statement."
 If there is an active region, send that. Otherwise, send the
 whole buffer.
 
+In Emacs 24.3 and later, without prefix argument and when there
+is no active region, this will escape the Python idiom of if
+__name__ == '__main__' to be false to avoid accidental execution
+of code. With prefix argument, this code is executed."
+  (interactive "P")
+  (elpy-shell--ensure-shell-running)
+  (when (not elpy-shell-echo-input) (elpy-shell--append-to-shell-output "\n"))
+  (let ((if-main-regex "^if +__name__ +== +[\"']__main__[\"'] *:")
+        (has-if-main-and-removed nil))
+    (if (use-region-p)
+        (let ((region (elpy-shell--region-without-indentation
+                       (region-beginning) (region-end))))
+          (when (string-match "\t" region)
+            (message "Region contained tabs, this might cause weird errors"))
+          (python-shell-send-string region))
+      (unless arg
+        (save-excursion
+          (goto-char (point-min))
+          (setq has-if-main-and-removed (re-search-forward if-main-regex nil t))))
+      (python-shell-send-buffer arg))
+    (when has-if-main-and-removed
+      (message (concat "Removed if __name__ == '__main__' construct, "
+                       "use a prefix argument to evaluate.")))))
+
+(defun elpy-shell-send-buffer-and-step (&optional arg)
+  "Send entire buffer to Python shell.
+
 In Emacs 24.3 and later, without prefix argument, this will
 escape the Python idiom of if __name__ == '__main__' to be false
 to avoid accidental execution of code. With prefix argument, this
 code is executed."
   (interactive "P")
-  ;; Ensure process exists
-  (elpy-shell-get-or-create-process)
-  (when (not elpy-shell-echo-input) (elpy-shell--append-to-shell-output "\n"))
-  (let ((if-main-regex "^if +__name__ +== +[\"']__main__[\"'] *:")
-        (has-if-main nil))
-    (if (use-region-p)
-        (let ((region (elpy-shell--region-without-indentation
-                       (region-beginning) (region-end))))
-          (setq has-if-main (string-match if-main-regex region))
-          (when (string-match "\t" region)
-            (message "Region contained tabs, this might cause weird errors"))
-          (python-shell-send-string region))
-      (save-excursion
-        (goto-char (point-min))
-        (setq has-if-main (re-search-forward if-main-regex nil t)))
-      (python-shell-send-buffer arg))
-    (when has-if-main
-      (message (concat "Removed if __name__ == '__main__' construct, "
-                       "use a prefix argument to evaluate.")))))
-
-(defun elpy-shell-send-buffer-and-step ()
-  "Send entire buffer to Python shell."
-  (interactive)
-  (elpy-shell--ensure-shell-running)
-  (elpy-shell--flash-and-message-region (point-min) (point-max))
-  (elpy-shell--with-maybe-echo
-   (python-shell-send-buffer))
-  (goto-char (point-max)))
+  (let ((p))
+    (save-mark-and-excursion
+      (deactivate-mark)
+      (elpy-shell-send-region-or-buffer-and-step arg)
+      (setq p (point)))
+    (goto-char p)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Send command variations (with/without step; with/without go)
 
-(defun elpy-shell--send-with-step-go (step-fun &optional step go)
+(defun elpy-shell--send-with-step-go (step-fun step go prefix-arg)
   "Run a function with STEP and/or GO.
 
 STEP-FUN should be a function that sends something to the shell
@@ -962,8 +975,8 @@ and moves point to code position right after what has been sent.
 
 When STEP is nil, keeps point position. When GO is non-nil,
 switches focus to Python shell buffer."
-  (interactive)
   (let ((orig (point)))
+    (setq current-prefix-arg prefix-arg)
     (call-interactively step-fun)
     (when (not step)
       (goto-char orig)))
@@ -976,20 +989,20 @@ switches focus to Python shell buffer."
     (list
      'progn
      (let ((fun (intern name)))
-       `(defun ,fun ()
+       `(defun ,fun (&optional arg)
           ,(concat "Run `" (symbol-name fun-and-step) "' but retain point position.")
-          (interactive)
-          (elpy-shell--send-with-step-go ',fun-and-step nil nil)))
+          (interactive "P")
+          (elpy-shell--send-with-step-go ',fun-and-step nil nil arg)))
      (let ((fun-and-go (intern (concat name "-and-go"))))
-       `(defun ,fun-and-go ()
+       `(defun ,fun-and-go (&optional arg)
           ,(concat "Run `" (symbol-name fun-and-step) "' but retain point position and switch to Python shell.")
-          (interactive)
-          (elpy-shell--send-with-step-go ',fun-and-step nil t)))
+          (interactive "P")
+          (elpy-shell--send-with-step-go ',fun-and-step nil t arg)))
      (let ((fun-and-step-and-go (intern (concat name "-and-step-and-go"))))
-       `(defun ,fun-and-step-and-go ()
+       `(defun ,fun-and-step-and-go (&optional arg)
           ,(concat "Run `" (symbol-name fun-and-step) "' and switch to Python shell.")
-          (interactive)
-          (elpy-shell--send-with-step-go ',fun-and-step t t))))))
+          (interactive "P")
+          (elpy-shell--send-with-step-go ',fun-and-step t t arg))))))
 
 (elpy-shell--defun-step-go elpy-shell-send-statement-and-step)
 (elpy-shell--defun-step-go elpy-shell-send-top-statement-and-step)
