@@ -181,8 +181,11 @@ necessary backends for the `xref`_ package.
 Interactive Python
 ==================
 
-Emacs can run a Python interpreter in a special buffer, making it much
-easier to send code snippets over.
+Emacs can run a Python interpreter in a special buffer, making it much easier to
+send code snippets over. Elpy provides additional functionality to seamlessly
+work with interactive Python in a style similar to ESS_.
+
+.. _ESS: http://ess.r-project.org
 
 .. command:: elpy-shell-switch-to-shell
    :kbd: C-c C-z
@@ -190,45 +193,19 @@ easier to send code snippets over.
    Switch to buffer with a Python interpreter running, starting one if
    necessary.
 
-   Do note that Elpy only starts a single interactive Python process.
-   This process will inherit the current virtual env. If you want to
-   start a Python interpreter with a different virtual env, you can
-   either kill the existing one, or rename the buffer.
+.. option:: elpy-dedicated-shells
 
-.. command:: elpy-shell-send-region-or-buffer
-   :kbd: C-c C-c
-
-   Whenever you are in an Elpy buffer, :kbd:`C-c C-c` will send Python
-   code to the subprocess. If there is an active region, that region
-   will be sent; if not, the whole buffer is sent.
-
-   This command will also escape any uses of the ``if __name__ ==
-   '__main__'`` idiom, to prevent accidental execution of a script. If
-   you want this to be evaluated, pass a prefix argument with
-   :kbd:`C-u`.
-
-.. command:: elpy-shell-send-current-statement
-   :kbd: C-RET
-
-   Send current statement to Python shell.
-
-   This command sends statements to shell without indentation. If you
-   send nested statements, shell will throw ``IndentationError``. To send
-   nested statements, it is recommended to select region and run
-   ``elpy-shell-send-region-or-buffer``
-
-.. command:: python-shell-send-defun
-   :kbd: C-M-x
-
-   Similar to :kbd:`C-c C-c`, this will send the code of the current
-   top level class or function to the interactive Python process.
+   By default, Elpy only starts a single interactive Python process. This
+   process will inherit the current virtual env. If you want to start a Python
+   interpreter with a different virtual env, you can either kill the existing
+   one, or rename the buffer. Moreover, if ``elpy-dedicated-shells`` is set to
+   ``t``, Elpy creates a dedicated shell for each buffer.
 
 .. command:: elpy-shell-kill
    :kbd: C-c C-k
 
-   Kill the current python shell.
-   If ``elpy-dedicated-shells`` is non-nil,
-   kill the current buffer dedicated shell.
+   Kill the current python shell. If ``elpy-dedicated-shells`` is non-nil, kill
+   the current buffer dedicated shell.
 
 .. command:: elpy-shell-kill-all
    :kbd: C-c C-K
@@ -243,11 +220,172 @@ easier to send code snippets over.
    ipython requires some more setup work in older Emacsen, these will
    take care of the right setup for you.
 
-   As an IPython user, you might be interested in the `Emacs IPython
-   Notebook`_, too.
+   As an IPython_ user, you might be interested in the `Emacs IPython
+   Notebook`_ or an `Elpy layer`_ for Spacemacs_, too.
 
 .. _IPython: http://ipython.org/
 .. _Emacs IPython Notebook: https://tkf.github.io/emacs-ipython-notebook/
+.. _Elpy layer: https://github.com/rgemulla/spacemacs-layers/tree/master/%2Blang/elpy
+.. _Spacemacs: http://spacemacs.org/
+
+Elpy provides commands to send the current Python statement (:kbd:`e`), function
+definition (:kbd:`f`), class definition (:kbd:`c`), top-level statement
+(:kbd:`s`), group of Python statements (:kbd:`g`), region (:kbd:`r`), or buffer
+(:kbd:`b`) to the Python shell. These commands are bound to prefix :kbd:`C-c
+C-y`, followed by the single character indicating what to send; e.g., :kbd:`C-c
+C-y e` sends the Python statement at point and :kbd:`C-c C-y g` sends the group
+of statements around point. Here a group is a set of top-level statements
+without an empty line in-between. `Further variants`_ that control what happens
+after a statement is sent as well as a `full list of all commands`_ are given
+below.
+
+When package `eval-sexp-fu`_ is loaded and ``eval-sexp-fu-flash-mode`` is
+active, the statements sent to the shell are briefly flashed after running an
+evaluation command, thereby providing visual feedback.
+
+.. _eval-sexp-fu: https://www.emacswiki.org/emacs/EvalSexpFu
+
+.. option:: elpy-shell-echo-input
+
+   Whenever a code fragment is sent to the Python shell, Elpy prints it in the
+   Python shell buffer (i.e., it looks as if it was actually typed into the
+   shell). This behavior can be turned on and off via the custom variable
+   ``elpy-shell-echo-input`` and further customized via
+   ``elpy-shell-echo-input-cont-prompt`` (whether to show continuation prompts
+   for multi-line inputs) and ``elpy.shell-echo-input-lines-head`` /
+   ``elpy-shell-echo-input-lines-tail`` (how much to cut when input is long).
+
+.. option:: elpy-shell-echo-output
+
+   Elpy shows the output produced by a code fragment sent to the shell in the
+   echo area when the shell buffer is currently invisible. This behavior can be
+   controlled via ``elpy-shell-echo-output`` (never, always, or only when shell
+   invisible). Output echoing is particularly useful if the custom variable
+   ``elpy-shell-display-buffer-after-send`` is set to ``nil`` (the default
+   value). Then, no window is needed to display the shell (thereby saving screen
+   real estate), but the outputs can still be seen in the echo area.
+
+.. option:: elpy-shell-capture-last-multiline-output
+
+  When a multiple statements are sent to the shell simultaneously (e.g., via
+  ``elpy-shell-send-group``), Elpy by default captures the value of the last
+  Python statement (if is an expression) and shows it in the shell buffer. This
+  variable can be used to turn off this behavior (then shell won't show any
+  output, except for single-line statements).
+
+.. option:: elpy-shell-display-buffer-after-send
+
+   Whether to display the Python shell after sending someting to it (default
+   ``nil``).
+
+.. _Further variants:
+
+Each of the commands to send code fragments to the shell has four variants, one
+for each combination of: whether or not the point should move after sending
+("step"), and whether or not the Python shell should be focused after sending
+("go"). Step is activated by :kbd:`C-`, go by :kdb:`S-`. For example:
+
+.. command:: elpy-shell-send-statement
+   :kbd: C-c C-y e
+
+   Send the current statement to the Python shell and keep point position. Here
+   statement refers to the Python statement the point is on, including
+   potentially nested statements and, if point is on an if/elif/else clause, the
+   entire if statement (with all its elif/else clauses).
+
+.. command:: elpy-shell-send-statement-and-step
+   :kbd: C-c C-y C-e
+   :kbd: C-RET
+
+   Send the current statement to the Python shell and move point to first
+   subsequent statement.
+
+.. command:: elpy-shell-send-statement-and-go
+   :kbd: C-c C-y E
+
+   Send the current statement to the Python shell, keeping point position, and
+   switch focus to the Python shell buffer.
+
+.. command:: elpy-shell-send-statement-and-step-and-go
+   :kbd: C-c C-y C-S-E
+
+   Send the current statement to the Python shell, move point to first
+   subsequent statement, and switch focus to the Python shell buffer.
+
+The functions for sending buffers have special support for avoiding accidental
+code execution, e.g.:
+
+.. command:: elpy-shell-send-region-or-buffer
+   :kbd: C-c C-y r
+   :kbd: C-c C-c
+
+   Send the the active region (if any) or the entire buffer (otherwise) to the
+   Python shell and keep point position.
+
+   When sending the whole buffer, this command will also escape any uses of the
+   ``if __name__ == '__main__'`` idiom, to prevent accidental execution of a
+   script. If you want this to be evaluated, pass a prefix argument with
+   :kbd:`C-u`.
+
+.. _full list of all commands:
+
+The full list of commands to send code fragments is:
+.. command:: elpy-shell-send-statement
+   :kbd:`C-c C-y e`
+.. command:: elpy-shell-send-statement-and-go
+   :kbd:`C-c C-y E`
+.. command:: elpy-shell-send-top-statement
+   :kbd:`C-c C-y s`
+.. command:: elpy-shell-send-top-statement-and-go
+   :kbd:`C-c C-y S`
+.. command:: elpy-shell-send-defun
+   :kbd:`C-c C-y f`
+.. command:: elpy-shell-send-defun-and-go
+   :kbd:`C-c C-y F`
+.. command:: elpy-shell-send-defclass
+   :kbd:`C-c C-y c`
+.. command:: elpy-shell-send-defclass-and-go
+   :kbd:`C-c C-y C`
+.. command:: elpy-shell-send-group
+   :kbd:`C-c C-y g`
+.. command:: elpy-shell-send-group-and-go
+   :kbd:`C-c C-y G`
+.. command:: elpy-shell-send-region-or-buffer
+   :kbd:`C-c C-y r`
+.. command:: elpy-shell-send-region-or-buffer-and-go
+   :kbd:`C-c C-y R`
+.. command:: elpy-shell-send-buffer
+   :kbd:`C-c C-y b`
+.. command:: elpy-shell-send-buffer-and-go
+   :kbd:`C-c C-y B`
+.. command:: elpy-shell-send-statement-and-step
+   :kbd:`C-c C-y C-e`
+.. command:: elpy-shell-send-statement-and-step-and-go
+   :kbd:`C-c C-y C-S-E`
+.. command:: elpy-shell-send-top-statement-and-step
+   :kbd:`C-c C-y C-s`
+.. command:: elpy-shell-send-top-statement-and-step-and-go
+   :kbd:`C-c C-y C-S-S`
+.. command:: elpy-shell-send-defun-and-step
+   :kbd:`C-c C-y C-f`
+.. command:: elpy-shell-send-defun-and-step-and-go
+   :kbd:`C-c C-y C-S-F`
+.. command:: elpy-shell-send-defclass-and-step
+   :kbd:`C-c C-y C-c`
+.. command:: elpy-shell-send-defclass-and-step-and-go
+   :kbd:`C-c C-y C-S-C`
+.. command:: elpy-shell-send-group-and-step
+   :kbd:`C-c C-y C-g`
+.. command:: elpy-shell-send-group-and-step-and-go
+   :kbd:`C-c C-y C-S-G`
+.. command:: elpy-shell-send-region-or-buffer-and-step
+   :kbd:`C-c C-y C-r`
+.. command:: elpy-shell-send-region-or-buffer-and-step-and-go
+   :kbd:`C-c C-y C-S-R`
+.. command:: elpy-shell-send-buffer-and-step
+   :kbd:`C-c C-y C-b`
+.. command:: elpy-shell-send-buffer-and-step-and-go
+   :kbd:`C-c C-y C-S-B`
 
 
 Syntax Checking
