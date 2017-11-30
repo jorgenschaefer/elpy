@@ -92,11 +92,41 @@ in the Python shell."
 (defcustom elpy-shell-use-project-root t
   "Whether to use project root as default directory when starting a Python shells.
 
-The project root is determined using `elpy-project-root`. If this variable is set to 
+The project root is determined using `elpy-project-root`. If this variable is set to
 nil, the current directory is used instead."
   :type 'boolean
   :group 'elpy)
 
+(defcustom elpy-shell-cell-boundary-regexp
+  (concat "^\\(?:"
+          "###" "\\|"
+          "#\\s-*<.+>" "\\|"
+          "#\\s-*\\(?:In\\|Out\\)\\[.*\\]:"
+          "\\)\\s-*$")
+  "Regular expression for matching a line indicating the boundary
+of a cell (beginning or ending). By default, ``###`` is treated
+as a cell boundary, as are the boundaries in Python files
+exported from IPython or Jupyter notebooks (e.g., ``#
+<markdowncell>``, ``# In[1]:'', or ``# Out[1]:``)."
+  :type 'string
+  :group 'elpy)
+
+(defcustom elpy-shell-codecell-beginning-regexp
+  (concat "^\\(?:"
+          "###" "\\|"
+          "#\\s-*<codecell>" "\\|"
+          "#\\s-*In\\[.*\\]:"
+          "\\)\\s-*$")
+  "Regular expression for matching a line indicating the
+beginning of a code cell. By default, ``###`` is treated as a
+beginning of a code cell, as are the code cell beginnings in
+Python files exported from IPython or Jupyter notebooks (e.g.,
+``# <codecell>`` or ``# In[1]:``).
+
+Note that `elpy-shell-cell-boundary-regexp' must also match
+the code cell beginnings defined here."
+  :type 'string
+  :group 'elpy)
 
 ;;;;;;;;;;;;;;;
 ;;; Shell setup
@@ -899,8 +929,42 @@ below point and send the group around this statement."
       (goto-char (point-max)))
     (setq mark-active nil)))
 
+(defun elpy-shell-send-codecell-and-step ()
+  "Send the current code cell to the Python shell and step.
+
+Signals an error if the point is not inside a code cell.
+
+Cell beginnings and cell boundaries can be customized via the
+variables `elpy-shell-cell-boundary-regexp' and
+`elpy-shell-codecell-beginning-regexp', which see."
+  (interactive)
+  (let ((beg (save-excursion
+               (end-of-line)
+               (re-search-backward elpy-shell-cell-boundary-regexp nil t)
+               (beginning-of-line)
+               (and (string-match-p elpy-shell-codecell-beginning-regexp
+                                    (thing-at-point 'line))
+                    (point))))
+        (end (save-excursion
+               (forward-line)
+               (if (re-search-forward elpy-shell-cell-boundary-regexp nil t)
+                   (forward-line -1)
+                 (end-of-buffer))
+               (end-of-line)
+               (point))))
+    (if beg
+        (progn
+          (elpy-shell--flash-and-message-region beg end)
+          (when (not elpy-shell-echo-input)
+            (elpy-shell--append-to-shell-output "\n"))
+          (elpy-shell--with-maybe-echo
+           (python-shell-send-region beg end))
+          (goto-char end)
+          (python-nav-forward-statement))
+      (message "Not in a codecell."))))
+
 (defun elpy-shell-send-region-or-buffer-and-step (&optional arg)
-  "Send the active region or the buffer to the Python shell.
+  "Send the active region or the buffer to the Python shell and step.
 
 If there is an active region, send that. Otherwise, send the
 whole buffer.
@@ -920,7 +984,7 @@ of code. With prefix argument, this code is executed."
     (goto-char (point-max))))
 
 (defun elpy-shell--send-region-or-buffer-internal (&optional arg)
-  "Send the active region or the buffer to the Python shell.
+  "Send the active region or the buffer to the Python shell and step.
 
 If there is an active region, send that. Otherwise, send the
 whole buffer.
@@ -1009,6 +1073,7 @@ switches focus to Python shell buffer."
 (elpy-shell--defun-step-go elpy-shell-send-defun-and-step)
 (elpy-shell--defun-step-go elpy-shell-send-defclass-and-step)
 (elpy-shell--defun-step-go elpy-shell-send-group-and-step)
+(elpy-shell--defun-step-go elpy-shell-send-codecell-and-step)
 (elpy-shell--defun-step-go elpy-shell-send-region-or-buffer-and-step)
 (elpy-shell--defun-step-go elpy-shell-send-buffer-and-step)
 
