@@ -1,6 +1,4 @@
 (source gnu)
-(source "elpy" "https://jorgenschaefer.github.io/packages/")
-;; (source "melpa-stable" "http://hiddencameras.milkbox.net/packages/")
 (source melpa)
 
 (package "elpy" "1.17.0" "Emacs Python Development Environment")

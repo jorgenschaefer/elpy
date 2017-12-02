@@ -44,7 +44,7 @@ Evaluate this in your ``*scratch*`` buffer:
 
   (require 'package)
   (add-to-list 'package-archives
-               '("elpy" . "https://jorgenschaefer.github.io/packages/"))
+               '("melpa-stable" . "https://stable.melpa.org/packages/"))
 
 
 Then run ``M-x package-refresh-contents`` to load the contents of the
