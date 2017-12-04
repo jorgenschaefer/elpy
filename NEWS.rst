@@ -5,6 +5,10 @@ New in Elpy 1.17.0
   following symbols at point.
 - Elpy now supports PEP 397 for Windows executable names.
 - In addition to pylint, Elpy now also supports epylint correctly.
+- A number of features for working with interactive Python have been added to
+  Elpy; e.g., commands for sending code fragments to the Python shell and the
+  ability to echo their output in the message area. See the documentation for a
+  full list.
 - Bunch of little bugfixes.
 
 
