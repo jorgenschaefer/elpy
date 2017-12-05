@@ -316,6 +316,7 @@ edited instead. Setting this variable to nil disables this feature."
 (defcustom elpy-test-runner 'elpy-test-discover-runner
   "The test runner to use to run tests."
   :type '(choice (const :tag "Unittest Discover" elpy-test-discover-runner)
+                 (const :tag "Green" elpy-test-green-runner)
                  (const :tag "Django Discover" elpy-test-django-runner)
                  (const :tag "Nose" elpy-test-nose-runner)
                  (const :tag "py.test" elpy-test-pytest-runner)
@@ -325,6 +326,11 @@ edited instead. Setting this variable to nil disables this feature."
 
 (defcustom elpy-test-discover-runner-command '("python" "-m" "unittest")
   "The command to use for `elpy-test-discover-runner'."
+  :type '(repeat string)
+  :group 'elpy)
+
+(defcustom elpy-test-green-runner-command '("green")
+  "The command to use for `elpy-test-green-runner'."
   :type '(repeat string)
   :group 'elpy)
 
@@ -1951,6 +1957,18 @@ This requires Python 2.7 or later."
            (append elpy-test-discover-runner-command
                    (list test)))))
 (put 'elpy-test-discover-runner 'elpy-test-runner-p t)
+
+(defun elpy-test-green-runner (top _file module test)
+  "Test the project using the green runner."
+  (interactive (elpy-test-at-point))
+  (let* ((test (cond
+               (test (format "%s.%s" module test))
+               (module module)))
+        (command (if test
+                     (append elpy-test-green-runner-command (list test))
+                   elpy-test-green-runner-command)))
+    (apply #'elpy-test-run top command)))
+(put 'elpy-test-green-runner 'elpy-test-runner-p t)
 
 (defun elpy-test-django-runner (top _file module test)
   "Test the project using the Django discover runner,
