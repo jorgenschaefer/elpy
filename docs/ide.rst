@@ -298,25 +298,26 @@ Elpy provides support for sending multiple statements to the shell.
    :kbd: C-c C-y W
 
    Send the current code cell to the Python shell and step. A code cell is a
-   piece of code surrounded by special separator lines. For example, you can
-   insert to lines containing only ``###`` end quickly send the code in-between.
-
-.. option:: elpy-shell-cell-boundary-regexp
-
-   Regular expression for matching a line indicating the boundary of a cell
-   (beginning or ending). By default, ``###`` is treated as a cell boundary, as
-   are the boundaries in Python files exported from IPython or Jupyter notebooks
-   (e.g., ``# <markdowncell>``, ``# In[1]:``, or ``# Out[1]:``).
+   piece of code surrounded by special separator lines; see below. For example,
+   you can insert two lines starting with ``##`` to quickly send the code
+   in-between.
 
 .. option:: elpy-shell-codecell-beginning-regexp
 
    Regular expression for matching a line indicating the beginning of a code
-   cell. By default, ``###`` is treated as a beginning of a code cell, as are
+   cell. By default, ``##.*`` is treated as a beginning of a code cell, as are
    the code cell beginnings in Python files exported from IPython or Jupyter
    notebooks (e.g., ``# <codecell>`` or ``# In[1]:``).
 
-   Note that :option:`elpy-shell-cell-boundary-regexp` must also match the code
-   cell beginnings defined here.
+.. option:: elpy-shell-cell-boundary-regexp
+
+   Regular expression for matching a line indicating the boundary of a cell
+   (beginning or ending). By default, ``##.*`` is treated as a cell boundary, as
+   are the boundaries in Python files exported from IPython or Jupyter notebooks
+   (e.g., ``# <markdowncell>``, ``# In[1]:``, or ``# Out[1]:``).
+
+   Note that :option:`elpy-shell-codecell-beginning-regexp` must also match the
+   cell boundaries defined here.
 
 The functions for sending the entire buffer have special support for avoiding
 accidental code execution, e.g.:

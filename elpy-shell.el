@@ -99,29 +99,30 @@ nil, the current directory is used instead."
 
 (defcustom elpy-shell-cell-boundary-regexp
   (concat "^\\(?:"
-          "###" "\\|"
+          "##.*" "\\|"
           "#\\s-*<.+>" "\\|"
           "#\\s-*\\(?:In\\|Out\\)\\[.*\\]:"
           "\\)\\s-*$")
   "Regular expression for matching a line indicating the boundary
-of a cell (beginning or ending). By default, ``###`` is treated
-as a cell boundary, as are the boundaries in Python files
-exported from IPython or Jupyter notebooks (e.g., ``#
-<markdowncell>``, ``# In[1]:'', or ``# Out[1]:``)."
+of a cell (beginning or ending). By default, lines starting with
+``##`` are treated as a cell boundaries, as are the boundaries in
+Python files exported from IPython or Jupyter notebooks (e.g.,
+``# <markdowncell>``, ``# In[1]:'', or ``# Out[1]:``)."
   :type 'string
   :group 'elpy)
 
 (defcustom elpy-shell-codecell-beginning-regexp
   (concat "^\\(?:"
-          "###" "\\|"
+          "##.*" "\\|"
           "#\\s-*<codecell>" "\\|"
           "#\\s-*In\\[.*\\]:"
           "\\)\\s-*$")
   "Regular expression for matching a line indicating the
-beginning of a code cell. By default, ``###`` is treated as a
-beginning of a code cell, as are the code cell beginnings in
-Python files exported from IPython or Jupyter notebooks (e.g.,
-``# <codecell>`` or ``# In[1]:``).
+beginning of a code cell. By default, lines starting with ``##``
+are treated as beginnings of a code cell, as are the code cell
+beginnings (and only the code cell beginnings) in Python files
+exported from IPython or Jupyter notebooks (e.g., ``#
+<codecell>`` or ``# In[1]:``).
 
 Note that `elpy-shell-cell-boundary-regexp' must also match
 the code cell beginnings defined here."
