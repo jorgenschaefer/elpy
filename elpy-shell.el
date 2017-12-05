@@ -90,11 +90,11 @@ in the Python shell."
   :group 'elpy)
 
 (defcustom elpy-shell-use-project-root t
-  "Whether to use project root as default directory for python shells.
+  "Whether to use project root as default directory when starting a Python shells.
 
-If nil, the current file directory is used.
-Project root is determined using `elpy-project-root' function."
-  :type 'integer
+The project root is determined using `elpy-project-root`. If this variable is set to 
+nil, the current directory is used instead."
+  :type 'boolean
   :group 'elpy)
 
 
