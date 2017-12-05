@@ -89,6 +89,15 @@ in the Python shell."
   :type 'integer
   :group 'elpy)
 
+(defcustom elpy-shell-use-project-root t
+  "Whether to use project root as default directory when starting a Python shells.
+
+The project root is determined using `elpy-project-root`. If this variable is set to 
+nil, the current directory is used instead."
+  :type 'boolean
+  :group 'elpy)
+
+
 ;;;;;;;;;;;;;;;
 ;;; Shell setup
 
@@ -290,7 +299,10 @@ Python process. This allows the process to start up."
     (if elpy-dedicated-shells
         (if dedproc
             dedproc
-          (run-python (python-shell-parse-command) t t)
+          (let ((default-directory (or (and elpy-shell-use-project-root
+                                            (elpy-project-root))
+                                       default-directory)))
+            (run-python (python-shell-parse-command) t t))
           (when sit
             (sit-for sit))
           (get-buffer-process dedbufname))
@@ -298,7 +310,10 @@ Python process. This allows the process to start up."
           dedproc
         (if proc
             proc
-          (run-python (python-shell-parse-command) nil t)
+          (let ((default-directory (or (and elpy-shell-use-project-root
+                                            (elpy-project-root))
+                                       default-directory)))
+            (run-python (python-shell-parse-command) nil t))
           (when sit
             (sit-for sit))
           (get-buffer-process bufname))))))
