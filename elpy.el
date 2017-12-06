@@ -44,7 +44,7 @@
 (require 'python)
 (require 'subr-x)
 (require 'xref nil t)
-(require 'cl-lib)       ; for `cl-every', `cl-union', `cl-remove-if-not'
+(require 'cl-lib)   ; for `cl-every', `cl-copy-list', `cl-delete-if-not'
 
 (require 'elpy-refactor)
 (require 'elpy-django)
@@ -118,11 +118,13 @@ Combines
   `elpy-project-ignored-directories'
   `vc-directory-exclusion-list'
   `grep-find-ignored-directories'"
-  (cl-union
-   (append elpy-project-ignored-directories vc-directory-exclusion-list)
-   (if (fboundp 'rgrep-find-ignored-directories)
-       (rgrep-find-ignored-directories (elpy-project-root))
-     (cl-remove-if-not #'stringp grep-find-ignored-directories))))
+  (delete-dups
+   (append elpy-project-ignored-directories
+           vc-directory-exclusion-list
+           (if (fboundp 'rgrep-find-ignored-directories)
+               (rgrep-find-ignored-directories (elpy-project-root))
+             (cl-delete-if-not #'stringp (cl-copy-list
+                                          grep-find-ignored-directories))))))
 
 (defcustom elpy-project-root nil
   "The root of the project the current buffer is in.
@@ -1435,17 +1437,14 @@ This combines
   `elpy-project-ignored-directories'
   `completion-ignored-extensions'
   `ffip-prune-patterns'."
-  (cl-union
-   (cl-union
+  (delete-dups
+   (nconc
     (mapcar (lambda (dir) (concat "*/" dir "/*"))
             elpy-project-ignored-directories)
     (mapcar (lambda (ext) (concat "*" ext))
             completion-ignored-extensions)
-    :test #'equal)
-   (cl-union elpy-ffip-prune-patterns
-             ffip-prune-patterns
-             :test #'equal)
-   :test #'equal))
+    (cl-copy-list elpy-ffip-prune-patterns)
+    (cl-copy-list ffip-prune-patterns))))
 
 (defun elpy-find-file (&optional dwim)
   "Efficiently find a file in the current project.
