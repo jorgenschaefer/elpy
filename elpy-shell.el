@@ -92,11 +92,42 @@ in the Python shell."
 (defcustom elpy-shell-use-project-root t
   "Whether to use project root as default directory when starting a Python shells.
 
-The project root is determined using `elpy-project-root`. If this variable is set to 
+The project root is determined using `elpy-project-root`. If this variable is set to
 nil, the current directory is used instead."
   :type 'boolean
   :group 'elpy)
 
+(defcustom elpy-shell-cell-boundary-regexp
+  (concat "^\\(?:"
+          "##.*" "\\|"
+          "#\\s-*<.+>" "\\|"
+          "#\\s-*\\(?:In\\|Out\\)\\[.*\\]:"
+          "\\)\\s-*$")
+  "Regular expression for matching a line indicating the boundary
+of a cell (beginning or ending). By default, lines starting with
+``##`` are treated as a cell boundaries, as are the boundaries in
+Python files exported from IPython or Jupyter notebooks (e.g.,
+``# <markdowncell>``, ``# In[1]:'', or ``# Out[1]:``)."
+  :type 'string
+  :group 'elpy)
+
+(defcustom elpy-shell-codecell-beginning-regexp
+  (concat "^\\(?:"
+          "##.*" "\\|"
+          "#\\s-*<codecell>" "\\|"
+          "#\\s-*In\\[.*\\]:"
+          "\\)\\s-*$")
+  "Regular expression for matching a line indicating the
+beginning of a code cell. By default, lines starting with ``##``
+are treated as beginnings of a code cell, as are the code cell
+beginnings (and only the code cell beginnings) in Python files
+exported from IPython or Jupyter notebooks (e.g., ``#
+<codecell>`` or ``# In[1]:``).
+
+Note that `elpy-shell-cell-boundary-regexp' must also match
+the code cell beginnings defined here."
+  :type 'string
+  :group 'elpy)
 
 ;;;;;;;;;;;;;;;
 ;;; Shell setup
@@ -899,62 +930,109 @@ below point and send the group around this statement."
       (goto-char (point-max)))
     (setq mark-active nil)))
 
-(defun elpy-shell-send-region-or-buffer-and-step ()
-  "Send the active region or the buffer to the Python shell."
+(defun elpy-shell-send-codecell-and-step ()
+  "Send the current code cell to the Python shell and step.
+
+Signals an error if the point is not inside a code cell.
+
+Cell beginnings and cell boundaries can be customized via the
+variables `elpy-shell-cell-boundary-regexp' and
+`elpy-shell-codecell-beginning-regexp', which see."
   (interactive)
+  (let ((beg (save-excursion
+               (end-of-line)
+               (re-search-backward elpy-shell-cell-boundary-regexp nil t)
+               (beginning-of-line)
+               (and (string-match-p elpy-shell-codecell-beginning-regexp
+                                    (thing-at-point 'line))
+                    (point))))
+        (end (save-excursion
+               (forward-line)
+               (if (re-search-forward elpy-shell-cell-boundary-regexp nil t)
+                   (forward-line -1)
+                 (end-of-buffer))
+               (end-of-line)
+               (point))))
+    (if beg
+        (progn
+          (elpy-shell--flash-and-message-region beg end)
+          (when (not elpy-shell-echo-input)
+            (elpy-shell--append-to-shell-output "\n"))
+          (elpy-shell--with-maybe-echo
+           (python-shell-send-region beg end))
+          (goto-char end)
+          (python-nav-forward-statement))
+      (message "Not in a codecell."))))
+
+(defun elpy-shell-send-region-or-buffer-and-step (&optional arg)
+  "Send the active region or the buffer to the Python shell and step.
+
+If there is an active region, send that. Otherwise, send the
+whole buffer.
+
+In Emacs 24.3 and later, without prefix argument and when there
+is no active region, this will escape the Python idiom of if
+__name__ == '__main__' to be false to avoid accidental execution
+of code. With prefix argument, this code is executed."
+  (interactive "P")
   (if (use-region-p)
       (elpy-shell--flash-and-message-region (region-beginning) (region-end))
     (elpy-shell--flash-and-message-region (point-min) (point-max)))
   (elpy-shell--with-maybe-echo
-   (elpy-shell--send-region-or-buffer-internal))
+   (elpy-shell--send-region-or-buffer-internal arg))
   (if (use-region-p)
       (goto-char (region-end))
     (goto-char (point-max))))
 
 (defun elpy-shell--send-region-or-buffer-internal (&optional arg)
-  "Send the active region or the buffer to the Python shell.
+  "Send the active region or the buffer to the Python shell and step.
 
 If there is an active region, send that. Otherwise, send the
 whole buffer.
+
+In Emacs 24.3 and later, without prefix argument and when there
+is no active region, this will escape the Python idiom of if
+__name__ == '__main__' to be false to avoid accidental execution
+of code. With prefix argument, this code is executed."
+  (interactive "P")
+  (elpy-shell--ensure-shell-running)
+  (when (not elpy-shell-echo-input) (elpy-shell--append-to-shell-output "\n"))
+  (let ((if-main-regex "^if +__name__ +== +[\"']__main__[\"'] *:")
+        (has-if-main-and-removed nil))
+    (if (use-region-p)
+        (let ((region (elpy-shell--region-without-indentation
+                       (region-beginning) (region-end))))
+          (when (string-match "\t" region)
+            (message "Region contained tabs, this might cause weird errors"))
+          (python-shell-send-string region))
+      (unless arg
+        (save-excursion
+          (goto-char (point-min))
+          (setq has-if-main-and-removed (re-search-forward if-main-regex nil t))))
+      (python-shell-send-buffer arg))
+    (when has-if-main-and-removed
+      (message (concat "Removed if __name__ == '__main__' construct, "
+                       "use a prefix argument to evaluate.")))))
+
+(defun elpy-shell-send-buffer-and-step (&optional arg)
+  "Send entire buffer to Python shell.
 
 In Emacs 24.3 and later, without prefix argument, this will
 escape the Python idiom of if __name__ == '__main__' to be false
 to avoid accidental execution of code. With prefix argument, this
 code is executed."
   (interactive "P")
-  ;; Ensure process exists
-  (elpy-shell-get-or-create-process)
-  (when (not elpy-shell-echo-input) (elpy-shell--append-to-shell-output "\n"))
-  (let ((if-main-regex "^if +__name__ +== +[\"']__main__[\"'] *:")
-        (has-if-main nil))
-    (if (use-region-p)
-        (let ((region (elpy-shell--region-without-indentation
-                       (region-beginning) (region-end))))
-          (setq has-if-main (string-match if-main-regex region))
-          (when (string-match "\t" region)
-            (message "Region contained tabs, this might cause weird errors"))
-          (python-shell-send-string region))
-      (save-excursion
-        (goto-char (point-min))
-        (setq has-if-main (re-search-forward if-main-regex nil t)))
-      (python-shell-send-buffer arg))
-    (when has-if-main
-      (message (concat "Removed if __name__ == '__main__' construct, "
-                       "use a prefix argument to evaluate.")))))
-
-(defun elpy-shell-send-buffer-and-step ()
-  "Send entire buffer to Python shell."
-  (interactive)
-  (elpy-shell--ensure-shell-running)
-  (elpy-shell--flash-and-message-region (point-min) (point-max))
-  (elpy-shell--with-maybe-echo
-   (python-shell-send-buffer))
-  (goto-char (point-max)))
+  (let ((p))
+    (save-mark-and-excursion
+      (deactivate-mark)
+      (elpy-shell-send-region-or-buffer-and-step arg)
+      (setq p (point)))
+    (goto-char p)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Send command variations (with/without step; with/without go)
 
-(defun elpy-shell--send-with-step-go (step-fun &optional step go)
+(defun elpy-shell--send-with-step-go (step-fun step go prefix-arg)
   "Run a function with STEP and/or GO.
 
 STEP-FUN should be a function that sends something to the shell
@@ -962,8 +1040,8 @@ and moves point to code position right after what has been sent.
 
 When STEP is nil, keeps point position. When GO is non-nil,
 switches focus to Python shell buffer."
-  (interactive)
   (let ((orig (point)))
+    (setq current-prefix-arg prefix-arg)
     (call-interactively step-fun)
     (when (not step)
       (goto-char orig)))
@@ -976,26 +1054,27 @@ switches focus to Python shell buffer."
     (list
      'progn
      (let ((fun (intern name)))
-       `(defun ,fun ()
+       `(defun ,fun (&optional arg)
           ,(concat "Run `" (symbol-name fun-and-step) "' but retain point position.")
-          (interactive)
-          (elpy-shell--send-with-step-go ',fun-and-step nil nil)))
+          (interactive "P")
+          (elpy-shell--send-with-step-go ',fun-and-step nil nil arg)))
      (let ((fun-and-go (intern (concat name "-and-go"))))
-       `(defun ,fun-and-go ()
+       `(defun ,fun-and-go (&optional arg)
           ,(concat "Run `" (symbol-name fun-and-step) "' but retain point position and switch to Python shell.")
-          (interactive)
-          (elpy-shell--send-with-step-go ',fun-and-step nil t)))
+          (interactive "P")
+          (elpy-shell--send-with-step-go ',fun-and-step nil t arg)))
      (let ((fun-and-step-and-go (intern (concat name "-and-step-and-go"))))
-       `(defun ,fun-and-step-and-go ()
+       `(defun ,fun-and-step-and-go (&optional arg)
           ,(concat "Run `" (symbol-name fun-and-step) "' and switch to Python shell.")
-          (interactive)
-          (elpy-shell--send-with-step-go ',fun-and-step t t))))))
+          (interactive "P")
+          (elpy-shell--send-with-step-go ',fun-and-step t t arg))))))
 
 (elpy-shell--defun-step-go elpy-shell-send-statement-and-step)
 (elpy-shell--defun-step-go elpy-shell-send-top-statement-and-step)
 (elpy-shell--defun-step-go elpy-shell-send-defun-and-step)
 (elpy-shell--defun-step-go elpy-shell-send-defclass-and-step)
 (elpy-shell--defun-step-go elpy-shell-send-group-and-step)
+(elpy-shell--defun-step-go elpy-shell-send-codecell-and-step)
 (elpy-shell--defun-step-go elpy-shell-send-region-or-buffer-and-step)
 (elpy-shell--defun-step-go elpy-shell-send-buffer-and-step)
 
