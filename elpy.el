@@ -1402,8 +1402,7 @@ With a prefix argument, always prompt for a string to search for."
           (concat "\\<" symbol "\\>")
         (read-from-minibuffer "Search in project for regexp: " symbol)))))
   (grep-compute-defaults)
-  (let ((grep-find-ignored-directories (append elpy-project-ignored-directories
-                                               grep-find-ignored-directories)))
+  (let ((grep-find-ignored-directories (elpy-project-ignored-directories)))
     (rgrep regexp
            elpy-rgrep-file-pattern
            (or (elpy-project-root)
