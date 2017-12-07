@@ -336,6 +336,9 @@ Python process. This allows the process to start up."
             (run-python (python-shell-parse-command) t t))
           (when sit
             (sit-for sit))
+          (when (elpy-project-root)
+            (python-shell-send-string
+             (format "import sys;sys.path.append('%s')" (elpy-project-root))))
           (get-buffer-process dedbufname))
       (if dedproc
           dedproc
@@ -347,6 +350,9 @@ Python process. This allows the process to start up."
             (run-python (python-shell-parse-command) nil t))
           (when sit
             (sit-for sit))
+          (when (elpy-project-root)
+            (python-shell-send-string
+             (format "import sys;sys.path.append('%s')" (elpy-project-root))))
           (get-buffer-process bufname))))))
 
 (defun elpy-shell--ensure-shell-running ()
