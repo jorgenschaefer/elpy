@@ -1166,7 +1166,7 @@ virtual_env_short"
               (cdr row)
               "\n"))))
 
-(defun elpy-config--package-link (name version latest)
+(defun elpy-config--package-link (_name version latest)
   "Return a string detailing a Python package.
 
 NAME is the PyPI name of the package. VERSION is the currently
@@ -1250,7 +1250,7 @@ PyPI, or nil if that's VERSION."
     (widget-put widget :command command)
     (insert command)))
 
-(defun elpy-insert--pip-button-action (widget &optional event)
+(defun elpy-insert--pip-button-action (widget &optional _event)
   "The :action option for the pip button widget."
   (async-shell-command (widget-get widget :command)))
 
@@ -1603,7 +1603,7 @@ with a prefix argument)."
                                (shell-quote-argument file-name-or-directory)
                                extra-args)
                        nil
-                       (lambda (mode-name)
+                       (lambda (_mode-name)
                          "*Python Check*"))))
 
 ;;;;;;;;;;;;;;
@@ -1828,7 +1828,7 @@ indentation levels."
     (when (not (= (point) (line-beginning-position)))
       (end-of-line))))
 
-(defun elpy-nav-indent-shift-right (&optional count)
+(defun elpy-nav-indent-shift-right (&optional _count)
   "Shift current line by COUNT columns to the right.
 
 COUNT defaults to `python-indent-offset'.
@@ -1840,7 +1840,7 @@ If region is active, normalize the region and shift."
         (python-indent-shift-right (region-beginning) (region-end) current-prefix-arg))
     (python-indent-shift-right (line-beginning-position) (line-end-position) current-prefix-arg)))
 
-(defun elpy-nav-indent-shift-left (&optional count)
+(defun elpy-nav-indent-shift-left (&optional _count)
   "Shift current line by COUNT columns to the left.
 
 COUNT defaults to `python-indent-offset'.
@@ -1969,7 +1969,7 @@ This uses the `elpy-test-runner-p' symbol property."
                         (cons command args)
                         " "))))
 
-(defun elpy-test-discover-runner (top file module test)
+(defun elpy-test-discover-runner (top _file module test)
   "Test the project using the python unittest discover runner.
 
 This requires Python 2.7 or later."
@@ -1984,7 +1984,7 @@ This requires Python 2.7 or later."
                    (list test)))))
 (put 'elpy-test-discover-runner 'elpy-test-runner-p t)
 
-(defun elpy-test-django-runner (top file module test)
+(defun elpy-test-django-runner (top _file module test)
   "Test the project using the Django discover runner,
 or with manage.py if elpy-test-django-with-manage is true.
 
@@ -2022,7 +2022,7 @@ This requires Django 1.6 or the django-discover-runner package."
               elpy-test-django-runner-command)))))
 (put 'elpy-test-django-runner 'elpy-test-runner-p t)
 
-(defun elpy-test-nose-runner (top file module test)
+(defun elpy-test-nose-runner (top _file module test)
   "Test the project using the nose test runner.
 
 This requires the nose package to be installed."
@@ -2039,7 +2039,7 @@ This requires the nose package to be installed."
            elpy-test-nose-runner-command)))
 (put 'elpy-test-nose-runner 'elpy-test-runner-p t)
 
-(defun elpy-test-trial-runner (top file module test)
+(defun elpy-test-trial-runner (top _file module test)
   "Test the project using Twisted's Trial test runner.
 
 This requires the twisted-core package to be installed."
@@ -2087,8 +2087,7 @@ This requires the pytest package to be installed."
 If there is no documentation for the symbol at point, or if a
 prefix argument is given, prompt for a symbol from the user."
   (interactive)
-  (let ((symbol-at-point nil)
-        (doc nil))
+  (let ((doc nil))
     (when (not current-prefix-arg)
       (setq doc (elpy-rpc-get-docstring))
       (when (not doc)
@@ -2321,8 +2320,8 @@ overlays, too."
     (delete-overlay ov))
   (setq elpy-multiedit-overlays nil))
 
-(defun elpy-multiedit--overlay-changed (ov after-change beg end
-                                           &optional pre-change-length)
+(defun elpy-multiedit--overlay-changed (ov after-change _beg _end
+                                           &optional _pre-change-length)
   "Called for each overlay that changes.
 
 This updates all other overlays."
@@ -2441,7 +2440,7 @@ name."
           (elpy-insert--para
            "The symbol '" name "' was found in multiple files. Editing "
            "all locations:\n\n")
-          (maphash (lambda (key value)
+          (maphash (lambda (key _value)
                      (when (not (member key filenames))
                        (setq filenames (cons key filenames))))
                    locations)
@@ -2808,7 +2807,7 @@ RPC calls with the event."
                (buffer-live-p buffer))
       (with-current-buffer buffer
         (when elpy-rpc--backend-callbacks
-          (maphash (lambda (call-id promise)
+          (maphash (lambda (_call-id promise)
                      (ignore-errors
                        (elpy-promise-reject promise err)))
                    elpy-rpc--backend-callbacks)
@@ -2829,7 +2828,7 @@ RPC calls with the event."
                 (json nil)
                 (did-read-json nil))
             (goto-char (point-min))
-            (condition-case err
+            (condition-case _err
                 (progn
                   (setq json (let ((json-array-type 'list))
                                (json-read)))
@@ -3365,8 +3364,8 @@ Make sure global-init is called first."
   "Run the buffer-stop method of Elpy modules."
   (elpy-modules-run 'buffer-stop))
 
-(defun elpy-modules-remove-modeline-lighter (mode-name)
-  "Remove the lighter for MODE-NAME.
+(defun elpy-modules-remove-modeline-lighter (modename)
+  "Remove the lighter for MODENAME.
 
 It should not be necessary to see (Python Elpy yas company ElDoc) all the
 time.
@@ -3377,10 +3376,10 @@ If you need your modeline, you can set the variable `elpy-remove-modeline-lighte
   (interactive)
   (when elpy-remove-modeline-lighter
     (cond
-     ((eq mode-name 'eldoc-minor-mode)
+     ((eq modename 'eldoc-minor-mode)
       (setq eldoc-minor-mode-string nil))
      (t
-      (let ((cell (assq mode-name minor-mode-alist)))
+      (let ((cell (assq modename minor-mode-alist)))
         (when cell
           (setcdr cell
                   (list ""))))))))
@@ -3388,7 +3387,7 @@ If you need your modeline, you can set the variable `elpy-remove-modeline-lighte
 ;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Module: Sane Defaults
 
-(defun elpy-module-sane-defaults (command &rest args)
+(defun elpy-module-sane-defaults (command &rest _args)
   (pcase command
     (`buffer-init
      ;; Set `forward-sexp-function' to nil in python-mode. See
@@ -3403,7 +3402,7 @@ If you need your modeline, you can set the variable `elpy-remove-modeline-lighte
 ;;;;;;;;;;;;;;;;;;;
 ;;; Module: Company
 
-(defun elpy-module-company (command &rest args)
+(defun elpy-module-company (command &rest _args)
   "Module to support company-mode completions."
   (pcase command
     (`global-init
@@ -3665,7 +3664,7 @@ or unless NAME is no callable instance."
 ;;;;;;;;;;;;;;;;;
 ;;; Module: ElDoc
 
-(defun elpy-module-eldoc (command &rest args)
+(defun elpy-module-eldoc (command &rest _args)
   "Module to support ElDoc for Python files."
   (pcase command
     (`global-init
@@ -3720,7 +3719,7 @@ display the current class and method instead."
 ;;;;;;;;;;;;;;;;;;;
 ;;; Module: Flymake
 
-(defun elpy-module-flymake (command &rest args)
+(defun elpy-module-flymake (command &rest _args)
   "Enable Flymake support for Python."
   (pcase command
     (`global-init
@@ -3811,7 +3810,7 @@ description."
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Module: Highlight Indentation
 
-(defun elpy-module-highlight-indentation (command &rest args)
+(defun elpy-module-highlight-indentation (command &rest _args)
   "Module to highlight indentation in Python files."
   (pcase command
     (`global-init
@@ -3824,7 +3823,7 @@ description."
 ;;;;;;;;;;;;;;;;;;
 ;;; Module: pyvenv
 
-(defun elpy-module-pyvenv (command &rest args)
+(defun elpy-module-pyvenv (command &rest _args)
   "Module to display the current virtualenv in the mode line."
   (pcase command
     (`global-init
@@ -3835,7 +3834,7 @@ description."
 ;;;;;;;;;;;;;;;;;;;;;
 ;;; Module: Yasnippet
 
-(defun elpy-module-yasnippet (command &rest args)
+(defun elpy-module-yasnippet (command &rest _args)
   "Module to enable YASnippet snippets."
   (pcase command
     (`global-init
@@ -3868,7 +3867,7 @@ description."
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Module: Elpy-Django
 
-(defun elpy-module-django (command &rest args)
+(defun elpy-module-django (command &rest _args)
   "Module to provide Django support."
   (pcase command
     (`buffer-init
@@ -3908,7 +3907,7 @@ description."
     process-environment))
 
 (when (not (fboundp 'python-shell-get-process-name))
-  (defun python-shell-get-process-name (dedicated)
+  (defun python-shell-get-process-name (_dedicated)
     "Compatibility function for older Emacsen."
     "Python"))
 
@@ -3918,7 +3917,7 @@ description."
     python-python-command))
 
 (when (not (fboundp 'python-shell-send-buffer))
-  (defun python-shell-send-buffer (&optional arg)
+  (defun python-shell-send-buffer (&optional _arg)
     (python-send-buffer)))
 
 (when (not (fboundp 'python-shell-send-string))
