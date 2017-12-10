@@ -283,11 +283,9 @@ The user can review the changes and confirm them with
 
 (defun elpy-refactor-options (option)
   "Show available refactor options and let user choose one."
-  (interactive "c[i]: importmagic-fixup [p]: autopep8-fix-code [r]: refactor")
+  (interactive "c[p]: autopep8-fix-code [r]: refactor")
   (let ((choice (char-to-string option)))
     (cond
-     ((string-equal choice "i")
-      (elpy-importmagic-fixup))
      ((string-equal choice "p")
       (elpy-autopep8-fix-code))
      ((string-equal choice "r")

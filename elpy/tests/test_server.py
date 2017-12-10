@@ -361,19 +361,6 @@ class TestRPCGetNames(BackendCallTestCase):
             self.assertIsNone(self.srv.rpc_get_names("filname", "source", 0))
 
 
-class TestRPCImportMagic(ServerTestCase):
-    def test_should_call_importmagic(self):
-        with mock.patch.object(self.srv, "import_magic") as impmagic:
-            self.srv.rpc_get_import_symbols("filename", "source", "os")
-            impmagic.get_import_symbols.assert_called_with("os")
-            self.srv.rpc_add_import("filename", "source", "import os")
-            impmagic.add_import.assert_called_with("source", "import os")
-            self.srv.rpc_get_unresolved_symbols("filename", "source")
-            impmagic.get_unresolved_symbols.assert_called_with("source")
-            self.srv.rpc_remove_unreferenced_imports("filename", "source")
-            impmagic.remove_unreferenced_imports.assert_called_with("source")
-
-
 class TestGetSource(unittest.TestCase):
     def test_should_return_string_by_default(self):
         self.assertEqual(server.get_source("foo"),

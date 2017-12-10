@@ -12,7 +12,6 @@
                      "jedi_latest"
                      "rope_version"
                      "rope_latest"
-                     "importmagic_version"
                      "virtual_env"
                      "virtual_env_short"))
         (should (not (eq :not-set (gethash key config :not-set))))))))
