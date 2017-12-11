@@ -5,6 +5,7 @@ python:
   - 3.3
   - 3.4
   - 3.5
+  - 3.6
 env:
   # - EVM_EMACS=emacs-24.1-travis
   # - EVM_EMACS=emacs-24.2-travis
