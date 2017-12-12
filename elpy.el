@@ -187,11 +187,10 @@ need to be installed separately using pip or other mechanisms to
 make them available to Python. If you prefer not to do this, you
 can use the native backend, which is very limited but does not
 have any external requirements."
-  :type '(choice (const :tag "Rope" "rope")
-                 (const :tag "Jedi" "jedi")
+  :type '(choice (const :tag "Jedi" "jedi")
                  (const :tag "Automatic" nil))
   :safe (lambda (val)
-          (member val '("rope" "jedi" "native" nil)))
+          (member val '("jedi" "native" nil)))
   :group 'elpy)
 
 (defcustom elpy-rpc-maximum-buffer-age (* 5 60)
@@ -876,10 +875,8 @@ item in another window.\n\n")
 
     ;; Requested backend unavailable
     (when (and (gethash "python_rpc_executable" config)
-               (or (and (equal elpy-rpc-backend "rope")
-                        (not (gethash "rope_version" config)))
-                   (and (equal elpy-rpc-backend "jedi")
-                        (not (gethash "jedi_version" config)))))
+               (and (equal elpy-rpc-backend "jedi")
+                    (not (gethash "jedi_version" config))))
       (elpy-insert--para
        "You requested Elpy to use the backend " elpy-rpc-backend ", "
        "but the Python interpreter could not load that module. Make "
@@ -887,21 +884,15 @@ item in another window.\n\n")
        "`elpy-rpc-backend' below to one of the available backends.\n")
       (insert "\n")
       (widget-create 'elpy-insert--pip-button
-                     :package (if (equal elpy-rpc-backend "rope")
-                                  rope-pypi-package
-                                "jedi"))
+                     :package "jedi"))
       (insert "\n\n"))
 
     ;; No backend available.
     (when (and (gethash "python_rpc_executable" config)
                (and (not elpy-rpc-backend)
-                    (not (gethash "rope_version" config))
                     (not (gethash "jedi_version" config))))
       (elpy-insert--para
-       "There is no backend available. Please install either Rope or Jedi."
-       "See https://github.com/jorgenschaefer/elpy/wiki/FAQ#q-should-i-use-rope-or-jedi for guidance.\n")
-      (insert "\n")
-      (widget-create 'elpy-insert--pip-button :package rope-pypi-package)
+       "There is no backend available. Please install Jedi.")
       (insert "\n")
       (widget-create 'elpy-insert--pip-button :package "jedi")
       (insert "\n\n"))
@@ -977,7 +968,7 @@ item in another window.\n\n")
       (widget-create 'elpy-insert--pip-button :package "flake8")
       (insert "\n\n"))
 
-    ))
+    )
 
 (defun elpy-config--get-config ()
   "Return the configuration from `elpy-rpc-python-command'.
@@ -3477,8 +3468,7 @@ or unless NAME is no callable instance."
            ;; and scipy) and `elpy-company--cache' does not allow to identify
            ;; callable instances.
            ;; It looks easy to modify `elpy-company--cache' cheaply for the jedi
-           ;; backend to eliminate the `elpy-rpc-get-calltip' call below, but
-           ;; not for the rope backend.
+           ;; backend to eliminate the `elpy-rpc-get-calltip' call below.
            (insert "()")
            (backward-char 1)
            (when (not (elpy-rpc-get-calltip))
