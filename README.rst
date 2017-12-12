@@ -29,14 +29,12 @@ First, install the required Python packages:::
   pip install jedi
   # flake8 for code checks
   pip install flake8
-  # importmagic for automatic imports
-  pip install importmagic
   # and autopep8 for automatic PEP8 formatting
   pip install autopep8
   # and yapf for code formatting
   pip install yapf
 
-One-line install: **pip install jedi flake8 importmagic autopep8**
+One-line install: **pip install jedi flake8 autopep8**
 
 Evaluate this in your ``*scratch*`` buffer:
 

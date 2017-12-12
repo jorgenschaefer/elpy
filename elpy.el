@@ -697,14 +697,6 @@ except:
     config['rope_latest'] = latest('rope')
 
 try:
-    import importmagic
-    config['importmagic_version'] = importmagic.__version__
-    config['importmagic_latest'] = latest('importmagic', config['importmagic_version'])
-except:
-    config['importmagic_version'] = None
-    config['importmagic_latest'] = latest('importmagic')
-
-try:
     import autopep8
     config['autopep8_version'] = autopep8.__version__
     config['autopep8_latest'] = latest('autopep8', config['autopep8_version'])
@@ -934,25 +926,6 @@ item in another window.\n\n")
                      :package "jedi" :upgrade t)
       (insert "\n\n"))
 
-    ;; No importmagic available
-    (when (not (gethash "importmagic_version" config))
-      (elpy-insert--para
-       "The importmagic package is not available. Commands using this will "
-       "not work.\n")
-      (insert "\n")
-      (widget-create 'elpy-insert--pip-button
-                     :package "importmagic")
-      (insert "\n\n"))
-
-    ;; Newer version of importmagic available
-    (when (and (gethash "importmagic_version" config)
-               (gethash "importmagic_latest" config))
-      (elpy-insert--para
-       "There is a newer version of the importmagic package available.\n")
-      (insert "\n")
-      (widget-create 'elpy-insert--pip-button
-                     :package "importmagic" :upgrade t)
-      (insert "\n\n"))
 
     ;; No autopep8 available
     (when (not (gethash "autopep8_version" config))
@@ -1080,8 +1053,6 @@ virtual_env_short"
         (jedi-latest (gethash "jedi_latest" config))
         (rope-version (gethash "rope_version" config))
         (rope-latest (gethash "rope_latest" config))
-        (importmagic-version (gethash "importmagic_version" config))
-        (importmagic-latest (gethash "importmagic_latest" config))
         (autopep8-version (gethash "autopep8_version" config))
         (autopep8-latest (gethash "autopep8_latest" config))
         (yapf-version (gethash "yapf_version" config))
@@ -1134,9 +1105,6 @@ virtual_env_short"
             ("Rope" . ,(elpy-config--package-link "rope"
                                                   rope-version
                                                   rope-latest))
-            ("Importmagic" . ,(elpy-config--package-link "importmagic"
-                                                         importmagic-version
-                                                         importmagic-latest))
             ("Autopep8" . ,(elpy-config--package-link "autopep8"
                                                       autopep8-version
                                                       autopep8-latest))
@@ -2164,78 +2132,16 @@ prefix argument is given, prompt for a symbol from the user."
       (insert rep)
       (delete-region beg end))))
 
+;;;;;;;;;;;;;;;;;;;;;
+;;; Importmagic - make obsolete
 
-;;;;;;;;;;;;;;;;;;;;;;;
-;;; Import manipulation
-
-(defun elpy-importmagic--add-import-read-args (&optional object prompt ask-for-alias)
-  (let* ((default-object (save-excursion
-                           (let ((bounds (with-syntax-table python-dotty-syntax-table
-                                           (bounds-of-thing-at-point 'symbol))))
-                             (if bounds (buffer-substring (car bounds) (cdr bounds)) ""))))
-         (object-to-import (or object (read-string "Object to import: " default-object)))
-         (possible-imports (elpy-rpc "get_import_symbols" (list buffer-file-name
-                                                                (elpy-rpc--buffer-contents)
-                                                                object-to-import)))
-         (statement-prompt (or prompt "New import statement: ")))
-    (cond
-     ;; An elpy warning (i.e. index not ready) is returned as a string.
-     ((stringp possible-imports)
-      "")
-     ;; If there is no candidate, we exit immediately.
-     ((null possible-imports)
-      (message "No import candidate found")
-      "")
-     ;; We have some candidates, let the user choose one.
-     (t
-      (let* ((first-choice (car possible-imports))
-	     (user-choice (completing-read statement-prompt possible-imports))
-	     (alias (if ask-for-alias (read-string (format "Import \"%s\" as: " object-to-import)) "")))
-	(concat (if (equal user-choice "") first-choice user-choice)
-		(if (not (or (equal alias "") (equal alias object-to-import))) (concat " as " alias))))))))
-
-(defun elpy-importmagic-add-import (&optional statement ask-for-alias)
-  "Prompt to import thing at point, show possible imports and add selected import.
-
-With prefix arg, also ask for an import alias."
-  (interactive "i\nP")
-  (let* ((statement (or statement (elpy-importmagic--add-import-read-args nil nil ask-for-alias)))
-	 (res (elpy-rpc "add_import" (list buffer-file-name
-					   (elpy-rpc--buffer-contents)
-					   statement))))
-    (unless (equal statement "")
-      (elpy-buffer--replace-block res))))
-
+(defun elpy-importmagic-add-import ()
+  (interactive))
 (defun elpy-importmagic-fixup ()
-  "Query for new imports of unresolved symbols, and remove unreferenced imports.
+  (interactive))
 
-Also sort the imports in the import statement blocks."
-  (interactive)
-  ;; get all unresolved names, and interactively add imports for them
-  (let* ((res (elpy-rpc "get_unresolved_symbols" (list buffer-file-name
-						       (elpy-rpc--buffer-contents))))
-	 (unresolved-aliases (list)))
-    (unless (stringp res)
-      (if (null res) (message "No imports to add."))
-      (dolist (object res)
-        (let* ((prompt (format "How to import \"%s\": " object))
-               (choice (elpy-importmagic--add-import-read-args object prompt nil)))
-	  (when (equal choice "")
-	    (push (car (split-string object "\\.")) unresolved-aliases))
-	  (elpy-importmagic-add-import choice nil))))
-    ;; ask for unresolved aliases real names and add import for them
-    (dolist (alias unresolved-aliases)
-      (let* ((object (read-string (format "Real name of \"%s\" alias: " alias nil)))
-	     (prompt (format "How to import \"%s\": " object))
-	     (choice (concat
-		      (elpy-importmagic--add-import-read-args object prompt nil)
-		      (concat " as " alias))))
-	(elpy-importmagic-add-import choice nil))))
-  ;; now get a new import statement block (this also sorts)
-  (let* ((res (elpy-rpc "remove_unreferenced_imports" (list buffer-file-name
-                                                            (elpy-rpc--buffer-contents)))))
-    (unless (stringp res)
-      (elpy-buffer--replace-block res))))
+(make-obsolete 'elpy-importmagic-add-import "support for importmagic has been dropped.")
+(make-obsolete 'elpy-importmagic-fixup "support for importmagic has been dropped.")
 
 ;;;;;;;;;;;;;;;;;;;;;
 ;;; Code reformatting
@@ -3431,9 +3337,9 @@ If you need your modeline, you can set the variable `elpy-remove-modeline-lighte
      (company-mode 1)
      (when (> (buffer-size) elpy-rpc-ignored-buffer-size)
        (message
-	(concat "Buffer %s larger than elpy-rpc-ignored-buffer-size (%d)."
-		" Elpy will turn off completion.")
-	(buffer-name) elpy-rpc-ignored-buffer-size)))
+        (concat "Buffer %s larger than elpy-rpc-ignored-buffer-size (%d)."
+                " Elpy will turn off completion.")
+        (buffer-name) elpy-rpc-ignored-buffer-size)))
     (`buffer-stop
      (company-mode -1)
      (kill-local-variable 'company-idle-delay)

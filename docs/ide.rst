@@ -577,13 +577,6 @@ Elpy supports various forms of refactoring Python code.
 .. _autopep8: https://github.com/hhatto/autopep8
 .. _yapf: https://github.com/google/yapf
 
-.. command:: elpy-importmagic-fixup
-   :kbd: C-c C-r i
-
-   Query for new imports of unresolved symbols, and remove unreferenced
-   imports. Also sort the imports in the import statement blocks.
-
-
 
 .. command:: elpy-refactor
    :kbd: C-c C-r r
