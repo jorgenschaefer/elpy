@@ -86,11 +86,6 @@ Python.
 
 .. _Jedi: https://github.com/davidhalter/jedi/
 
-.. option:: elpy-rpc-backend
-
-   Elpy will use Jedi if installed. You can set this option to 'native'
-   to use the very limited native backend.
-
 
 Virtual Envs
 ============

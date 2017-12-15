@@ -48,38 +48,25 @@ class TestRPCEcho(ServerTestCase):
 class TestRPCInit(ServerTestCase):
     @mock.patch("elpy.jedibackend.JediBackend")
     def test_should_set_project_root(self, JediBackend):
-        self.srv.rpc_init({"project_root": "/project/root",
-                           "backend": "jedi"})
+        self.srv.rpc_init({"project_root": "/project/root"})
 
         self.assertEqual("/project/root", self.srv.project_root)
 
     @mock.patch("elpy.jedibackend.JediBackend")
     def test_should_initialize_jedi(self, JediBackend):
-        self.srv.rpc_init({"project_root": "/project/root",
-                           "backend": "jedi"})
+        self.srv.rpc_init({"project_root": "/project/root"})
 
         JediBackend.assert_called_with("/project/root")
 
 
     @mock.patch("elpy.jedibackend.JediBackend")
-    def test_should_use_jedi_if_available_and_requested(
-            self, JediBackend):
+    def test_should_use_jedi_if_available(self, JediBackend):
         JediBackend.return_value.name = "jedi"
 
-        self.srv.rpc_init({"project_root": "/project/root",
-                           "backend": "jedi"})
+        self.srv.rpc_init({"project_root": "/project/root"})
 
         self.assertEqual("jedi", self.srv.backend.name)
 
-    @mock.patch("elpy.jedibackend.JediBackend")
-    def test_should_use_jedi_if_available_and_nothing_requested(
-            self, JediBackend):
-        JediBackend.return_value.name = "jedi"
-
-        self.srv.rpc_init({"project_root": "/project/root",
-                           "backend": None})
-
-        self.assertEqual("jedi", self.srv.backend.name)
 
     @mock.patch("elpy.jedibackend.JediBackend")
     def test_should_use_none_if_nothing_available(
@@ -89,8 +76,7 @@ class TestRPCInit(ServerTestCase):
         server.jedibackend = None
 
         try:
-            self.srv.rpc_init({"project_root": "/project/root",
-                               "backend": None})
+            self.srv.rpc_init({"project_root": "/project/root"})
         finally:
             server.jedibackend = old_jedi
 

@@ -60,8 +60,7 @@ class ElpyRPCServer(JSONRPCServer):
             self.backend = None
 
         return {
-            'backend': (self.backend.name if self.backend is not None
-                        else None)
+            'jedi_available': (self.backend is not None)
         }
 
     def rpc_get_calltip(self, filename, source, offset):
