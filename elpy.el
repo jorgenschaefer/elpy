@@ -1408,7 +1408,9 @@ This combines
    (nconc
     (mapcar (lambda (dir) (concat "*/" dir "/*"))
             elpy-project-ignored-directories)
-    (mapcar (lambda (ext) (concat "*" ext))
+    (mapcar (lambda (ext) (if (s-ends-with? "/" ext)
+                              (concat "*" ext "*")
+                            (concat "*" ext)))
             completion-ignored-extensions)
     (cl-copy-list elpy-ffip-prune-patterns)
     (cl-copy-list ffip-prune-patterns))))
