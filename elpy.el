@@ -34,7 +34,6 @@
 ;; https://elpy.readthedocs.io/en/latest/index.html
 
 ;;; Code:
-
 (require 'cus-edit)
 (require 'etags)
 (require 'files-x)
@@ -1408,7 +1407,8 @@ This combines
    (nconc
     (mapcar (lambda (dir) (concat "*/" dir "/*"))
             elpy-project-ignored-directories)
-    (mapcar (lambda (ext) (concat "*" ext))
+    (mapcar (lambda (ext) (concat "*"
+                                  (if (s-ends-with? "/" ext) (concat ext "*") ext)))
             completion-ignored-extensions)
     (cl-copy-list elpy-ffip-prune-patterns)
     (cl-copy-list ffip-prune-patterns))))
