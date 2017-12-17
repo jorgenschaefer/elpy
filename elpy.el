@@ -34,6 +34,7 @@
 ;; https://elpy.readthedocs.io/en/latest/index.html
 
 ;;; Code:
+
 (require 'cus-edit)
 (require 'etags)
 (require 'files-x)
