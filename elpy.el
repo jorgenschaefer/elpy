@@ -179,21 +179,6 @@ you might want to keep it."
   :type 'boolean
   :group 'elpy)
 
-(defcustom elpy-rpc-backend nil
-  "Your preferred backend.
-
-Elpy can use different backends for code introspection. These
-need to be installed separately using pip or other mechanisms to
-make them available to Python. If you prefer not to do this, you
-can use the native backend, which is very limited but does not
-have any external requirements."
-  :type '(choice (const :tag "Rope" "rope")
-                 (const :tag "Jedi" "jedi")
-                 (const :tag "Automatic" nil))
-  :safe (lambda (val)
-          (member val '("rope" "jedi" "native" nil)))
-  :group 'elpy)
-
 (defcustom elpy-rpc-maximum-buffer-age (* 5 60)
   "Seconds after which Elpy automatically closes an unused RPC buffer.
 
@@ -876,34 +861,13 @@ item in another window.\n\n")
 
     ;; Requested backend unavailable
     (when (and (gethash "python_rpc_executable" config)
-               (or (and (equal elpy-rpc-backend "rope")
-                        (not (gethash "rope_version" config)))
-                   (and (equal elpy-rpc-backend "jedi")
-                        (not (gethash "jedi_version" config)))))
+               (not (gethash "jedi_version" config)))
       (elpy-insert--para
-       "You requested Elpy to use the backend " elpy-rpc-backend ", "
-       "but the Python interpreter could not load that module. Make "
-       "sure the module is installed, or change the value of "
-       "`elpy-rpc-backend' below to one of the available backends.\n")
+       "The jedi package is not available. Completion and code navigation will"
+       " not work.\n")
       (insert "\n")
       (widget-create 'elpy-insert--pip-button
-                     :package (if (equal elpy-rpc-backend "rope")
-                                  rope-pypi-package
-                                "jedi"))
-      (insert "\n\n"))
-
-    ;; No backend available.
-    (when (and (gethash "python_rpc_executable" config)
-               (and (not elpy-rpc-backend)
-                    (not (gethash "rope_version" config))
-                    (not (gethash "jedi_version" config))))
-      (elpy-insert--para
-       "There is no backend available. Please install either Rope or Jedi."
-       "See https://github.com/jorgenschaefer/elpy/wiki/FAQ#q-should-i-use-rope-or-jedi for guidance.\n")
-      (insert "\n")
-      (widget-create 'elpy-insert--pip-button :package rope-pypi-package)
-      (insert "\n")
-      (widget-create 'elpy-insert--pip-button :package "jedi")
+                     :package "jedi"))
       (insert "\n\n"))
 
     ;; Newer version of Rope available
@@ -977,7 +941,7 @@ item in another window.\n\n")
       (widget-create 'elpy-insert--pip-button :package "flake8")
       (insert "\n\n"))
 
-    ))
+    )
 
 (defun elpy-config--get-config ()
   "Return the configuration from `elpy-rpc-python-command'.
@@ -2528,6 +2492,9 @@ This maps call IDs to functions.")
 (defvar elpy-rpc--last-error-popup nil
   "The last time an error popup happened.")
 
+(defvar elpy-rpc--jedi-available nil
+  "Whether jedi is available or not.")
+
 (defun elpy-rpc (method params &optional success error)
   "Call METHOD with PARAMS in the backend.
 
@@ -2645,9 +2612,6 @@ died, this will kill the process and buffer."
 
 (defun elpy-rpc--open (library-root python-command)
   "Start a new RPC process and return the associated buffer."
-  (when (and elpy-rpc-backend
-             (not (stringp elpy-rpc-backend)))
-    (error "`elpy-rpc-backend' should be nil or a string."))
   (elpy-rpc--cleanup-buffers)
   (let* ((full-python-command (executable-find python-command))
          (name (format " *elpy-rpc [project:%s python:%s]*"
@@ -2678,14 +2642,10 @@ died, this will kill the process and buffer."
       (set-process-query-on-exit-flag proc nil)
       (set-process-sentinel proc #'elpy-rpc--sentinel)
       (set-process-filter proc #'elpy-rpc--filter)
-      (elpy-rpc-init elpy-rpc-backend library-root
+      (elpy-rpc-init library-root
                      (lambda (result)
-                       (let ((backend (cdr (assq 'backend result))))
-                         (when (and elpy-rpc-backend
-                                    (not (equal backend elpy-rpc-backend)))
-                           (elpy-config-error
-                            "Can't set backend %s, using %s instead"
-                            elpy-rpc-backend backend))))))
+                       (setq elpy-rpc--jedi-available
+                             (cdr (assq 'jedi_available result))))))
     new-elpy-rpc-buffer))
 
 (defun elpy-rpc--cleanup-buffers ()
@@ -2978,7 +2938,7 @@ protocol if the buffer is larger than
       (ignore-errors
         (kill-buffer buffer)))))
 
-(defun elpy-rpc-init (backend library-root &optional success error)
+(defun elpy-rpc-init (library-root &optional success error)
   "Initialize the backend.
 
 This has to be called as the first method, else Elpy won't be
@@ -2987,8 +2947,7 @@ able to respond to other calls."
             ;; This uses a vector because otherwise, json-encode in
             ;; older Emacsen gets seriously confused, especially when
             ;; backend is nil.
-            (vector `((backend . ,backend)
-                      (project_root . ,(expand-file-name library-root))))
+            (vector `((project_root . ,(expand-file-name library-root))))
             success error))
 
 (defun elpy-rpc-get-calltip (&optional success error)
@@ -3095,7 +3054,7 @@ Returns a possible multi-line docstring."
 ;;; Xref backend
 (defun elpy--xref-backend ()
   "Return the name of the elpy xref backend."
-  (if (string= elpy-rpc-backend "jedi")
+  (if elpy-rpc--jedi-available
       'elpy
     nil))
 
@@ -3479,8 +3438,7 @@ or unless NAME is no callable instance."
            ;; and scipy) and `elpy-company--cache' does not allow to identify
            ;; callable instances.
            ;; It looks easy to modify `elpy-company--cache' cheaply for the jedi
-           ;; backend to eliminate the `elpy-rpc-get-calltip' call below, but
-           ;; not for the rope backend.
+           ;; backend to eliminate the `elpy-rpc-get-calltip' call below.
            (insert "()")
            (backward-char 1)
            (when (not (elpy-rpc-get-calltip))

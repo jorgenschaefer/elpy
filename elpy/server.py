@@ -20,11 +20,6 @@ try:
 except ImportError:  # pragma: no cover
     jedibackend = None
 
-try:
-    from elpy import ropebackend
-except ImportError:  # pragma: no cover
-    ropebackend = None
-
 
 class ElpyRPCServer(JSONRPCServer):
     """The RPC server for elpy.
@@ -59,20 +54,13 @@ class ElpyRPCServer(JSONRPCServer):
     def rpc_init(self, options):
         self.project_root = options["project_root"]
 
-        if ropebackend and options["backend"] == "rope":
-            self.backend = ropebackend.RopeBackend(self.project_root)
-        elif jedibackend and options["backend"] == "jedi":
-            self.backend = jedibackend.JediBackend(self.project_root)
-        elif ropebackend:
-            self.backend = ropebackend.RopeBackend(self.project_root)
-        elif jedibackend:
+        if jedibackend:
             self.backend = jedibackend.JediBackend(self.project_root)
         else:
             self.backend = None
 
         return {
-            'backend': (self.backend.name if self.backend is not None
-                        else None)
+            'jedi_available': (self.backend is not None)
         }
 
     def rpc_get_calltip(self, filename, source, offset):

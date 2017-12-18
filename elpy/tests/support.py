@@ -110,7 +110,6 @@ class GenericRPCTests(object):
         self.rpc(filename, source, offset)
 
     def test_should_not_fail_for_bad_indentation(self):
-        # Bug in Rope: rope#80
         source, offset = source_and_offset(
             "def foo():\n"
             "       print(23)_|_\n"
@@ -122,7 +121,6 @@ class GenericRPCTests(object):
     @unittest.skipIf((3, 3) <= sys.version_info < (3, 4),
                      "Bug in jedi for Python 3.3")
     def test_should_not_fail_for_relative_import(self):
-        # Bug in Rope: rope#81 and rope#82
         source, offset = source_and_offset(
             "from .. import foo_|_"
         )
@@ -141,7 +139,6 @@ class GenericRPCTests(object):
         self.rpc(filename, source, offset)
 
     def test_should_not_fail_with_bad_encoding(self):
-        # Bug in Rope: rope#83
         source, offset = source_and_offset(
             u'# coding: utf-8X_|_\n'
         )
