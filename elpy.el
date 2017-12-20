@@ -2768,8 +2768,10 @@ This is usually an error or backtrace."
         (elpy-insert--header "Output from Backend")
         (elpy-insert--para
          "There was some unexpected output from the Elpy backend. "
-         "This is usually some module that does not use correct logging, "
-         "but might indicate a configuration problem.\n\n")
+         "This is usually not a problem and should usually not be "
+         "reported as a bug with Elpy. You can safely hide this "
+         "buffer and ignore it. You can also see the output below "
+         "in case there is an actual problem.\n\n")
         (elpy-insert--header "Output")
         (setq buf (current-buffer))))
     (with-current-buffer buf
