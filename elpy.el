@@ -2779,6 +2779,12 @@ If you need your modeline, you can set the variable `elpy-remove-modeline-lighte
 ;;;;;;;;;;;;;;;;;;;
 ;;; Module: Company
 
+(defcustom elpy-company-ignore-case nil
+  "Non-nil if elpy-company-backend returns case-insensitive
+matches."
+  :type 'boolean
+  :group 'elpy)
+
 (defun elpy-module-company (command &rest _args)
   "Module to support company-mode completions."
   (pcase command
@@ -3048,6 +3054,7 @@ and return the list."
     ;; duplicates => t if there could be duplicates
     (`duplicates
      nil)
+    (`ignore-case elpy-company-ignore-case)
     ;; no-cache <prefix> => t if company shouldn't cache results
     ;; meta <candidate> => short docstring for minibuffer
     (`meta
