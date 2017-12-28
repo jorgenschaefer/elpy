@@ -873,7 +873,7 @@ item in another window.\n\n")
        " not work.\n")
       (insert "\n")
       (widget-create 'elpy-insert--pip-button
-                     :package "jedi"))
+                     :package "jedi")
       (insert "\n\n"))
 
     ;; Newer version of Rope available
@@ -947,7 +947,7 @@ item in another window.\n\n")
       (widget-create 'elpy-insert--pip-button :package "flake8")
       (insert "\n\n"))
 
-    )
+    ))
 
 (defun elpy-config--get-config ()
   "Return the configuration from `elpy-rpc-python-command'.
