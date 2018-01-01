@@ -3115,11 +3115,11 @@ Points to file FILE, at position POS."
     "Return identifier at point.
 
 Is a string, formatted as \"LINE_NUMBER: VARIABLE_NAME\"."
-    (let ((symb (symbol-at-point))
-          (line (save-excursion
-                  (elpy-goto-assignment)
-                  (line-number-at-pos))))
-      (format "%s: %s" line symb)))
+    (let ((symb (substring-no-properties (symbol-name (symbol-at-point))))
+          (assign (elpy-rpc-get-assignment)))
+      (when assign (format "%s: %s"
+                        (line-number-at-pos (+ 1 (car (cdr assign))))
+                        symb))))
 
   (defun elpy-xref--identifier-name (id)
     "Return the identifier ID variable name."
@@ -3136,7 +3136,8 @@ Is a string, formatted as \"LINE_NUMBER: VARIABLE_NAME\"."
 This is needed to get information on the identifier with jedi
 \(that work only on the symbol at point\)"
     (goto-line (elpy-xref--identifier-line id))
-    (search-forward (elpy-xref--identifier-name id)))
+    (search-forward (elpy-xref--identifier-name id))
+    (goto-char (match-beginning 0)))
 
   ;; Find definition
   (cl-defmethod xref-backend-definitions ((_backend (eql elpy)) id)

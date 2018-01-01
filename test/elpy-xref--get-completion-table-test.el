@@ -7,4 +7,4 @@
                 "    return x + y\n"
                 "var1 = foo(5, 2)")
         (let ((identifiers (elpy-xref--get-completion-table)))
-        (should (equal identifiers (list "var1" "y" "x" "foo")))))))
+        (should (equal identifiers (list "1: x" "1: y" "3: var1" "1: foo")))))))

@@ -7,7 +7,7 @@
                 "    return x + y\n"
                 "var1 = foo(5, 2)")
         (goto-char (point-min))
-        (elpy-xref--goto-identifier "foo")
+        (elpy-xref--goto-identifier "1: foo")
         (should (equal (point) 5))
-        (elpy-xref--goto-identifier "var1")
+        (elpy-xref--goto-identifier "3: var1")
         (should (equal (point) 33)))))

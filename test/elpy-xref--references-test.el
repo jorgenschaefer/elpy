@@ -8,7 +8,7 @@
                 "    return x + y\n"
                 "var1 = foo(5, 2)")
         (let ((file (f-join project-root "test.py"))
-            (foo-refs (elpy-xref--references "foo")))
+            (foo-refs (elpy-xref--references "1: foo")))
         (should (equal (length foo-refs) 2))
         (let* ((foo-refs1 (car foo-refs))
                 (summary1 (xref-item-summary foo-refs1))
