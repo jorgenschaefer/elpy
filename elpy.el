@@ -3115,7 +3115,7 @@ Points to file FILE, at position POS."
     "Return identifier at point.
 
 Is a string, formatted as \"LINE_NUMBER: VARIABLE_NAME\"."
-    (let ((symb (substring-no-properties (symbol-name (symbol-at-point))))
+    (let ((symb (thing-at-point 'symbol t))
           (assign (elpy-rpc-get-assignment)))
       (when assign (format "%s: %s"
                         (line-number-at-pos (+ 1 (car (cdr assign))))
