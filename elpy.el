@@ -3112,27 +3112,41 @@ Points to file FILE, at position POS."
     (elpy-xref--identifier-at-point))
 
   (defun elpy-xref--identifier-at-point ()
-    "Return identifier at point."
-    (symbol-at-point))
+    "Return identifier at point.
+
+Is a string, formatted as \"LINE_NUMBER: VARIABLE_NAME\"."
+    (let ((symb (substring-no-properties (symbol-name (symbol-at-point))))
+          (assign (elpy-rpc-get-assignment)))
+      (when assign (format "%s: %s"
+                        (line-number-at-pos (+ 1 (car (cdr assign))))
+                        symb))))
+
+  (defun elpy-xref--identifier-name (id)
+    "Return the identifier ID variable name."
+    (string-match ".*: \\([^:]*\\)" id)
+    (match-string 1 id))
+
+  (defun elpy-xref--identifier-line (id)
+    "Return the identifier ID line number."
+    (string-match "\\([^:]*\\):.*" id)
+    (string-to-number (match-string 1 id)))
 
   (defun elpy-xref--goto-identifier (id)
     "Goto the identifier ID in the current buffer.
 This is needed to get information on the identifier with jedi
 \(that work only on the symbol at point\)"
-    (let ((case-fold-search nil))
-      (goto-char (point-min))
-      (if (not (search-forward-regexp (format "\\_<%s\\_>" id) nil t))
-          (error "Symbol not found on current buffer")
-        (goto-char (match-beginning 0)))))
+    (goto-line (elpy-xref--identifier-line id))
+    (search-forward (elpy-xref--identifier-name id))
+    (goto-char (match-beginning 0)))
 
   ;; Find definition
-  (cl-defmethod xref-backend-definitions ((_backend (eql elpy)) symbol)
-    (elpy-xref--definitions symbol))
+  (cl-defmethod xref-backend-definitions ((_backend (eql elpy)) id)
+    (elpy-xref--definitions id))
 
-  (defun elpy-xref--definitions (symbol)
+  (defun elpy-xref--definitions (id)
     "Return SYMBOL definition position as a xref object."
     (save-excursion
-      (elpy-xref--goto-identifier symbol)
+      (elpy-xref--goto-identifier id)
       (let* ((location (elpy-rpc-get-definition)))
         (if (not location)
             (error "No definition found")
@@ -3148,13 +3162,13 @@ This is needed to get information on the identifier with jedi
             (list (xref-make summary loc)))))))
 
   ;; Find references
-  (cl-defmethod xref-backend-references ((_backend (eql elpy)) symbol)
-    (elpy-xref--references symbol))
+  (cl-defmethod xref-backend-references ((_backend (eql elpy)) id)
+    (elpy-xref--references id))
 
-  (defun elpy-xref--references (symbol)
+  (defun elpy-xref--references (id)
     "Return SYMBOL references as a list of xref objects."
     (save-excursion
-      (elpy-xref--goto-identifier symbol)
+      (elpy-xref--goto-identifier id)
       (let* ((references (elpy-rpc-get-usages)))
         (cl-loop
          for ref in references
@@ -3178,13 +3192,25 @@ This is needed to get information on the identifier with jedi
     "Return the completion table for identifiers."
     (let ((id-at-point (elpy-xref--identifier-at-point))
           (table nil))
-      (when id-at-point
-        (push id-at-point table))
       (cl-loop
-       for ref in (elpy-rpc-get-names)
-       for name = (alist-get 'name ref)
-       unless (member name table)
-       do (push name table))
+       for ref in (nreverse (elpy-rpc-get-names))
+       for offset = (+ (alist-get 'offset ref) 1)
+       for filename = (alist-get 'filename ref)
+       ;; ensure that variables with same assignment are not represented twice
+       do (with-current-buffer (find-file-noselect filename)
+            (save-excursion
+                                 (goto-char offset)
+                                 (let* ((def (elpy-rpc-get-assignment))
+                                        (tmp_filename (car def))
+                                        (tmp_offset (car (cdr def))))
+                                   (when def
+                                     (setq filename tmp_filename)
+                                     (setq offset (+ tmp_offset 1))))))
+       for line = (with-current-buffer (find-file-noselect filename)
+                    (line-number-at-pos offset))
+       for id = (format "%s: %s" line (alist-get 'name ref))
+       unless (member id table)
+       do (push id table))
       table))
 
   ;; Apropos

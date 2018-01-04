@@ -8,7 +8,7 @@
                 "    return x + y\n"
                 "var1 = foo(5, 2)")
         (let* ((basefile (f-join project-root "test.py"))
-            (foo-defs (car (elpy-xref--definitions "foo")))
+            (foo-defs (car (elpy-xref--definitions "1: foo")))
             (summary (xref-item-summary foo-defs))
             (location (xref-item-location foo-defs))
             (pos (xref-elpy-location-pos location))
@@ -17,7 +17,7 @@
         (should (string-equal file basefile))
         (should (equal pos 5)))
         (let* ((basefile (f-join project-root "test.py"))
-            (foo-defs (car (elpy-xref--definitions "var1")))
+            (foo-defs (car (elpy-xref--definitions "3: var1")))
             (summary (xref-item-summary foo-defs))
             (location (xref-item-location foo-defs))
             (pos (xref-elpy-location-pos location))
