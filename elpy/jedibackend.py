@@ -143,17 +143,6 @@ class JediBackend(object):
             call = None
         if not call:
             return None
-        try:
-            call.index
-        except AttributeError as e:
-            if "get_definition" in str(e):
-                # Bug #627 / jedi#573
-                return None
-            elif "get_subscope_by_name" in str(e):
-                # Bug #677 / jedi#628
-                return None
-            else:
-                raise
         return {"name": call.name,
                 "index": call.index,
                 "params": [param.description for param in call.params]}
@@ -188,8 +177,6 @@ class JediBackend(object):
 
     def rpc_get_names(self, filename, source, offset):
         """Return the list of possible names"""
-        # Remove form feed characters, they confuse Jedi (jedi#424)
-        source = source.replace("\f", " ")
         names = jedi.api.names(source=source,
                                path=filename, encoding='utf-8',
                                all_scopes=True,
@@ -255,39 +242,12 @@ def linecol_to_pos(text, line, col):
 
 def run_with_debug(jedi, name, *args, **kwargs):
     re_raise = kwargs.pop('re_raise', ())
-    # Remove form feed characters, they confuse Jedi (jedi#424)
-    if 'source' in kwargs:
-        kwargs['source'] = kwargs['source'].replace("\f", " ")
     try:
         script = jedi.Script(*args, **kwargs)
         return getattr(script, name)()
     except Exception as e:
         if isinstance(e, re_raise):
             raise
-        # Bug jedi#417
-        if isinstance(e, TypeError) and str(e) == 'no dicts allowed':
-            return None
-        # Bug jedi#427
-        if isinstance(e, UnicodeDecodeError):
-            return None
-        # Bug jedi#429
-        if isinstance(e, IndexError):
-            return None
-        # Bug jedi#431
-        if isinstance(e, AttributeError) and str(e).endswith("'end_pos'"):
-            return None
-        # Bug in Python 2.6, see #275
-        if isinstance(e, OSError) and e.errno == 13:
-            return None
-        # Bug jedi#466
-        if (
-                isinstance(e, SyntaxError) and
-                "EOL while scanning string literal" in str(e)
-        ):
-            return None
-        # Bug jedi#482
-        if isinstance(e, UnicodeEncodeError):
-            return None
         # Bug jedi#485
         if (
                 isinstance(e, ValueError) and
@@ -298,63 +258,6 @@ def run_with_debug(jedi, name, *args, **kwargs):
         if (
                 isinstance(e, SyntaxError) and
                 "truncated \\xXX escape" in str(e)
-        ):
-            return None
-        # Bug jedi#465
-        if (
-                isinstance(e, SyntaxError) and
-                "encoding declaration in Unicode string" in str(e)
-        ):
-            return None
-        # Bug #337 / jedi#471
-        if (
-                isinstance(e, ImportError) and
-                "No module named" in str(e)
-        ):
-            return None
-        # Bug #365 / jedi#486 - fixed in Jedi 0.8.2
-        if (
-                isinstance(e, UnboundLocalError) and
-                "local variable 'path' referenced before assignment" in str(e)
-        ):
-            return None
-        # Bug #366 / jedi#491
-        if (
-                isinstance(e, ValueError) and
-                "__loader__ is None" in str(e)
-        ):
-            return None
-        # Bug #353
-        if (
-                isinstance(e, OSError) and
-                "No such file or directory" in str(e)
-        ):
-            return None
-        # Bug #561, #564, #570, #588, #593, #599 / jedi#572, jedi#579, jedi#590
-        if isinstance(e, KeyError):
-            return None
-        # Bug #519 / jedi#610
-        if (
-                isinstance(e, RuntimeError) and
-                "maximum recursion depth exceeded" in str(e)
-        ):
-            return None
-        # Bug #563 / jedi#589
-        if (
-                isinstance(e, AttributeError) and
-                "MergedNamesDict" in str(e)
-        ):
-            return None
-        # Bug #615 / jedi#592
-        if (
-                isinstance(e, AttributeError) and
-                "ListComprehension" in str(e)
-        ):
-            return None
-        # Bug #569 / jedi#593
-        if (
-                isinstance(e, AttributeError) and
-                "names_dict" in str(e)
         ):
             return None
 
