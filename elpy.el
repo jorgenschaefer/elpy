@@ -3117,9 +3117,9 @@ Points to file FILE, at position POS."
 Is a string, formatted as \"LINE_NUMBER: VARIABLE_NAME\"."
     (let ((symb (substring-no-properties (symbol-name (symbol-at-point))))
           (assign (elpy-rpc-get-assignment)))
-      (when assign (format "%s: %s"
-                        (line-number-at-pos (+ 1 (car (cdr assign))))
-                        symb))))
+      (when assign
+        (format "%s: %s"
+                (line-number-at-pos (+ 1 (car (cdr assign)))) symb))))
 
   (defun elpy-xref--identifier-name (id)
     "Return the identifier ID variable name."
