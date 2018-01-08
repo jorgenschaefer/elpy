@@ -3190,8 +3190,7 @@ This is needed to get information on the identifier with jedi
 
   (defun elpy-xref--get-completion-table ()
     "Return the completion table for identifiers."
-    (let ((id-at-point (elpy-xref--identifier-at-point))
-          (table nil))
+    (let ((table nil))
       (cl-loop
        for ref in (nreverse (elpy-rpc-get-names))
        for offset = (+ (alist-get 'offset ref) 1)
