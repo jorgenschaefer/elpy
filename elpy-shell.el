@@ -129,107 +129,6 @@ the code cell beginnings defined here."
   :type 'string
   :group 'elpy)
 
-;;;;;;;;;;;;;;;
-;;; Shell setup
-
-(defun elpy-use-ipython (&optional ipython)
-  "Set defaults to use IPython instead of the standard interpreter.
-
-With prefix arg, prompt for the command to use."
-  (interactive (list (when current-prefix-arg
-                       (read-file-name "IPython command: "))))
-  (when (not ipython)
-    (setq ipython "ipython"))
-  (when (not (executable-find ipython))
-    (error "Command %S not found" ipython))
-  ;; Needed for IPython 5+
-  (setenv "IPY_TEST_SIMPLE_PROMPT" "1")
-  (cond
-   ;; Emacs 24 until 24.3
-   ((boundp 'python-python-command)
-    (setq python-python-command ipython))
-   ;; Emacs 24.3
-   ((and (version<= "24.3" emacs-version)
-         (not (boundp 'python-shell-interpreter-interactive-arg)))
-    ;; This is from the python.el commentary.
-    ;; Settings for IPython 0.11:
-    (setq python-shell-interpreter ipython
-          python-shell-interpreter-args ""
-          python-shell-prompt-regexp "In \\[[0-9]+\\]: "
-          python-shell-prompt-output-regexp "Out\\[[0-9]+\\]: "
-          python-shell-completion-setup-code
-          "from IPython.core.completerlib import module_completion"
-          python-shell-completion-module-string-code
-          "';'.join(module_completion('''%s'''))\n"
-          python-shell-completion-string-code
-          "';'.join(get_ipython().Completer.all_completions('''%s'''))\n"))
-   ;; Emacs 24.4
-   ((boundp 'python-shell-interpreter-interactive-arg)
-    (setq python-shell-interpreter ipython
-          python-shell-interpreter-args "-i")
-    ;; Windows requires some special handling here, see #422
-    (let ((exe "C:\\Python27\\python.exe")
-          (ipython_py "C:\\Python27\\Scripts\\ipython-script.py"))
-      (when (and (eq system-type 'windows-nt)
-                 (file-exists-p exe)
-                 (file-exists-p ipython_py))
-        (setq python-shell-interpreter exe
-              python-shell-interpreter-args "-i " + ipython_py))))
-   (t
-    (error "I don't know how to set ipython settings for this Emacs"))))
-
-(defun elpy-use-cpython (&optional cpython)
-  "Set defaults to use the standard interpreter instead of IPython.
-
-With prefix arg, prompt for the command to use."
-  (interactive (list (when current-prefix-arg
-                       (read-file-name "Python command: "))))
-  (when (not cpython)
-    (setq cpython "python"))
-  (when (not (executable-find cpython))
-    (error "Command %S not found" cpython))
-  (cond
-   ;; Emacs 24 until 24.3
-   ((boundp 'python-python-command)
-    (setq python-python-command cpython))
-   ;; Emacs 24.3 and onwards.
-   ((and (version<= "24.3" emacs-version)
-         (not (boundp 'python-shell-interpreter-interactive-arg)))
-    (setq python-shell-interpreter cpython
-          python-shell-interpreter-args "-i"
-          python-shell-prompt-regexp ">>> "
-          python-shell-prompt-output-regexp ""
-          python-shell-completion-setup-code
-          "try:
-    import readline
-except ImportError:
-    def __COMPLETER_all_completions(text): []
-else:
-    import rlcompleter
-    readline.set_completer(rlcompleter.Completer().complete)
-    def __COMPLETER_all_completions(text):
-        import sys
-        completions = []
-        try:
-            i = 0
-            while True:
-                res = readline.get_completer()(text, i)
-                if not res: break
-                i += 1
-                completions.append(res)
-        except NameError:
-            pass
-        return completions"
-          python-shell-completion-module-string-code ""
-          python-shell-completion-string-code
-          "';'.join(__COMPLETER_all_completions('''%s'''))\n"))
-   ;; Emacs 24.4
-   ((boundp 'python-shell-interpreter-interactive-arg)
-    (setq python-shell-interpreter cpython
-          python-shell-interpreter-args "-i"))
-   (t
-    (error "I don't know how to set ipython settings for this Emacs"))))
-
 
 ;;;;;;;;;;;;;;;;;;
 ;;; Shell commands
@@ -1084,6 +983,19 @@ switches focus to Python shell buffer."
 (elpy-shell--defun-step-go elpy-shell-send-region-or-buffer-and-step)
 (elpy-shell--defun-step-go elpy-shell-send-buffer-and-step)
 
+;;;;;;;;;;;;;;;;;;;;;;;
+;; Deprecated functions
+
+(defun elpy-use-ipython (&optional ipython)
+  "Deprecated; see https://elpy.readthedocs.io/en/latest/ide.html#interpreter-setup"
+  (error "elpy-use-ipython is deprecated; see https://elpy.readthedocs.io/en/latest/ide.html#interpreter-setup"))
+(make-obsolete 'elpy-use-ipython nil "Jan 2017")
+
+(defun elpy-use-cpython (&optional cpython)
+  "Deprecated; see https://elpy.readthedocs.io/en/latest/ide.html#interpreter-setup"
+  (error "elpy-use-cpython is deprecated; see https://elpy.readthedocs.io/en/latest/ide.html#interpreter-setup"))
+(make-obsolete 'elpy-use-cpython nil "Jan 2017")
 
 (provide 'elpy-shell)
+
 ;;; elpy-shell.el ends here

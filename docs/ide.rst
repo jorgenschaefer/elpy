@@ -187,6 +187,47 @@ work with interactive Python in a style similar to ESS_.
 
 .. _ESS: http://ess.r-project.org
 
+Interpreter Setup
+-----------------
+
+Elpy uses the Python interpreter setup from the Emacs ``python`` package. This
+section briefly summarizes some common setups; add the one you need to your
+``.emacs`` file. Note that the code below (and Elpy in general) require at least
+Emacs 24.4.
+
+Use the Python standard interpreter (default):
+
+.. code-block:: cl
+
+   (setq python-shell-interpreter "python"
+         python-shell-interpreter-args "-i")
+
+Use Jupyter console (recommended for interactive Python):
+
+.. code-block:: cl
+
+   (setq python-shell-interpreter "jupyter"
+         python-shell-interpreter-args "console --simple-prompt")
+
+Use IPython:
+
+.. code-block:: cl
+
+   (setq python-shell-interpreter "ipython"
+         python-shell-interpreter-args "-i --simple-prompt")
+
+Note that various issues with plotting have been reported when running IPython 5
+in Emacs under Windows. We recommend using Jupyter console instead.
+
+If you have an older version of IPython and the above code does not work for
+you, you may also try:
+
+.. code-block:: cl
+
+   (setenv "IPY_TEST_SIMPLE_PROMPT" "1")
+   (setq python-shell-interpreter "ipython"
+         python-shell-interpreter-args "-i")
+
 The Shell Buffer
 ----------------
 
