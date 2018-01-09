@@ -983,6 +983,19 @@ switches focus to Python shell buffer."
 (elpy-shell--defun-step-go elpy-shell-send-region-or-buffer-and-step)
 (elpy-shell--defun-step-go elpy-shell-send-buffer-and-step)
 
+;;;;;;;;;;;;;;;;;;;;;;;
+;; Deprecated functions
+
+(defun elpy-use-ipython (&optional ipython)
+  "Deprecated; see https://elpy.readthedocs.io/en/latest/ide.html#interpreter-setup"
+  (error "elpy-use-ipython is deprecated; see https://elpy.readthedocs.io/en/latest/ide.html#interpreter-setup"))
+(make-obsolete 'elpy-use-ipython nil "Jan 2017")
+
+(defun elpy-use-cpython (&optional cpython)
+  "Deprecated; see https://elpy.readthedocs.io/en/latest/ide.html#interpreter-setup"
+  (error "elpy-use-cpython is deprecated; see https://elpy.readthedocs.io/en/latest/ide.html#interpreter-setup"))
+(make-obsolete 'elpy-use-cpython nil "Jan 2017")
 
 (provide 'elpy-shell)
+
 ;;; elpy-shell.el ends here
