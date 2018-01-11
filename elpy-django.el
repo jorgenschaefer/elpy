@@ -123,7 +123,7 @@ require arguments in order for it to work."
     ;; get a list of commands from the output of manage.py -h
     ;; What would be the pattern to optimize this ?
     (setq dj-commands-str (split-string dj-commands-str "\n"))
-    (setq dj-commands-str (-remove (lambda (x) (string= x "")) dj-commands-str))
+    (setq dj-commands-str (remove (lambda (x) (string= x "")) dj-commands-str))
     (setq dj-commands-str (mapcar (lambda (x) (s-trim x)) dj-commands-str))
     (sort dj-commands-str 'string-lessp)))
 
