@@ -435,12 +435,12 @@ option is `pdb'."
     (define-key map (kbd "<M-left>") 'elpy-nav-indent-shift-left)
     (define-key map (kbd "<M-right>") 'elpy-nav-indent-shift-right)
 
-    (if (not (boundp 'xref-find-definitions))
+    (if (not (fboundp 'xref-find-definitions))
         (define-key map (kbd "M-.") 'elpy-goto-definition))
-    (if (not (boundp 'xref-find-definitions-other-window))
+    (if (not (fboundp 'xref-find-definitions-other-window))
         (define-key map (kbd "C-x 4 M-.") 'elpy-goto-definition-other-window)
       (define-key map (kbd "C-x 4 M-.") 'xref-find-definitions-other-window))
-    (if (boundp 'xref-pop-marker-stack)
+    (if (fboundp 'xref-pop-marker-stack)
       (define-key map (kbd "M-*") 'xref-pop-marker-stack))
 
     (define-key map (kbd "M-TAB") 'elpy-company-backend)
