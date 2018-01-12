@@ -118,7 +118,8 @@ require arguments in order for it to work."
               ;; cleanup [auth] and stuff
               (goto-char (point-min))
               (save-excursion
-                (replace-regexp "\\[.*\\]" ""))
+                (while (re-search-forward "\\[.*\\]" nil t)
+                  (replace-match "" nil nil)))
               (buffer-string))))
     ;; get a list of commands from the output of manage.py -h
     ;; What would be the pattern to optimize this ?

@@ -185,12 +185,11 @@ If KILL-BUFF is non-nil, also kill the associated buffer."
   "Kill all active python shells.
 
 If KILL-BUFFERS is non-nil, also kill the associated buffers.
-If ASK-FOR-EACH-ONE is non-nil, ask before killing each python process.
-"
+If ASK-FOR-EACH-ONE is non-nil, ask before killing each python process."
   (interactive)
   (let ((python-buffer-list ()))
     ;; Get active python shell buffers and kill inactive ones (if asked)
-    (loop for buffer being the buffers do
+    (cl-loop for buffer being the buffers do
 	  (when (and (buffer-name buffer)
 		     (string-match (rx bol "*Python" (opt "[" (* (not (any "]"))) "]") "*" eol)
 				   (buffer-name buffer)))
@@ -201,15 +200,15 @@ If ASK-FOR-EACH-ONE is non-nil, ask before killing each python process.
     (cond
      ;; Ask for each buffers and kill
      ((and python-buffer-list ask-for-each-one)
-      (loop for buffer in python-buffer-list do
-	    (when (y-or-n-p (format "Kill %s ?" buffer))
+      (cl-loop for buffer in python-buffer-list do
+	    (when (y-or-n-p (format "Kill %s ? " buffer))
 		(delete-process buffer)
 		(when kill-buffers
 		  (kill-buffer buffer)))))
      ;; Ask and kill every buffers
      (python-buffer-list
-      (if (y-or-n-p (format "Kill %s python shells ?" (length python-buffer-list)))
-	  (loop for buffer in python-buffer-list do
+      (if (y-or-n-p (format "Kill %s python shells ? " (length python-buffer-list)))
+	  (cl-loop for buffer in python-buffer-list do
 		(delete-process buffer)
 		(when kill-buffers
 		  (kill-buffer buffer)))))
@@ -611,8 +610,7 @@ there."
 Assumes that the point is precisely at the beginning of a
 statement (e.g., after calling
 `elpy-shell--nav-beginning-of-statement')."
-  (let ((indent (current-column))
-        (continue t)
+  (let ((continue t)
         (p))
     (while (and (not (eq p (point)))
                 continue)
@@ -855,7 +853,7 @@ variables `elpy-shell-cell-boundary-regexp' and
                (forward-line)
                (if (re-search-forward elpy-shell-cell-boundary-regexp nil t)
                    (forward-line -1)
-                 (end-of-buffer))
+                 (goto-char (point-max)))
                (end-of-line)
                (point))))
     (if beg
