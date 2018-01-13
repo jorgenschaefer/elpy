@@ -11,6 +11,5 @@
 (depends-on "s" "1.11.0")
 
 (development
- (depends-on "dash")
  (depends-on "f")
  (depends-on "ert-runner"))
