@@ -1,3 +1,36 @@
+New in Elpy 1.18.0
+==================
+
+- Elpy is now using MELPA Stable as the official distribution point.
+  Please remove jorgenschaefer.github.io from your sources list if you
+  still use it. It will not receive further updates after 1.18.
+- New commands for interacting with the Python shell, thanks to Rainer
+  Gemulla. Check them out at
+  https://elpy.readthedocs.io/en/latest/ide.html#evaluating-code-fragments
+- Shells started using ``C-c C-z`` will now use the project root as
+  the current directory, to be in line with other code sending
+  functionality.
+- importmagic has been removed. While this package added some nice
+  functionality to Elpy, the way it worked by importing every module
+  caused a lot of bugs. It was not an easy decision, but this is
+  better for most Elpy users.
+- Rope is no longer supported for completions and similar
+  functionality. Refactoring support using Rope is still there. Sadly,
+  Rope has not received much of any update in a long time, and
+  attempts to revive it failed. Maintaining multiple code paths to
+  support both Jedi and Rope was complicated, so we decided to get rid
+  of Rope for these features. Jedi is almost always an equivalent if
+  not better choice.
+- The Green test runner is now supported by default.
+- Beyond all of this, there were numerous bugfixes.
+
+We are happy to report that Elpy now has more maintainers! Daniel
+Gopar, Rainer Gemulla and @galaunay are now helping regularly with
+this project.
+  
+Thanks to all the contributors!
+
+
 New in Elpy 1.17.0
 ==================
 
