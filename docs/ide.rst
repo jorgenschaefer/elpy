@@ -167,8 +167,7 @@ necessary backends for the `xref`_ package.
 .. command:: xref-find-references
    :kbd: M-?
 
-   Find references to the identifier at point.
-   With prefix argument, prompt for the identifier.
+   Find references for an identifier of the current buffer.
 
 .. command:: xref-find-apropos
    :kbd: C-M-.

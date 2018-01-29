@@ -3114,12 +3114,18 @@ Points to file FILE, at position POS."
   (defun elpy-xref--identifier-at-point ()
     "Return identifier at point.
 
-Is a string, formatted as \"LINE_NUMBER: VARIABLE_NAME\"."
-    (let ((symb (substring-no-properties (symbol-name (symbol-at-point))))
-          (assign (elpy-rpc-get-assignment)))
-      (when assign
-        (format "%s: %s"
-                (line-number-at-pos (+ 1 (car (cdr assign)))) symb))))
+Is a string, formatted as \"LINE_NUMBER: VARIABLE_NAME\".
+Try to find the identifier assignement if it is in the current buffer.
+"
+    (let* ((symb  (symbol-at-point))
+           (symb-str (substring-no-properties (symbol-name symb)))
+           (assign (elpy-rpc-get-assignment)))
+      (when symb
+        (if (and assign (string= (car assign) (buffer-file-name)))
+            (format "%s: %s"
+                    (line-number-at-pos (+ 1 (car (cdr assign))))
+                    symb-str)
+          (format "%s: %s" (line-number-at-pos) symb-str)))))
 
   (defun elpy-xref--identifier-name (id)
     "Return the identifier ID variable name."
@@ -3189,27 +3195,27 @@ This is needed to get information on the identifier with jedi
     (elpy-xref--get-completion-table))
 
   (defun elpy-xref--get-completion-table ()
-    "Return the completion table for identifiers."
-    (let ((table nil))
+    "Return the completion table for identifiers.
+
+Try to use the identifier assignement instead of the identifier at point.
+Also ensure that variables are not represented more than once."
+    (let ((table nil)
+          (outside-assigns))
       (cl-loop
        for ref in (nreverse (elpy-rpc-get-names))
        for offset = (+ (alist-get 'offset ref) 1)
-       for filename = (alist-get 'filename ref)
-       ;; ensure that variables with same assignment are not represented twice
-       do (with-current-buffer (find-file-noselect filename)
-            (save-excursion
-                                 (goto-char offset)
-                                 (let* ((def (elpy-rpc-get-assignment))
-                                        (tmp_filename (car def))
-                                        (tmp_offset (car (cdr def))))
-                                   (when def
-                                     (setq filename tmp_filename)
-                                     (setq offset (+ tmp_offset 1))))))
-       for line = (with-current-buffer (find-file-noselect filename)
-                    (line-number-at-pos offset))
+       for line = (line-number-at-pos offset)
+       ;; Use assignment line position if the assignement is in the same file
+       for assign = (save-excursion (goto-char offset) (elpy-rpc-get-assignment))
+       do (when (string= (car assign) (buffer-file-name))
+            (setq offset (+ 1 (car (cdr assign))))
+            (setq line (line-number-at-pos offset)))
        for id = (format "%s: %s" line (alist-get 'name ref))
-       unless (member id table)
-       do (push id table))
+       ;; ensure that identifier are represented only once
+       unless (or (member id table) (member assign outside-assigns))
+       do (progn
+            (push id table)
+            (when assign (push assign outside-assigns))))
       table))
 
   ;; Apropos
