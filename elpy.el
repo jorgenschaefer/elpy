@@ -593,9 +593,13 @@ virtualenv.
     (add-hook 'xref-backend-functions #'elpy--xref-backend nil t))
   (cond
    (elpy-mode
-    (elpy-modules-buffer-init))
+    (elpy-modules-buffer-init)
+    (add-hook 'pre-command-hook 'elpy-autodoc--pre-command nil t)
+    (add-hook 'post-command-hook 'elpy-autodoc--post-command nil t))
    ((not elpy-mode)
-    (elpy-modules-buffer-stop))))
+    (elpy-modules-buffer-stop)
+    (remove-hook 'pre-command-hook 'elpy-autodoc--pre-command t)
+    (remove-hook 'post-command-hook 'elpy-autodoc--post-command t))))
 
 ;;;;;;;;;;;;;
 ;;; Elpy News
@@ -2087,6 +2091,38 @@ prefix argument is given, prompt for a symbol from the user."
       (if symbol
           (symbol-name symbol)
         nil))))
+
+;;;;;;;;;;;;;;
+;;; Auto documentation
+
+(defvar elpy-autodoc-timer nil
+  "Timer for autodoc to show up.")
+
+(defcustom elpy-autodoc-delay .5
+  "Idle delay before which displaying autodoc.")
+
+(defun elpy-autodoc--pre-command ()
+  "Cancel autodoc timer on user action."
+  (when elpy-autodoc-timer
+    (cancel-timer elpy-autodoc-timer)
+    (setq elpy-autodoc-timer nil)))
+
+(defun elpy-autodoc--post-command ()
+  "Set up autodoc timer after user action."
+  (when elpy-autodoc-delay
+    (setq elpy-autodoc-timer
+          (run-with-timer elpy-autodoc-delay nil
+                          'elpy-autodoc--refresh-doc))))
+
+(defun elpy-autodoc--refresh-doc ()
+  "Refresh the doc asynchronously."
+  (when (get-buffer-window "*Python Doc*")
+    (elpy-rpc-get-docstring 'elpy-autodoc--show-doc (lambda (reason) nil))))
+
+(defun elpy-autodoc--show-doc (doc)
+  "Display DOC (if any) and only if the doc buffer is visible."
+  (when (and doc (get-buffer-window "*Python Doc*"))
+             (elpy-doc--show doc)))
 
 ;;;;;;;;;;;;;;
 ;;; Buffer manipulation
