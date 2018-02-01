@@ -2095,11 +2095,13 @@ prefix argument is given, prompt for a symbol from the user."
 ;;;;;;;;;;;;;;
 ;;; Auto documentation
 
+;; Auto refresh documentation on cursor motion
 (defvar elpy-autodoc-timer nil
   "Timer for autodoc to show up.")
 
 (defcustom elpy-autodoc-delay .5
-  "Idle delay before which displaying autodoc.")
+  "Idle delay before which refreshing the documentation.
+If nil, deactivate documentation auto refresh.")
 
 (defun elpy-autodoc--pre-command ()
   "Cancel autodoc timer on user action."
@@ -2123,6 +2125,26 @@ prefix argument is given, prompt for a symbol from the user."
   "Display DOC (if any) and only if the doc buffer is visible."
   (when (and doc (get-buffer-window "*Python Doc*"))
              (elpy-doc--show doc)))
+
+;; Auto refresh documentation in company candidate selection
+(defun elpy-autodoc--frontend (command)
+  "elpy-autodoc front-end for refreshing documentation."
+  (pcase command
+    (`post-command (when elpy-autodoc-delay
+                     (when elpy-autodoc-timer
+                       (cancel-timer elpy-autodoc-timer))
+                     (setq elpy-autodoc-timer
+                           (run-with-timer elpy-autodoc-delay nil 'elpy-autodoc--refresh-doc-from-company))))
+    (`hide
+     (when elpy-autodoc-delay
+       (cancel-timer elpy-autodoc-timer)))))
+
+(defun elpy-autodoc--refresh-doc-from-company ()
+  "Refresh the doc asynchronously."
+  (interactive)
+  (let* ((symbol (nth company-selection company-candidates))
+         (doc (elpy-rpc-get-completion-docstring symbol)))
+    (elpy-autodoc--show-doc doc)))
 
 ;;;;;;;;;;;;;;
 ;;; Buffer manipulation
@@ -3374,6 +3396,9 @@ If you need your modeline, you can set the variable `elpy-remove-modeline-lighte
      ;; Also, dabbrev in comments and strings is nice.
      (set (make-local-variable 'company-dabbrev-code-everywhere)
           t)
+     ;; Add documentation auto-refresh
+     (make-local-variable 'company-frontends)
+     (add-to-list 'company-frontends 'elpy-autodoc--frontend :append)
      ;; Add our own backend and remove a bunch of backends that
      ;; interfere in Python mode.
      (set (make-local-variable 'company-backends)
