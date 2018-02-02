@@ -2101,7 +2101,11 @@ prefix argument is given, prompt for a symbol from the user."
 
 (defcustom elpy-autodoc-delay .5
   "Idle delay before which refreshing the documentation.
-If nil, deactivate documentation auto refresh.")
+If nil, deactivate documentation auto refresh."
+  :type '(choice (const :tag "never (nil)" nil)
+                 (const :tag "immediate (0)" 0)
+                 (number :tag "seconds"))
+  :group 'elpy)
 
 (defun elpy-autodoc--pre-command ()
   "Cancel autodoc timer on user action."
@@ -2136,7 +2140,7 @@ If nil, deactivate documentation auto refresh.")
                      (setq elpy-autodoc-timer
                            (run-with-timer elpy-autodoc-delay nil 'elpy-autodoc--refresh-doc-from-company))))
     (`hide
-     (when elpy-autodoc-delay
+     (when elpy-autodoc-timer
        (cancel-timer elpy-autodoc-timer)))))
 
 (defun elpy-autodoc--refresh-doc-from-company ()
