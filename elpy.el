@@ -2987,7 +2987,8 @@ Returns a calltip string for the function call at point."
 
 Returns a list of possible completions for the Python symbol at
 point."
-  (when (< (buffer-size) elpy-rpc-ignored-buffer-size)
+  (when (and (< (buffer-size) elpy-rpc-ignored-buffer-size)
+             (not (string-match "^[0-9]+$" (symbol-name (symbol-at-point)))))
     (elpy-rpc "get_completions"
               (list buffer-file-name
                     (elpy-rpc--buffer-contents)
