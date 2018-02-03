@@ -49,15 +49,21 @@ class TestRPCGetCompletionLocation(RPCGetCompletionLocationTests,
 
 class TestRPCGetDocstring(RPCGetDocstringTests,
                           JediBackendTestCase):
-    JSON_LOADS_DOCSTRING = (
-        'loads(s, encoding=None, cls=None, '
-        'object_hook=None, parse_float=None,'
-    )
 
     def check_docstring(self, docstring):
+        if sys.version_info >= (3, 6):
+            JSON_LOADS_DOCSTRING = (
+                'loads(s, *, encoding=None, cls=None, '
+                'object_hook=None, parse_float=None,'
+            )
+        else:
+            JSON_LOADS_DOCSTRING = (
+                'loads(s, encoding=None, cls=None, '
+                'object_hook=None, parse_float=None,'
+            )
         lines = docstring.splitlines()
         self.assertEqual(lines[0], 'Documentation for json.loads:')
-        self.assertEqual(lines[2], self.JSON_LOADS_DOCSTRING)
+        self.assertEqual(lines[2], JSON_LOADS_DOCSTRING)
 
     @mock.patch("elpy.jedibackend.run_with_debug")
     def test_should_not_return_empty_docstring(self, run_with_debug):
