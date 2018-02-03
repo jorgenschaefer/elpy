@@ -9,3 +9,53 @@
                      '("get_completions"
                        (nil "" 0)
                        nil nil))))))
+
+(ert-deftest elpy-rpc-get-completions-should-return-completion ()
+    (elpy-testcase ((:project project-root "test.py")
+                    (:emacs-required "25.1"))
+        (find-file (f-join project-root "test.py"))
+        (python-mode)
+        (elpy-mode)
+        (insert "def addition(x, y):\n"
+                "    return x + y\n"
+                "def addition2(x, y):\n"
+                "    return x + y\n"
+                "var1 = add")
+        (let* ((compls (elpy-rpc-get-completions))
+               (compl1 (car compls))
+               (compl2 (car (cdr compls))))
+          (should (string= (alist-get 'name compl1) "addition"))
+          (should (string= (alist-get 'suffix compl1) "ition"))
+          (should (string= (alist-get 'meta compl1) "def addition"))
+          (should (string= (alist-get 'annotation compl1) "function"))
+          (should (string= (alist-get 'name compl2) "addition2"))
+          (should (string= (alist-get 'suffix compl2) "ition2"))
+          (should (string= (alist-get 'meta compl2) "def addition2"))
+          (should (string= (alist-get 'annotation compl2) "function")))))
+
+(ert-deftest elpy-rpc-get-completions-should-not-return-completion-for-numbers ()
+    (elpy-testcase ((:project project-root "test.py")
+                    (:emacs-required "25.1"))
+        (find-file (f-join project-root "test.py"))
+        (python-mode)
+        (elpy-mode)
+        (insert "def foo(x, y):\n"
+                "    return x + y\n"
+                "a = 893")
+        (let ((compl (elpy-rpc-get-completions)))
+          (should (equal compl nil)))))
+
+(ert-deftest elpy-rpc-get-completions-should-return-completion-for-variable-with-numbers ()
+    (elpy-testcase ((:project project-root "test.py")
+                    (:emacs-required "25.1"))
+        (find-file (f-join project-root "test.py"))
+        (python-mode)
+        (elpy-mode)
+        (insert "def foo12345(x, y):\n"
+                "    return x + y\n"
+                "a = foo12")
+        (let ((compl (car (elpy-rpc-get-completions))))
+          (should (string= (alist-get 'name compl) "foo12345"))
+          (should (string= (alist-get 'suffix compl) "345"))
+          (should (string= (alist-get 'meta compl) "def foo12345"))
+          (should (string= (alist-get 'annotation compl) "function")))))
