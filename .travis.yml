@@ -5,6 +5,7 @@ python:
   - 3.3
   - 3.4
   - 3.5
+  - 3.6
 env:
   # - EVM_EMACS=emacs-24.1-travis
   # - EVM_EMACS=emacs-24.2-travis
@@ -13,6 +14,7 @@ env:
   - EVM_EMACS=emacs-24.5-travis
   - EVM_EMACS=emacs-25.1-travis
   - EVM_EMACS=emacs-25.2-travis
+  - EVM_EMACS=emacs-25.3-travis
   # - EVM_EMACS=emacs-git-snapshot
 before_install:
   - curl -fsSkL https://gist.github.com/rejeep/ebcd57c3af83b049833b/raw > travis.sh && source ./travis.sh
