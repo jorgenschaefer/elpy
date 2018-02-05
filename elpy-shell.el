@@ -24,6 +24,8 @@
 ;;
 ;;; Code:
 
+(eval-when-compile (require 'subr-x))
+
 ;;;;;;;;;;;;;;;;;;;;;;
 ;;; User customization
 
