@@ -2138,7 +2138,7 @@ If nil, deactivate the documentation automatic refresh."
     (`post-command
      (when elpy-autodoc-delay
        (when elpy-autodoc--timer
-         (cancel-timer elpy-autodoc-timer))
+         (cancel-timer elpy-autodoc--timer))
        (setq elpy-autodoc--timer
              (run-with-timer elpy-autodoc-delay
                              nil
