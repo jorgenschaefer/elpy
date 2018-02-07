@@ -2096,12 +2096,13 @@ prefix argument is given, prompt for a symbol from the user."
 ;;; Auto documentation
 
 ;; Auto refresh documentation on cursor motion
-(defvar elpy-autodoc-timer nil
-  "Timer for autodoc to show up.")
+(defvar elpy-autodoc--timer nil
+  "Timer to refresh documentation.")
 
 (defcustom elpy-autodoc-delay .5
-  "Idle delay before which refreshing the documentation.
-If nil, deactivate documentation auto refresh."
+  "The idle delay in seconds until documentation is refreshed automatically.
+
+If nil, deactivate the documentation automatic refresh."
   :type '(choice (const :tag "never (nil)" nil)
                  (const :tag "immediate (0)" 0)
                  (number :tag "seconds"))
@@ -2109,43 +2110,45 @@ If nil, deactivate documentation auto refresh."
 
 (defun elpy-autodoc--pre-command ()
   "Cancel autodoc timer on user action."
-  (when elpy-autodoc-timer
-    (cancel-timer elpy-autodoc-timer)
-    (setq elpy-autodoc-timer nil)))
+  (when elpy-autodoc--timer
+    (cancel-timer elpy-autodoc--timer)
+    (setq elpy-autodoc--timer nil)))
 
 (defun elpy-autodoc--post-command ()
   "Set up autodoc timer after user action."
   (when elpy-autodoc-delay
-    (setq elpy-autodoc-timer
+    (setq elpy-autodoc--timer
           (run-with-timer elpy-autodoc-delay nil
                           'elpy-autodoc--refresh-doc))))
 
 (defun elpy-autodoc--refresh-doc ()
-  "Refresh the doc asynchronously."
+  "Refresh the doc asynchronously with the symbol at point."
   (when (get-buffer-window "*Python Doc*")
     (elpy-rpc-get-docstring 'elpy-autodoc--show-doc (lambda (reason) nil))))
 
 (defun elpy-autodoc--show-doc (doc)
-  "Display DOC (if any) and only if the doc buffer is visible."
+  "Display DOC (if any) but only if the doc buffer is currently visible."
   (when (and doc (get-buffer-window "*Python Doc*"))
-             (elpy-doc--show doc)))
+    (elpy-doc--show doc)))
 
 ;; Auto refresh documentation in company candidate selection
 (defun elpy-autodoc--frontend (command)
-  "elpy-autodoc front-end for refreshing documentation."
+  "Elpy autodoc front-end for refreshing documentation."
   (pcase command
-    (`post-command (when elpy-autodoc-delay
-                     (when elpy-autodoc-timer
-                       (cancel-timer elpy-autodoc-timer))
-                     (setq elpy-autodoc-timer
-                           (run-with-timer elpy-autodoc-delay nil 'elpy-autodoc--refresh-doc-from-company))))
+    (`post-command
+     (when elpy-autodoc-delay
+       (when elpy-autodoc--timer
+         (cancel-timer elpy-autodoc-timer))
+       (setq elpy-autodoc--timer
+             (run-with-timer elpy-autodoc-delay
+                             nil
+                             'elpy-autodoc--refresh-doc-from-company))))
     (`hide
-     (when elpy-autodoc-timer
-       (cancel-timer elpy-autodoc-timer)))))
+     (when elpy-autodoc--timer
+       (cancel-timer elpy-autodoc--timer)))))
 
 (defun elpy-autodoc--refresh-doc-from-company ()
-  "Refresh the doc asynchronously."
-  (interactive)
+  "Refresh the doc asynchronously using the current company candidate."
   (let* ((symbol (nth company-selection company-candidates))
          (doc (elpy-rpc-get-completion-docstring symbol)))
     (elpy-autodoc--show-doc doc)))

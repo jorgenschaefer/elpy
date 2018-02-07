@@ -532,11 +532,13 @@ Elpy provides a single interface to documentation.
    With a prefix argument, Elpy will skip all the guessing and just
    prompt the user for a string to look up in pydoc.
 
+   Documentation buffer will be automatically updated with symbol at
+   point or with the currently selected company candidate.
+
 .. option:: elpy-autodoc-delay
 
-   Delay before which the documentation buffer will be updated using the symbol at point.
-   Documentation will also be updated from company candidate selection.
-   If nil, Elpy won't update the documentation buffer.
+   The idle delay in seconds until documentation is updated automatically.
+   If nil, disable automatic update of the documentation buffer.
 
 
 Testing
