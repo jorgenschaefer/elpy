@@ -130,7 +130,7 @@ Available types:
   boolean      - A boolean question"
   (mapcar (lambda (arg)
             (let ((type (cadr arg))
-                  (prompt (caddr arg)))
+                  (prompt (cl-caddr arg)))
               (cond
                ((equal type "offset")
                 (aref pos 0))
