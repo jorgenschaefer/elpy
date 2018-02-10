@@ -75,6 +75,7 @@ This can be used to enable minor modes for Python development."
 (defcustom elpy-modules '(elpy-module-sane-defaults
                           elpy-module-company
                           elpy-module-eldoc
+                          elpy-module-autodoc
                           elpy-module-flymake
                           elpy-module-highlight-indentation
                           elpy-module-pyvenv
@@ -98,6 +99,8 @@ can be inidividually enabled or disabled."
                      elpy-module-yasnippet)
               (const :tag "Django configurations (Elpy-Django)"
                      elpy-module-django)
+              (const :tag "Automatically update documentation (Autodoc)."
+                     elpy-module-autodoc)
               (const :tag "Configure some sane defaults for Emacs"
                      elpy-module-sane-defaults))
   :group 'elpy)
@@ -593,13 +596,9 @@ virtualenv.
     (add-hook 'xref-backend-functions #'elpy--xref-backend nil t))
   (cond
    (elpy-mode
-    (elpy-modules-buffer-init)
-    (add-hook 'pre-command-hook 'elpy-autodoc--pre-command nil t)
-    (add-hook 'post-command-hook 'elpy-autodoc--post-command nil t))
+    (elpy-modules-buffer-init))
    ((not elpy-mode)
-    (elpy-modules-buffer-stop)
-    (remove-hook 'pre-command-hook 'elpy-autodoc--pre-command t)
-    (remove-hook 'post-command-hook 'elpy-autodoc--post-command t))))
+    (elpy-modules-buffer-stop))))
 
 ;;;;;;;;;;;;;
 ;;; Elpy News
@@ -628,7 +627,8 @@ virtualenv.
     ("Snippets (YASnippet)" yasnippet "yas-")
     ("Directory Grep (rgrep)" grep "grep-")
     ("Search as You Type (ido)" ido "ido-")
-    ("Django Extension" elpy-django "elpy-django-")
+    ("Django extension" elpy-django "elpy-django-")
+    ("Autodoc extension" elpy-autodoc "elpy-autodoc-")
     ;; ffip does not use defcustom
     ;; highlight-indent does not use defcustom, either. Its sole face
     ;; is defined in basic-faces.
@@ -2093,67 +2093,6 @@ prefix argument is given, prompt for a symbol from the user."
         nil))))
 
 ;;;;;;;;;;;;;;
-;;; Auto documentation
-
-;; Auto refresh documentation on cursor motion
-(defvar elpy-autodoc--timer nil
-  "Timer to refresh documentation.")
-
-(defcustom elpy-autodoc-delay .5
-  "The idle delay in seconds until documentation is refreshed automatically.
-
-If nil, deactivate the documentation automatic refresh."
-  :type '(choice (const :tag "never (nil)" nil)
-                 (const :tag "immediate (0)" 0)
-                 (number :tag "seconds"))
-  :group 'elpy)
-
-(defun elpy-autodoc--pre-command ()
-  "Cancel autodoc timer on user action."
-  (when elpy-autodoc--timer
-    (cancel-timer elpy-autodoc--timer)
-    (setq elpy-autodoc--timer nil)))
-
-(defun elpy-autodoc--post-command ()
-  "Set up autodoc timer after user action."
-  (when elpy-autodoc-delay
-    (setq elpy-autodoc--timer
-          (run-with-timer elpy-autodoc-delay nil
-                          'elpy-autodoc--refresh-doc))))
-
-(defun elpy-autodoc--refresh-doc ()
-  "Refresh the doc asynchronously with the symbol at point."
-  (when (get-buffer-window "*Python Doc*")
-    (elpy-rpc-get-docstring 'elpy-autodoc--show-doc (lambda (reason) nil))))
-
-(defun elpy-autodoc--show-doc (doc)
-  "Display DOC (if any) but only if the doc buffer is currently visible."
-  (when (and doc (get-buffer-window "*Python Doc*"))
-    (elpy-doc--show doc)))
-
-;; Auto refresh documentation in company candidate selection
-(defun elpy-autodoc--frontend (command)
-  "Elpy autodoc front-end for refreshing documentation."
-  (pcase command
-    (`post-command
-     (when elpy-autodoc-delay
-       (when elpy-autodoc--timer
-         (cancel-timer elpy-autodoc--timer))
-       (setq elpy-autodoc--timer
-             (run-with-timer elpy-autodoc-delay
-                             nil
-                             'elpy-autodoc--refresh-doc-from-company))))
-    (`hide
-     (when elpy-autodoc--timer
-       (cancel-timer elpy-autodoc--timer)))))
-
-(defun elpy-autodoc--refresh-doc-from-company ()
-  "Refresh the doc asynchronously using the current company candidate."
-  (let* ((symbol (nth company-selection company-candidates))
-         (doc (elpy-rpc-get-completion-docstring symbol)))
-    (elpy-autodoc--show-doc doc)))
-
-;;;;;;;;;;;;;;
 ;;; Buffer manipulation
 
 (defun elpy-buffer--replace-block (spec)
@@ -3403,9 +3342,6 @@ If you need your modeline, you can set the variable `elpy-remove-modeline-lighte
      ;; Also, dabbrev in comments and strings is nice.
      (set (make-local-variable 'company-dabbrev-code-everywhere)
           t)
-     ;; Add documentation auto-refresh
-     (make-local-variable 'company-frontends)
-     (add-to-list 'company-frontends 'elpy-autodoc--frontend :append)
      ;; Add our own backend and remove a bunch of backends that
      ;; interfere in Python mode.
      (set (make-local-variable 'company-backends)
@@ -3859,6 +3795,82 @@ description."
      (elpy-django-setup))
     (`buffer-stop
      (elpy-django -1))))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; Module: Autodoc
+
+(defun elpy-module-autodoc (command &rest _args)
+  "Module to automatically update documentation."
+  (pcase command
+    (`buffer-init
+     (add-hook 'pre-command-hook 'elpy-autodoc--pre-command nil t)
+     (add-hook 'post-command-hook 'elpy-autodoc--post-command nil t)
+     (make-local-variable 'company-frontends)
+     (add-to-list 'company-frontends 'elpy-autodoc--frontend :append))
+    (`buffer-stop
+     (remove-hook 'pre-command-hook 'elpy-autodoc--pre-command t)
+     (remove-hook 'post-command-hook 'elpy-autodoc--post-command t)
+     (setq company-frontends (remove 'elpy-autodoc--frontend 'company-frontends)))))
+
+
+;; Auto refresh documentation on cursor motion
+(defvar elpy-autodoc--timer nil
+  "Timer to refresh documentation.")
+
+(defcustom elpy-autodoc-delay .5
+  "The idle delay in seconds until documentation is refreshed automatically.
+
+If nil, deactivate the documentation automatic refresh."
+  :type '(choice (const :tag "never (nil)" nil)
+                 (const :tag "immediate (0)" 0)
+                 (number :tag "seconds"))
+  :group 'elpy
+  :group 'elpy-autodoc)
+
+(defun elpy-autodoc--pre-command ()
+  "Cancel autodoc timer on user action."
+  (when elpy-autodoc--timer
+    (cancel-timer elpy-autodoc--timer)
+    (setq elpy-autodoc--timer nil)))
+
+(defun elpy-autodoc--post-command ()
+  "Set up autodoc timer after user action."
+  (when elpy-autodoc-delay
+    (setq elpy-autodoc--timer
+          (run-with-timer elpy-autodoc-delay nil
+                          'elpy-autodoc--refresh-doc))))
+
+(defun elpy-autodoc--refresh-doc ()
+  "Refresh the doc asynchronously with the symbol at point."
+  (when (get-buffer-window "*Python Doc*")
+    (elpy-rpc-get-docstring 'elpy-autodoc--show-doc (lambda (_reason) nil))))
+
+(defun elpy-autodoc--show-doc (doc)
+  "Display DOC (if any) but only if the doc buffer is currently visible."
+  (when (and doc (get-buffer-window "*Python Doc*"))
+    (elpy-doc--show doc)))
+
+;; Auto refresh documentation in company candidate selection
+(defun elpy-autodoc--frontend (command)
+  "Elpy autodoc front-end for refreshing documentation."
+  (pcase command
+    (`post-command
+     (when elpy-autodoc-delay
+       (when elpy-autodoc--timer
+         (cancel-timer elpy-autodoc--timer))
+       (setq elpy-autodoc--timer
+             (run-with-timer elpy-autodoc-delay
+                             nil
+                             'elpy-autodoc--refresh-doc-from-company))))
+    (`hide
+     (when elpy-autodoc--timer
+       (cancel-timer elpy-autodoc--timer)))))
+
+(defun elpy-autodoc--refresh-doc-from-company ()
+  "Refresh the doc asynchronously using the current company candidate."
+  (let* ((symbol (nth company-selection company-candidates))
+         (doc (elpy-rpc-get-completion-docstring symbol)))
+    (elpy-autodoc--show-doc doc)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Backwards compatibility
