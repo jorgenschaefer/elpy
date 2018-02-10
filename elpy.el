@@ -951,6 +951,11 @@ item in another window.\n\n")
 
     ))
 
+(defun elpy-config--package-available-p (package)
+  "Check if PACKAGE is installed in the rpc."
+  (equal 0 (call-process elpy-rpc-python-command nil nil nil "-c"
+                         (format "import %s" package))))
+
 (defun elpy-config--get-config ()
   "Return the configuration from `elpy-rpc-python-command'.
 
@@ -2139,9 +2144,9 @@ prefix argument is given, prompt for a symbol from the user."
   "Format code using the available formatter."
   (interactive)
   (cond
-   ((executable-find "yapf")
+   ((elpy-config--package-available-p "yapf")
     (elpy-yapf-fix-code))
-   ((executable-find "autopep8")
+   ((elpy-config--package-available-p "autopep8")
     (elpy-autopep8-fix-code))
    (t
     (message "Install yapf/autopep8 to format code."))))
