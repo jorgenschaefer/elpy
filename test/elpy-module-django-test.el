@@ -70,3 +70,15 @@ Available subcommands:
     (should (member "clearsessions" (elpy-django--get-commands)))
     (should (member "migrate" (elpy-django--get-commands)))
     (should (member "changepassword" (elpy-django--get-commands)))))
+
+(ert-deftest elpy-module-django-get-test-runner-should-error-if-no-django-settings-module-environment ()
+  (setenv "DJANGO_SETTINGS_MODULE" "")
+  (should-error (elpy-django--get-test-runner)))
+
+(ert-deftest elpy-module-django-get-test-runner-should-error-if-cannot-import-django-settings-module ()
+  (setenv "DJANGO_SETTINGS_MODULE" "popcorn")
+  (should-error (elpy-django--get-test-runner)))
+
+(ert-deftest elpy-module-django-get-test-format-should-error-if-cannot-find-test-runner ()
+  (mletf* ((elpy-django--get-test-runner "math")))
+  (should-error (elpy--get-django-test-format)))

@@ -78,6 +78,18 @@ require arguments in order for it to work."
   :group 'elpy)
 (make-variable-buffer-local 'elpy-django-commands-with-req-arg)
 
+
+(defcustom elpy-django-test-runner-formats '(("django_nose.NoseTestSuiteRunner" . ":")
+                                              ("django.test.runner.DiscoverRunner" . "."))
+  "List of test runners and their format for calling tests.
+
+Some tests runners are called differently. For example, Nose requires a ':' when calling specific tests,
+but the default Django test runner uses '.'"
+  :type 'list
+  :safe 'listp
+  :group 'elpy)
+(make-variable-buffer-local 'elpy-django-test-runner-formats)
+
 ;;;;;;;;;;;;;;;;;;;;;;
 ;; Key map
 
@@ -127,6 +139,35 @@ require arguments in order for it to work."
     (setq dj-commands-str (cl-remove-if (lambda (x) (string= x "")) dj-commands-str))
     (setq dj-commands-str (mapcar (lambda (x) (s-trim x)) dj-commands-str))
     (sort dj-commands-str 'string-lessp)))
+
+(defun elpy-django--get-test-runner ()
+  "Return the name of the django test runner.
+Needs `DJANGO_SETTINGS_MODULE' to be set in order to work."
+  (let ((django-import-cmd "import django;django.setup();from django.conf import settings;print(settings.TEST_RUNNER)")
+        (django-settings-env (getenv "DJANGO_SETTINGS_MODULE"))
+        (default-directory (elpy-project-root)))
+    ;; If no Django settings has been set, then nothing will work. Warn user
+    (when (not django-settings-env)
+      (error "Please set environment variable `DJANGO_SETTINGS_MODULE' if you'd like to run the test runner"))
+
+    ;; We have to be able to import the DJANGO_SETTINGS_MODULE otherwise it will also break
+    ;; If we get a traceback when import django settings, then warn the user that settings is not valid
+    (when (not (string= "" (shell-command-to-string
+                            (format "%s -c 'import %s'" elpy-rpc-python-command django-settings-env))))
+      (error (format "Unable to import DJANGO_SETTINGS_MODULE: '%s'" django-settings-env)))
+
+    ;; Return test runner
+    (s-trim (shell-command-to-string
+             (format "%s -c '%s'" elpy-rpc-python-command django-import-cmd)))))
+
+(defun elpy-django--get-test-format ()
+  "When running a Django test, some test runners require a different format that others.
+Return the correct string format here."
+  (let  ((pair (assoc (elpy-django--get-test-runner) elpy-django-test-runner-formats)))
+    (if pair
+        ;; Return the associated test format
+        (cdr pair)
+      (error (format "Unable to find test format for `%s'" (elpy--get-django-test-runner))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;
 ;;; User Functions

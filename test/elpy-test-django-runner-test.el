@@ -36,6 +36,7 @@
   (elpy-testcase ()
     (mletf* ((command nil)
              (top nil)
+             (elpy-django--get-test-format () ".")
              (elpy-test-run (start-dir &rest args) (setq command args
                                                          top start-dir)))
 
@@ -53,6 +54,7 @@
   (elpy-testcase ()
     (mletf* ((command nil)
              (top nil)
+             (elpy-django--get-test-format () ".")
              (elpy-test-run (start-dir &rest args) (setq command args
                                                          top start-dir)))
 
