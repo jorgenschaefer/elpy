@@ -4,7 +4,7 @@
 	  (buff2 (generate-new-buffer "buff2"))
 	  (shell-buff1 nil)
 	  (shell-buff2 nil)
-	  (elpy-dedicated-shells t))
+          (add-hook (lambda () (elpy-shell-toggle-dedicated-shell 1))))
       (with-current-buffer buff1
 	(python-mode)
 	(elpy-mode 1)
