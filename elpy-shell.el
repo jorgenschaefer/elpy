@@ -25,6 +25,7 @@
 ;;; Code:
 
 (eval-when-compile (require 'subr-x))
+(require 'python)
 
 ;;;;;;;;;;;;;;;;;;;;;;
 ;;; User customization
@@ -37,6 +38,10 @@ manually started dedicated shells. Setting this option to non-nil
 force the creation of dedicated shells for each buffers."
   :type 'boolean
   :group 'elpy)
+(make-obsolete-variable 'elpy-dedicated-shells
+                        "Dedicated shells are no longer supported by Elpy.
+See the documentation to achieve the same behavior with `elpy-shell-toggle-dedicated-shell'."
+                        "1.17.0")
 
 (defcustom elpy-shell-display-buffer-after-send nil ;
   "Whether to display the Python shell after sending something to it."
@@ -168,9 +173,6 @@ the code cell beginnings defined here."
 (defun elpy-shell-kill (&optional kill-buff)
   "Kill the current python shell.
 
-If `elpy-dedicated-shells' is non-nil,
-kill the current buffer dedicated shell.
-
 If KILL-BUFF is non-nil, also kill the associated buffer."
   (interactive)
   (let ((shell-buffer (python-shell-get-buffer)))
@@ -224,36 +226,61 @@ If ASK-FOR-EACH-ONE is non-nil, ask before killing each python process."
 If SIT is non-nil, sit for that many seconds after creating a
 Python process. This allows the process to start up."
   (let* ((bufname (format "*%s*" (python-shell-get-process-name nil)))
-         (dedbufname (format "*%s*" (python-shell-get-process-name t)))
-         (proc (get-buffer-process bufname))
-         (dedproc (get-buffer-process dedbufname)))
-    (if elpy-dedicated-shells
-        (if dedproc
-            dedproc
-          (let ((default-directory (or (and elpy-shell-use-project-root
-                                            (elpy-project-root))
-                                       default-directory)))
-            (run-python (python-shell-parse-command) t t))
-          (when sit
-            (sit-for sit))
-          (when (elpy-project-root)
-            (python-shell-send-string
-             (format "import sys;sys.path.append('%s')" (elpy-project-root))))
-          (get-buffer-process dedbufname))
-      (if dedproc
-          dedproc
-        (if proc
-            proc
-          (let ((default-directory (or (and elpy-shell-use-project-root
-                                            (elpy-project-root))
-                                       default-directory)))
-            (run-python (python-shell-parse-command) nil t))
-          (when sit
-            (sit-for sit))
-          (when (elpy-project-root)
-            (python-shell-send-string
-             (format "import sys;sys.path.append('%s')" (elpy-project-root))))
-          (get-buffer-process bufname))))))
+         (proc (get-buffer-process bufname)))
+    (if proc
+        proc
+      (let ((default-directory (or (and elpy-shell-use-project-root
+                                        (elpy-project-root))
+                                   default-directory)))
+        (run-python (python-shell-parse-command) nil t))
+      (when sit (sit-for sit))
+      (when (elpy-project-root)
+        (python-shell-send-string
+         (format "import sys;sys.path.append('%s')" (elpy-project-root))))
+      (get-buffer-process bufname))))
+
+(defun elpy-shell-toggle-dedicated-shell (&optional arg)
+  "Toggle the use of a dedicated python shell for the current buffer.
+
+if ARG is positive, enable the use of a dedicated shell.
+if ARG is negative or 0, disable the use of a dedicated shell."
+  (interactive)
+  (let ((arg (or arg
+                 (if (local-variable-p 'python-shell-buffer-name) 0 1))))
+    (if (<= arg 0)
+        (kill-local-variable 'python-shell-buffer-name)
+      (setq-local python-shell-buffer-name
+                  (format "Python[%s]" (buffer-name))))))
+
+(defun elpy-shell-set-local-shell (&optional shell-name)
+  "Associate the current buffer to a specific shell.
+
+This means that the code from the current buffer will be sent to this shell.
+
+If SHELL-NAME is not specified, ask with completion for a name.
+
+If SHELL-NAME is \"Global\", associate the current buffer to the main python
+shell (often \"*Python*\" shell)."
+  (interactive)
+  (let* ((current-shell-name (if (local-variable-p 'python-shell-buffer-name)
+                                 (progn
+                                   (string-match "Python\\[\\(.*?\\)\\]"
+                                                 python-shell-buffer-name)
+                                   (match-string 1 python-shell-buffer-name))
+                               "Global"))
+         (shell-names (cl-loop
+                for buffer in (buffer-list)
+                for buffer-name = (substring-no-properties (buffer-name buffer))
+                if (string-match "\\*Python\\[\\(.*?\\)\\]\\*" buffer-name)
+                collect (match-string 1 buffer-name)))
+         (candidates (remove current-shell-name
+                          (delete-dups
+                           (append (list (buffer-name) "Global") shell-names))))
+         (prompt (format "Shell name (current: %s): " current-shell-name))
+         (shell-name (or shell-name (completing-read prompt candidates))))
+    (if (string= shell-name "Global")
+       (kill-local-variable 'python-shell-buffer-name)
+      (setq-local python-shell-buffer-name (format "Python[%s]" shell-name)))))
 
 (defun elpy-shell--ensure-shell-running ()
   "Ensure that the Python shell for the current buffer is running.
