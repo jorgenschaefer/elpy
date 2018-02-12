@@ -52,3 +52,23 @@ For their main work, they can use the helper function
 To make it possible to set the test runner as a file-, directory- or
 project-local variable, the function symbol should get the
 ``elpy-test-runner`` property with a value of ``t``.
+
+.. _Running Tests:
+
+Running Tests:
+==============
+
+You can set up a working environment for Elpy using ``pip`` and
+``cask``. After installing Cask_, create a new virtual environment
+and run the ``setup`` script in it:
+
+.. code-block::
+
+   virtualenv ~/.virtualenvs/elpy
+   source ~/.virtualenvs/elpy/bin/activate
+   ./scripts/setup
+
+.. _Cask: https://cask.readthedocs.io/en/latest/#user-guide
+
+
+You can now run ``./scripts/test`` to run Elpy's test suite.
