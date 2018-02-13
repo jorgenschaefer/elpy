@@ -3843,7 +3843,12 @@ If nil, deactivate the documentation automatic refresh."
 (defun elpy-autodoc--refresh-doc ()
   "Refresh the doc asynchronously with the symbol at point."
   (when (get-buffer-window "*Python Doc*")
-    (elpy-rpc-get-docstring 'elpy-autodoc--show-doc (lambda (_reason) nil))))
+    (save-excursion
+      (re-search-forward "\\>" (point-max) t)
+      (when (not (looking-at "("))
+        (python-nav-backward-up-list))
+      (elpy-rpc-get-docstring 'elpy-autodoc--show-doc
+                              (lambda (_reason) nil)))))
 
 (defun elpy-autodoc--show-doc (doc)
   "Display DOC (if any) but only if the doc buffer is currently visible."
