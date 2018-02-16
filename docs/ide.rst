@@ -245,11 +245,11 @@ The Shell Buffer
 
    By default, python buffers are all attached to a same python shell
    (that lies in the `*Python*` buffer), meaning that all buffers and
-   code fragments will be executed in this shell.
+   code fragments will be send to this shell.
    `elpy-shell-toggle-dedicated-shell` attaches a dedicated python shell
    (not shared with the other python buffers) to the current python buffer.
    To make this the default behavior (like the deprecated option
-   `elpy-dedicated-shells` did), you can use the following snippet:
+   `elpy-dedicated-shells` did), use the following snippet:
 
 .. code-block:: lisp
 
@@ -259,8 +259,7 @@ The Shell Buffer
 
    Attach the current python buffer to a specific python shell (whose name is
    asked with completion).
-   You can use this function, for example, to have one python shell per project,
-   with:
+   You can use this function to have one python shell per project, with:
 
 .. code-block:: lisp
 

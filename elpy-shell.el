@@ -40,7 +40,7 @@ force the creation of dedicated shells for each buffers."
   :group 'elpy)
 (make-obsolete-variable 'elpy-dedicated-shells
                         "Dedicated shells are no longer supported by Elpy.
-See the documentation to achieve the same behavior with `elpy-shell-toggle-dedicated-shell'."
+You can use `(add-hook 'elpy-mode-hook (lambda () (elpy-shell-toggle-dedicated-shell 1)))' to achieve the same result."
                         "1.17.0")
 
 (defcustom elpy-shell-display-buffer-after-send nil ;
@@ -255,9 +255,9 @@ if ARG is negative or 0, disable the use of a dedicated shell."
 (defun elpy-shell-set-local-shell (&optional shell-name)
   "Associate the current buffer to a specific shell.
 
-This means that the code from the current buffer will be sent to this shell.
+Meaning that the code from the current buffer will be sent to this shell.
 
-If SHELL-NAME is not specified, ask with completion for a name.
+If SHELL-NAME is not specified, ask with completion for a shell name.
 
 If SHELL-NAME is \"Global\", associate the current buffer to the main python
 shell (often \"*Python*\" shell)."
