@@ -241,19 +241,34 @@ The Shell Buffer
    starts the python interpreter here. This behaviour can be suppressed
    with the option ``elpy-shell-use-project-root``.
 
-.. option:: elpy-dedicated-shells
+.. command:: elpy-shell-toggle-dedicated-shell
 
-   By default, Elpy only starts a single interactive Python process. This
-   process will inherit the current virtual env. If you want to start a Python
-   interpreter with a different virtual env, you can either kill the existing
-   one, or rename the buffer. Moreover, if `elpy-dedicated-shells` is set to
-   ``t``, Elpy creates a dedicated shell for each buffer.
+   By default, python buffers are all attached to a same python shell
+   (that lies in the `*Python*` buffer), meaning that all buffers and
+   code fragments will be send to this shell.
+   `elpy-shell-toggle-dedicated-shell` attaches a dedicated python shell
+   (not shared with the other python buffers) to the current python buffer.
+   To make this the default behavior (like the deprecated option
+   `elpy-dedicated-shells` did), use the following snippet:
+
+.. code-block:: lisp
+
+   (add-hook 'elpy-mode-hook (lambda () (elpy-shell-toggle-dedicated-shell 1)))
+
+.. command:: elpy-shell-set-local-shell
+
+   Attach the current python buffer to a specific python shell (whose name is
+   asked with completion).
+   You can use this function to have one python shell per project, with:
+
+.. code-block:: lisp
+
+   (add-hook 'elpy-mode-hook (lambda () (elpy-shell-set-local-shell elpy-project-root)))
 
 .. command:: elpy-shell-kill
    :kbd: C-c C-k
 
-   Kill the current python shell. If :option:`elpy-dedicated-shells` is non-nil,
-   kill the current buffer dedicated shell.
+   Kill the associated python shell.
 
 .. command:: elpy-shell-kill-all
    :kbd: C-c C-K
