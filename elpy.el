@@ -3810,7 +3810,7 @@ description."
     (`buffer-stop
      (remove-hook 'pre-command-hook 'elpy-autodoc--pre-command t)
      (remove-hook 'post-command-hook 'elpy-autodoc--post-command t)
-     (setq company-frontends (remove 'elpy-autodoc--frontend 'company-frontends)))))
+     (setq company-frontends (remove 'elpy-autodoc--frontend company-frontends)))))
 
 
 ;; Auto refresh documentation on cursor motion
@@ -3843,12 +3843,8 @@ If nil, deactivate the documentation automatic refresh."
 (defun elpy-autodoc--refresh-doc ()
   "Refresh the doc asynchronously with the symbol at point."
   (when (get-buffer-window "*Python Doc*")
-    (save-excursion
-      (re-search-forward "\\>" (point-max) t)
-      (when (not (looking-at "("))
-        (python-nav-backward-up-list))
-      (elpy-rpc-get-docstring 'elpy-autodoc--show-doc
-                              (lambda (_reason) nil)))))
+    (elpy-rpc-get-docstring 'elpy-autodoc--show-doc
+                            (lambda (_reason) nil))))
 
 (defun elpy-autodoc--show-doc (doc)
   "Display DOC (if any) but only if the doc buffer is currently visible."
