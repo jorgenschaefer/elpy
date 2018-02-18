@@ -1967,7 +1967,7 @@ This requires Django 1.6 or the django-discover-runner package."
                 ;; or the default:
                 elpy-test-django-runner-command)
               (list (if test
-                        (format "%s.%s" module test)
+                        (format "%s%s%s" module (elpy-django--get-test-format) test)
                       module))))
     (apply #'elpy-test-run
            top
