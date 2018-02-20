@@ -321,24 +321,6 @@ edited instead. Setting this variable to nil disables this feature."
   :type '(repeat string)
   :group 'elpy)
 
-(defcustom elpy-test-django-runner-command '("django-admin.py" "test"
-                                             "--noinput")
-  "The command to use for `elpy-test-django-runner'."
-  :type '(repeat string)
-  :group 'elpy)
-
-(defcustom elpy-test-django-runner-manage-command '("manage.py" "test"
-                                                    "--noinput")
-  "The command to use for `elpy-test-django-runner' in case we want to use manage.py."
-  :type '(repeat string)
-  :group 'elpy)
-
-(defcustom elpy-test-django-with-manage nil
-  "Set to nil, elpy will use `elpy-test-django-runner-command',
-set to t elpy will use `elpy-test-django-runner-manage-command' and set the project root accordingly."
-  :type 'boolean
-  :group 'elpy)
-
 (defcustom elpy-test-nose-runner-command '("nosetests")
   "The command to use for `elpy-test-nose-runner'."
   :type '(repeat string)
@@ -1945,44 +1927,6 @@ This requires Python 2.7 or later."
                    elpy-test-green-runner-command)))
     (apply #'elpy-test-run top command)))
 (put 'elpy-test-green-runner 'elpy-test-runner-p t)
-
-(defun elpy-test-django-runner (top _file module test)
-  "Test the project using the Django discover runner,
-or with manage.py if elpy-test-django-with-manage is true.
-
-This requires Django 1.6 or the django-discover-runner package."
-  (interactive (elpy-test-at-point))
-  (if module
-      (apply #'elpy-test-run
-             top
-             (append
-              ;; if we want to use manage.py, get the root directory where it is.
-              (if elpy-test-django-with-manage
-                  (append (list (concat (expand-file-name
-                                         (locate-dominating-file
-                                          (elpy-project-root)
-                                          (car elpy-test-django-runner-manage-command)))
-                                        (car elpy-test-django-runner-manage-command)))
-                          (cdr elpy-test-django-runner-manage-command))
-                ;; or the default:
-                elpy-test-django-runner-command)
-              (list (if test
-                        (format "%s%s%s" module (elpy-django--get-test-format) test)
-                      module))))
-    (apply #'elpy-test-run
-           top
-           (append
-            (if elpy-test-django-with-manage
-                (append (list (concat (expand-file-name
-                                       (locate-dominating-file
-                                        (if (elpy-project-root)
-                                            (elpy-project-root)
-                                          ".")
-                                        (car elpy-test-django-runner-manage-command)))
-                                      (car elpy-test-django-runner-manage-command)))
-                        (cdr elpy-test-django-runner-manage-command))
-              elpy-test-django-runner-command)))))
-(put 'elpy-test-django-runner 'elpy-test-runner-p t)
 
 (defun elpy-test-nose-runner (top _file module test)
   "Test the project using the nose test runner.
