@@ -34,21 +34,21 @@
 Best to set it to full path to 'manage.py' if it's available."
   :type 'string
   :safe 'stringp
-  :group 'elpy)
+  :group 'elpy-django)
 (make-variable-buffer-local 'elpy-django-command)
 
 (defcustom elpy-django-server-ipaddr "127.0.0.1"
   "What address Django will use when running the dev server."
   :type 'string
   :safe 'stringp
-  :group 'elpy)
+  :group 'elpy-django)
 (make-variable-buffer-local 'elpy-django-server-ipaddr)
 
 (defcustom elpy-django-server-port "8000"
   "What port Django will use when running the dev server."
   :type 'string
   :safe 'stringp
-  :group 'elpy)
+  :group 'elpy-django)
 (make-variable-buffer-local 'elpy-django-server-port)
 
 (defcustom elpy-django-server-command "runserver"
@@ -56,7 +56,7 @@ Best to set it to full path to 'manage.py' if it's available."
 command to use."
   :type 'string
   :safe 'stringp
-  :group 'elpy)
+  :group 'elpy-django)
 (make-variable-buffer-local 'elpy-django-server-command)
 
 (defcustom elpy-django-always-prompt nil
@@ -64,7 +64,7 @@ command to use."
 to pass with the chosen command."
   :type 'boolean
   :safe 'booleanp
-  :group 'elpy)
+  :group 'elpy-django)
 (make-variable-buffer-local 'elpy-django-always-prompt)
 
 (defcustom elpy-django-commands-with-req-arg '("startapp" "startproject"
@@ -75,9 +75,8 @@ to pass with the chosen command."
 require arguments in order for it to work."
   :type 'list
   :safe 'listp
-  :group 'elpy)
+  :group 'elpy-django)
 (make-variable-buffer-local 'elpy-django-commands-with-req-arg)
-
 
 (defcustom elpy-django-test-runner-formats '(("django_nose.NoseTestSuiteRunner" . ":")
                                               ("django.test.runner.DiscoverRunner" . "."))
@@ -89,6 +88,24 @@ but the default Django test runner uses '.'"
   :safe 'listp
   :group 'elpy)
 (make-variable-buffer-local 'elpy-django-test-runner-formats)
+
+(defcustom elpy-test-django-runner-command '("django-admin.py" "test"
+                                             "--noinput")
+  "The command to use for `elpy-test-django-runner'."
+  :type '(repeat string)
+  :group 'elpy-django)
+
+(defcustom elpy-test-django-runner-manage-command '("manage.py" "test"
+                                                    "--noinput")
+  "The command to use for `elpy-test-django-runner' in case we want to use manage.py."
+  :type '(repeat string)
+  :group 'elpy-django)
+
+(defcustom elpy-test-django-with-manage nil
+  "Set to nil, elpy will use `elpy-test-django-runner-command',
+set to t elpy will use `elpy-test-django-runner-manage-command' and set the project root accordingly."
+  :type 'boolean
+  :group 'elpy-django)
 
 ;;;;;;;;;;;;;;;;;;;;;;
 ;; Key map
@@ -203,9 +220,48 @@ When called with a prefix (C-u), it will prompt for additional args."
     (with-current-buffer "*compilation*"
       (rename-buffer buff-name))))
 
+(defun elpy-test-django-runner (top _file module test)
+  "Test the project using the Django discover runner,
+or with manage.py if elpy-test-django-with-manage is true.
+
+This requires Django 1.6 or the django-discover-runner package."
+  (interactive (elpy-test-at-point))
+  (if module
+      (apply #'elpy-test-run
+             top
+             (append
+              ;; if we want to use manage.py, get the root directory where it is.
+              (if elpy-test-django-with-manage
+                  (append (list (concat (expand-file-name
+                                         (locate-dominating-file
+                                          (elpy-project-root)
+                                          (car elpy-test-django-runner-manage-command)))
+                                        (car elpy-test-django-runner-manage-command)))
+                          (cdr elpy-test-django-runner-manage-command))
+                ;; or the default:
+                elpy-test-django-runner-command)
+              (list (if test
+                        (format "%s.%s" module test)
+                      module))))
+    (apply #'elpy-test-run
+           top
+           (append
+            (if elpy-test-django-with-manage
+                (append (list (concat (expand-file-name
+                                       (locate-dominating-file
+                                        (if (elpy-project-root)
+                                            (elpy-project-root)
+                                          ".")
+                                        (car elpy-test-django-runner-manage-command)))
+                                      (car elpy-test-django-runner-manage-command)))
+                        (cdr elpy-test-django-runner-manage-command))
+              elpy-test-django-runner-command)))))
+(put 'elpy-test-django-runner 'elpy-test-runner-p t)
+
+
 (define-minor-mode elpy-django
   "Minor mode to for Django commands."
-  :group 'elpy)
+  :group 'elpy-django)
 
 (provide 'elpy-django)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
