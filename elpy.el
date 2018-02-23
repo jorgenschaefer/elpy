@@ -3339,7 +3339,13 @@ If you need your modeline, you can set the variable `elpy-remove-modeline-lighte
      (require 'company)
      (elpy-modules-remove-modeline-lighter 'company-mode)
      (define-key company-active-map (kbd "C-d")
-       'company-show-doc-buffer))
+       'company-show-doc-buffer)
+     ;; Workaround for company bug
+     ;; (https://github.com/company-mode/company-mode/issues/759)
+     (add-hook 'inferior-python-mode-hook
+               (lambda () (setq-local company-transformers
+                                      (remove 'company-sort-by-occurrence
+                                              company-transformers)))))
     (`buffer-init
      ;; We want immediate completions from company.
      (set (make-local-variable 'company-idle-delay)
