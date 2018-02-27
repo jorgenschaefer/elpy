@@ -79,14 +79,14 @@ require arguments in order for it to work."
 (make-variable-buffer-local 'elpy-django-commands-with-req-arg)
 
 (defcustom elpy-django-test-runner-formats '(("django_nose.NoseTestSuiteRunner" . ":")
-                                              ("django.test.runner.DiscoverRunner" . "."))
+                                             ("django.test.runner.DiscoverRunner" . "."))
   "List of test runners and their format for calling tests.
 
 Some tests runners are called differently. For example, Nose requires a ':' when calling specific tests,
 but the default Django test runner uses '.'"
   :type 'list
   :safe 'listp
-  :group 'elpy)
+  :group 'elpy-django)
 (make-variable-buffer-local 'elpy-django-test-runner-formats)
 
 (defcustom elpy-test-django-runner-command '("django-admin.py" "test"
