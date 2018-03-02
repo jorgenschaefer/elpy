@@ -67,3 +67,17 @@
                      '("django-admin.py" "test" "--noinput"
                        "package.module.TestClass.test_method")))
       (should (equal root "/project/root/")))))
+
+(ert-deftest elpy-test-django-runner-with-manage-path-should-run-all-tests ()
+  (elpy-testcase ()
+    (mletf* ((command nil)
+             (root nil)
+             (elpy-django-command "/project/root/manage.py")
+             (elpy-test-run (start-dir &rest args) (setq command args
+                                                         root start-dir)))
+
+      (elpy-test-django-runner "/project/root/" nil nil nil)
+
+      (should (equal command
+                     '("/project/root/manage.py" "test" "--noinput")))
+      (should (equal root "/project/root/")))))

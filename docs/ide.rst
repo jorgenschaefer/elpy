@@ -575,12 +575,10 @@ advantages this brings.
    py.test. You can also write your own, as described in :ref:`Writing
    Test Runners`.
 
-   Note on Django runners: by default, elpy runs Django tests with
-   :kbd:`django-admin.py`. You must set the environment variable
-   :envvar:`DJANGO_SETTINGS_MODULE` accordingly. Alternatively, you can set
-   **elpy-test-django-with-manage** to **t** in order to use your
-   project's :kbd:`manage.py`. You then don't need to set the environment
-   variable, but change virtual envs (see `virtualenvwrapper.el`_).
+   Note on Django runners: Elpy tries to find `manage.py` within your project
+   structure. If it's unable to find it, it falls back to `django-admin.py`.
+   You must set the environment variable :envvar:`DJANGO_SETTINGS_MODULE` accordingly.
+
 
 This enables a good workflow. You write a test and use :kbd:`C-c C-t`
 to watch it fail. You then go to your implementation file, for example

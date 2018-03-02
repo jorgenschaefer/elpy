@@ -22,7 +22,7 @@ the `manage.py' file."
     (elpy-module-django 'buffer-init)
 
     (should elpy-django)
-    (should (string= elpy-django-command (concat default-directory "manage.py")))
+    (should (string= elpy-django-command (expand-file-name (concat default-directory "manage.py"))))
 
     (delete-file (concat default-directory "manage.py"))))
 
