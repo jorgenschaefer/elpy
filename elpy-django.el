@@ -89,23 +89,32 @@ but the default Django test runner uses '.'"
   :group 'elpy-django)
 (make-variable-buffer-local 'elpy-django-test-runner-formats)
 
-(defcustom elpy-test-django-runner-command '("django-admin.py" "test"
-                                             "--noinput")
-  "The command to use for `elpy-test-django-runner'."
+(defcustom elpy-django-test-runner-args '("test" "--noinput")
+  "Arguments to pass to the test runner when calling tests."
   :type '(repeat string)
   :group 'elpy-django)
+(make-variable-buffer-local 'elpy-django-test-runner-args)
 
-(defcustom elpy-test-django-runner-manage-command '("manage.py" "test"
-                                                    "--noinput")
-  "The command to use for `elpy-test-django-runner' in case we want to use manage.py."
+(defcustom elpy-test-django-runner-command nil
+  "Deprecated. Please define Django command in `elpy-django-command' and
+test arguments in `elpy-django-test-runner-args'"
   :type '(repeat string)
   :group 'elpy-django)
+(make-obsolete-variable 'elpy-test-django-runner-command nil "March 2018")
+
+(defcustom elpy-test-django-runner-manage-command nil
+  "Deprecated. Please define Django command in `elpy-django-command' and
+test arguments in `elpy-django-test-runner-args'."
+  :type '(repeat string)
+  :group 'elpy-django)
+(make-obsolete-variable 'elpy-test-django-runner-manage-command nil "March 2018")
 
 (defcustom elpy-test-django-with-manage nil
-  "Set to nil, elpy will use `elpy-test-django-runner-command',
-set to t elpy will use `elpy-test-django-runner-manage-command' and set the project root accordingly."
+  "Deprecated.  Please define Django command in `elpy-django-command' and
+test arguments in `elpy-django-test-runner-args'."
   :type 'boolean
   :group 'elpy-django)
+(make-obsolete-variable 'elpy-test-django-with-manage nil "March 2018")
 
 ;;;;;;;;;;;;;;;;;;;;;;
 ;; Key map
@@ -130,7 +139,7 @@ set to t elpy will use `elpy-test-django-runner-manage-command' and set the proj
     ;; This only affects the buffer if there's no directory
     ;; variable overwriting it.
     (setq elpy-django-command
-          (concat (locate-dominating-file default-directory "manage.py") "manage.py"))
+          (expand-file-name (concat (locate-dominating-file default-directory "manage.py") "manage.py")))
     (elpy-django 1)))
 
 (defun elpy-django--get-commands ()
@@ -230,34 +239,17 @@ This requires Django 1.6 or the django-discover-runner package."
       (apply #'elpy-test-run
              top
              (append
-              ;; if we want to use manage.py, get the root directory where it is.
-              (if elpy-test-django-with-manage
-                  (append (list (concat (expand-file-name
-                                         (locate-dominating-file
-                                          (elpy-project-root)
-                                          (car elpy-test-django-runner-manage-command)))
-                                        (car elpy-test-django-runner-manage-command)))
-                          (cdr elpy-test-django-runner-manage-command))
-                ;; or the default:
-                elpy-test-django-runner-command)
+              (list elpy-django-command)
+              elpy-django-test-runner-args
               (list (if test
                         (format "%s.%s" module test)
                       module))))
     (apply #'elpy-test-run
            top
            (append
-            (if elpy-test-django-with-manage
-                (append (list (concat (expand-file-name
-                                       (locate-dominating-file
-                                        (if (elpy-project-root)
-                                            (elpy-project-root)
-                                          ".")
-                                        (car elpy-test-django-runner-manage-command)))
-                                      (car elpy-test-django-runner-manage-command)))
-                        (cdr elpy-test-django-runner-manage-command))
-              elpy-test-django-runner-command)))))
+            (list elpy-django-command)
+            elpy-django-test-runner-args))))
 (put 'elpy-test-django-runner 'elpy-test-runner-p t)
-
 
 (define-minor-mode elpy-django
   "Minor mode to for Django commands."
