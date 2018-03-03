@@ -104,6 +104,13 @@ nil, the current directory is used instead."
   :type 'boolean
   :group 'elpy)
 
+(defcustom elpy-shell-custom-root nil
+  "Custom directory where a Python shell will *always* start from.
+
+If you wish to use this, then set `elpy-shell-use-project-root' to nil"
+  :type 'string
+  :group 'elpy)
+
 (defcustom elpy-shell-cell-boundary-regexp
   (concat "^\\(?:"
           "##.*" "\\|"
@@ -231,6 +238,7 @@ Python process. This allows the process to start up."
         proc
       (let ((default-directory (or (and elpy-shell-use-project-root
                                         (elpy-project-root))
+                                   elpy-shell-custom-root
                                    default-directory)))
         (run-python (python-shell-parse-command) nil t))
       (when sit (sit-for sit))
