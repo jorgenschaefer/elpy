@@ -144,7 +144,7 @@ class ELispDomain(Domain):
                                     contnode, target + " " + objtype)
 
     def get_objects(self):
-        for (name, type_), docname in self.data['objects'].iteritems():
+        for (name, type_), docname in self.data['objects'].items():
             yield name, name, type_, docname, type_ + '-' + name, 1
 
 
