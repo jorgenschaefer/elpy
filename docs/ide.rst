@@ -482,7 +482,7 @@ evaluation command, thereby providing visual feedback.
 
 .. option:: elpy-shell-display-buffer-after-send
 
-   Whether to display the Python shell after sending someting to it (default
+   Whether to display the Python shell after sending something to it (default
    ``nil``).
 
 
@@ -666,7 +666,7 @@ Can also start `runserver` automatically and you can give an ip address and port
 Profiling
 =========
 
-Elpy allows to profile asynchronously python scripts using `cProfile`.
+Elpy allows one to profile asynchronously python scripts using `cProfile`.
 
 .. command:: elpy-profile-buffer-or-region
 
