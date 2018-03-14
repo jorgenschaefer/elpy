@@ -547,6 +547,14 @@ Elpy provides a single interface to documentation.
    With a prefix argument, Elpy will skip all the guessing and just
    prompt the user for a string to look up in pydoc.
 
+If the `autodoc` module is enabled (not the case by default) the
+documentation is automatically updated with the symbol at point or the
+currently selected company candidate.
+
+.. option:: elpy-autodoc-delay
+
+   The idle delay in seconds until documentation is updated automatically.
+
 
 Testing
 =======
