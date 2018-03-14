@@ -75,7 +75,6 @@ This can be used to enable minor modes for Python development."
 (defcustom elpy-modules '(elpy-module-sane-defaults
                           elpy-module-company
                           elpy-module-eldoc
-                          elpy-module-autodoc
                           elpy-module-flymake
                           elpy-module-highlight-indentation
                           elpy-module-pyvenv
@@ -3818,11 +3817,8 @@ description."
   "Timer to refresh documentation.")
 
 (defcustom elpy-autodoc-delay .5
-  "The idle delay in seconds until documentation is refreshed automatically.
-
-If nil, deactivate the documentation automatic refresh."
-  :type '(choice (const :tag "never (nil)" nil)
-                 (const :tag "immediate (0)" 0)
+  "The idle delay in seconds until documentation is refreshed automatically."
+  :type '(choice (const :tag "immediate (0)" 0)
                  (number :tag "seconds"))
   :group 'elpy
   :group 'elpy-autodoc)

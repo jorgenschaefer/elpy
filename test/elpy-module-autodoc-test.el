@@ -14,6 +14,7 @@ def fun2():
 
 (ert-deftest elpy-doc-should-be-updated-automatically ()
   (elpy-testcase ()
+    (add-to-list 'elpy-modules 'elpy-module-autodoc)
     (python-mode)
     (elpy-mode)
     (elpy-doc-test-insert-functions)
@@ -29,6 +30,7 @@ def fun2():
 
 (ert-deftest elpy-doc-should-not-be-updated-if-doc-not-visible ()
   (elpy-testcase ()
+    (add-to-list 'elpy-modules 'elpy-module-autodoc)
     (python-mode)
     (elpy-doc-test-insert-functions)
     (insert "fun1")
@@ -44,6 +46,7 @@ def fun2():
 
 (ert-deftest elpy-doc-should-not-be-updated-if-deactivated ()
   (elpy-testcase ()
+    (add-to-list 'elpy-modules 'elpy-module-autodoc)
     (python-mode)
     (elpy-mode)
     (setq elpy-autodoc-delay nil)
