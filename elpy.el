@@ -2099,7 +2099,10 @@ prefix argument is given, prompt for a symbol from the user."
     (message "Install yapf/autopep8 to format code."))))
 
 (defun elpy-yapf-fix-code ()
-  "Automatically formats Python code with yapf."
+  "Automatically formats Python code with yapf.
+
+Yapf can be configured with a style file placed in the project
+root directory."
   (interactive)
   (elpy--fix-code-with-formatter "fix_code_with_yapf"
                                  (or (expand-file-name (elpy-project-root))
