@@ -2104,36 +2104,36 @@ prefix argument is given, prompt for a symbol from the user."
 Yapf can be configured with a style file placed in the project
 root directory."
   (interactive)
-  (elpy--fix-code-with-formatter "fix_code_with_yapf"
-                                 (or (expand-file-name (elpy-project-root))
-                                     default-directory)))
+  (elpy--fix-code-with-formatter "fix_code_with_yapf"))
 
 (defun elpy-autopep8-fix-code ()
-  "Automatically formats Python code to conform to the PEP 8 style guide."
+  "Automatically formats Python code to conform to the PEP 8 style guide.
+
+Autopep8 can be configured with a style file placed in the project
+root directory."
   (interactive)
   (elpy--fix-code-with-formatter "fix_code"))
 
-(defun elpy--fix-code-with-formatter (method &optional directory)
+(defun elpy--fix-code-with-formatter (method)
   "Common routine for formatting python code."
   (let ((line (line-number-at-pos))
-        (col (current-column)))
+        (col (current-column))
+        (directory (or (expand-file-name (elpy-project-root))
+                              default-directory)))
     (if (use-region-p)
         (let ((new-block (elpy-rpc method
-                                   (if directory
-                                       (list (elpy-rpc--region-contents) directory)
-                                     (list (elpy-rpc--region-contents)))))
-              (beg (region-beginning)) (end (region-end)))
+                                   (list (elpy-rpc--region-contents)
+                                         directory)))
+              (beg (region-beginning))
+              (end (region-end)))
           (elpy-buffer--replace-region
            beg end
            (replace-regexp-in-string "\n$" "" new-block))
           (goto-char end)
           (deactivate-mark))
-      ;; Vector instead of list, json.el in Emacs 24.3 and before
-      ;; breaks for single-element lists of alists.
       (let ((new-block (elpy-rpc method
-                                 (if directory
-                                     (vector (elpy-rpc--buffer-contents) directory)
-                                   (vector (elpy-rpc--buffer-contents)))))
+                                 (list (elpy-rpc--buffer-contents)
+                                       directory)))
             (beg (point-min))
             (end (point-max)))
         (elpy-buffer--replace-region beg end new-block)

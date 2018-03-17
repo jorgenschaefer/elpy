@@ -20,7 +20,7 @@ except ImportError:  # pragma: no cover
     yapf_api = None
 
 
-def fix_code(code, directory=None):
+def fix_code(code, directory):
     """Formats Python code to conform to the PEP 8 style guide.
 
     """

@@ -363,5 +363,5 @@ class Autopep8TestCase(ServerTestCase):
 
     def test_rpc_fix_code_should_return_formatted_string(self):
         code_block = 'x=       123\n'
-        new_block = self.srv.rpc_fix_code(code_block)
+        new_block = self.srv.rpc_fix_code(code_block, os.getcwd())
         self.assertEqual(new_block, 'x = 123\n')
