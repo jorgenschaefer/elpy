@@ -635,6 +635,9 @@ Elpy supports various forms of refactoring Python code.
    region is selected, only that region is formatted. Otherwise current
    buffer is formatted.
 
+   `yapf`_ and `autopep8`_ can be configured with style files placed in
+   the project root directory (determined by ``elpy-project-root``).
+
 .. _autopep8: https://github.com/hhatto/autopep8
 .. _yapf: https://github.com/google/yapf
 

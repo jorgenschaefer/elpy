@@ -2,6 +2,7 @@
 """Tests for the elpy.yapf module"""
 
 import unittest
+import os
 
 from elpy import yapfutil
 from elpy.rpc import Fault
@@ -17,7 +18,7 @@ class YAPFTestCase(BackendTestCase):
 
     def test_fix_code_should_throw_error_for_invalid_code(self):
         src = 'x = '
-        self.assertRaises(Fault, yapfutil.fix_code, src)
+        self.assertRaises(Fault, yapfutil.fix_code, src, os.getcwd())
 
     def test_fix_code(self):
         testdata = [
@@ -28,5 +29,5 @@ class YAPFTestCase(BackendTestCase):
             self._assert_format(src, expected)
 
     def _assert_format(self, src, expected):
-        new_block = yapfutil.fix_code(src)
+        new_block = yapfutil.fix_code(src, os.getcwd())
         self.assertEqual(new_block, expected)
