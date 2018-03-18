@@ -242,7 +242,7 @@ This requires Django 1.6 or the django-discover-runner package."
               (list elpy-django-command)
               elpy-django-test-runner-args
               (list (if test
-                        (format "%s.%s" module test)
+                        (format "%s%s%s" module (elpy-django--get-test-format) test)
                       module))))
     (apply #'elpy-test-run
            top
