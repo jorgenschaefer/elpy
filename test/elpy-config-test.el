@@ -21,4 +21,4 @@
                                          (elpy/wait-for-output "Only")
                                          (buffer-string))))
                            (should (equal python-check-command "/foo/bar/flake8"))
-                           (should (string-match "python -m pip install flake8" output))))))
+                           (should (string-match "python -m pip install.*flake8" output))))))
