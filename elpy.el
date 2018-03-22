@@ -619,6 +619,10 @@ virtualenv.
 
 (defvar elpy-config--get-config "import json
 import sys
+import warnings
+
+if 'ResourceWarning' in __builtins__.__dict__.keys():
+    warnings.simplefilter('ignore', ResourceWarning)
 
 try:
     import xmlrpclib
