@@ -566,14 +566,14 @@ Prepends a continuation promt if PREPEND-CONT-PROMPT is set."
 
 (defun elpy-shell-send-file (file-name &optional process temp-file-name
                                          delete msg)
-  """Like `python-shell-send-file' but evaluates last expression separately.
+  "Like `python-shell-send-file' but evaluates last expression separately.
 
-  See `python-shell-send-file' for a description of the
-  arguments. This function differs in that it breaks up the
-  Python code in FILE-NAME into statements. If the last statement
-  is a Python expression, it is evaluated separately in 'eval'
-  mode. This way, the interactive python shell can capture (and
-  print) the output of the last expression."""
+See `python-shell-send-file' for a description of the
+arguments. This function differs in that it breaks up the
+Python code in FILE-NAME into statements. If the last statement
+is a Python expression, it is evaluated separately in 'eval'
+mode. This way, the interactive python shell can capture (and
+print) the output of the last expression."
   (interactive
    (list
     (read-file-name "File to send: ")   ; file-name
