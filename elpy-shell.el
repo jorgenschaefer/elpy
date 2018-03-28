@@ -342,7 +342,8 @@ BEGIN and END refer to the region of the current buffer containing the code bein
           (message "Sent: %s" (string-trim (thing-at-point 'line)))
         (message "Sent: %s..." (string-trim (thing-at-point 'line)))))
     (when (bound-and-true-p eval-sexp-fu-flash-mode)
-      (multiple-value-bind (bounds hi unhi eflash) (eval-sexp-fu-flash (cons begin end))
+      (multiple-value-bind (_bounds hi unhi _eflash)
+          (eval-sexp-fu-flash (cons begin end))
         (eval-sexp-fu-flash-doit (lambda () t) hi unhi)))))
 
 ;;;;;;;;;;;;;;;;;;;
@@ -505,8 +506,7 @@ Prepends a continuation promt if PREPEND-CONT-PROMPT is set."
 
 (defun elpy-shell--string-head-lines (string n)
   "Extract the first N lines from STRING."
-  (let* ((any "\\(?:.\\|\n\\)")
-         (line "\\(?:\\(?:.*\n\\)\\|\\(?:.+\\'\\)\\)")
+  (let* ((line "\\(?:\\(?:.*\n\\)\\|\\(?:.+\\'\\)\\)")
          (lines (concat line "\\{" (number-to-string n) "\\}"))
          (regexp (concat "\\`" "\\(" lines "\\)")))
     (if (string-match regexp string)
@@ -515,15 +515,14 @@ Prepends a continuation promt if PREPEND-CONT-PROMPT is set."
 
 (defun elpy-shell--string-tail-lines (string n)
   "Extract the last N lines from STRING."
-  (let* ((any "\\(?:.\\|\n\\)")
-         (line "\\(?:\\(?:.*\n\\)\\|\\(?:.+\\'\\)\\)")
+  (let* ((line "\\(?:\\(?:.*\n\\)\\|\\(?:.+\\'\\)\\)")
          (lines (concat line "\\{" (number-to-string n) "\\}"))
          (regexp (concat "\\(" lines "\\)" "\\'")))
     (if (string-match regexp string)
         (match-string 1 string)
       string)))
 
-(defun elpy-shell--python-shell-send-string-echo-advice (string &optional process msg)
+(defun elpy-shell--python-shell-send-string-echo-advice (string &optional _process _msg)
   "Advice to enable echoing of input in the Python shell."
   (interactive)
   (let* ((append-string ; strip setup code from Python shell
@@ -567,14 +566,14 @@ Prepends a continuation promt if PREPEND-CONT-PROMPT is set."
 
 (defun elpy-shell-send-file (file-name &optional process temp-file-name
                                          delete msg)
-  """Like `python-shell-send-file' but evaluates last expression separately.
+  "Like `python-shell-send-file' but evaluates last expression separately.
 
-  See `python-shell-send-file' for a description of the
-  arguments. This function differs in that it breaks up the
-  Python code in FILE-NAME into statements. If the last statement
-  is a Python expression, it is evaluated separately in 'eval'
-  mode. This way, the interactive python shell can capture (and
-  print) the output of the last expression."""
+See `python-shell-send-file' for a description of the
+arguments. This function differs in that it breaks up the
+Python code in FILE-NAME into statements. If the last statement
+is a Python expression, it is evaluated separately in 'eval'
+mode. This way, the interactive python shell can capture (and
+print) the output of the last expression."
   (interactive
    (list
     (read-file-name "File to send: ")   ; file-name
@@ -964,7 +963,7 @@ code is executed."
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Send command variations (with/without step; with/without go)
 
-(defun elpy-shell--send-with-step-go (step-fun step go prefix-arg)
+(defun elpy-shell--send-with-step-go (step-fun step go my-prefix-arg)
   "Run a function with STEP and/or GO.
 
 STEP-FUN should be a function that sends something to the shell
@@ -973,7 +972,7 @@ and moves point to code position right after what has been sent.
 When STEP is nil, keeps point position. When GO is non-nil,
 switches focus to Python shell buffer."
   (let ((orig (point)))
-    (setq current-prefix-arg prefix-arg)
+    (setq current-prefix-arg my-prefix-arg)
     (call-interactively step-fun)
     (when (not step)
       (goto-char orig)))
@@ -1013,12 +1012,12 @@ switches focus to Python shell buffer."
 ;;;;;;;;;;;;;;;;;;;;;;;
 ;; Deprecated functions
 
-(defun elpy-use-ipython (&optional ipython)
+(defun elpy-use-ipython (&optional _ipython)
   "Deprecated; see https://elpy.readthedocs.io/en/latest/ide.html#interpreter-setup"
   (error "elpy-use-ipython is deprecated; see https://elpy.readthedocs.io/en/latest/ide.html#interpreter-setup"))
 (make-obsolete 'elpy-use-ipython nil "Jan 2017")
 
-(defun elpy-use-cpython (&optional cpython)
+(defun elpy-use-cpython (&optional _cpython)
   "Deprecated; see https://elpy.readthedocs.io/en/latest/ide.html#interpreter-setup"
   (error "elpy-use-cpython is deprecated; see https://elpy.readthedocs.io/en/latest/ide.html#interpreter-setup"))
 (make-obsolete 'elpy-use-cpython nil "Jan 2017")
