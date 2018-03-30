@@ -3,13 +3,21 @@
 set -e
 cd "$(dirname "$0")/.."
 
-VERSION="$(sed -ne 's/^;; Version: \(.*\)/\1/p' elpy.el)"
+main() {
+    echo -n "Did you update the NEWS.rst? [y/N] "
+    read response
+    [ "$response" = "y" ] || exit 1
+    run bumpversion minor
+    run rm dist/*
+    run python setup.py sdist bdist_wheel
+    run twine upload dist/*
+    run git push
+    run git push --tags
+}
 
-mkdir -p dist/
-tar -c elpy*.el LICENSE README.rst \
-    snippets/ elpy/ \
-    --exclude "elpy/tests" --exclude '*.pyc' \
-    --transform "s,^,elpy-${VERSION}/," \
-    > "dist/elpy-${VERSION}.tar"
+run() {
+    echo "\$ $*"
+    "$@"
+}
 
-echo "Created dist/elpy-${VERSION}.tar"
+main

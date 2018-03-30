@@ -1,33 +1,3 @@
 To release elpy:
 
-$ ./scripts/test
-
-Make sure nothing breaks.
-
-$ emacsclient NEWS.rst
-
-Update NEWS.rst with the latest changes.
-
-$ bumpversion minor
-
-Elpy ELPA release:
-
 $ ./scripts/release
-
-This creates dist/elpy-X.Y.tar
-
-PyPI release:
-
-$ python setup.py sdist bdist_wheel
-
-Recheck all is well, then
-
-$ twine upload dist/*
-
-Github:
-
-$ git push --tags
-
-$ bumpversion patch --no-tag --new-version X.Y.50
-
-The .50 means "development".
