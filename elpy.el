@@ -4,7 +4,7 @@
 
 ;; Author: Jorgen Schaefer <contact@jorgenschaefer.de>
 ;; URL: https://github.com/jorgenschaefer/elpy
-;; Version: 1.18.0
+;; Version: 1.19.0
 ;; Keywords: Python, IDE, Languages, Tools
 ;; Package-Requires: ((company "0.9.2") (emacs "24.4") (find-file-in-project "3.3")  (highlight-indentation "0.5.0") (pyvenv "1.3") (yasnippet "0.8.0") (s "1.11.0"))
 
@@ -53,7 +53,7 @@
 (require 'pyvenv)
 (require 'find-file-in-project)
 
-(defconst elpy-version "1.18.0"
+(defconst elpy-version "1.19.0"
   "The version of the Elpy lisp code.")
 
 ;;;;;;;;;;;;;;;;;;;;;;
@@ -352,7 +352,7 @@ option is `pdb'."
   :group 'elpy)
 
 (defcustom elpy-disable-backend-error-display t
-  "Non-nil if Elpy should disable backed error display."
+  "Non-nil if Elpy should disable backend error display."
   :type 'boolean
   :group 'elpy)
 
@@ -630,8 +630,8 @@ from distutils.version import LooseVersion
 
 def latest(package, version=None):
     try:
-        pypi = xmlrpclib.ServerProxy('https://pypi.python.org/pypi')
-        latest = pypi.package_releases(package)[0]
+        with xmlrpclib.ServerProxy('https://pypi.python.org/pypi') as pypi:
+            latest = pypi.package_releases(package)[0]
         if version is None or LooseVersion(version) < LooseVersion(latest):
             return latest
         else:
