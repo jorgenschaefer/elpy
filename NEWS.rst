@@ -1,3 +1,21 @@
+New in Elpy 1.19.0
+==================
+
+- Python 3.6 and Emacs 25.3 are now officially supported.
+- Sending code to a Python process is now a lot more convenient, see
+  the documentation for more information.
+- Elpy can now automatically update the buffer displaying help for the
+  symbol uner point. Customize ``elpy-modules`` and enable the autodoc
+  module there!
+- yapf and autopep8 now use their respective config files in the
+  project root.
+- And tons of bugfixes.
+
+Thanks to Craig MacEachern, Daniel Gopar, Gaby Launay, Maxim
+Cournoyer, Nicholas D. Steeves and Sam Steingold for their help in
+making this release!
+
+  
 New in Elpy 1.18.0
 ==================
 
