@@ -1,11 +1,10 @@
 # Summary
 
+Thank you for reporting to Elpy !
 
-# Expected behavior
-
-
-# Actual behavior
-
+Here is a template to help you do it so your issue can be fixed as
+soon as possible. Please replace this paragraph with a summary of
+your issue and fill the next sections.
 
 # Steps to reproduce
 
@@ -13,9 +12,8 @@
 # My configuration
 ## OS
 
-## Emacs version
 
-## Result from `(elpy-config)`
+## Result of `(elpy-config)`
 ```
 # Paste it here
 ```
