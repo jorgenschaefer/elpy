@@ -332,11 +332,11 @@ class TestGetSource(unittest.TestCase):
         fd, filename = tempfile.mkstemp(prefix="elpy-test-")
         self.addCleanup(os.remove, filename)
         with open(filename, "wb") as f:
-            f.write(u"möp".encode("utf-8"))
+            f.write(u"mop".encode("utf-8"))
 
         source = server.get_source({'filename': filename})
 
-        self.assertEqual(source, u"möp")
+        self.assertEqual(source, u"mop")
 
 
 class TestPysymbolKey(BackendTestCase):
