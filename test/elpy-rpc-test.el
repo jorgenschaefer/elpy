@@ -25,5 +25,5 @@
 
 (ert-deftest elpy-rpc-integration ()
   (elpy-testcase ()
-    (should (equal (elpy-rpc "echo" '(23 "möp"))
-                   '(23 "möp")))))
+    (should (equal (elpy-rpc "echo" '(23 "mop"))
+                   '(23 "mop")))))
