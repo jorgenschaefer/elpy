@@ -3150,14 +3150,17 @@ This is needed to get information on the identifier with jedi
          for ref in references
          for file = (alist-get 'filename ref)
          for pos = (+ (alist-get 'offset ref) 1)
-         for line = (with-current-buffer (find-file-noselect file)
-                      (save-excursion
-                        (goto-char (+ pos 1))
-                        (buffer-substring (line-beginning-position) (line-end-position))))
-         for linenumber = (with-current-buffer (find-file-noselect file)
-                            (line-number-at-pos pos))
+         for line = (when file
+                      (with-current-buffer (find-file-noselect file)
+                        (save-excursion
+                          (goto-char (+ pos 1))
+                          (buffer-substring (line-beginning-position) (line-end-position)))))
+         for linenumber = (when file
+                            (with-current-buffer (find-file-noselect file)
+                              (line-number-at-pos pos)))
          for summary = (format elpy-xref--format-references linenumber line)
          for loc = (xref-make-elpy-location file pos)
+         if file
          collect (xref-make summary loc)))))
 
   ;; Completion table (used when calling `xref-find-references`)
