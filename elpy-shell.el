@@ -229,6 +229,11 @@ Python process. This allows the process to start up."
          (proc (get-buffer-process bufname)))
     (if proc
         proc
+      (when (and pyvenv-virtual-env
+                 (not (string-prefix-p (expand-file-name pyvenv-virtual-env)
+                                       (executable-find
+                                        python-shell-interpreter))))
+        (error "Intepreter binaries not found in current virtual environnement"))
       (let ((default-directory (or (and elpy-shell-use-project-root
                                         (elpy-project-root))
                                    default-directory)))
