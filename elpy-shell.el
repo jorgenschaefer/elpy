@@ -25,6 +25,7 @@
 ;;; Code:
 
 (eval-when-compile (require 'subr-x))
+(require 'pyvenv)
 (require 'python)
 
 ;;;;;;;;;;;;;;;;;;;;;;
@@ -233,7 +234,7 @@ Python process. This allows the process to start up."
                  (not (string-prefix-p (expand-file-name pyvenv-virtual-env)
                                        (executable-find
                                         python-shell-interpreter))))
-        (error "Intepreter binaries not found in current virtual environnement"))
+        (error "Interpreter binaries not found in the current virtual environnement"))
       (let ((default-directory (or (and elpy-shell-use-project-root
                                         (elpy-project-root))
                                    default-directory)))
