@@ -97,6 +97,7 @@ itself a list where the car indicates the type of environment.
   (declare (indent 1))
   `(save-buffer-excursion
      (with-temp-buffer
+       (setq elpy-rpc-timeout 100)
        ,(elpy-testcase-transform-spec spec body))
      (when (and (boundp 'elpy-enable)
                 elpy-enable)
