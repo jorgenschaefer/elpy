@@ -31,3 +31,15 @@
     (elpy-module-yasnippet 'buffer-stop)
 
     (should-not yas-minor-mode)))
+
+(ert-deftest elpy-snippet-split-args ()
+  (elpy-testcase ()
+    (python-mode)
+    (elpy-mode)
+    (let ((args "self, arg1, arg2 :int, arg3=4, arg4='message', arg5 :int, arg6 :float=65.4, *args, **kwargs"))
+      (should (equal (elpy-snippet-split-args args)
+	     '("self" "arg1" "arg2" "arg3" "arg4" "arg5" "arg6" "*args" "**kwargs"))))
+    ;; badly formatted arguments
+    (let ((args "self,arg1 , arg2:int , arg3 =4 ,arg4 = 'message',arg5 :int , arg6:float =65.4,*args ,**kwargs"))
+      (should (equal (elpy-snippet-split-args args)
+	     '("self" "arg1" "arg2" "arg3" "arg4" "arg5" "arg6" "*args" "**kwargs"))))))
