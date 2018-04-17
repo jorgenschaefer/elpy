@@ -2118,8 +2118,9 @@ root directory."
   "Common routine for formatting python code."
   (let ((line (line-number-at-pos))
         (col (current-column))
-        (directory (or (expand-file-name (elpy-project-root))
-                              default-directory)))
+        (directory (if (elpy-project-root)
+                       (expand-file-name (elpy-project-root))
+                     default-directory)))
     (if (use-region-p)
         (let ((new-block (elpy-rpc method
                                    (list (elpy-rpc--region-contents)
