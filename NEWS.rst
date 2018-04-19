@@ -5,7 +5,7 @@ New in Elpy 1.19.0
 - Sending code to a Python process is now a lot more convenient, see
   the documentation for more information.
 - Elpy can now automatically update the buffer displaying help for the
-  symbol uner point. Customize ``elpy-modules`` and enable the autodoc
+  symbol under point. Customize ``elpy-modules`` and enable the autodoc
   module there!
 - yapf and autopep8 now use their respective config files in the
   project root.
