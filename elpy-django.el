@@ -252,7 +252,7 @@ This requires Django 1.6 or the django-discover-runner package."
 (put 'elpy-test-django-runner 'elpy-test-runner-p t)
 
 (define-minor-mode elpy-django
-  "Minor mode to for Django commands."
+  "Minor mode for Django commands."
   :group 'elpy-django)
 
 (provide 'elpy-django)
