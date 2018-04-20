@@ -1,3 +1,5 @@
+;;; -*-coding: utf-8-*-
+
 (ert-deftest elpy-rpc-should-call-async-with-success-callback ()
   (elpy-testcase ()
     (mletf* ((elpy-rpc--call
