@@ -3309,15 +3309,6 @@ If you need your modeline, you can set the variable `elpy-remove-modeline-lighte
                                       (remove 'company-sort-by-occurrence
                                               company-transformers)))))
     (`buffer-init
-     ;; We want immediate completions from company.
-     (set (make-local-variable 'company-idle-delay)
-          0.01)
-     ;; And annotations should be right-aligned.
-     (set (make-local-variable 'company-tooltip-align-annotations)
-          t)
-     ;; Also, dabbrev in comments and strings is nice.
-     (set (make-local-variable 'company-dabbrev-code-everywhere)
-          t)
      ;; Add our own backend and remove a bunch of backends that
      ;; interfere in Python mode.
      (set (make-local-variable 'company-backends)
@@ -3334,8 +3325,6 @@ If you need your modeline, you can set the variable `elpy-remove-modeline-lighte
         (buffer-name) elpy-rpc-ignored-buffer-size)))
     (`buffer-stop
      (company-mode -1)
-     (kill-local-variable 'company-idle-delay)
-     (kill-local-variable 'company-tooltip-align-annotations)
      (kill-local-variable 'company-backends))
     ))
 
