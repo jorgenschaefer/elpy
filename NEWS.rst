@@ -1,3 +1,11 @@
+New in Elpy 1.20.0
+==================
+
+- No new features, but lots of bugfixes
+
+Thanks again to Gaby Launay for the continued and exceptional work!
+
+
 New in Elpy 1.19.0
 ==================
 
