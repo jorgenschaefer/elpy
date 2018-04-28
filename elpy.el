@@ -3294,6 +3294,17 @@ If you need your modeline, you can set the variable `elpy-remove-modeline-lighte
 ;;;;;;;;;;;;;;;;;;;
 ;;; Module: Company
 
+(defvar elpy--company-default-overrides ())
+
+(defun elpy--override-company-default (variable override-value)
+  (let* ((std-value-place (get variable 'standard-value))
+         (default-value   (and (consp std-value-place)
+                               (eval (car std-value-place)))))
+    (when (and std-value-place
+               (equal (symbol-value variable) default-value))
+      (cl-pushnew variable elpy--company-default-overrides)
+      (set (make-local-variable variable) override-value))))
+
 (defun elpy-module-company (command &rest _args)
   "Module to support company-mode completions."
   (pcase command
@@ -3310,14 +3321,14 @@ If you need your modeline, you can set the variable `elpy-remove-modeline-lighte
                                               company-transformers)))))
     (`buffer-init
      ;; We want immediate completions from company.
-     (set (make-local-variable 'company-idle-delay)
-          0.01)
+     (elpy--override-company-default 'company-idle-delay
+                                     0.01)
      ;; And annotations should be right-aligned.
-     (set (make-local-variable 'company-tooltip-align-annotations)
-          t)
+     (elpy--override-company-default 'company-tooltip-align-annotations
+                                     t)
      ;; Also, dabbrev in comments and strings is nice.
-     (set (make-local-variable 'company-dabbrev-code-everywhere)
-          t)
+     (elpy--override-company-default 'company-dabbrev-code-everywhere
+                                     t)
      ;; Add our own backend and remove a bunch of backends that
      ;; interfere in Python mode.
      (set (make-local-variable 'company-backends)
@@ -3334,8 +3345,8 @@ If you need your modeline, you can set the variable `elpy-remove-modeline-lighte
         (buffer-name) elpy-rpc-ignored-buffer-size)))
     (`buffer-stop
      (company-mode -1)
-     (kill-local-variable 'company-idle-delay)
-     (kill-local-variable 'company-tooltip-align-annotations)
+     (dolist (overriden-variable elpy--company-default-overrides)
+       (kill-local-variable overriden-variable))
      (kill-local-variable 'company-backends))
     ))
 
