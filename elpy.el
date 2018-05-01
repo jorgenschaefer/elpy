@@ -3695,14 +3695,18 @@ description."
 
 (defun elpy-flymake-error-at-point ()
   "Return the flymake error at point, or nil if there is none."
-  (when (boundp 'flymake-err-info)
-    (let* ((lineno (line-number-at-pos))
-           (err-info (car (flymake-find-err-info flymake-err-info
-                                                 lineno))))
-      (when err-info
-        (mapconcat #'flymake-ler-text
-                   err-info
-                   ", ")))))
+  (cond ((boundp 'flymake-err-info)     ; emacs < 26
+         (let* ((lineno (line-number-at-pos))
+                (err-info (car (flymake-find-err-info flymake-err-info
+                                                      lineno))))
+           (when err-info
+             (mapconcat #'flymake-ler-text
+                        err-info
+                        ", "))))
+        ((and (fboundp 'flymake-diagnostic-text)
+              (fboundp 'flymake-diagnostics)) ; emacs >= 26
+         (mapconcat #'flymake-diagnostic-text
+                    (flymake-diagnostics (point)) ", "))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Module: Highlight Indentation
