@@ -49,12 +49,23 @@ Then run ``M-x package-refresh-contents`` to load the contents of the
 new repository, and ``M-x package-install RET elpy RET`` to install
 elpy.
 
-Finally, add the following to your ``.emacs``:
+Users of Debian ≥10 or Ubuntu ≥18.10 can skip the instructions above
+this line and may simply install Elpy and all of its recommended
+dependencies with the following command:::
+
+  sudo apt install elpa-elpy
+
+Elpy can then be activated by running ``M-x elpy-enable``
+
+Finally, to make this automatic, add the following to your ``.emacs``:
 
 .. code-block:: lisp
 
   (package-initialize)
   (elpy-enable)
+  ;; (package-initialize) should already exist at the top of the init
+  ;; file on Debian-derived systems, thus (elpy-enable) should be all
+  ;; that is required.
 
 Done.
 
