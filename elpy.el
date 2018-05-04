@@ -3702,7 +3702,11 @@ description."
       (when err-info
         (mapconcat #'flymake-ler-text
                    err-info
-                   ", ")))))
+                   ", "))))
+  (when (and (fboundp 'flymake-diagnostics) (fboundp 'flymake-diagnostic-text))
+    (mapconcat #'flymake-diagnostic-text (flymake-diagnostics (point)) "\n")
+    )
+  )
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Module: Highlight Indentation
