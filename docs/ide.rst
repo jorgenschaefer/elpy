@@ -266,7 +266,7 @@ The Shell Buffer
 
 .. code-block:: lisp
 
-   (add-hook 'elpy-mode-hook (lambda () (elpy-shell-set-local-shell elpy-project-root)))
+   (add-hook 'elpy-mode-hook (lambda () (elpy-shell-set-local-shell (elpy-project-root))))
 
 .. command:: elpy-shell-kill
    :kbd: C-c C-k
