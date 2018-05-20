@@ -852,6 +852,23 @@ item in another window.\n\n")
               (gethash "error_output" config) "\n"
               "\n"))
 
+    ;; Interactive python interpreter not in the current virtual env
+    (when (and pyvenv-virtual-env
+               (not (string-prefix-p (expand-file-name pyvenv-virtual-env)
+                                     (executable-find
+                                      python-shell-interpreter))))
+      (elpy-insert--para
+       "The python interactive interpreter (" python-shell-interpreter
+       ") is not installed on the current virtualenv ("
+       pyvenv-virtual-env "). The system binary ("
+       (executable-find python-shell-interpreter)
+       ") will be used instead."
+       "\n")
+      (insert "\n")
+      (widget-create 'elpy-insert--pip-button
+                     :package python-shell-interpreter)
+      (insert "\n\n"))
+
     ;; Requested backend unavailable
     (when (and (gethash "python_rpc_executable" config)
                (not (gethash "jedi_version" config)))
