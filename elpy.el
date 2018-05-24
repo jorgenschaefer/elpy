@@ -2738,7 +2738,12 @@ RPC calls with the event."
       (elpy-insert--para
        "You are not using the same version of Elpy in Emacs Lisp "
        "compared to Python. This can cause random problems. Please "
-       "do make sure to use compatible versions.\n")
+       "do make sure to use compatible versions.\n\n"
+       "This often happens because you have an obsolete elpy python "
+       "package installed on your system/virtualenv. This package "
+       "shadows the elpy python package shipped with elpy, leading "
+       "to this mismatch. If it is the case, uninstalling the elpy "
+       "python package (with pip for example) should resolve the issue.\n")
       (insert
        "\n"
        "Elpy Emacs Lisp version: " elpy-version "\n"
