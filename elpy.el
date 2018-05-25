@@ -690,6 +690,14 @@ except:
     config['yapf_version'] = None
     config['yapf_latest'] = latest('yapf')
 
+try:
+    import black
+    config['black_version'] = black.__version__
+    config['black_latest'] = latest('black', config['black_version'])
+except:
+    config['black_version'] = None
+    config['black_latest'] = latest('black')
+
 json.dump(config, sys.stdout)
 ")
 
@@ -941,6 +949,26 @@ item in another window.\n\n")
                      :package "yapf" :upgrade t)
       (insert "\n\n"))
 
+    ;; No black available
+    (when (not (gethash "black_version" config))
+      (elpy-insert--para
+       "The black package is not available. Commands using this will "
+       "not work.\n")
+      (insert "\n")
+      (widget-create 'elpy-insert--pip-button
+                     :package "black")
+      (insert "\n\n"))
+
+    ;; Newer version of black available
+    (when (and (gethash "black_version" config)
+               (gethash "black_latest" config))
+      (elpy-insert--para
+       "There is a newer version of the black package available.\n")
+      (insert "\n")
+      (widget-create 'elpy-insert--pip-button
+                     :package "black" :upgrade t)
+      (insert "\n\n"))
+
     ;; Syntax checker not available
     (when (not (executable-find elpy-syntax-check-command))
       (elpy-insert--para
@@ -1036,6 +1064,8 @@ virtual_env_short"
         (autopep8-latest (gethash "autopep8_latest" config))
         (yapf-version (gethash "yapf_version" config))
         (yapf-latest (gethash "yapf_latest" config))
+        (black-version (gethash "black_version" config))
+        (black-latest (gethash "black_latest" config))
         (virtual-env (gethash "virtual_env" config))
         (virtual-env-short (gethash "virtual_env_short" config))
         table maxwidth)
@@ -1090,6 +1120,9 @@ virtual_env_short"
             ("Yapf" . ,(elpy-config--package-link "yapf"
                                                   yapf-version
                                                   yapf-latest))
+            ("Black" . ,(elpy-config--package-link "black"
+                                                   black-version
+                                                   black-latest))
             ("Syntax checker" . ,(let ((syntax-checker
                                         (executable-find
                                          elpy-syntax-check-command)))
@@ -2112,6 +2145,8 @@ prefix argument is given, prompt for a symbol from the user."
     (elpy-yapf-fix-code))
    ((elpy-config--package-available-p "autopep8")
     (elpy-autopep8-fix-code))
+   ((elpy-config--package-available-p "black")
+    (elpy-black-fix-code))
    (t
     (message "Install yapf/autopep8 to format code."))))
 
@@ -2130,6 +2165,11 @@ Autopep8 can be configured with a style file placed in the project
 root directory."
   (interactive)
   (elpy--fix-code-with-formatter "fix_code"))
+
+(defun elpy-black-fix-code ()
+  "Automatically formats Python code with black."
+  (interactive)
+  (elpy--fix-code-with-formatter "fix_code_with_black"))
 
 (defun elpy--fix-code-with-formatter (method)
   "Common routine for formatting python code."

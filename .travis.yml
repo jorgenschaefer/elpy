@@ -33,6 +33,7 @@ install:
     fi
   - pip install autopep8
   - pip install yapf
+  - pip install black
   - pip install coveralls
 script:
   - nosetests
