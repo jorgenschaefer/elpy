@@ -1,3 +1,8 @@
+New in Elpy development
+=======================
+
+- Elpy now supports Black to format your code.
+
 New in Elpy 1.21.0
 ==================
 
@@ -5,12 +10,6 @@ New in Elpy 1.21.0
 - Elpy now knows how to deal with the flymake in the upcoming Emacs
   release.
 - Some minor improvements in error messages and warnings.
-  
-
-New in Elpy 1.20.0
-==================
-
-- Elpy now supports Black to format your code.
 
 New in Elpy 1.20.0
 ==================
