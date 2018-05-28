@@ -3066,7 +3066,10 @@ Returns a possible multi-line docstring."
 ;;; Xref backend
 (defun elpy--xref-backend ()
   "Return the name of the elpy xref backend."
-  (if elpy-rpc--jedi-available
+  ;; If no rpc available, start one and assume jedi is available
+  (if (or (and (not (elpy-rpc--process-buffer-p elpy-rpc--buffer))
+               (elpy-rpc--get-rpc-buffer))
+          elpy-rpc--jedi-available)
       'elpy
     nil))
 
