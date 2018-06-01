@@ -33,6 +33,9 @@ install:
     fi
   - pip install autopep8
   - pip install yapf
+  - if [[ "$TRAVIS_PYTHON_VERSION" > 3.6 || "$TRAVIS_PYTHON_VERSION" == 3.6 ]] ; then
+      pip install black ;
+    fi
   - pip install coveralls
 script:
   - nosetests

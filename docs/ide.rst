@@ -634,15 +634,16 @@ Elpy supports various forms of refactoring Python code.
 
    Format code using the available formatter.
 
-   This command formats code using `yapf`_ or `autopep8`_ formatter. If a
-   region is selected, only that region is formatted. Otherwise current
-   buffer is formatted.
+   This command formats code using `yapf`_ , `autopep8`_ or `black`_
+   formatter. If a region is selected, only that region is formatted.
+   Otherwise current buffer is formatted.
 
    `yapf`_ and `autopep8`_ can be configured with style files placed in
    the project root directory (determined by ``elpy-project-root``).
 
 .. _autopep8: https://github.com/hhatto/autopep8
 .. _yapf: https://github.com/google/yapf
+.. _black: https://github.com/ambv/black
 
 
 .. command:: elpy-refactor

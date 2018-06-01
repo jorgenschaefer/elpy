@@ -13,6 +13,7 @@ from elpy.pydocutils import get_pydoc_completions
 from elpy.rpc import JSONRPCServer, Fault
 from elpy.auto_pep8 import fix_code
 from elpy.yapfutil import fix_code as fix_code_with_yapf
+from elpy.blackutil import fix_code as fix_code_with_black
 
 
 try:
@@ -212,6 +213,13 @@ class ElpyRPCServer(JSONRPCServer):
         """
         source = get_source(source)
         return fix_code_with_yapf(source, directory)
+
+    def rpc_fix_code_with_black(self, source, directory):
+        """Formats Python code to conform to the PEP 8 style guide.
+
+        """
+        source = get_source(source)
+        return fix_code_with_black(source, directory)
 
 
 def get_source(fileobj):

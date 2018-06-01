@@ -1,3 +1,8 @@
+New in Elpy development
+=======================
+
+- Elpy now supports Black to format your code.
+
 New in Elpy 1.21.0
 ==================
 
@@ -5,7 +10,6 @@ New in Elpy 1.21.0
 - Elpy now knows how to deal with the flymake in the upcoming Emacs
   release.
 - Some minor improvements in error messages and warnings.
-  
 
 New in Elpy 1.20.0
 ==================
@@ -32,7 +36,7 @@ Thanks to Craig MacEachern, Daniel Gopar, Gaby Launay, Maxim
 Cournoyer, Nicholas D. Steeves and Sam Steingold for their help in
 making this release!
 
-  
+
 New in Elpy 1.18.0
 ==================
 
@@ -62,7 +66,7 @@ New in Elpy 1.18.0
 We are happy to report that Elpy now has more maintainers! Daniel
 Gopar, Rainer Gemulla and @galaunay are now helping regularly with
 this project.
-  
+
 Thanks to all the contributors!
 
 
