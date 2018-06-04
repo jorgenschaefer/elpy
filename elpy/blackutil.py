@@ -32,6 +32,8 @@ def fix_code(code, directory):
             fast=False
         )
         return reformatted_source
+    except black.NothingChanged:
+        return code
     except Exception as e:
             raise Fault("Error during formatting: {}".format(e),
                         code=400)

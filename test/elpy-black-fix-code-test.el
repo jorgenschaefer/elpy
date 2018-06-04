@@ -45,3 +45,28 @@
                       "x =_|_"
                       )
                      (should-error (elpy-black-fix-code))))))
+
+(ert-deftest elpy-black-fix-code-should-do-nothing-if-already-formatted ()
+  (let* ((pyversion (getenv "TRAVIS_PYTHON_VERSION"))
+         (black-not-supported (string< pyversion "3.6")))
+    (unless black-not-supported
+      (elpy-testcase ()
+                     (set-buffer-string-with-point
+                      "_|_y =  2"
+                      "z = 3"
+                      "x = 3"
+                      )
+                     (elpy-black-fix-code)
+                     (should
+                      (buffer-be
+                       "_|_y = 2"
+                       "z = 3"
+                       "x = 3"
+                       ))
+                     (elpy-black-fix-code)
+                     (should
+                      (buffer-be
+                       "_|_y = 2"
+                       "z = 3"
+                       "x = 3"
+                       ))))))
