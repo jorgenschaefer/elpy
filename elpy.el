@@ -3649,7 +3649,7 @@ backend to get a call tip, and display that using
 `eldoc-message'. If the backend has no call tip, this will
 display the current class and method instead."
   (let ((flymake-error (elpy-flymake-error-at-point)))
-    (if flymake-error
+    (if (not (string= flymake-error ""))
         flymake-error
       (elpy-rpc-get-calltip
        (lambda (calltip)
