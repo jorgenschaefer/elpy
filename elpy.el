@@ -3770,8 +3770,9 @@ description."
                         ", "))))
         ((and (fboundp 'flymake-diagnostic-text)
               (fboundp 'flymake-diagnostics)) ; emacs >= 26
-         (mapconcat #'flymake-diagnostic-text
-                    (flymake-diagnostics (point)) ", "))))
+         (let ((diag (flymake-diagnostics (point))))
+           (when diag
+             (mapconcat #'flymake-diagnostic-text diag ", "))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Module: Highlight Indentation
