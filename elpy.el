@@ -3688,10 +3688,11 @@ python shell interpreter."
      (require 'eldoc)
      (setq eldoc-minor-mode-string nil))
     (`buffer-init
-     ;; avoid interferences between eldoc and company meta frontend
-     (when (member 'elpy-module-company elpy-modules)
-       (set (make-local-variable 'company-frontends)
-            (delq 'company-echo-metadata-frontend company-frontends)))
+     ;; avoid eldoc message flickering when using eldoc and company modules jointly
+     (eldoc-add-command-completions "company-")
+     (eldoc-add-command-completions "python-indent-dedent-line-backspace")
+     (set (make-local-variable 'company-frontends)
+          (delq 'company-echo-metadata-frontend company-frontends))
      (set (make-local-variable 'eldoc-documentation-function)
           'elpy-eldoc-documentation)
      (eldoc-mode 1))
