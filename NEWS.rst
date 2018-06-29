@@ -1,7 +1,10 @@
-New in Elpy development
-=======================
+New in Elpy 1.22.0
+==================
 
-- Elpy now supports Black to format your code.
+- Elpy now supports the Black source code formatter.
+- Make Elpy work more nicely with the new Flymake.
+- Support Emacs 26.1
+- Lots of bugfixes.
 
 New in Elpy 1.21.0
 ==================
