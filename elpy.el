@@ -3688,15 +3688,19 @@ display the current class and method instead."
      (require 'flymake)
      (elpy-modules-remove-modeline-lighter 'flymake-mode)
      ;; Add our initializer function.
-     ;; For emacs > 26.1, python.el natively supports flymake,
-     ;; so we just tell python.el to use flake8
-     (if (version<= "26.1" emacs-version)
-         (setq python-flymake-command '("flake8" "-"))
+     (when (not (version<= "26.1" emacs-version))
        (setq python-check-command elpy-syntax-check-command)
        (add-to-list 'flymake-allowed-file-name-masks
                     '("\\.py\\'" elpy-flymake-python-init))))
 
     (`buffer-init
+     ;; For emacs > 26.1, python.el natively supports flymake,
+     ;; so we just tell python.el to use the wanted syntax checker
+     (when (version<= "26.1" emacs-version)
+       (setq-local python-flymake-command
+                   (if (string= elpy-syntax-check-command "pyflakes")
+                       '("pyflakes")
+                     `(,elpy-syntax-check-command "-"))))
      ;; `flymake-no-changes-timeout': The original value of 0.5 is too
      ;; short for Python code, as that will result in the current line
      ;; to be highlighted most of the time, and that's annoying. This
