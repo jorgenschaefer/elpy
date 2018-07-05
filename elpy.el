@@ -3689,11 +3689,12 @@ display the current class and method instead."
      (elpy-modules-remove-modeline-lighter 'flymake-mode)
      ;; Add our initializer function.
      (when (not (version<= "26.1" emacs-version))
-       (setq python-check-command elpy-syntax-check-command)
        (add-to-list 'flymake-allowed-file-name-masks
                     '("\\.py\\'" elpy-flymake-python-init))))
 
     (`buffer-init
+     ;; Set this for `elpy-check' command
+     (setq-local python-check-command elpy-syntax-check-command)
      ;; For emacs > 26.1, python.el natively supports flymake,
      ;; so we just tell python.el to use the wanted syntax checker
      (when (version<= "26.1" emacs-version)
