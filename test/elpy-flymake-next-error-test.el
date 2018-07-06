@@ -4,4 +4,6 @@
 
 (ert-deftest elpy-flymake-next-error ()
   (elpy-testcase ()
+    (elpy-module-flymake 'global-init)
+    (elpy-module-flymake 'buffer-init)
     (elpy-flymake-next-error)))
