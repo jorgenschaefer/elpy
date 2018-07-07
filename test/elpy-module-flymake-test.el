@@ -2,10 +2,10 @@
   (elpy-testcase ()
     (mletf* ((executable-find (name) (equal name "flake8")))
       (elpy-module-flymake 'global-init)
-
-      (if (version< emacs-version "26.1")
-          (should (equal python-check-command "flake8"))
-      (should (equal python-flymake-command '("flake8" "-")))))))
+      (elpy-module-flymake 'buffer-init)
+      (should (equal python-check-command "flake8"))
+      (if (version<= "26.1" emacs-version)
+          (should (equal python-flymake-command '("flake8" "-")))))))
 
 (ert-deftest elpy-module-flymake-global-init ()
   (elpy-testcase ()
