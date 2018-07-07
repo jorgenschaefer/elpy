@@ -619,6 +619,9 @@ virtualenv.
 
 (defvar elpy-config--get-config "import json
 import sys
+import warnings
+
+warnings.filterwarnings('ignore', category=FutureWarning)
 
 try:
     import xmlrpclib
