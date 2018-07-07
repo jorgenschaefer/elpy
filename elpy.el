@@ -3633,6 +3633,10 @@ or unless NAME is no callable instance."
      (require 'eldoc)
      (setq eldoc-minor-mode-string nil))
     (`buffer-init
+     ;; avoid interferences between eldoc and company meta frontend
+     (when (member 'elpy-module-company elpy-modules)
+       (set (make-local-variable 'company-frontends)
+            (delq 'company-echo-metadata-frontend company-frontends)))
      (set (make-local-variable 'eldoc-documentation-function)
           'elpy-eldoc-documentation)
      (eldoc-mode 1))
