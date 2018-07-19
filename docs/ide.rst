@@ -341,7 +341,7 @@ for each combination of: whether or not the point should move after sending
 Elpy provides support for sending multiple statements to the shell.
 
 .. command:: elpy-shell-send-group-and-step
-   :kbd: C-c C-y G
+   :kbd: C-c C-y O
 
    Send the current or next group of top-level statements to the Python shell
    and step. A sequence of top-level statements is a group if they are not
@@ -408,9 +408,9 @@ The list of remaining commands to send code fragments is:
 .. command:: elpy-shell-send-defclass-and-go
    :kbd: C-c C-y C
 .. command:: elpy-shell-send-group
-   :kbd: C-c C-y g
+   :kbd: C-c C-y o
 .. command:: elpy-shell-send-group-and-go
-   :kbd: C-c C-y G
+   :kbd: C-c C-y O
 .. command:: elpy-shell-send-codecell
    :kbd: C-c C-y w
 .. command:: elpy-shell-send-codecell-and-go
@@ -434,7 +434,7 @@ The list of remaining commands to send code fragments is:
 .. command:: elpy-shell-send-defclass-and-step-and-go
    :kbd: C-c C-y C-S-C
 .. command:: elpy-shell-send-group-and-step-and-go
-   :kbd: C-c C-y C-S-G
+   :kbd: C-c C-y C-S-O
 .. command:: elpy-shell-send-codecell-and-step-and-go
    :kbd: C-c C-y C-W
 .. command:: elpy-shell-send-region-or-buffer-and-step
