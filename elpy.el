@@ -3672,16 +3672,18 @@ display the current class and method instead."
            (t
             (let ((name (cdr (assq 'name calltip)))
                   (index (cdr (assq 'index calltip)))
-                  (params (cdr (assq 'params calltip))))
+                  (params (mapcar (lambda (param)
+                                    (string-trim-left param "param "))
+                                  (cdr (assq 'params calltip)))))
               (when index
                 (setf (nth index params)
                       (propertize (nth index params)
                                   'face
                                   'eldoc-highlight-function-argument)))
-              (format "%s(%s)"
-                      name
-                      (mapconcat #'identity params ", "))
-              ))))))
+              (let ((prefix (propertize name 'face
+                                        'font-lock-function-name-face))
+                    (args (format "(%s)" (mapconcat #'identity params ", "))))
+                (eldoc-docstring-format-sym-doc prefix args))))))))
       ;; Return the last message until we're done
       eldoc-last-message)))
 
