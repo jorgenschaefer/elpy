@@ -3672,8 +3672,10 @@ display the current class and method instead."
            (t
             (let ((name (cdr (assq 'name calltip)))
                   (index (cdr (assq 'index calltip)))
+                  ;; Strip 'param' added by jedi at the beggining of
+                  ;; parameter names. Should be unecessary for jedi > 0.13.0
                   (params (mapcar (lambda (param)
-                                    (string-trim-left param "param "))
+                                    (car (split-string param "^param " t)))
                                   (cdr (assq 'params calltip)))))
               (when index
                 (setf (nth index params)
