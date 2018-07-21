@@ -81,7 +81,7 @@
              (calltip nil)
              ;; without UI, the minibuffer width is only 9,
              ;; leading to truncated eldoc messages
-             (window-width (window) 100)
+             (window-width (window pixelwise) 100)
              (eldoc-message (tip) (setq calltip tip)))
 
       (elpy-eldoc-documentation)
