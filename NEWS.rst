@@ -1,3 +1,11 @@
+New in Elpy 1.23.0
+==================
+
+- Use the new ``elpy-syntax-check-command`` variable to configure
+  which syntax checker to use in Emacs 26
+- Sending a "group" to the shell now uses the ``o`` suffix instead of
+  ``g`` to avoid clashing with ``C-g``
+
 New in Elpy 1.22.0
 ==================
 
