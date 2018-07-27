@@ -3685,7 +3685,10 @@ display the current class and method instead."
               (let ((prefix (propertize name 'face
                                         'font-lock-function-name-face))
                     (args (format "(%s)" (mapconcat #'identity params ", "))))
-                (eldoc-docstring-format-sym-doc prefix args))))))))
+                ;; for emacs < 25, eldoc function do not accept string
+                (if (version<= emacs-version "25")
+                    (format "%s%s" prefix args)
+                (eldoc-docstring-format-sym-doc prefix args nil)))))))))
       ;; Return the last message until we're done
       eldoc-last-message)))
 
