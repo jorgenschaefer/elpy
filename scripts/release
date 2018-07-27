@@ -8,7 +8,7 @@ main() {
     read response
     [ "$response" = "y" ] || exit 1
     run bumpversion minor
-    run rm dist/*
+    run rm -f dist/*
     run python setup.py sdist bdist_wheel
     run twine upload dist/*
     run git push
