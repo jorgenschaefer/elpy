@@ -3670,6 +3670,7 @@ display the current class and method instead."
            ((stringp calltip)
             calltip)
            (t
+            (message "OK1")
             (let ((name (cdr (assq 'name calltip)))
                   (index (cdr (assq 'index calltip)))
                   ;; Strip 'param' added by jedi at the beggining of
@@ -3677,15 +3678,19 @@ display the current class and method instead."
                   (params (mapcar (lambda (param)
                                     (car (split-string param "^param " t)))
                                   (cdr (assq 'params calltip)))))
+              (message "OK2")
               (when index
                 (setf (nth index params)
                       (propertize (nth index params)
                                   'face
                                   'eldoc-highlight-function-argument)))
+              (message "OK3")
               (let ((prefix (propertize name 'face
                                         'font-lock-function-name-face))
                     (args (format "(%s)" (mapconcat #'identity params ", "))))
+                (message "OK4")
                 (eldoc-docstring-format-sym-doc prefix args))))))))
+                (message "OK5")
       ;; Return the last message until we're done
       eldoc-last-message)))
 
