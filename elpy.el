@@ -3672,16 +3672,23 @@ display the current class and method instead."
            (t
             (let ((name (cdr (assq 'name calltip)))
                   (index (cdr (assq 'index calltip)))
-                  (params (cdr (assq 'params calltip))))
+                  ;; Strip 'param' added by jedi at the beggining of
+                  ;; parameter names. Should be unecessary for jedi > 0.13.0
+                  (params (mapcar (lambda (param)
+                                    (car (split-string param "^param " t)))
+                                  (cdr (assq 'params calltip)))))
               (when index
                 (setf (nth index params)
                       (propertize (nth index params)
                                   'face
                                   'eldoc-highlight-function-argument)))
-              (format "%s(%s)"
-                      name
-                      (mapconcat #'identity params ", "))
-              ))))))
+              (let ((prefix (propertize name 'face
+                                        'font-lock-function-name-face))
+                    (args (format "(%s)" (mapconcat #'identity params ", "))))
+                ;; for emacs < 25, eldoc function do not accept string
+                (if (version<= emacs-version "25")
+                    (format "%s%s" prefix args)
+                (eldoc-docstring-format-sym-doc prefix args nil)))))))))
       ;; Return the last message until we're done
       eldoc-last-message)))
 
