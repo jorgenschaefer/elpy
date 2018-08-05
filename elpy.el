@@ -3153,17 +3153,11 @@ Points to file FILE, at position POS."
     "Return identifier at point.
 
 Is a string, formatted as \"LINE_NUMBER: VARIABLE_NAME\".
-Try to find the identifier assignement if it is in the current buffer.
 "
     (let* ((symb  (symbol-at-point))
-           (symb-str (substring-no-properties (symbol-name symb)))
-           (assign (elpy-rpc-get-assignment)))
+           (symb-str (substring-no-properties (symbol-name symb))))
       (when symb
-        (if (and assign (string= (car assign) (buffer-file-name)))
-            (format "%s: %s"
-                    (line-number-at-pos (+ 1 (car (cdr assign))))
-                    symb-str)
-          (format "%s: %s" (line-number-at-pos) symb-str)))))
+        (format "%s: %s" (line-number-at-pos) symb-str))))
 
   (defun elpy-xref--identifier-name (id)
     "Return the identifier ID variable name."
@@ -3237,28 +3231,13 @@ This is needed to get information on the identifier with jedi
     (elpy-xref--get-completion-table))
 
   (defun elpy-xref--get-completion-table ()
-    "Return the completion table for identifiers.
-
-Try to use the identifier assignement instead of the identifier at point.
-Also ensure that variables are not represented more than once."
-    (let ((table nil)
-          (outside-assigns))
+    "Return the completion table for identifiers."
       (cl-loop
        for ref in (nreverse (elpy-rpc-get-names))
        for offset = (+ (alist-get 'offset ref) 1)
        for line = (line-number-at-pos offset)
-       ;; Use assignment line position if the assignement is in the same file
-       for assign = (save-excursion (goto-char offset) (elpy-rpc-get-assignment))
-       do (when (string= (car assign) (buffer-file-name))
-            (setq offset (+ 1 (car (cdr assign))))
-            (setq line (line-number-at-pos offset)))
        for id = (format "%s: %s" line (alist-get 'name ref))
-       ;; ensure that identifier are represented only once
-       unless (or (member id table) (member assign outside-assigns))
-       do (progn
-            (push id table)
-            (when assign (push assign outside-assigns))))
-      table))
+       collect id))
 
   ;; Apropos
   (cl-defmethod xref-backend-apropos ((_backend (eql elpy)) regex)
