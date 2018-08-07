@@ -464,9 +464,7 @@ complete). Otherwise, does nothing."
         (if (string-empty-p output)
             (message "No output was produced.")
           (message "%s" (replace-regexp-in-string "\n\\'" "" output))))
-      (setq-local elpy-shell--captured-output nil)
-      ;; Stop capturing the outputs then
-      (setq-local elpy-shell--capture-output nil)))
+      (setq-local elpy-shell--captured-output nil)))
 
   ;; return input unmodified
   string)
