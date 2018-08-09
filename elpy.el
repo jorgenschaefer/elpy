@@ -3179,10 +3179,11 @@ Try to find the identifier assignement if it is in the current buffer.
     "Goto the identifier ID in the current buffer.
 This is needed to get information on the identifier with jedi
 \(that work only on the symbol at point\)"
-    (goto-char (point-min))
-    (forward-line (1- (elpy-xref--identifier-line id)))
-    (search-forward (elpy-xref--identifier-name id))
-    (goto-char (match-beginning 0)))
+    (let ((case-fold-search nil))
+      (goto-char (point-min))
+      (forward-line (1- (elpy-xref--identifier-line id)))
+      (search-forward (elpy-xref--identifier-name id) (line-end-position))
+      (goto-char (match-beginning 0))))
 
   ;; Find definition
   (cl-defmethod xref-backend-definitions ((_backend (eql elpy)) id)
