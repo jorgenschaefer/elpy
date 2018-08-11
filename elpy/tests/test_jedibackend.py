@@ -120,13 +120,13 @@ class TestRPCGetAssignment(RPCGetAssignmentTests,
 class TestRPCGetCalltip(RPCGetCalltipTests,
                         JediBackendTestCase):
     KEYS_CALLTIP = {'index': 0,
-                    'params': ['param '],
+                    'params': [''],
                     'name': u'keys'}
     RADIX_CALLTIP = {'index': None,
                      'params': [],
                      'name': u'radix'}
     ADD_CALLTIP = {'index': 0,
-                   'params': [u'param a', u'param b'],
+                   'params': [u'a', u'b'],
                    'name': u'add'}
     if compat.PYTHON3:
         THREAD_CALLTIP = {"name": "Thread",
@@ -139,12 +139,12 @@ class TestRPCGetCalltip(RPCGetCalltipTests,
                           "index": 0}
     else:
         THREAD_CALLTIP = {"name": "Thread",
-                          "params": ["param group=None",
-                                     "param target=None",
-                                     "param name=None",
-                                     "param args=()",
-                                     "param kwargs=None",
-                                     "param verbose=None"],
+                          "params": ["group=None",
+                                     "target=None",
+                                     "name=None",
+                                     "args=()",
+                                     "kwargs=None",
+                                     "verbose=None"],
                           "index": 0}
 
     def test_should_not_fail_with_get_subscope_by_name(self):

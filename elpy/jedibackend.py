@@ -8,6 +8,7 @@ https://github.com/davidhalter/jedi
 
 import sys
 import traceback
+import re
 
 import jedi
 
@@ -143,9 +144,13 @@ class JediBackend(object):
             call = None
         if not call:
             return None
+        # Strip 'param' added by jedi at the beggining of
+        # parameter names. Should be unecessary for jedi > 0.13.0
+        params = [re.sub("^param ", '', param.description)
+                  for param in call.params]
         return {"name": call.name,
                 "index": call.index,
-                "params": [param.description for param in call.params]}
+                "params": params}
 
     def rpc_get_usages(self, filename, source, offset):
         """Return the uses of the symbol at offset.
