@@ -3680,7 +3680,9 @@ display the current class and method instead."
   (pcase command
     (`global-init
      (require 'flymake)
-     (elpy-modules-remove-modeline-lighter 'flymake-mode)
+     ;; flymake modeline is quite useful for emacs > 26.1
+     (when (version< emacs-version "26.1")
+       (elpy-modules-remove-modeline-lighter 'flymake-mode))
      ;; Add our initializer function.
      (when (not (version<= "26.1" emacs-version))
        (add-to-list 'flymake-allowed-file-name-masks
