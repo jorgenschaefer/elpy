@@ -6,7 +6,7 @@
 ;; URL: https://github.com/jorgenschaefer/elpy
 ;; Version: 1.23.0
 ;; Keywords: Python, IDE, Languages, Tools
-;; Package-Requires: ((company "0.9.2") (emacs "24.4") (find-file-in-project "3.3")  (highlight-indentation "0.5.0") (pyvenv "1.3") (yasnippet "0.8.0") (s "1.11.0"))
+;; Package-Requires: ((company "0.9.2") (emacs "24.3") (find-file-in-project "3.3")  (highlight-indentation "0.5.0") (pyvenv "1.3") (yasnippet "0.8.0") (s "1.11.0"))
 
 ;; This program is free software; you can redistribute it and/or
 ;; modify it under the terms of the GNU General Public License
@@ -42,7 +42,8 @@
 (require 'ido)
 (require 'json)
 (require 'python)
-(require 'subr-x)
+(require 'subr-x nil t)
+(require 'elpy-backport-24.3)
 (require 'xref nil t)
 (require 'cl-lib)   ; for `cl-every', `cl-copy-list', `cl-delete-if-not'
 
