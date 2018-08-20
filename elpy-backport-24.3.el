@@ -26,6 +26,13 @@
   (defsubst string-empty-p (string)
     "Check whether STRING is empty."
     (string= string ""))
+  (defsubst string-suffix-p (str1 str2 &optional ignore-case)
+    (let ((begin2 (- (length str2) (length str1)))
+          (end2 (length str2)))
+      (when (< begin2 0) (setq begin2 0))
+      (eq t (compare-strings str1 nil nil
+                             str2 begin2 end2
+                             ignore-case))))
   (defsubst string-remove-suffix (suffix string)
     "Remove SUFFIX from STRING if present."
     (if (string-suffix-p suffix string)
