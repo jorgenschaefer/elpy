@@ -17,8 +17,8 @@
               (program &optional infile destination display &rest args)
               0)
              (widget (widget-create 'elpy-insert--pip-button "test-module")))
-      (should (string-match ".*python.* -m pip" (widget-get widget :command)))
-      (should (string-match ".*python.* -m pip" (buffer-string))))))
+      (should (string-match "python.*\ -m pip" (widget-get widget :command)))
+      (should (string-match "python.*\ -m pip" (buffer-string))))))
 
 (ert-deftest elpy-insert--pip-button-value-create-should-use-easy_install ()
   (elpy-testcase ()
