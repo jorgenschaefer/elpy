@@ -3347,6 +3347,7 @@ If you need your modeline, you can set the variable `elpy-remove-modeline-lighte
   (pcase command
     (`global-init
      (require 'company)
+     (require 'company-capf)
      (elpy-modules-remove-modeline-lighter 'company-mode)
      (define-key company-active-map (kbd "C-d")
        'company-show-doc-buffer)
@@ -3524,6 +3525,28 @@ or unless NAME is no callable instance."
              (backward-char 1)
              (delete-char 2))))))
 
+(defun elpy-company--add-interpreter-completions-candidates (candidates)
+  "Add completions candidates from python.el to the list of candidates.
+
+Get completions candidates at point from python.el, normalize them to look
+like what elpy-company returns, merge them with the CANDIDATES list
+and return the list.
+
+  python.el provides completion based on what is currently loaded in the
+python shell interpreter."
+  (let* ((completion-at-point-functions '(python-completion-complete-at-point))
+         (pytel-candidates (company-capf 'candidates (company-capf 'prefix)))
+         (candidates-name (cl-loop
+                           for cand in candidates
+                           collect (cdr (assoc 'name cand)))))
+    (cl-loop
+     for pytel-cand in pytel-candidates
+     for pytel-cand = (replace-regexp-in-string "($" "" pytel-cand)
+     for pytel-cand = (replace-regexp-in-string "^.*\\." "" pytel-cand)
+     if (not (member pytel-cand candidates-name))
+     do (add-to-list 'candidates (list (cons 'name pytel-cand)) t)))
+  candidates)
+
 (defun elpy-company-backend (command &optional arg &rest ignored)
   "A company-mode backend for Elpy."
   (interactive (list 'interactive))
@@ -3542,6 +3565,10 @@ or unless NAME is no callable instance."
            (lambda (callback)
              (elpy-rpc-get-completions
               (lambda (result)
+                ;; add completion candidates from python.el
+                (setq result
+                      (elpy-company--add-interpreter-completions-candidates
+                       result))
                 (elpy-company--cache-clear)
                 (funcall
                  callback
