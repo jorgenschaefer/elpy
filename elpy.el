@@ -3534,15 +3534,15 @@ and return the list.
 
   python.el provides completion based on what is currently loaded in the
 python shell interpreter."
-  (let* ((completion-at-point-functions '(python-completion-at-point))
+  (let* ((completion-at-point-functions '(python-completion-complete-at-point))
          (pytel-candidates (company-capf 'candidates (company-capf 'prefix)))
          (candidates-name (cl-loop
                            for cand in candidates
                            collect (cdr (assoc 'name cand)))))
     (cl-loop
      for pytel-cand in pytel-candidates
-     for pytel-cand = (string-trim-right pytel-cand "(")
-     for pytel-cand = (string-trim-left pytel-cand ".*\\.")
+     for pytel-cand = (replace-regexp-in-string "($" "" pytel-cand)
+     for pytel-cand = (replace-regexp-in-string "^.*\\." "" pytel-cand)
      if (not (member pytel-cand candidates-name))
      do (add-to-list 'candidates (list (cons 'name pytel-cand)) t)))
   candidates)
