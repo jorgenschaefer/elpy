@@ -6,7 +6,7 @@
 ;; URL: https://github.com/jorgenschaefer/elpy
 ;; Version: 1.23.0
 ;; Keywords: Python, IDE, Languages, Tools
-;; Package-Requires: ((company "0.9.2") (emacs "24.4") (find-file-in-project "3.3")  (highlight-indentation "0.5.0") (pyvenv "1.3") (yasnippet "0.8.0") (s "1.11.0"))
+;; Package-Requires: ((company "0.9.2") (emacs "24.3") (find-file-in-project "3.3")  (highlight-indentation "0.5.0") (pyvenv "1.3") (yasnippet "0.8.0") (s "1.11.0"))
 
 ;; This program is free software; you can redistribute it and/or
 ;; modify it under the terms of the GNU General Public License
@@ -42,7 +42,8 @@
 (require 'ido)
 (require 'json)
 (require 'python)
-(require 'subr-x)
+(require 'subr-x nil 'noerror)
+(require 'elpy-backport-24.3)
 (require 'xref nil t)
 (require 'cl-lib)   ; for `cl-every', `cl-copy-list', `cl-delete-if-not'
 
@@ -1286,13 +1287,13 @@ This is marked with setup.py or setup.cfg."
                             (and (file-directory-p (format "%s/.svn" dir))
                                  (not (file-directory-p (format "%s/../.svn"
                                                                 dir)))))))
-
-(defun elpy-project-find-projectile-root ()
-  "Return the current project root according to projectile."
-  ;; `ignore-errors' both to avoid an unbound function error as well
-  ;; as ignore projectile saying there is no project root here.
-  (ignore-errors
-    (projectile-project-root)))
+(if (version< "25.1" emacs-version)
+    (defun elpy-project-find-projectile-root ()
+      "Return the current project root according to projectile."
+      ;; `ignore-errors' both to avoid an unbound function error as well
+      ;; as ignore projectile saying there is no project root here.
+      (ignore-errors
+        (projectile-project-root))))
 
 (defun elpy-library-root ()
   "Return the root of the Python package chain of the current buffer.
