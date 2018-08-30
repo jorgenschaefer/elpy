@@ -1293,7 +1293,10 @@ This is marked with setup.py or setup.cfg."
       ;; `ignore-errors' both to avoid an unbound function error as well
       ;; as ignore projectile saying there is no project root here.
       (ignore-errors
-        (projectile-project-root))))
+        (projectile-project-root)))
+  (defun elpy-project-find-projectile-root ()
+    "Compatibility: return nothing."
+      nil))
 
 (defun elpy-library-root ()
   "Return the root of the Python package chain of the current buffer.
