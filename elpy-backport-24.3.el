@@ -5,6 +5,7 @@
 
 ;;; Code:
 
+(require 'company)
 (unless (featurep 'subr-x)
   ;; `subr-x' function for Emacs 24.3 and below
   (defsubst string-join (strings &optional separator)
