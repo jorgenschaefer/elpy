@@ -50,5 +50,15 @@ of `error' with a user-friendly message."
           (error
            "No inferior Python process running.")))))
 
+(unless (fboundp 'python-shell-get-buffer)
+  ;; python-shell-get-buffer def for 24.3 
+  (defun python-shell-get-buffer ()
+    "Return inferior Python buffer for current buffer.
+If current buffer is in `inferior-python-mode', return it."
+    (if (derived-mode-p 'inferior-python-mode)
+        (current-buffer)
+      (format "*%s*" (python-shell-get-process-name nil))))
+)
+
 (provide 'elpy-backport-24.3)
 ;;; elpy-backport-24.3.el ends here
