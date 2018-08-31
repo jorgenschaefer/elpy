@@ -1,4 +1,4 @@
-(when (version<= "24.4" emacs-version)
+(when (version<= "25.1" emacs-version)
     (fset 'projectile-project-root (lambda (&rest ignored) nil))
 
      (ert-deftest elpy-project-find-projectile-root-should-return-root ()
