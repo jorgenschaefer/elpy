@@ -3538,7 +3538,8 @@ and return the list.
 
   python.el provides completion based on what is currently loaded in the
 python shell interpreter."
-  (let* ((completion-at-point-functions '(python-completion-complete-at-point))
+  (if version< 24.4 emacs-version)
+  ((let* ((completion-at-point-functions '(python-completion-complete-at-point))
          (pytel-candidates (company-capf 'candidates (company-capf 'prefix)))
          (candidates-name (cl-loop
                            for cand in candidates
@@ -3550,6 +3551,7 @@ python shell interpreter."
      if (not (member pytel-cand candidates-name))
      do (add-to-list 'candidates (list (cons 'name pytel-cand)) t)))
   candidates)
+  (candidates))
 
 (defun elpy-company-backend (command &optional arg &rest ignored)
   "A company-mode backend for Elpy."
