@@ -4,7 +4,7 @@
 
 ;; Author: Jorgen Schaefer <contact@jorgenschaefer.de>
 ;; URL: https://github.com/jorgenschaefer/elpy
-;; Version: 1.23.0
+;; Version: 1.24.0
 ;; Keywords: Python, IDE, Languages, Tools
 ;; Package-Requires: ((company "0.9.2") (emacs "24.3") (find-file-in-project "3.3")  (highlight-indentation "0.5.0") (pyvenv "1.3") (yasnippet "0.8.0") (s "1.11.0"))
 
@@ -54,7 +54,7 @@
 (require 'pyvenv)
 (require 'find-file-in-project)
 
-(defconst elpy-version "1.23.0"
+(defconst elpy-version "1.24.0"
   "The version of the Elpy lisp code.")
 
 ;;;;;;;;;;;;;;;;;;;;;;
@@ -3538,24 +3538,24 @@ and return the list.
 
   python.el provides completion based on what is currently loaded in the
 python shell interpreter."
-  (if version< 24.4 emacs-version)
-  ((let* ((completion-at-point-functions '(python-completion-complete-at-point))
-          (pytel-candidates 
-           (condition-case nil
-               ;; Sometimes, python.el completion raise an error...
-               (company-capf 'candidates (company-capf 'prefix))
-             (error '())))
-         (candidates-name (cl-loop
-                           for cand in candidates
-                           collect (cdr (assoc 'name cand)))))
-    (cl-loop
-     for pytel-cand in pytel-candidates
-     for pytel-cand = (replace-regexp-in-string "($" "" pytel-cand)
-     for pytel-cand = (replace-regexp-in-string "^.*\\." "" pytel-cand)
-     if (not (member pytel-cand candidates-name))
-     do (add-to-list 'candidates (list (cons 'name pytel-cand)) t)))
+  (if (version< 24.4 emacs-version)
+    (let* ((completion-at-point-functions '(python-completion-complete-at-point))
+           (pytel-candidates 
+            (condition-case nil
+                ;; Sometimes, python.el completion raise an error...
+                (company-capf 'candidates (company-capf 'prefix))
+              (error '())))
+           (candidates-name (cl-loop
+                             for cand in candidates
+                             collect (cdr (assoc 'name cand)))))
+      (cl-loop
+       for pytel-cand in pytel-candidates
+       for pytel-cand = (replace-regexp-in-string "($" "" pytel-cand)
+       for pytel-cand = (replace-regexp-in-string "^.*\\." "" pytel-cand)
+       if (not (member pytel-cand candidates-name))
+       do (add-to-list 'candidates (list (cons 'name pytel-cand)) t)))
+    candidates)
   candidates)
-  (candidates))
 
 (defun elpy-company-backend (command &optional arg &rest ignored)
   "A company-mode backend for Elpy."

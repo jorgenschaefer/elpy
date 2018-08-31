@@ -1,3 +1,11 @@
+New in Elpy 1.24.0
+==================
+
+- Eldoc messages are a bit nicer now
+- Flymake has a useful modeline in Emacs 26 now, so Elpy won't hide it
+  anymore
+- Elpy will now also use the Python shell to suggest completions
+
 New in Elpy 1.23.0
 ==================
 
