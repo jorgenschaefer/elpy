@@ -3540,7 +3540,11 @@ and return the list.
 python shell interpreter."
   (if version< 24.4 emacs-version)
   ((let* ((completion-at-point-functions '(python-completion-complete-at-point))
-         (pytel-candidates (company-capf 'candidates (company-capf 'prefix)))
+          (pytel-candidates 
+           (condition-case nil
+               ;; Sometimes, python.el completion raise an error...
+               (company-capf 'candidates (company-capf 'prefix))
+             (error '())))
          (candidates-name (cl-loop
                            for cand in candidates
                            collect (cdr (assoc 'name cand)))))
