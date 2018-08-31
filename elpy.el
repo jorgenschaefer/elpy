@@ -3538,7 +3538,7 @@ and return the list.
 
   python.el provides completion based on what is currently loaded in the
 python shell interpreter."
-  (if (version< 24.4 emacs-version)
+  (if (version< "24.4" emacs-version)
     (let* ((completion-at-point-functions '(python-completion-complete-at-point))
            (pytel-candidates 
             (condition-case nil
