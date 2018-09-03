@@ -3534,22 +3534,20 @@ and return the list.
 
   python.el provides completion based on what is currently loaded in the
 python shell interpreter."
-  (let* ((completion-at-point-functions '(python-completion-complete-at-point))
-         (pytel-candidates
-          (condition-case nil
-              ;; Sometimes, python.el completion raise an error...
-              (company-capf 'candidates (company-capf 'prefix))
-            (error '())))
-         (candidates-name (cl-loop
-                           for cand in candidates
-                           collect (cdr (assoc 'name cand)))))
-    (cl-loop
-     for pytel-cand in pytel-candidates
-     for pytel-cand = (replace-regexp-in-string "($" "" pytel-cand)
-     for pytel-cand = (replace-regexp-in-string "^.*\\." "" pytel-cand)
-     if (not (member pytel-cand candidates-name))
-     do (add-to-list 'candidates (list (cons 'name pytel-cand)) t)))
-  candidates)
+  (let* ((new-candidates (python-completion-complete-at-point))
+         (start (nth 0 new-candidates))
+         (end (nth 1 new-candidates))
+         (completion-list (nth 2 new-candidates)))
+    (when (and start end)
+      (let ((candidates-name (all-completions (buffer-substring start end)
+                                              completion-list)))
+        (cl-loop
+         for pytel-cand in candidates-name
+         for pytel-cand = (replace-regexp-in-string "($" "" pytel-cand)
+         for pytel-cand = (replace-regexp-in-string "^.*\\." "" pytel-cand)
+         if (not (member pytel-cand candidates))
+         do (add-to-list 'candidates (list (cons 'name pytel-cand)) t)))
+      candidates)))
 
 (defun elpy-company-backend (command &optional arg &rest ignored)
   "A company-mode backend for Elpy."
