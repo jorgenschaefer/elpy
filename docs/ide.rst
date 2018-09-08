@@ -192,7 +192,7 @@ Interpreter Setup
 Elpy uses the Python interpreter setup from the Emacs ``python`` package. This
 section briefly summarizes some common setups; add the one you need to your
 ``.emacs`` file. Note that the code below (and Elpy in general) require at least
-Emacs 24.4.
+Emacs 24.3.
 
 Use the Python standard interpreter (default):
 

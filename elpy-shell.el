@@ -24,7 +24,8 @@
 ;;
 ;;; Code:
 
-(eval-when-compile (require 'subr-x))
+(eval-when-compile (require 'subr-x nil t))
+(require 'elpy-backport-24.3)
 (require 'pyvenv)
 (require 'python)
 
