@@ -431,9 +431,6 @@ option is `pdb'."
 
     (define-key map (kbd "M-TAB") 'elpy-company-backend)
 
-    ;; ;; key bindings for elpy-shell
-    ;; (define-key map (kbd elpy-shell-prefix-key) 'elpy-shell-map)
-
     map)
   "Key map for the Emacs Lisp Python Environment.")
 
@@ -475,16 +472,18 @@ option is `pdb'."
   "Key map for the shell related commands")
 (fset 'elpy-shell-map elpy-shell-map)
 
-(defcustom elpy-shell-command-prefix-key (kbd "C-c C-y")
-"Prefix key used to call elpy shell related commands."
-:type 'key-sequence
+(defcustom elpy-shell-command-prefix-key "C-c C-y"
+"Prefix key used to call elpy shell related commands.
+
+This option need to bet set through `customize' or `customize-set-variable' to be taken into account."
+:type 'string
 :group 'elpy
 :set
 (lambda (var key)
   (when (and (boundp var) (symbol-value var))
-    (define-key elpy-mode-map (symbol-value var) nil))
+    (define-key elpy-mode-map (kbd (symbol-value var)) nil))
   (when key
-    (define-key elpy-mode-map  key 'elpy-shell-map)
+    (define-key elpy-mode-map (kbd key) 'elpy-shell-map)
   (set var key))))
 
 (easy-menu-define elpy-menu elpy-mode-map
