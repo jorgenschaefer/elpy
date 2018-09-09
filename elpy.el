@@ -3538,7 +3538,8 @@ python shell interpreter."
          (start (nth 0 new-candidates))
          (end (nth 1 new-candidates))
          (completion-list (nth 2 new-candidates)))
-    (when (and start end)
+    (if (not (and start end))
+        candidates
       (let ((candidates-name (all-completions (buffer-substring start end)
                                               completion-list)))
         (cl-loop
