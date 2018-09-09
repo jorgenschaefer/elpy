@@ -81,4 +81,4 @@ Available subcommands:
 
 (ert-deftest elpy-module-django-get-test-format-should-error-if-cannot-find-test-runner ()
   (mletf* ((elpy-django--get-test-runner "math")))
-  (should-error (elpy--get-django-test-format)))
+  (should-error (elpy-django--get-test-format)))
