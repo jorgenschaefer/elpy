@@ -79,6 +79,13 @@ Available subcommands:
   (setenv "DJANGO_SETTINGS_MODULE" "popcorn")
   (should-error (elpy-django--get-test-runner)))
 
-(ert-deftest elpy-module-django-get-test-format-should-error-if-cannot-find-test-runner ()
-  (mletf* ((elpy-django--get-test-runner "math")))
-  (should-error (elpy--get-django-test-format)))
+(ert-deftest elpy-module-django-get-test-format-defaults-to-standard-django-runner-format ()
+  (mletf*
+   ((elpy-django--get-test-runner () "my.custom.TestRunner"))
+   (should (string= "." (elpy-django--get-test-format)))))
+
+(ert-deftest elpy-module-django-get-test-format-applies-test-runner-formats-config ()
+  (mletf*
+   ((elpy-django--get-test-runner () "my.custom.TestRunner")
+    (elpy-django-test-runner-formats '(("my.custom.TestRunner" . "~"))))
+   (should (string= "~" (elpy-django--get-test-format)))))
