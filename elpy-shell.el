@@ -24,7 +24,8 @@
 ;;
 ;;; Code:
 
-(eval-when-compile (require 'subr-x))
+(eval-when-compile (require 'subr-x nil 'noerror))
+(require 'elpy-backport-24.3)
 (require 'pyvenv)
 (require 'python)
 
@@ -181,7 +182,7 @@ If KILL-BUFF is non-nil, also kill the associated buffer."
      (shell-buffer
       (delete-process shell-buffer)
       (when kill-buff
-	(kill-buffer shell-buffer))
+        (kill-buffer shell-buffer))
       (message "Killed %s shell" shell-buffer))
      (t
       (message "No python shell to kill")))))
@@ -195,28 +196,28 @@ If ASK-FOR-EACH-ONE is non-nil, ask before killing each python process."
   (let ((python-buffer-list ()))
     ;; Get active python shell buffers and kill inactive ones (if asked)
     (cl-loop for buffer being the buffers do
-	  (when (and (buffer-name buffer)
-		     (string-match (rx bol "*Python" (opt "[" (* (not (any "]"))) "]") "*" eol)
-				   (buffer-name buffer)))
-	    (if (get-buffer-process buffer)
-		(push buffer python-buffer-list)
-	      (when kill-buffers
-		(kill-buffer buffer)))))
+          (when (and (buffer-name buffer)
+                     (string-match (rx bol "*Python" (opt "[" (* (not (any "]"))) "]") "*" eol)
+                                   (buffer-name buffer)))
+            (if (get-buffer-process buffer)
+                (push buffer python-buffer-list)
+              (when kill-buffers
+                (kill-buffer buffer)))))
     (cond
      ;; Ask for each buffers and kill
      ((and python-buffer-list ask-for-each-one)
       (cl-loop for buffer in python-buffer-list do
-	    (when (y-or-n-p (format "Kill %s ? " buffer))
-		(delete-process buffer)
-		(when kill-buffers
-		  (kill-buffer buffer)))))
+            (when (y-or-n-p (format "Kill %s ? " buffer))
+                (delete-process buffer)
+                (when kill-buffers
+                  (kill-buffer buffer)))))
      ;; Ask and kill every buffers
      (python-buffer-list
       (if (y-or-n-p (format "Kill %s python shells ? " (length python-buffer-list)))
-	  (cl-loop for buffer in python-buffer-list do
-		(delete-process buffer)
-		(when kill-buffers
-		  (kill-buffer buffer)))))
+          (cl-loop for buffer in python-buffer-list do
+                (delete-process buffer)
+                (when kill-buffers
+                  (kill-buffer buffer)))))
      ;; No shell to close
      (t
       (message "No python shell to close")))))
@@ -327,7 +328,7 @@ commands can be sent to the shell."
                         (- indent-level))
         ;; 'indent-rigidly' introduces tabs despite the fact that 'indent-tabs-mode' is nil
         ;; 'untabify' fix that
-	(untabify (point-min) (point-max))
+        (untabify (point-min) (point-max))
         (buffer-string)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -464,7 +465,9 @@ complete). Otherwise, does nothing."
         (if (string-empty-p output)
             (message "No output was produced.")
           (message "%s" (replace-regexp-in-string "\n\\'" "" output))))
-      (setq-local elpy-shell--captured-output nil)))
+      (setq-local elpy-shell--captured-output nil)
+      ;; Stop capturing the outputs then
+      (setq-local elpy-shell--capture-output nil)))
 
   ;; return input unmodified
   string)
@@ -558,16 +561,24 @@ Prepends a continuation promt if PREPEND-CONT-PROMPT is set."
                append-string
                "\n")))))
 
+(if (not (fboundp 'advice-add))
+    (defadvice elpy-shell-echo-input-before (before elpy-shell--python-shell-send-string-echo-advice ())
+      (progn python-shell-send-string)))
+
 (defun elpy-shell--enable-echo ()
   "Enable input echoing when `elpy-shell-echo-input' is set."
   (when elpy-shell-echo-input
-    (advice-add 'python-shell-send-string
-                :before 'elpy-shell--python-shell-send-string-echo-advice)))
+    (if (fboundp 'advice-add)
+        (advice-add 'python-shell-send-string
+                    :before 'elpy-shell--python-shell-send-string-echo-advice)
+      (ad-activate 'elpy-shell-echo-input-before))))
 
 (defun elpy-shell--disable-echo ()
   "Disable input echoing."
-  (advice-remove 'python-shell-send-string
-                 'elpy-shell--python-shell-send-string-echo-advice))
+  (if (fboundp 'advice-add)
+      (advice-remove 'python-shell-send-string
+                     'elpy-shell--python-shell-send-string-echo-advice)
+    (ad-deactivate 'elpy-shell-echo-input-before)))
 
 (defun elpy-shell-send-file (file-name &optional process temp-file-name
                                          delete msg)
@@ -950,20 +961,35 @@ of code. With prefix argument, this code is executed."
       (message (concat "Removed if __name__ == '__main__' construct, "
                        "use a prefix argument to evaluate.")))))
 
-(defun elpy-shell-send-buffer-and-step (&optional arg)
-  "Send entire buffer to Python shell.
+(if (version< emacs-version "25.0")
+    (defun elpy-shell-send-buffer-and-step (&optional arg)
+      "send entire buffer to python shell.
 
-In Emacs 24.3 and later, without prefix argument, this will
-escape the Python idiom of if __name__ == '__main__' to be false
-to avoid accidental execution of code. With prefix argument, this
+in emacs 24.3 and later, without prefix argument, this will
+escape the python idiom of if __name__ == '__main__' to be false
+to avoid accidental execution of code. with prefix argument, this
 code is executed."
-  (interactive "P")
-  (let ((p))
-    (save-mark-and-excursion
-      (deactivate-mark)
-      (elpy-shell-send-region-or-buffer-and-step arg)
-      (setq p (point)))
-    (goto-char p)))
+      (interactive "p")
+      (let ((p))
+        (save-excursion
+          (deactivate-mark)
+          (elpy-shell-send-region-or-buffer-and-step arg)
+          (setq p (point)))
+        (goto-char p)))
+  (defun elpy-shell-send-buffer-and-step (&optional arg)
+    "send entire buffer to python shell.
+
+in emacs 24.3 and later, without prefix argument, this will
+escape the python idiom of if __name__ == '__main__' to be false
+to avoid accidental execution of code. with prefix argument, this
+code is executed."
+    (interactive "p")
+    (let ((p))
+      (save-mark-and-excursion
+       (deactivate-mark)
+       (elpy-shell-send-region-or-buffer-and-step arg)
+       (setq p (point)))
+      (goto-char p))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Send command variations (with/without step; with/without go)

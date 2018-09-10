@@ -59,28 +59,29 @@
       (when (not dont-display)
         (elpy-profile--display-profiling prof-file)))))
 
-(defun elpy-profile--file (file &optional in-dir dont-display)
-  "Profile asynchronously FILE and display the result using
+(when (fboundp 'make-process)
+  (defun elpy-profile--file (file &optional in-dir dont-display)
+    "Profile asynchronously FILE and display the result using
 `elpy-profile-visualizer'.
 
 If IN-DIR is non nil, profile result is saved in the same
 directory as the script.
 If DONT-DISPLAY is non nil, don't display the profile results."
-  (ignore-errors (kill-buffer "*elpy-profile-log*"))
-  (let* ((prof-file (if in-dir
-                        (concat (file-name-sans-extension file) ".profile")
-                      (concat (make-temp-file "elpy-profile-" nil ".profile"))))
-         (proc-name (format "elpy-profile-%s" file))
-         (proc-cmd (list python-shell-interpreter "-m" "cProfile" "-o" prof-file file))
-         (proc (make-process :name proc-name
-                             :buffer "*elpy-profile-log*"
-                             :sentinel 'elpy-profile--sentinel
-                             :command proc-cmd)))
-    (message "[%s] Profiling ..." (file-name-nondirectory file))
-    (process-put proc 'prof-file prof-file)
-    (process-put proc 'file file)
-    (process-put proc 'dont-display dont-display)
-    prof-file))
+    (ignore-errors (kill-buffer "*elpy-profile-log*"))
+    (let* ((prof-file (if in-dir
+                          (concat (file-name-sans-extension file) ".profile")
+                        (concat (make-temp-file "elpy-profile-" nil ".profile"))))
+           (proc-name (format "elpy-profile-%s" file))
+           (proc-cmd (list python-shell-interpreter "-m" "cProfile" "-o" prof-file file))
+           (proc (make-process :name proc-name
+                               :buffer "*elpy-profile-log*"
+                               :sentinel 'elpy-profile--sentinel
+                               :command proc-cmd)))
+      (message "[%s] Profiling ..." (file-name-nondirectory file))
+      (process-put proc 'prof-file prof-file)
+      (process-put proc 'file file)
+      (process-put proc 'dont-display dont-display)
+      prof-file)))
 
 ;;;;;;;;;;;;;;;;;;;;;;
 ;;; User Functions
