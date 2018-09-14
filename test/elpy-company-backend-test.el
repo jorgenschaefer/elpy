@@ -137,7 +137,7 @@
                        "variable_script"))
       (should (string= (mapconcat (lambda (cand) (cdr (assoc 'name cand)))
                                   ext-cand " ")
-                       "variable_script variable_shell")))
+                       "variable_shell variable_script")))
     ;; Test function completions
     (insert "\nfunction")
     (sleep-for 1)
@@ -148,4 +148,4 @@
                        "function_script"))
       (should (string= (mapconcat (lambda (cand) (cdr (assoc 'name cand)))
                                   ext-cand " ")
-                       "function_script function_shell")))))
+                       "function_shell function_script")))))
