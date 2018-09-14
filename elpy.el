@@ -293,6 +293,16 @@ this feature."
                  (function :tag "Other function"))
   :group 'elpy)
 
+(defcustom elpy-company-add-completion-from-shell nil
+  "If t, add completion candidates gathered from the shell.
+
+Normally elpy provides completion using static code analysis (from jedi).
+With this option set to t, elpy will add the completion candidates from the
+associated python shell. This allow to have decent completion candidates when
+the static code analysis fails."
+  :type 'boolean
+  :group 'elpy)
+
 (defcustom elpy-eldoc-show-current-function t
   "If true, show the current function if no calltip is available.
 
@@ -3534,24 +3544,26 @@ and return the list.
 
   python.el provides completion based on what is currently loaded in the
 python shell interpreter."
-  (let* ((new-candidates (python-completion-complete-at-point))
-         (start (nth 0 new-candidates))
-         (end (nth 1 new-candidates))
-         (completion-list (nth 2 new-candidates)))
-    (if (not (and start end))
-        candidates
-      (let ((candidate-names (cl-map 'list
-                                     (lambda (el) (cdr (assoc 'name el)))
-                                     candidates))
-            (new-candidate-names (all-completions (buffer-substring start end)
-                                                  completion-list)))
-        (cl-loop
-         for pytel-cand in new-candidate-names
-         for pytel-cand = (replace-regexp-in-string "($" "" pytel-cand)
-         for pytel-cand = (replace-regexp-in-string "^.*\\." "" pytel-cand)
-         if (not (member pytel-cand candidate-names))
-         do (push (list (cons 'name pytel-cand)) candidates)))
-      candidates)))
+  (if (not elpy-company-add-completion-from-shell)
+      candidates
+    (let* ((new-candidates (python-completion-complete-at-point))
+           (start (nth 0 new-candidates))
+           (end (nth 1 new-candidates))
+           (completion-list (nth 2 new-candidates)))
+      (if (not (and start end))
+          candidates
+        (let ((candidate-names (cl-map 'list
+                                       (lambda (el) (cdr (assoc 'name el)))
+                                       candidates))
+              (new-candidate-names (all-completions (buffer-substring start end)
+                                                    completion-list)))
+          (cl-loop
+           for pytel-cand in new-candidate-names
+           for pytel-cand = (replace-regexp-in-string "($" "" pytel-cand)
+           for pytel-cand = (replace-regexp-in-string "^.*\\." "" pytel-cand)
+           if (not (member pytel-cand candidate-names))
+           do (push (list (cons 'name pytel-cand)) candidates)))
+        candidates))))
 
 (defun elpy-company-backend (command &optional arg &rest ignored)
   "A company-mode backend for Elpy."
