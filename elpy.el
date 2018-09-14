@@ -3540,14 +3540,17 @@ python shell interpreter."
          (completion-list (nth 2 new-candidates)))
     (if (not (and start end))
         candidates
-      (let ((candidates-name (all-completions (buffer-substring start end)
-                                              completion-list)))
+      (let ((candidate-names (cl-map 'list
+                                     (lambda (el) (cdr (assoc 'name el)))
+                                     candidates))
+            (new-candidate-names (all-completions (buffer-substring start end)
+                                                  completion-list)))
         (cl-loop
-         for pytel-cand in candidates-name
+         for pytel-cand in new-candidate-names
          for pytel-cand = (replace-regexp-in-string "($" "" pytel-cand)
          for pytel-cand = (replace-regexp-in-string "^.*\\." "" pytel-cand)
-         if (not (member pytel-cand candidates))
-         do (add-to-list 'candidates (list (cons 'name pytel-cand)) t)))
+         if (not (member pytel-cand candidate-names))
+         do (push (list (cons 'name pytel-cand)) candidates)))
       candidates)))
 
 (defun elpy-company-backend (command &optional arg &rest ignored)
