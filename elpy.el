@@ -441,42 +441,60 @@ option is `pdb'."
 
     (define-key map (kbd "M-TAB") 'elpy-company-backend)
 
-    ;; key bindings for elpy-shell
-    (define-key map (kbd "C-c C-y e") 'elpy-shell-send-statement)
-    (define-key map (kbd "C-c C-y E") 'elpy-shell-send-statement-and-go)
-    (define-key map (kbd "C-c C-y s") 'elpy-shell-send-top-statement)
-    (define-key map (kbd "C-c C-y S") 'elpy-shell-send-top-statement-and-go)
-    (define-key map (kbd "C-c C-y f") 'elpy-shell-send-defun)
-    (define-key map (kbd "C-c C-y F") 'elpy-shell-send-defun-and-go)
-    (define-key map (kbd "C-c C-y c") 'elpy-shell-send-defclass)
-    (define-key map (kbd "C-c C-y C") 'elpy-shell-send-defclass-and-go)
-    (define-key map (kbd "C-c C-y o") 'elpy-shell-send-group)
-    (define-key map (kbd "C-c C-y O") 'elpy-shell-send-group-and-go)
-    (define-key map (kbd "C-c C-y w") 'elpy-shell-send-codecell)
-    (define-key map (kbd "C-c C-y W") 'elpy-shell-send-codecell-and-go)
-    (define-key map (kbd "C-c C-y r") 'elpy-shell-send-region-or-buffer)
-    (define-key map (kbd "C-c C-y R") 'elpy-shell-send-region-or-buffer-and-go)
-    (define-key map (kbd "C-c C-y b") 'elpy-shell-send-buffer)
-    (define-key map (kbd "C-c C-y B") 'elpy-shell-send-buffer-and-go)
-    (define-key map (kbd "C-c C-y C-e") 'elpy-shell-send-statement-and-step)
-    (define-key map (kbd "C-c C-y C-S-E") 'elpy-shell-send-statement-and-step-and-go)
-    (define-key map (kbd "C-c C-y C-s") 'elpy-shell-send-top-statement-and-step)
-    (define-key map (kbd "C-c C-y C-S-S") 'elpy-shell-send-top-statement-and-step-and-go)
-    (define-key map (kbd "C-c C-y C-f") 'elpy-shell-send-defun-and-step)
-    (define-key map (kbd "C-c C-y C-S-F") 'elpy-shell-send-defun-and-step-and-go)
-    (define-key map (kbd "C-c C-y C-c") 'elpy-shell-send-defclass-and-step)
-    (define-key map (kbd "C-c C-y C-S-C") 'elpy-shell-send-defclass-and-step-and-go)
-    (define-key map (kbd "C-c C-y C-o") 'elpy-shell-send-group-and-step)
-    (define-key map (kbd "C-c C-y C-S-O") 'elpy-shell-send-group-and-step-and-go)
-    (define-key map (kbd "C-c C-y C-w") 'elpy-shell-send-codecell-and-step)
-    (define-key map (kbd "C-c C-y C-S-W") 'elpy-shell-send-codecell-and-step-and-go)
-    (define-key map (kbd "C-c C-y C-r") 'elpy-shell-send-region-or-buffer-and-step)
-    (define-key map (kbd "C-c C-y C-S-R") 'elpy-shell-send-region-or-buffer-and-step-and-go)
-    (define-key map (kbd "C-c C-y C-b") 'elpy-shell-send-buffer-and-step)
-    (define-key map (kbd "C-c C-y C-S-B") 'elpy-shell-send-buffer-and-step-and-go)
-
     map)
   "Key map for the Emacs Lisp Python Environment.")
+
+(defvar elpy-shell-map
+  (let ((map (make-sparse-keymap)))
+    (define-key map (kbd "e") 'elpy-shell-send-statement)
+    (define-key map (kbd "E") 'elpy-shell-send-statement-and-go)
+    (define-key map (kbd "s") 'elpy-shell-send-top-statement)
+    (define-key map (kbd "S") 'elpy-shell-send-top-statement-and-go)
+    (define-key map (kbd "f") 'elpy-shell-send-defun)
+    (define-key map (kbd "F") 'elpy-shell-send-defun-and-go)
+    (define-key map (kbd "c") 'elpy-shell-send-defclass)
+    (define-key map (kbd "C") 'elpy-shell-send-defclass-and-go)
+    (define-key map (kbd "o") 'elpy-shell-send-group)
+    (define-key map (kbd "O") 'elpy-shell-send-group-and-go)
+    (define-key map (kbd "w") 'elpy-shell-send-codecell)
+    (define-key map (kbd "W") 'elpy-shell-send-codecell-and-go)
+    (define-key map (kbd "r") 'elpy-shell-send-region-or-buffer)
+    (define-key map (kbd "R") 'elpy-shell-send-region-or-buffer-and-go)
+    (define-key map (kbd "b") 'elpy-shell-send-buffer)
+    (define-key map (kbd "B") 'elpy-shell-send-buffer-and-go)
+    (define-key map (kbd "C-e") 'elpy-shell-send-statement-and-step)
+    (define-key map (kbd "C-S-E") 'elpy-shell-send-statement-and-step-and-go)
+    (define-key map (kbd "C-s") 'elpy-shell-send-top-statement-and-step)
+    (define-key map (kbd "C-S-S") 'elpy-shell-send-top-statement-and-step-and-go)
+    (define-key map (kbd "C-f") 'elpy-shell-send-defun-and-step)
+    (define-key map (kbd "C-S-F") 'elpy-shell-send-defun-and-step-and-go)
+    (define-key map (kbd "C-c") 'elpy-shell-send-defclass-and-step)
+    (define-key map (kbd "C-S-C") 'elpy-shell-send-defclass-and-step-and-go)
+    (define-key map (kbd "C-o") 'elpy-shell-send-group-and-step)
+    (define-key map (kbd "C-S-O") 'elpy-shell-send-group-and-step-and-go)
+    (define-key map (kbd "C-w") 'elpy-shell-send-codecell-and-step)
+    (define-key map (kbd "C-S-W") 'elpy-shell-send-codecell-and-step-and-go)
+    (define-key map (kbd "C-r") 'elpy-shell-send-region-or-buffer-and-step)
+    (define-key map (kbd "C-S-R") 'elpy-shell-send-region-or-buffer-and-step-and-go)
+    (define-key map (kbd "C-b") 'elpy-shell-send-buffer-and-step)
+    (define-key map (kbd "C-S-B") 'elpy-shell-send-buffer-and-step-and-go)
+    map)
+  "Key map for the shell related commands")
+(fset 'elpy-shell-map elpy-shell-map)
+
+(defcustom elpy-shell-command-prefix-key "C-c C-y"
+"Prefix key used to call elpy shell related commands.
+
+This option need to bet set through `customize' or `customize-set-variable' to be taken into account."
+:type 'string
+:group 'elpy
+:set
+(lambda (var key)
+  (when (and (boundp var) (symbol-value var))
+    (define-key elpy-mode-map (kbd (symbol-value var)) nil))
+  (when key
+    (define-key elpy-mode-map (kbd key) 'elpy-shell-map)
+  (set var key))))
 
 (easy-menu-define elpy-menu elpy-mode-map
   "Elpy Mode Menu"
