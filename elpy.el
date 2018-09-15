@@ -3562,7 +3562,17 @@ and return the list.
 
   python.el provides completion based on what is currently loaded in the
 python shell interpreter."
-  (if (not elpy-company-add-completion-from-shell)
+  ;; check if prompt available
+  (if (or (not elpy-company-add-completion-from-shell)
+          (not (python-shell-get-process))
+          (with-current-buffer (process-buffer (python-shell-get-process))
+            (save-excursion
+              (goto-char (point-max))
+              (let ((inhibit-field-text-motion t))
+                (beginning-of-line)
+                (not (search-forward-regexp
+                      python-shell--prompt-calculated-input-regexp
+                      nil t))))))
       candidates
     (let* ((new-candidates (python-completion-complete-at-point))
            (start (nth 0 new-candidates))
