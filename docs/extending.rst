@@ -62,7 +62,7 @@ You can set up a working environment for Elpy using ``pip`` and
 ``cask``. After installing Cask_, create a new virtual environment
 and run the ``setup`` script in it:
 
-.. code-block::
+.. code-block:: sh
 
    virtualenv ~/.virtualenvs/elpy
    source ~/.virtualenvs/elpy/bin/activate

@@ -34,7 +34,7 @@ class ELispMarkup(ObjectDescription):
         indextext = self.get_index_text(self.objtype, name)
         if indextext:
             self.indexnode['entries'].append(('single', indextext,
-                                              targetname, ''))
+                                              targetname, '', None))
 
 
 class ELispFunction(ELispMarkup):
