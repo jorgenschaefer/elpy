@@ -72,7 +72,7 @@ Available subcommands:
     (should (member "changepassword" (elpy-django--get-commands)))))
 
 (ert-deftest elpy-module-django-get-test-runner-should-error-if-no-django-settings-module-environment ()
-  (setenv "DJANGO_SETTINGS_MODULE" "")
+  (setenv "DJANGO_SETTINGS_MODULE" nil)
   (should-error (elpy-django--get-test-runner)))
 
 (ert-deftest elpy-module-django-get-test-runner-should-error-if-cannot-import-django-settings-module ()
