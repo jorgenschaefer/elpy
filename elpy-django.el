@@ -176,11 +176,13 @@ Needs `DJANGO_SETTINGS_MODULE' to be set in order to work."
     (when (not django-settings-env)
       (error "Please set environment variable `DJANGO_SETTINGS_MODULE' if you'd like to run the test runner"))
 
-    ;; We have to be able to import the DJANGO_SETTINGS_MODULE otherwise it will also break
-    ;; If we get a traceback when import django settings, then warn the user that settings is not valid
-    (when (not (string= "" (shell-command-to-string
-                            (format "%s -c 'import %s'" elpy-rpc-python-command django-settings-env))))
-      (error (format "Unable to import DJANGO_SETTINGS_MODULE: '%s'" django-settings-env)))
+    ;; We have to be able to import the DJANGO_SETTINGS_MODULE to detect test
+    ;; runner; if python process importing settings exits with error,
+    ;; then warn the user that settings is not valid
+    (unless (= 0 (call-process elpy-rpc-python-command nil nil nil
+                               "-c" (format "import %s" django-settings-env)))
+      (error (format "Unable to import DJANGO_SETTINGS_MODULE: '%s'"
+                     django-settings-env)))
 
     ;; Return test runner
     (s-trim (shell-command-to-string
