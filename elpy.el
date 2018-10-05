@@ -617,13 +617,7 @@ virtualenv.
 (defun elpy-news ()
   "Display Elpy's release notes."
   (interactive)
-  (with-current-buffer (get-buffer-create "*Elpy News*")
-    (let ((inhibit-read-only t))
-      (erase-buffer)
-      (insert-file-contents (concat (file-name-directory (locate-library "elpy"))
-                                    "NEWS.rst"))
-      (help-mode))
-    (pop-to-buffer (current-buffer))))
+  (message "The Elpy News command is deprecated and will be removed in future versions of Elpy"))
 
 ;;;;;;;;;;;;;;;
 ;;; Elpy Config

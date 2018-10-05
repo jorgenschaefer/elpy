@@ -4,9 +4,6 @@ set -e
 cd "$(dirname "$0")/.."
 
 main() {
-    echo -n "Did you update the NEWS.rst? [y/N] "
-    read response
-    [ "$response" = "y" ] || exit 1
     run bumpversion minor
     run rm -f dist/*
     run python setup.py sdist bdist_wheel
