@@ -3,4 +3,4 @@ jedi==0.12.1
 rope_py3k==0.9.4-1
 autopep8==1.4
 yapf==0.23
-black==18.6
+black==18.9b0
