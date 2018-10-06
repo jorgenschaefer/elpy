@@ -152,6 +152,40 @@ class JediBackend(object):
                 "index": call.index,
                 "params": params}
 
+    def rpc_get_oneline_docstring(self, filename, source, offset):
+        """Return a oneline docstring for the symbol at offset"""
+        line, column = pos_to_linecol(source, offset)
+        definitions = run_with_debug(jedi, 'goto_definitions',
+                                     source=source, line=line, column=column,
+                                     path=filename, encoding='utf-8')
+        if definitions:
+            definition = definitions[0]
+        else:
+            definition = None
+        if definition:
+            # Try to get only the definition docstring summary
+            doc = definition.docstring().split('\n')
+            onelinedoc = []
+            indef = False
+            for i in range(len(doc)):
+                if doc[i] == '' and not indef:
+                    indef = True
+                    continue
+                if doc[i] == '' and indef:
+                    break
+                if indef:
+                    onelinedoc += [doc[i]]
+            onelinedoc = " ".join(onelinedoc)
+            name = definition.name
+            if definition.type in ["function", "class"]:
+                name += '()'
+            else:
+                name += " {}".format(definition.type)
+            return {"name": name,
+                    "doc": onelinedoc}
+        # Return nothing
+        return None
+
     def rpc_get_usages(self, filename, source, offset):
         """Return the uses of the symbol at offset.
 

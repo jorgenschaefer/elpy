@@ -312,6 +312,19 @@ edited instead. Setting this variable to nil disables this feature."
   :type 'boolean
   :group 'elpy)
 
+(make-obsolete 'elpy-eldoc-show-current-function
+               "Please use `elpy-eldoc-info' instead" "1.25.0")
+
+(defcustom elpy-eldoc-info 'docstring
+  "What to show in eldoc if no calltip is available.
+
+Can be 'docstring' to show a oneline docstring for the symbol at point,
+'current-function' to show the current function or method being edited or
+'nil to show nothing"
+  :type '(choice (const :tag "Show docstring" 'docstring)
+                 (const :tag "Show current edited function" 'current-function)
+                 (const :tag "Show nothing" nil)))
+
 (defcustom elpy-test-runner 'elpy-test-discover-runner
   "The test runner to use to run tests."
   :type '(choice (const :tag "Unittest Discover" elpy-test-discover-runner)
@@ -3038,6 +3051,19 @@ Returns a calltip string for the function call at point."
                        (point-min)))
               success error)))
 
+
+(defun elpy-rpc-get-oneline-docstring (&optional success error)
+  "Call the get_oneline_docstring API function.
+
+Returns a oneline docstring string for the symbol at point."
+  (when (< (buffer-size) elpy-rpc-ignored-buffer-size)
+    (elpy-rpc "get_oneline_docstring"
+              (list buffer-file-name
+                    (elpy-rpc--buffer-contents)
+                    (- (point)
+                       (point-min)))
+              success error)))
+
 (defun elpy-rpc-get-completions (&optional success error)
   "Call the get_completions API function.
 
@@ -3712,15 +3738,32 @@ display the current class and method instead."
         flymake-error
       (elpy-rpc-get-calltip
        (lambda (calltip)
-         (eldoc-message
           (cond
            ((not calltip)
-            (when elpy-eldoc-show-current-function
-              (let ((current-defun (python-info-current-defun)))
-                (when current-defun
-                  (format "In: %s()" current-defun)))))
+            (pcase elpy-eldoc-info
+              (`docstring
+               (elpy-rpc-get-oneline-docstring
+                (lambda (doc)
+                  (eldoc-message
+                  (when doc
+                    (let ((name (cdr (assq 'name doc)))
+                          (doc (cdr (assq 'doc doc))))
+                      (let ((prefix (propertize (format "%s: " name)
+                                                'face
+                                                'font-lock-function-name-face)))
+                         (if (version<= emacs-version "25")
+                             (format "%s: %s" prefix doc)
+                           (eldoc-docstring-format-sym-doc
+                            prefix doc nil))
+                         )))))))
+              (`current-function
+               (let ((current-defun (python-info-current-defun)))
+                 (when current-defun
+                   (eldoc-message
+                    (format "In: %s()" current-defun)))))
+              ))
            ((stringp calltip)
-            calltip)
+            (eldoc-message calltip))
            (t
             (let ((name (cdr (assq 'name calltip)))
                   (index (cdr (assq 'index calltip)))
@@ -3733,6 +3776,7 @@ display the current class and method instead."
               (let ((prefix (propertize name 'face
                                         'font-lock-function-name-face))
                     (args (format "(%s)" (mapconcat #'identity params ", "))))
+                (eldoc-message
                 (if (version<= emacs-version "25")
                     (format "%s%s" prefix args)
                   (eldoc-docstring-format-sym-doc prefix args nil)))))))))
