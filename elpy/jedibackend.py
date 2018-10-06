@@ -177,7 +177,9 @@ class JediBackend(object):
                     onelinedoc += [doc[i]]
             onelinedoc = " ".join(onelinedoc)
             name = definition.name
-            if definition.type in ["function", "class"]:
+            if definition.type in ['instance']:
+                return None
+            elif definition.type in ["function", "class"]:
                 name += '()'
             else:
                 name += " {}".format(definition.type)
