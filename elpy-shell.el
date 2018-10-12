@@ -395,6 +395,18 @@ non-nil, skips backwards."
                 (not (eq (point) (point-max))))
       (forward-line))))
 
+(defun elpy-shell--check-if-shell-available ()
+  "Check if the associated python shell is available.
+
+Return non-nil is the shell is running and not busy, nil otherwise."
+  (and (python-shell-get-process)
+       (with-current-buffer (process-buffer (python-shell-get-process))
+         (save-excursion
+           (goto-char (point-max))
+           (let ((inhibit-field-text-motion t))
+             (python-shell-comint-end-of-output-p
+              (buffer-substring (line-beginning-position)
+                                (line-end-position))))))))
 ;;;;;;;;;;
 ;; Echoing
 
