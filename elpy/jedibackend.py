@@ -163,29 +163,36 @@ class JediBackend(object):
         else:
             definition = None
         if definition:
-            # Try to get only the definition docstring summary
-            doc = definition.docstring().split('\n')
-            onelinedoc = []
-            indef = False
-            for i in range(len(doc)):
-                if doc[i] == '' and not indef:
-                    indef = True
-                    continue
-                if doc[i] == '' and indef:
-                    break
-                if indef:
-                    onelinedoc += [doc[i]]
-            onelinedoc = " ".join(onelinedoc)
-            name = definition.name
-            if definition.type in ['instance']:
-                return None
-            elif definition.type in ["function", "class"]:
-                name += '()'
+            # Get name
+            if definition.type in ['function', 'class']:
+                name = '{}()'.format(definition.name)
+            elif definition.type in ['module']:
+                name = '{} {}'.format(definition.name, definition.type)
             else:
-                name += " {}".format(definition.type)
+                return None
+            # Get oneline doc
+            doc = definition.docstring().split('\n')
+            # Keep only the first paragraph that is not a function declaration
+            lines = []
+            call = "{}(".format(definition.name)
+            for i in range(len(doc)):
+                if (doc[i] == '' or i == len(doc) - 1) and len(lines) != 0:
+                    paragraph = " ".join(lines)
+                    lines = []
+                    if call != paragraph[0:len(call)]:
+                        break
+                    continue
+                lines.append(doc[i])
+            # Keep only the first sentence
+            onelinedoc = paragraph.split('. ', 1)
+            if len(onelinedoc) == 2:
+                onelinedoc = onelinedoc[0] + '.'
+            else:
+                onelinedoc = onelinedoc[0]
+            if onelinedoc == '':
+                return None
             return {"name": name,
                     "doc": onelinedoc}
-        # Return nothing
         return None
 
     def rpc_get_usages(self, filename, source, offset):

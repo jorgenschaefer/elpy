@@ -312,19 +312,6 @@ edited instead. Setting this variable to nil disables this feature."
   :type 'boolean
   :group 'elpy)
 
-(make-obsolete 'elpy-eldoc-show-current-function
-               "Please use `elpy-eldoc-info' instead" "1.25.0")
-
-(defcustom elpy-eldoc-info 'docstring
-  "What to show in eldoc if no calltip is available.
-
-Can be 'docstring' to show a oneline docstring for the symbol at point,
-'current-function' to show the current function or method being edited or
-'nil to show nothing"
-  :type '(choice (const :tag "Show docstring" 'docstring)
-                 (const :tag "Show current edited function" 'current-function)
-                 (const :tag "Show nothing" nil)))
-
 (defcustom elpy-test-runner 'elpy-test-discover-runner
   "The test runner to use to run tests."
   :type '(choice (const :tag "Unittest Discover" elpy-test-discover-runner)
@@ -3736,50 +3723,51 @@ display the current class and method instead."
   (let ((flymake-error (elpy-flymake-error-at-point)))
     (if flymake-error
         flymake-error
+      ;; Try getting calltip
       (elpy-rpc-get-calltip
        (lambda (calltip)
-          (cond
-           ((not calltip)
-            (pcase elpy-eldoc-info
-              (`docstring
-               (elpy-rpc-get-oneline-docstring
-                (lambda (doc)
-                  (eldoc-message
-                  (when doc
-                    (let ((name (cdr (assq 'name doc)))
-                          (doc (cdr (assq 'doc doc))))
-                      (let ((prefix (propertize (format "%s: " name)
-                                                'face
-                                                'font-lock-function-name-face)))
-                         (if (version<= emacs-version "25")
-                             (format "%s: %s" prefix doc)
-                           (eldoc-docstring-format-sym-doc
-                            prefix doc nil))
-                         )))))))
-              (`current-function
-               (let ((current-defun (python-info-current-defun)))
-                 (when current-defun
-                   (eldoc-message
-                    (format "In: %s()" current-defun)))))
-              ))
-           ((stringp calltip)
-            (eldoc-message calltip))
-           (t
-            (let ((name (cdr (assq 'name calltip)))
-                  (index (cdr (assq 'index calltip)))
-                  (params (cdr (assq 'params calltip))))
-              (when index
-                (setf (nth index params)
-                      (propertize (nth index params)
-                                  'face
-                                  'eldoc-highlight-function-argument)))
-              (let ((prefix (propertize name 'face
-                                        'font-lock-function-name-face))
-                    (args (format "(%s)" (mapconcat #'identity params ", "))))
-                (eldoc-message
+         (cond
+          ((stringp calltip)
+           (eldoc-message calltip))
+          (calltip
+           (let ((name (cdr (assq 'name calltip)))
+                 (index (cdr (assq 'index calltip)))
+                 (params (cdr (assq 'params calltip))))
+             (when index
+               (setf (nth index params)
+                     (propertize (nth index params)
+                                 'face
+                                 'eldoc-highlight-function-argument)))
+             (let ((prefix (propertize name 'face
+                                       'font-lock-function-name-face))
+                   (args (format "(%s)" (mapconcat #'identity params ", "))))
+               (eldoc-message
                 (if (version<= emacs-version "25")
                     (format "%s%s" prefix args)
-                  (eldoc-docstring-format-sym-doc prefix args nil)))))))))
+                  (eldoc-docstring-format-sym-doc prefix args nil))))))
+          (t
+           ;; Try getting oneline docstring
+           (elpy-rpc-get-oneline-docstring
+            (lambda (doc)
+              (cond
+               (doc
+                 (let ((name (cdr (assq 'name doc)))
+                       (doc (cdr (assq 'doc doc))))
+                   (let ((prefix (propertize (format "%s: " name)
+                                             'face
+                                             'font-lock-function-name-face)))
+                     (if (version<= emacs-version "25")
+                         (format "%s: %s" prefix doc)
+                       (let ((eldoc-echo-area-use-multiline-p nil))
+                         (eldoc-message (eldoc-docstring-format-sym-doc
+                                         prefix doc nil)))
+                     ))))
+               ;; Give the current definition
+               (elpy-eldoc-show-current-function
+                (let ((current-defun (python-info-current-defun)))
+                  (when current-defun
+                    (eldoc-message
+                     (format "In: %s()" current-defun))))))))))))
       ;; Return the last message until we're done
       eldoc-last-message)))
 
