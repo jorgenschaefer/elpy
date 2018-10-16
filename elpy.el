@@ -3756,10 +3756,11 @@ display the current class and method instead."
                    (let ((prefix (propertize (format "%s: " name)
                                              'face
                                              'font-lock-function-name-face)))
+                     (eldoc-message
                      (if (version<= emacs-version "25")
-                         (format "%s: %s" prefix doc)
+                         (format "%s%s" prefix doc)
                        (let ((eldoc-echo-area-use-multiline-p nil))
-                         (eldoc-message (eldoc-docstring-format-sym-doc
+                         (eldoc-docstring-format-sym-doc
                                          prefix doc nil)))
                      ))))
                ;; Give the current definition

@@ -181,6 +181,7 @@ class JediBackend(object):
                     lines = []
                     if call != paragraph[0:len(call)]:
                         break
+                    paragraph = ""
                     continue
                 lines.append(doc[i])
             # Keep only the first sentence
