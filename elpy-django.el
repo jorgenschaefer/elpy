@@ -195,7 +195,7 @@ Return the correct string format here."
     (if pair
         ;; Return the associated test format
         (cdr pair)
-      (error (format "Unable to find test format for `%s'" (elpy--get-django-test-runner))))))
+      (error (format "Unable to find test format for `%s'" (elpy-django--get-test-runner))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;
 ;;; User Functions
