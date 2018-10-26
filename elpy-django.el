@@ -79,9 +79,11 @@ require arguments in order for it to work."
 (make-variable-buffer-local 'elpy-django-commands-with-req-arg)
 
 (defcustom elpy-django-test-runner-formats '(("django_nose.NoseTestSuiteRunner" . ":")
-                                             ("django.test.runner.DiscoverRunner" . "."))
+                                             (".*" . "."))
   "List of test runners and their format for calling tests.
 
+  The keys are the regular expressions to match the runner used in test, 
+while the values are the separators to use to build test target path.
 Some tests runners are called differently. For example, Nose requires a ':' when calling specific tests,
 but the default Django test runner uses '.'"
   :type 'list
@@ -191,11 +193,17 @@ Needs `DJANGO_SETTINGS_MODULE' to be set in order to work."
 (defun elpy-django--get-test-format ()
   "When running a Django test, some test runners require a different format that others.
 Return the correct string format here."
-  (let  ((pair (assoc (elpy-django--get-test-runner) elpy-django-test-runner-formats)))
-    (if pair
-        ;; Return the associated test format
-        (cdr pair)
-      (error (format "Unable to find test format for `%s'" (elpy-django--get-test-runner))))))
+  (let ((runner (elpy-django--get-test-runner))
+        (found nil)
+        (formats elpy-django-test-runner-formats))
+    (while (and formats (not found))
+      (let* ((entry (car formats)) (regex (car entry)))
+        (when (string-match regex runner)
+          (setq found (cdr entry))))
+      (setq formats (cdr formats)))
+    (or found (error (format "Unable to find test format for `%s'"
+                             (elpy-django--get-test-runner))))))
+
 
 ;;;;;;;;;;;;;;;;;;;;;;
 ;;; User Functions

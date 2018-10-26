@@ -79,6 +79,23 @@ Available subcommands:
   (setenv "DJANGO_SETTINGS_MODULE" "popcorn")
   (should-error (elpy-django--get-test-runner)))
 
-(ert-deftest elpy-module-django-get-test-format-should-error-if-cannot-find-test-runner ()
-  (mletf* ((elpy-django--get-test-runner "math")))
-  (should-error (elpy-django--get-test-format)))
+(ert-deftest elpy-module-django-get-test-format-regex-match ()
+  "elpy-django--get-test-runner should interpreter elpy-django-test-runner-formats
+keys as regular expression"
+  (mletf* ((elpy-django--get-test-runner () "package.mod.Runner")
+           (elpy-django-test-runner-formats
+            '(("package.mod.Runner2" . ".") ("Runner$" . "~"))))
+          (should (equal (elpy-django--get-test-format) "~"))))
+
+(ert-deftest elpy-module-django-get-test-format-dot-default ()
+  "elpy-django--get-test-runner should default to `.`"
+  (mletf* ((elpy-django--get-test-runner () "a.b.TestRunner")
+           (should (equal (elpy-django--get-test-format) ".")))))
+
+
+(ert-deftest elpy-module-django-get-test-format-should-error-with-no-matching-format ()
+  "elpy-django--get-test-runner should default to `.`"
+  (mletf* ((elpy-django--get-test-runner () "Runner3")
+           (elpy-django-test-runner-formats
+            '(("Runner2$" . ".") ("Runner4$" . "~"))))
+           (should-error (elpy-django--get-test-format))))
