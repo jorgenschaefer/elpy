@@ -158,25 +158,40 @@ class JediBackend(object):
         definitions = run_with_debug(jedi, 'goto_definitions',
                                      source=source, line=line, column=column,
                                      path=filename, encoding='utf-8')
+        assignments = run_with_debug(jedi, 'goto_assignments',
+                                     source=source, line=line, column=column,
+                                     path=filename, encoding='utf-8')
         if definitions:
             definition = definitions[0]
         else:
             definition = None
+        if assignments:
+            assignment = assignments[0]
+        else:
+            assignment = None
         if definition:
             # Get name
             if definition.type in ['function', 'class']:
-                name = '{}()'.format(definition.name)
+                raw_name = definition.name
+                name = '{}()'.format(raw_name)
+                doc = definition.docstring().split('\n')
             elif definition.type in ['module']:
-                name = '{} {}'.format(definition.name, definition.type)
+                raw_name = definition.name
+                name = '{} {}'.format(raw_name, definition.type)
+                doc = definition.docstring().split('\n')
+            elif definition.type in ['instance']:
+                raw_name = assignment.name
+                name = raw_name
+                doc = assignment.docstring().split('\n')
             else:
                 return None
-            # Get oneline doc
-            doc = definition.docstring().split('\n')
             # Keep only the first paragraph that is not a function declaration
             lines = []
-            call = "{}(".format(definition.name)
+            call = "{}(".format(raw_name)
+            # last line
+            doc.append('')
             for i in range(len(doc)):
-                if (doc[i] == '' or i == len(doc) - 1) and len(lines) != 0:
+                if doc[i] == '' and len(lines) != 0:
                     paragraph = " ".join(lines)
                     lines = []
                     if call != paragraph[0:len(call)]:
@@ -191,7 +206,7 @@ class JediBackend(object):
             else:
                 onelinedoc = onelinedoc[0]
             if onelinedoc == '':
-                return None
+                onelinedoc = "No documentation"
             return {"name": name,
                     "doc": onelinedoc}
         return None
