@@ -6,40 +6,7 @@
       (should (equal (elpy-eldoc-documentation)
                      "last message")))))
 
-(ert-deftest elpy-eldoc-documentation-should-use-current-defun-if-no-calltip ()
-  (elpy-testcase ()
-    (mletf* ((elpy-rpc-get-calltip (callback) (funcall callback nil))
-             (calltip nil)
-             (eldoc-message (tip) (setq calltip tip))
-             (python-info-current-defun () "FooClass.method"))
-
-      (elpy-eldoc-documentation)
-
-      (should (equal calltip "In: FooClass.method()")))))
-
-(ert-deftest elpy-eldoc-documentation-should-not-display-current-defun-if-no-calltip-and-show-defun-disabled ()
-  (elpy-testcase ()
-    (mletf* ((elpy-rpc-get-calltip (callback) (funcall callback nil))
-             (calltip nil)
-             (eldoc-message (tip) (setq calltip tip))
-             (python-info-current-defun () "FooClass.method")
-             (elpy-eldoc-show-current-function nil))
-
-      (elpy-eldoc-documentation)
-
-      (should (null calltip)))))
-
-(ert-deftest elpy-eldoc-documentation-should-return-nil-without-defun ()
-  (elpy-testcase ()
-    (mletf* ((elpy-rpc-get-calltip (callback) (funcall callback nil))
-             (calltip 'nothing-set)
-             (eldoc-message (tip) (setq calltip tip))
-             (python-info-current-defun () nil))
-
-      (elpy-eldoc-documentation)
-
-      (should (equal calltip nil)))))
-
+;; Calltip available: display that
 (ert-deftest elpy-eldoc-documentation-should-show-string-calltip ()
   (elpy-testcase ()
     (mletf* ((elpy-rpc-get-calltip
@@ -87,3 +54,55 @@
       (elpy-eldoc-documentation)
 
       (should (equal calltip "cancel_join_thread()")))))
+
+
+;; No calltip: display function oneline docstring
+(ert-deftest elpy-eldoc-documentation-should-show-object-onelinedoc ()
+  (elpy-testcase ()
+    (mletf* ((elpy-rpc-get-calltip
+              (callback)
+              (funcall callback nil))
+             (elpy-rpc-get-oneline-docstring
+              (callback)
+              (funcall callback '((name . "cancel_join_thread()")
+                                  (doc . "This function does things."))))
+             (doc nil)
+             (window-width (buff) 100000000)
+             (eldoc-message (tip) (setq doc tip)))
+
+      (elpy-eldoc-documentation)
+
+      (should (equal doc (format "%s%s"
+                                 (propertize "cancel_join_thread()"
+                                             'face
+                                             'font-lock-function-name-face)
+                                 ": This function does things.")))
+      )))
+
+
+
+;; No calltip and docstring: display current edited function
+(ert-deftest elpy-eldoc-documentation-should-use-current-defun-if-nothing-else ()
+  (elpy-testcase ()
+    (mletf* ((elpy-rpc-get-calltip (callback) (funcall callback nil))
+             (elpy-rpc-get-oneline-docstring (callback) (funcall callback nil))
+             (calltip nil)
+             (eldoc-message (tip) (setq calltip tip))
+             (python-info-current-defun () "FooClass.method"))
+
+      (elpy-eldoc-documentation)
+
+      (should (equal calltip "In: FooClass.method()")))))
+
+;; No calltip, docstring or current function: display nothing
+(ert-deftest elpy-eldoc-documentation-should-return-nil-without-defun ()
+  (elpy-testcase ()
+    (mletf* ((elpy-rpc-get-calltip (callback) (funcall callback nil))
+             (elpy-rpc-get-oneline-docstring (callback) (funcall callback nil))
+             (calltip nil)
+             (eldoc-message (tip) (setq calltip tip))
+             (python-info-current-defun () nil))
+
+      (elpy-eldoc-documentation)
+
+      (should (equal calltip nil)))))

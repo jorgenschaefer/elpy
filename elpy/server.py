@@ -71,6 +71,13 @@ class ElpyRPCServer(JSONRPCServer):
         return self._call_backend("rpc_get_calltip", None, filename,
                                   get_source(source), offset)
 
+    def rpc_get_oneline_docstring(self, filename, source, offset):
+        """Get a oneline docstring for the symbol at the offset.
+
+        """
+        return self._call_backend("rpc_get_oneline_docstring", None, filename,
+                                  get_source(source), offset)
+
     def rpc_get_completions(self, filename, source, offset):
         """Get a list of completion candidates for the symbol at offset.
 

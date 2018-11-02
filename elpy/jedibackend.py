@@ -152,6 +152,65 @@ class JediBackend(object):
                 "index": call.index,
                 "params": params}
 
+    def rpc_get_oneline_docstring(self, filename, source, offset):
+        """Return a oneline docstring for the symbol at offset"""
+        line, column = pos_to_linecol(source, offset)
+        definitions = run_with_debug(jedi, 'goto_definitions',
+                                     source=source, line=line, column=column,
+                                     path=filename, encoding='utf-8')
+        assignments = run_with_debug(jedi, 'goto_assignments',
+                                     source=source, line=line, column=column,
+                                     path=filename, encoding='utf-8')
+        if definitions:
+            definition = definitions[0]
+        else:
+            definition = None
+        if assignments:
+            assignment = assignments[0]
+        else:
+            assignment = None
+        if definition:
+            # Get name
+            if definition.type in ['function', 'class']:
+                raw_name = definition.name
+                name = '{}()'.format(raw_name)
+                doc = definition.docstring().split('\n')
+            elif definition.type in ['module']:
+                raw_name = definition.name
+                name = '{} {}'.format(raw_name, definition.type)
+                doc = definition.docstring().split('\n')
+            elif definition.type in ['instance']:
+                raw_name = assignment.name
+                name = raw_name
+                doc = assignment.docstring().split('\n')
+            else:
+                return None
+            # Keep only the first paragraph that is not a function declaration
+            lines = []
+            call = "{}(".format(raw_name)
+            # last line
+            doc.append('')
+            for i in range(len(doc)):
+                if doc[i] == '' and len(lines) != 0:
+                    paragraph = " ".join(lines)
+                    lines = []
+                    if call != paragraph[0:len(call)]:
+                        break
+                    paragraph = ""
+                    continue
+                lines.append(doc[i])
+            # Keep only the first sentence
+            onelinedoc = paragraph.split('. ', 1)
+            if len(onelinedoc) == 2:
+                onelinedoc = onelinedoc[0] + '.'
+            else:
+                onelinedoc = onelinedoc[0]
+            if onelinedoc == '':
+                onelinedoc = "No documentation"
+            return {"name": name,
+                    "doc": onelinedoc}
+        return None
+
     def rpc_get_usages(self, filename, source, offset):
         """Return the uses of the symbol at offset.
 
