@@ -98,4 +98,45 @@ keys as regular expression"
   (mletf* ((elpy-django--get-test-runner () "Runner3")
            (elpy-django-test-runner-formats
             '(("Runner2$" . ".") ("Runner4$" . "~"))))
-           (should-error (elpy-django--get-test-format))))
+          (should-error (elpy-django--get-test-format))))
+
+
+(ert-deftest elpy-module-django-get-test-runner-should-cache-result ()
+  (setenv "DJANGO_SETTINGS_MODULE" "popcorn")
+  (mletf* ((call-process (&rest args) 0)
+           (shell-command-to-string (&rest args) "my.Runner")
+           (elpy-project-root () "/proj/root/"))
+          (elpy-django--get-test-runner)
+          (let ((cached-runner (cdr (assoc '("/proj/root/" "popcorn")
+                                           elpy-django--test-runner-cache))))
+            (should (equal cached-runner "my.Runner")))))
+
+
+(ert-deftest elpy-module-django-get-test-runner-should-use-cached-result ()
+  (setenv "DJANGO_SETTINGS_MODULE" "popcorn")
+  (mletf* ((elpy-project-root () "/proj/root/")
+           (elpy-django--test-runner-cache
+            '((("/proj/root/" "popcorn") . "my.Runner"))))
+          (should (equal (elpy-django--get-test-runner) "my.Runner"))))
+
+(ert-deftest elpy-module-django-get-test-runner-cache-size-limit ()
+  (mletf* ((elpy-django--test-runner-cache-max-size 7)
+           (getenv (var) "djsettings")
+           (call-process (&rest args) 0)
+           )
+          (dotimes (i 5)
+            (mletf* ((elpy-project-root () (format "/proj/root/%d" i))
+                     (shell-command-to-string (&rest args)
+                                              (format "my.Runner%d" i)))
+                    (elpy-django--get-test-runner)))
+
+          (should (equal (length elpy-django--test-runner-cache) 5))
+
+          (dotimes (i 5)
+            (mletf* ((elpy-project-root () (format "/proj/root/%d" (+ i 5)))
+                     (shell-command-to-string (&rest args)
+                                              (format "my.Runner%d" (+ i 5))))
+                    (elpy-django--get-test-runner)))
+
+          (should (equal (length elpy-django--test-runner-cache) 7))))
+          

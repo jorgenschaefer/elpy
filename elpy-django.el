@@ -82,7 +82,7 @@ require arguments in order for it to work."
                                              (".*" . "."))
   "List of test runners and their format for calling tests.
 
-  The keys are the regular expressions to match the runner used in test, 
+  The keys are the regular expressions to match the runner used in test,
 while the values are the separators to use to build test target path.
 Some tests runners are called differently. For example, Nose requires a ':' when calling specific tests,
 but the default Django test runner uses '.'"
@@ -168,9 +168,19 @@ test arguments in `elpy-django-test-runner-args'."
     (setq dj-commands-str (mapcar (lambda (x) (s-trim x)) dj-commands-str))
     (sort dj-commands-str 'string-lessp)))
 
+
+(defvar elpy-django--test-runner-cache nil
+  "Internal cache for elpy-django--get-test-runner.
+The cache is keyed on project root and DJANGO_SETTINGS_MODULE env var")
+
+(defvar elpy-django--test-runner-cache-max-size 100
+  "Maximum number of entries in test runner cache")
+
+
 (defun elpy-django--get-test-runner ()
   "Return the name of the django test runner.
-Needs `DJANGO_SETTINGS_MODULE' to be set in order to work."
+Needs `DJANGO_SETTINGS_MODULE' to be set in order to work.
+The result is memoized on project root and `DJANGO_SETTINGS_MODULE'"
   (let ((django-import-cmd "import django;django.setup();from django.conf import settings;print(settings.TEST_RUNNER)")
         (django-settings-env (getenv "DJANGO_SETTINGS_MODULE"))
         (default-directory (elpy-project-root)))
@@ -178,17 +188,14 @@ Needs `DJANGO_SETTINGS_MODULE' to be set in order to work."
     (when (not django-settings-env)
       (error "Please set environment variable `DJANGO_SETTINGS_MODULE' if you'd like to run the test runner"))
 
-    ;; We have to be able to import the DJANGO_SETTINGS_MODULE to detect test
-    ;; runner; if python process importing settings exits with error,
-    ;; then warn the user that settings is not valid
-    (unless (= 0 (call-process elpy-rpc-python-command nil nil nil
-                               "-c" (format "import %s" django-settings-env)))
-      (error (format "Unable to import DJANGO_SETTINGS_MODULE: '%s'"
-                     django-settings-env)))
+    (let* ((runner-key (list default-directory django-settings-env))
+           (runner (or (elpy-django--get-test-runner-from-cache runner-key)
+                       (elpy-django--cache-test-runner
+                        runner-key
+                        (elpy-django--detect-test-runner django-settings-env)))))
+      (elpy-django--limit-test-runner-cache-size)
+      runner)))
 
-    ;; Return test runner
-    (s-trim (shell-command-to-string
-             (format "%s -c '%s'" elpy-rpc-python-command django-import-cmd)))))
 
 (defun elpy-django--get-test-format ()
   "When running a Django test, some test runners require a different format that others.
@@ -203,6 +210,41 @@ Return the correct string format here."
       (setq formats (cdr formats)))
     (or found (error (format "Unable to find test format for `%s'"
                              (elpy-django--get-test-runner))))))
+
+
+(defun elpy-django--detect-test-runner (django-settings-env)
+  "Detects django test runner in current configuration"
+  ;; We have to be able to import the DJANGO_SETTINGS_MODULE to detect test
+  ;; runner; if python process importing settings exits with error,
+  ;; then warn the user that settings is not valid
+  (unless (= 0 (call-process elpy-rpc-python-command nil nil nil
+                             "-c" (format "import %s" django-settings-env)))
+    (error (format "Unable to import DJANGO_SETTINGS_MODULE: '%s'"
+                   django-settings-env)))
+  (s-trim (shell-command-to-string
+                       (format "%s -c '%s'" elpy-rpc-python-command
+                               django-import-cmd))))
+
+
+(defun elpy-django--get-test-runner-from-cache (key)
+  "Retrieve from cache test runner with given caching key.
+Return nil if the runner is missing in cache"
+  (let ((runner (cdr (assoc key elpy-django--test-runner-cache))))
+    ;; if present re-add to implement lru cache
+    (when runner (elpy-django--cache-test-runner key runner))))
+
+
+(defun elpy-django--cache-test-runner (key runner)
+  "Store in test runner cache a runner with a key"""
+  (push (cons key runner) elpy-django--test-runner-cache)
+  runner)
+
+
+(defun elpy-django--limit-test-runner-cache-size ()
+  "Ensure elpy-django--test-runner-cache does not overflow a fixed size"
+  (while (> (length elpy-django--test-runner-cache)
+            elpy-django--test-runner-cache-max-size)
+    (setq elpy-django--test-runner-cache (cdr elpy-django--test-runner-cache))))
 
 
 ;;;;;;;;;;;;;;;;;;;;;;
