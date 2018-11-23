@@ -238,6 +238,14 @@ you, you may also try:
    (setq python-shell-interpreter "ipython"
          python-shell-interpreter-args "-i")
 
+   As an IPython_ user, you might be interested in the `Emacs IPython
+   Notebook`_ or an `Elpy layer`_ for Spacemacs_, too.
+
+.. _IPython: http://ipython.org/
+.. _Emacs IPython Notebook: https://tkf.github.io/emacs-ipython-notebook/
+.. _Elpy layer: https://github.com/rgemulla/spacemacs-layers/tree/master/%2Blang/elpy
+.. _Spacemacs: http://spacemacs.org/
+
 The Shell Buffer
 ----------------
 
@@ -286,21 +294,6 @@ The Shell Buffer
 
    Kill all active python shells.
 
-.. command:: elpy-use-ipython
-.. command:: elpy-use-cpython
-
-   Use these commands, either interactively or from your ``.emacs``,
-   to set the interactive interpreter to either ipython or cpython. As
-   ipython requires some more setup work in older Emacsen, these will
-   take care of the right setup for you.
-
-   As an IPython_ user, you might be interested in the `Emacs IPython
-   Notebook`_ or an `Elpy layer`_ for Spacemacs_, too.
-
-.. _IPython: http://ipython.org/
-.. _Emacs IPython Notebook: https://tkf.github.io/emacs-ipython-notebook/
-.. _Elpy layer: https://github.com/rgemulla/spacemacs-layers/tree/master/%2Blang/elpy
-.. _Spacemacs: http://spacemacs.org/
 
 Evaluating code fragments
 -------------------------
