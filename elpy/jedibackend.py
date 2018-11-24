@@ -179,7 +179,8 @@ class JediBackend(object):
                 raw_name = definition.name
                 name = '{} {}'.format(raw_name, definition.type)
                 doc = definition.docstring().split('\n')
-            elif definition.type in ['instance']:
+            elif (definition.type in ['instance']
+                  and hasattr(assignment, "name")):
                 raw_name = assignment.name
                 name = raw_name
                 doc = assignment.docstring().split('\n')
