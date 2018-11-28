@@ -54,6 +54,10 @@ this line and may simply install Elpy and all of its recommended
 dependencies with the following command:::
 
   sudo apt install elpa-elpy
+  # To extend Elpy's capabilities by installing packages at the "Suggests"
+  # level of dependency, noted by apt during installation, do:
+  sudo apt install python3-autopep8 yapf3 black python3-pip \
+                   python3-jupyter-console
 
 Elpy can then be activated by running ``M-x elpy-enable``
 
