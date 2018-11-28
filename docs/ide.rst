@@ -109,7 +109,7 @@ documentation is a good place for further information.
     If t, add completion candidates gathered from the current python shell.
     Normally elpy provides completion using static code analysis (from jedi).
     With this option set to t, elpy will add the completion candidates from the
-    associated python shell. This allow to have decent completion candidates
+    associated python shell. This provides decent fallback completion candidates
     when the static code analysis fails.
 
 

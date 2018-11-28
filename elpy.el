@@ -298,8 +298,8 @@ this feature."
 
 Normally elpy provides completion using static code analysis (from jedi).
 With this option set to t, elpy will add the completion candidates from the
-associated python shell. This allow to have decent completion candidates when
-the static code analysis fails."
+associated python shell. This provides decent fallback completion candidates
+when the static code analysis fails."
   :type 'boolean
   :group 'elpy)
 
