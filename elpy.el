@@ -3796,9 +3796,12 @@ display the current class and method instead."
      ;; so we just tell python.el to use the wanted syntax checker
      (when (version<= "26.1" emacs-version)
        (setq-local python-flymake-command
-                   (if (string= elpy-syntax-check-command "pyflakes")
-                       '("pyflakes")
-                     `(,elpy-syntax-check-command "-"))))
+                   (let ((command (split-string elpy-syntax-check-command)))
+                     (if (string= (file-name-nondirectory (car command))
+                                  "flake8")
+                         (append command '("-"))
+                       command))))
+
      ;; `flymake-no-changes-timeout': The original value of 0.5 is too
      ;; short for Python code, as that will result in the current line
      ;; to be highlighted most of the time, and that's annoying. This
