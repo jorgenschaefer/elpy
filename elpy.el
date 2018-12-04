@@ -1462,7 +1462,7 @@ On an import line, it opens the file of that module.
 
 Otherwise, it opens a test file associated with the current file,
 if one exists. A test file is named test_<name>.py if the current
-file is <name>.py, and is either in the same directors or a
+file is <name>.py, and is either in the same directory or a
 \"test\" or \"tests\" subdirectory."
   (interactive "P")
   (cond
