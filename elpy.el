@@ -2104,11 +2104,19 @@ prefix argument is given, prompt for a symbol from the user."
   (interactive)
   (let ((doc nil))
     (when (not current-prefix-arg)
+      ;; Try jedi
       (setq doc (elpy-rpc-get-docstring))
+      (when (and (not doc) elpy-get-info-from-shell)
+        ;; Try the shell
+        (setq doc (elpy-doc-get-docstring-from-shell)))
       (when (not doc)
+        ;; Try jedi on the previous symbol
         (save-excursion
           (python-nav-backward-up-list)
-          (setq doc (elpy-rpc-get-docstring))))
+          (setq doc (elpy-rpc-get-docstring))
+          (when (and (not doc) elpy-get-info-from-shell)
+            ;; Try the shell on the previous symbol
+            (setq doc (elpy-doc-get-docstring-from-shell)))))
       (when (not doc)
         (setq doc (elpy-rpc-get-pydoc-documentation
                    (elpy-doc--symbol-at-point))))
@@ -2150,6 +2158,37 @@ prefix argument is given, prompt for a symbol from the user."
       (if symbol
           (symbol-name symbol)
         nil))))
+
+(defun elpy-doc-get-symbol-at-point ()
+  "Get the symbol at point using dotty syntax."
+  (let ((symbol (symbol-at-point))
+        (symbol-dotty (python-info-current-symbol t)))
+    (when (and symbol symbol-dotty)
+      (let ((symbol (substring-no-properties (symbol-name symbol))))
+        (replace-regexp-in-string (format "%s.*$" symbol)
+                                  symbol
+                                  symbol-dotty)))))
+
+(defun elpy-doc-get-docstring-from-shell ()
+  "Return the docstring for the symbol at point from the shell.
+
+Ask directly the associated shell if it exists."
+  (when (elpy-shell--check-if-shell-available)
+    (let* ((process (python-shell-get-process))
+           (symbol (elpy-doc-get-symbol-at-point))
+           (docstring
+            (when symbol
+              (python-shell-send-string-no-output
+               (format "\ntry:\n    help(%s)\nexcept NameError:\n    try:\n        help('%s')\n    except NameError:\n        pass"
+                       symbol symbol)
+               process))))
+      (unless (or (zerop (length docstring))
+                  (string-match "Traceback (most recent call last):"
+                                docstring)
+                  (string-match "No Python documentation found for"
+                                docstring))
+        ;; Remove potential warnings in the output
+        (substring docstring (string-match "^Help on " docstring))))))
 
 ;;;;;;;;;;;;;;
 ;;; Buffer manipulation
