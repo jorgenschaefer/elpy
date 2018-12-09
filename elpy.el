@@ -293,14 +293,16 @@ this feature."
                  (function :tag "Other function"))
   :group 'elpy)
 
-(defcustom elpy-company-add-completion-from-shell nil
-  "If t, add completion candidates gathered from the shell.
+(defcustom elpy-get-info-from-shell nil
+  "If t, use the shell to gather docstrings and completions.
 
-Normally elpy provides completion using static code analysis (from jedi).
-With this option set to t, elpy will add the completion candidates from the
-associated python shell. This allow to have decent completion candidates when
-the static code analysis fails."
+Normally elpy provides completion and documentation using static code analysis (from jedi). With this option set to t, elpy will add the completion candidates and the docstrings from the associated python shell. This allows to have decent completion candidates and documentation when the static code analysis fails."
   :type 'boolean
+  :group 'elpy)
+
+(defcustom elpy-get-info-from-shell-timeout 1
+  "Timeout (in seconds) for gathering information from the shell."
+  :type 'number
   :group 'elpy)
 
 (defcustom elpy-eldoc-show-current-function t
@@ -3566,44 +3568,43 @@ or unless NAME is no callable instance."
              (delete-char 2))))))
 
 (defun elpy-company--add-interpreter-completions-candidates (candidates)
-  "Add completions candidates from python.el to the list of candidates.
+  "Add completions candidates from the shell to the list of candidates.
 
-Get completions candidates at point from python.el, normalize them to look
+Get completions candidates at point from the shell, normalize them to look
 like what elpy-company returns, merge them with the CANDIDATES list
-and return the list.
-
-  python.el provides completion based on what is currently loaded in the
-python shell interpreter."
-  ;; check if prompt available
-  (if (or (not elpy-company-add-completion-from-shell)
-          (not (python-shell-get-process))
-          (with-current-buffer (process-buffer (python-shell-get-process))
-            (save-excursion
-              (goto-char (point-max))
-              (let ((inhibit-field-text-motion t))
-                (beginning-of-line)
-                (not (search-forward-regexp
-                      python-shell--prompt-calculated-input-regexp
-                      nil t))))))
+and return the list."
+  ;; Check if prompt available
+  (if (not (and elpy-get-info-from-shell
+                (elpy-shell--check-if-shell-available)))
       candidates
-    (let* ((new-candidates (python-completion-complete-at-point))
-           (start (nth 0 new-candidates))
-           (end (nth 1 new-candidates))
-           (completion-list (nth 2 new-candidates)))
-      (if (not (and start end))
-          candidates
-        (let ((candidate-names (cl-map 'list
-                                       (lambda (el) (cdr (assoc 'name el)))
-                                       candidates))
-              (new-candidate-names (all-completions (buffer-substring start end)
-                                                    completion-list)))
-          (cl-loop
-           for pytel-cand in new-candidate-names
-           for pytel-cand = (replace-regexp-in-string "($" "" pytel-cand)
-           for pytel-cand = (replace-regexp-in-string "^.*\\." "" pytel-cand)
-           if (not (member pytel-cand candidate-names))
-           do (push (list (cons 'name pytel-cand)) candidates)))
-        candidates))))
+    ;; Completion need the cursor to be at the end of the shell buffer
+    (save-excursion
+      (with-current-buffer (process-buffer (python-shell-get-process))
+        (goto-char (point-max)))
+      ;; Try to get the info with timeout
+      (let* ((new-candidates (with-timeout (elpy-get-info-from-shell-timeout
+                                            '(nil nil nil))
+                               (python-completion-complete-at-point)))
+             (start (nth 0 new-candidates))
+             (end (nth 1 new-candidates))
+             (completion-list (nth 2 new-candidates)))
+        (if (not (and start end))
+            candidates
+          ;; Add the new candidates to the current ones
+          (let ((candidate-names (cl-map 'list
+                                         (lambda (el) (cdr (assoc 'name el)))
+                                         candidates))
+                (new-candidate-names (all-completions
+                                      (buffer-substring start end)
+                                      completion-list)))
+            (cl-loop
+             for pytel-cand in new-candidate-names
+             for pytel-cand = (replace-regexp-in-string "($" "" pytel-cand)
+             for pytel-cand = (replace-regexp-in-string "^.*\\." ""
+                                                        pytel-cand)
+             if (not (member pytel-cand candidate-names))
+             do (push (list (cons 'name pytel-cand)) candidates)))
+          candidates)))))
 
 (defun elpy-company-backend (command &optional arg &rest ignored)
   "A company-mode backend for Elpy."
