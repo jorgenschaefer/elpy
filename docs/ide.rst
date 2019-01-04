@@ -106,11 +106,12 @@ documentation is a good place for further information.
 
 .. option:: elpy-company-add-completion-from-shell
 
-    If t, add completion candidates gathered from the current python shell.
-    Normally elpy provides completion using static code analysis (from jedi).
-    With this option set to t, elpy will add the completion candidates from the
-    associated python shell. This allow to have decent completion candidates
-    when the static code analysis fails.
+    If t, use the shell to gather docstrings and completions. Normally elpy
+    provides completion and documentation using static code analysis (from
+    jedi). With this option set to t, elpy will add the completion candidates
+    and the docstrings from the associated python shell. This allows to have
+    decent completion candidates and documentation when the static code analysis
+    fails. the static code analysis fails.
 
 
 Navigation
