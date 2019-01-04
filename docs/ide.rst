@@ -104,7 +104,7 @@ documentation is a good place for further information.
 
 .. _Company Mode: https://company-mode.github.io/
 
-.. option:: elpy-company-add-completion-from-shell
+.. option:: elpy-get-info-from-shell
 
     If t, use the shell to gather docstrings and completions. Normally elpy
     provides completion and documentation using static code analysis (from
