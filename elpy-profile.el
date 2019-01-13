@@ -101,7 +101,7 @@ If DONT-DISPLAY is non nil, don't display the profile results."
          (tmp-file (if in-dir
                        (concat file-dir "/" tmp-file-prefix file-name)
                      (concat (make-temp-file "elpy-profile-" t)  "/" tmp-file-prefix file-name)))
-         (region (elpy-shell--region-without-indentation beg end)))
+         (region (python-shell-buffer-substring beg end)))
     (with-temp-buffer
       (insert region)
       (write-region (point-min) (point-max) tmp-file nil t))
