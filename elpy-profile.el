@@ -71,7 +71,7 @@ If DONT-DISPLAY is non nil, don't display the profile results."
                         (concat (file-name-sans-extension file) ".profile")
                       (concat (make-temp-file "elpy-profile-" nil ".profile"))))
          (proc-name (format "elpy-profile-%s" file))
-         (proc-cmd (list python-shell-interpreter "-m" "cProfile" "-o" prof-file file))
+         (proc-cmd (list elpy-rpc-python-command "-m" "cProfile" "-o" prof-file file))
          (proc (make-process :name proc-name
                              :buffer "*elpy-profile-log*"
                              :sentinel 'elpy-profile--sentinel
