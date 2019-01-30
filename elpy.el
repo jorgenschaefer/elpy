@@ -3402,7 +3402,7 @@ If you need your modeline, you can set the variable `elpy-remove-modeline-lighte
     (`buffer-init
      ;; We want immediate completions from company.
      (set (make-local-variable 'company-idle-delay)
-          0.01)
+          0.1)
      ;; And annotations should be right-aligned.
      (set (make-local-variable 'company-tooltip-align-annotations)
           t)
