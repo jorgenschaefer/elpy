@@ -301,35 +301,6 @@ commands can be sent to the shell."
         (setq cumtime (+ cumtime 0.1)))))
   (elpy-shell-get-or-create-process))
 
-(defun elpy-shell--region-without-indentation (beg end)
-  "Return the current region as a string, but without indentation."
-  (if (= beg end)
-      ""
-    (let ((region (buffer-substring beg end))
-          (indent-level nil)
-          (indent-tabs-mode nil))
-      (with-temp-buffer
-        (insert region)
-        (goto-char (point-min))
-        (while (< (point) (point-max))
-          (cond
-           ((or (elpy-shell--current-line-only-whitespace-p)
-                (python-info-current-line-comment-p)))
-           ((not indent-level)
-            (setq indent-level (current-indentation)))
-           ((and indent-level
-                 (< (current-indentation) indent-level))
-            (error (message "X%sX" (thing-at-point 'line)))))
-            ;; (error "Can't adjust indentation, consecutive lines indented less than starting line")))
-          (forward-line))
-        (indent-rigidly (point-min)
-                        (point-max)
-                        (- indent-level))
-        ;; 'indent-rigidly' introduces tabs despite the fact that 'indent-tabs-mode' is nil
-        ;; 'untabify' fix that
-	(untabify (point-min) (point-max))
-        (buffer-string)))))
-
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Flash input sent to shell
 
@@ -793,7 +764,7 @@ corresponding statement."
     (unless (eq beg end)
       (elpy-shell--flash-and-message-region beg end)
         (elpy-shell--with-maybe-echo
-         (python-shell-send-string (elpy-shell--region-without-indentation beg end)))))
+         (python-shell-send-string (python-shell-buffer-substring beg end)))))
   (python-nav-forward-statement))
 
 (defun elpy-shell-send-top-statement-and-step ()
@@ -948,7 +919,7 @@ of code. With prefix argument, this code is executed."
   (let ((if-main-regex "^if +__name__ +== +[\"']__main__[\"'] *:")
         (has-if-main-and-removed nil))
     (if (use-region-p)
-        (let ((region (elpy-shell--region-without-indentation
+        (let ((region (python-shell-buffer-substring
                        (region-beginning) (region-end))))
           (when (string-match "\t" region)
             (message "Region contained tabs, this might cause weird errors"))
