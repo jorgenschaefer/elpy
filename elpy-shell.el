@@ -625,9 +625,10 @@ print) the output of the last expression."
        (when (and delete temp-file-name)
          (format "os.remove('''%s''');" temp-file-name))
        "__block = ast.parse(__code, '''%s''', mode='exec');"
+       "__block.body = __block.body if not isinstance(__block.body[0], ast.If) else __block.body if not isinstance(__block.body[0].test, ast.NameConstant) else __block.body if not __block.body[0].test.value is True else __block.body[0].body;"  ;; remove "if True:" wrapping when sending regions
        "__last = __block.body[-1];" ;; the last statement
        "__isexpr = isinstance(__last,ast.Expr);" ;; is it an expression?
-       "__block.body.pop() if __isexpr else None;" ;; if so, remove it
+       "_ = __block.body.pop() if __isexpr else None;" ;; if so, remove it
        "exec(compile(__block, '''%s''', mode='exec'));" ;; execute everything else
        "eval(compile(ast.Expression(__last.value), '''%s''', mode='eval')) if __isexpr else None" ;; if it was an expression, it has been removed; now evaluate it
        )
