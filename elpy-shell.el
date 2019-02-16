@@ -763,9 +763,35 @@ corresponding statement."
         (end (progn (elpy-shell--nav-end-of-statement) (point))))
     (unless (eq beg end)
       (elpy-shell--flash-and-message-region beg end)
-        (elpy-shell--with-maybe-echo
-         (python-shell-send-string (python-shell-buffer-substring beg end)))))
+      (elpy-shell--with-maybe-echo
+       (python-shell-send-string
+        (elpy-shell--strip-iftrue
+         (python-shell-buffer-substring beg end))))))
   (python-nav-forward-statement))
+
+(defun elpy-shell--strip-iftrue (str)
+  "Strip both ``if True:'' and take care of indentation."
+  (let ((region (replace-regexp-in-string "^if True:\n" "" str))
+        (indent-level nil)
+        (indent-tabs-mode nil))
+    (with-temp-buffer
+      (insert region)
+      (goto-char (point-min))
+      (while (< (point) (point-max))
+        (cond
+         ((or (elpy-shell--current-line-only-whitespace-p)
+              (python-info-current-line-comment-p)))
+         ((not indent-level)
+          (setq indent-level (current-indentation)))
+         ((and indent-level
+               (< (current-indentation) indent-level))
+          (error (message "X%sX" (thing-at-point 'line)))))
+        (forward-line))
+      (indent-rigidly (point-min)
+                      (point-max)
+                      (- indent-level))
+      (untabify (point-min) (point-max))
+      (concat "1\n" (buffer-string)))))
 
 (defun elpy-shell-send-top-statement-and-step ()
   "Send the current or next top-level statement to the Python shell and step.
@@ -919,8 +945,9 @@ of code. With prefix argument, this code is executed."
   (let ((if-main-regex "^if +__name__ +== +[\"']__main__[\"'] *:")
         (has-if-main-and-removed nil))
     (if (use-region-p)
-        (let ((region (python-shell-buffer-substring
-                       (region-beginning) (region-end))))
+        (let ((region (elpy-shell--strip-iftrue
+                       (python-shell-buffer-substring
+                        (region-beginning) (region-end)))))
           (when (string-match "\t" region)
             (message "Region contained tabs, this might cause weird errors"))
           (python-shell-send-string region))
