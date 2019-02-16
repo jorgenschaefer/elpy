@@ -2212,8 +2212,7 @@ root directory."
               (beg (region-beginning))
               (end (region-end)))
           (elpy-buffer--replace-region
-           beg end
-           (replace-regexp-in-string "\n$" "" new-block))
+           beg end (string-trim-right new-block))
           (goto-char end)
           (deactivate-mark))
       (let ((new-block (elpy-rpc method
