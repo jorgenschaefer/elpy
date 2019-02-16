@@ -301,6 +301,34 @@ commands can be sent to the shell."
         (setq cumtime (+ cumtime 0.1)))))
   (elpy-shell-get-or-create-process))
 
+(defun elpy-shell--string-without-indentation (string)
+  "Return the current string, but without indentation."
+  (if (string-empty-p string)
+      string
+    (let ((indent-level nil)
+          (indent-tabs-mode nil))
+      (with-temp-buffer
+        (insert string)
+        (goto-char (point-min))
+        (while (< (point) (point-max))
+          (cond
+           ((or (elpy-shell--current-line-only-whitespace-p)
+                (python-info-current-line-comment-p)))
+           ((not indent-level)
+            (setq indent-level (current-indentation)))
+           ((and indent-level
+                 (< (current-indentation) indent-level))
+            (error (message "X%sX" (thing-at-point 'line)))))
+          ;; (error "Can't adjust indentation, consecutive lines indented less than starting line")))
+          (forward-line))
+        (indent-rigidly (point-min)
+                        (point-max)
+                        (- indent-level))
+        ;; 'indent-rigidly' introduces tabs despite the fact that 'indent-tabs-mode' is nil
+        ;; 'untabify' fix that
+        (untabify (point-min) (point-max))
+        (buffer-string)))))
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Flash input sent to shell
 
@@ -521,11 +549,17 @@ Prepends a continuation promt if PREPEND-CONT-PROMPT is set."
           (if (string-match "^# -\\*- coding: utf-8 -\\*-\n*$" append-string)
               (replace-match "" nil nil append-string)
             append-string))
+         (append-string ; Strip "if True:", added when sending regions
+          (if (string-match "^if True:$" append-string)
+              (replace-match "" nil nil append-string)
+            append-string))
          (append-string ; strip newlines from beginning and white space from end
           (string-trim-right
            (if (string-match "\\`\n+" append-string)
                (replace-match "" nil nil append-string)
              append-string)))
+         (append-string ; Dedent region
+          (elpy-shell--string-without-indentation append-string))
          (head (elpy-shell--string-head-lines append-string elpy-shell-echo-input-lines-head))
          (tail (elpy-shell--string-tail-lines append-string elpy-shell-echo-input-lines-tail))
          (append-string (if (> (length append-string) (+ (length head) (length tail)))
