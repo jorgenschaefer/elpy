@@ -493,6 +493,7 @@ complete). Otherwise, does nothing."
 
 Unless NO-FONT-LOCK is set, formats STRING as shell input.
 Prepends a continuation promt if PREPEND-CONT-PROMPT is set."
+  (when (not (string-empty-p string))
   (let* ((process (elpy-shell-get-or-create-process))
          (process-buf (process-buffer process))
          (mark-point (process-mark process)))
@@ -506,19 +507,19 @@ Prepends a continuation promt if PREPEND-CONT-PROMPT is set."
               (goto-char mark-point)
               (elpy-shell--insert-and-font-lock
                (car lines) 'comint-highlight-input no-font-lock)
-              (if (cdr lines)
+              (when (cdr lines)
                   ;; no additional newline at end for multiline
                   (dolist (line (cdr lines))
                     (insert "\n")
                     (elpy-shell--insert-and-font-lock
                      prompt 'comint-highlight-prompt no-font-lock)
                     (elpy-shell--insert-and-font-lock
-                     line 'comint-highlight-input no-font-lock))
+                     line 'comint-highlight-input no-font-lock)))
                 ;; but put one for single line
-                (insert "\n")))
+                (insert "\n"))
           (elpy-shell--insert-and-font-lock
            string 'comint-highlight-input no-font-lock))
-        (set-marker (process-mark process) (point))))))
+        (set-marker (process-mark process) (point)))))))
 
 (defun elpy-shell--string-head-lines (string n)
   "Extract the first N lines from STRING."
