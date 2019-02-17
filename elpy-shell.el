@@ -421,9 +421,13 @@ Return non-nil is the shell is running and not busy, nil otherwise."
 ;; Echoing
 
 (defmacro elpy-shell--with-maybe-echo (body)
-  `(elpy-shell--with-maybe-echo-output
-    (elpy-shell--with-maybe-echo-input
-     ,body)))
+  ;; Echoing is apparently buggy for emacs < 25...
+  (if (<= 25 emacs-major-version)
+      `(elpy-shell--with-maybe-echo-output
+        (elpy-shell--with-maybe-echo-input
+         ,body))
+    body))
+
 
 (defmacro elpy-shell--with-maybe-echo-input (body)
   "Run BODY so that it adheres `elpy-shell-echo-input' and `elpy-shell-display-buffer'."
