@@ -4,7 +4,6 @@
     (elpy-mode)
     (setq elpy-shell-echo-input nil)
     (setq elpy-shell-echo-output nil)
-    (setq elpy-shell-capture-last-multiline-output nil)
     (insert "def foo():
     1+1
     for i in range(10):

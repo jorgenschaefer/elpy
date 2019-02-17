@@ -68,6 +68,9 @@ You can use `(add-hook 'elpy-mode-hook (lambda () (elpy-shell-toggle-dedicated-s
   captures its output so that it is echoed in the shell."
   :type 'boolean
   :group 'elpy)
+(make-obsolete-variable 'elpy-shell-capture-last-multiline-output
+                        "The last multiline output is now always captured."
+                        "February 2019")
 
 (defcustom elpy-shell-echo-input t
   "Whether to echo input sent to the Python shell as input in the
@@ -441,11 +444,9 @@ Return non-nil is the shell is running and not busy, nil otherwise."
   "Current captured output of the Python shell.")
 
 (defmacro elpy-shell--with-maybe-echo-output (body)
-  "Run BODY and grab shell output according to `elpy-shell-echo-output' and `elpy-shell-capture-last-multiline-output'."
+  "Run BODY and grab shell output according to `elpy-shell-echo-output'."
   `(cl-letf (((symbol-function 'python-shell-send-file)
-              (if elpy-shell-capture-last-multiline-output
-                  (symbol-function 'elpy-shell-send-file)
-                (symbol-function 'python-shell-send-file))))
+              (symbol-function 'elpy-shell-send-file)))
      (let* ((process (elpy-shell--ensure-shell-running))
             (process-buf (process-buffer process))
             (shell-visible (or elpy-shell-display-buffer-after-send

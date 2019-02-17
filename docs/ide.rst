@@ -477,14 +477,6 @@ evaluation command, thereby providing visual feedback.
    value). Then, no window is needed to display the shell (thereby saving screen
    real estate), but the outputs can still be seen in the echo area.
 
-.. option:: elpy-shell-capture-last-multiline-output
-
-   When a multiple statements are sent to the shell simultaneously (e.g., via
-   :command:`elpy-shell-send-group-and-step`), Elpy by default captures the
-   value of the last Python statement (if is an expression) and shows it in the
-   shell buffer. This variable can be used to turn off this behavior (then shell
-   won't show any output, except for single-line statements).
-
 .. option:: elpy-shell-display-buffer-after-send
 
    Whether to display the Python shell after sending something to it (default

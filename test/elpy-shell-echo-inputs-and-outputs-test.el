@@ -4,7 +4,6 @@
     (elpy-mode)
     (setq elpy-shell-echo-input nil)
     (setq elpy-shell-echo-output nil)
-    (setq elpy-shell-capture-last-multiline-output nil)
     (insert "def foo():
     1+1
     for i in range(10):
@@ -30,7 +29,6 @@
     (elpy-mode)
     (setq elpy-shell-echo-input t)
     (setq elpy-shell-echo-output nil)
-    (setq elpy-shell-capture-last-multiline-output nil)
     (insert "def foo():
     1+1
     for i in range(10):
@@ -81,7 +79,6 @@
     (elpy-mode)
     (setq elpy-shell-echo-input nil)
     (setq elpy-shell-echo-output t)
-    (setq elpy-shell-capture-last-multiline-output t)
     (insert "def foo():\n    1+1\n    for i in range(10):\n        a = 2+2\n        4+3\n        b = a+i\n")
 
     ;; on "1+1"
