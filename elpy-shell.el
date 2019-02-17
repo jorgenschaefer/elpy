@@ -144,6 +144,14 @@ the code cell beginnings defined here."
 (defvar elpy--shell-last-py-buffer nil
   "Help keep track of python buffer when changing to pyshell.")
 
+(defun elpy-shell-get-python-version ()
+  "Return the python interpreter version"
+  (string-trim
+   (replace-regexp-in-string "Python" ""
+                             (shell-command-to-string
+                              (format "%s --version"
+                                      python-shell-interpreter)))))
+
 (defun elpy-shell-display-buffer ()
   "Display inferior Python process buffer."
   (display-buffer (process-buffer (elpy-shell-get-or-create-process))
@@ -626,7 +634,10 @@ print) the output of the last expression."
        (when (and delete temp-file-name)
          (format "os.remove('''%s''');" temp-file-name))
        "__block = ast.parse(__code, '''%s''', mode='exec');"
-       "__block.body = __block.body if not isinstance(__block.body[0], ast.If) else __block.body if not isinstance(__block.body[0].test, ast.NameConstant) else __block.body if not __block.body[0].test.value is True else __block.body[0].body;"  ;; remove "if True:" wrapping when sending regions
+       (if (version< (elpy-shell-get-python-version) "3.0.0")
+           "__block.body = __block.body if not isinstance(__block.body[0], ast.If) else __block.body if not isinstance(__block.body[0].test, ast.Name) else __block.body if not __block.body[0].test.id == 'True' else __block.body[0].body;"  ;; remove "if True:" wrapping when sending regions
+         "__block.body = __block.body if not isinstance(__block.body[0], ast.If) else __block.body if not isinstance(__block.body[0].test, ast.NameConstant) else __block.body if not __block.body[0].test.value is True else __block.body[0].body;"  ;; remove "if True:" wrapping when sending regions
+       )
        "__last = __block.body[-1];" ;; the last statement
        "__isexpr = isinstance(__last,ast.Expr);" ;; is it an expression?
        "_ = __block.body.pop() if __isexpr else None;" ;; if so, remove it
