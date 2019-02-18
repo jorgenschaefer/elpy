@@ -1050,6 +1050,51 @@ switches focus to Python shell buffer."
 (elpy-shell--defun-step-go elpy-shell-send-region-or-buffer-and-step)
 (elpy-shell--defun-step-go elpy-shell-send-buffer-and-step)
 
+
+;;;;;;;;;;;;;;;;;;;;;;;
+;; Debug features
+
+(defun elpy-pdb-debug-buffer ()
+  "Run pdb on the current buffer."
+  (interactive)
+  (elpy-shell--ensure-shell-running)
+  (save-buffer)
+  (python-shell-send-string (format
+                             "import pdb as __pdb;__pdb.Pdb()._runscript('%s')"
+                             (buffer-file-name))))
+
+(defun elpy-pdb-debug-buffer-and-break-at-point ()
+  "Run pdb on the current buffer and break at point.
+
+Pdb can directly exit if  the current line is not a
+statement that is actually run (blank line, comment line, ...).
+"
+  (interactive)
+  (elpy-shell--ensure-shell-running)
+  (save-buffer)
+  (let ((line-number (line-number-at-pos)))
+    (python-shell-send-string
+     (format "import pdb as __pdb;__pdb.Pdb()._runscript('%s')"
+             (buffer-file-name)))
+    (python-shell-send-string (format "break %s" line-number))
+    (python-shell-send-string "continue")))
+
+(defun elpy-pdb-debug-last-exception ()
+  "Run post-mortem pdb on the last exception."
+  (interactive)
+  (elpy-shell--ensure-shell-running)
+  ;; check if there is a last exception
+  (if (not (with-current-buffer (format "*%s*"
+                                        (python-shell-get-process-name nil))
+             (save-excursion
+               (goto-char (point-max))
+               (search-backward "Traceback (most recent call last):"
+                                nil t))))
+      (error "No traceback on the current shell")
+    (python-shell-send-string
+     "import pdb as __pdb;__pdb.pm()")))
+
+
 ;;;;;;;;;;;;;;;;;;;;;;;
 ;; Deprecated functions
 
