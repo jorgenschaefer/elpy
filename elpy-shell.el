@@ -68,6 +68,9 @@ You can use `(add-hook 'elpy-mode-hook (lambda () (elpy-shell-toggle-dedicated-s
   captures its output so that it is echoed in the shell."
   :type 'boolean
   :group 'elpy)
+(make-obsolete-variable 'elpy-shell-capture-last-multiline-output
+                        "The last multiline output is now always captured."
+                        "February 2019")
 
 (defcustom elpy-shell-echo-input t
   "Whether to echo input sent to the Python shell as input in the
@@ -143,6 +146,14 @@ the code cell beginnings defined here."
 
 (defvar elpy--shell-last-py-buffer nil
   "Help keep track of python buffer when changing to pyshell.")
+
+(defun elpy-shell-get-python-version ()
+  "Return the python interpreter version"
+  (string-trim
+   (replace-regexp-in-string "Python" ""
+                             (shell-command-to-string
+                              (format "%s --version"
+                                      python-shell-interpreter)))))
 
 (defun elpy-shell-display-buffer ()
   "Display inferior Python process buffer."
@@ -301,6 +312,34 @@ commands can be sent to the shell."
         (setq cumtime (+ cumtime 0.1)))))
   (elpy-shell-get-or-create-process))
 
+(defun elpy-shell--string-without-indentation (string)
+  "Return the current string, but without indentation."
+  (if (string-empty-p string)
+      string
+    (let ((indent-level nil)
+          (indent-tabs-mode nil))
+      (with-temp-buffer
+        (insert string)
+        (goto-char (point-min))
+        (while (< (point) (point-max))
+          (cond
+           ((or (elpy-shell--current-line-only-whitespace-p)
+                (python-info-current-line-comment-p)))
+           ((not indent-level)
+            (setq indent-level (current-indentation)))
+           ((and indent-level
+                 (< (current-indentation) indent-level))
+            (error (message "X%sX" (thing-at-point 'line)))))
+          ;; (error "Can't adjust indentation, consecutive lines indented less than starting line")))
+          (forward-line))
+        (indent-rigidly (point-min)
+                        (point-max)
+                        (- indent-level))
+        ;; 'indent-rigidly' introduces tabs despite the fact that 'indent-tabs-mode' is nil
+        ;; 'untabify' fix that
+        (untabify (point-min) (point-max))
+        (buffer-string)))))
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Flash input sent to shell
 
@@ -382,9 +421,13 @@ Return non-nil is the shell is running and not busy, nil otherwise."
 ;; Echoing
 
 (defmacro elpy-shell--with-maybe-echo (body)
-  `(elpy-shell--with-maybe-echo-output
-    (elpy-shell--with-maybe-echo-input
-     ,body)))
+  ;; Echoing is apparently buggy for emacs < 25...
+  (if (<= 25 emacs-major-version)
+      `(elpy-shell--with-maybe-echo-output
+        (elpy-shell--with-maybe-echo-input
+         ,body))
+    body))
+
 
 (defmacro elpy-shell--with-maybe-echo-input (body)
   "Run BODY so that it adheres `elpy-shell-echo-input' and `elpy-shell-display-buffer'."
@@ -405,11 +448,9 @@ Return non-nil is the shell is running and not busy, nil otherwise."
   "Current captured output of the Python shell.")
 
 (defmacro elpy-shell--with-maybe-echo-output (body)
-  "Run BODY and grab shell output according to `elpy-shell-echo-output' and `elpy-shell-capture-last-multiline-output'."
+  "Run BODY and grab shell output according to `elpy-shell-echo-output'."
   `(cl-letf (((symbol-function 'python-shell-send-file)
-              (if elpy-shell-capture-last-multiline-output
-                  (symbol-function 'elpy-shell-send-file)
-                (symbol-function 'python-shell-send-file))))
+              (symbol-function 'elpy-shell-send-file)))
      (let* ((process (elpy-shell--ensure-shell-running))
             (process-buf (process-buffer process))
             (shell-visible (or elpy-shell-display-buffer-after-send
@@ -465,6 +506,7 @@ complete). Otherwise, does nothing."
 
 Unless NO-FONT-LOCK is set, formats STRING as shell input.
 Prepends a continuation promt if PREPEND-CONT-PROMPT is set."
+  (when (not (string-empty-p string))
   (let* ((process (elpy-shell-get-or-create-process))
          (process-buf (process-buffer process))
          (mark-point (process-mark process)))
@@ -478,19 +520,19 @@ Prepends a continuation promt if PREPEND-CONT-PROMPT is set."
               (goto-char mark-point)
               (elpy-shell--insert-and-font-lock
                (car lines) 'comint-highlight-input no-font-lock)
-              (if (cdr lines)
+              (when (cdr lines)
                   ;; no additional newline at end for multiline
                   (dolist (line (cdr lines))
                     (insert "\n")
                     (elpy-shell--insert-and-font-lock
                      prompt 'comint-highlight-prompt no-font-lock)
                     (elpy-shell--insert-and-font-lock
-                     line 'comint-highlight-input no-font-lock))
+                     line 'comint-highlight-input no-font-lock)))
                 ;; but put one for single line
-                (insert "\n")))
+                (insert "\n"))
           (elpy-shell--insert-and-font-lock
            string 'comint-highlight-input no-font-lock))
-        (set-marker (process-mark process) (point))))))
+        (set-marker (process-mark process) (point)))))))
 
 (defun elpy-shell--string-head-lines (string n)
   "Extract the first N lines from STRING."
@@ -521,11 +563,17 @@ Prepends a continuation promt if PREPEND-CONT-PROMPT is set."
           (if (string-match "^# -\\*- coding: utf-8 -\\*-\n*$" append-string)
               (replace-match "" nil nil append-string)
             append-string))
+         (append-string ; Strip "if True:", added when sending regions
+          (if (string-match "^if True:$" append-string)
+              (replace-match "" nil nil append-string)
+            append-string))
          (append-string ; strip newlines from beginning and white space from end
           (string-trim-right
            (if (string-match "\\`\n+" append-string)
                (replace-match "" nil nil append-string)
              append-string)))
+         (append-string ; Dedent region
+          (elpy-shell--string-without-indentation append-string))
          (head (elpy-shell--string-head-lines append-string elpy-shell-echo-input-lines-head))
          (tail (elpy-shell--string-tail-lines append-string elpy-shell-echo-input-lines-tail))
          (append-string (if (> (length append-string) (+ (length head) (length tail)))
@@ -591,9 +639,13 @@ print) the output of the last expression."
        (when (and delete temp-file-name)
          (format "os.remove('''%s''');" temp-file-name))
        "__block = ast.parse(__code, '''%s''', mode='exec');"
+       (if (version< (elpy-shell-get-python-version) "3.0.0")
+           "__block.body = __block.body if not isinstance(__block.body[0], ast.If) else __block.body if not isinstance(__block.body[0].test, ast.Name) else __block.body if not __block.body[0].test.id == 'True' else __block.body[0].body;"  ;; remove "if True:" wrapping when sending regions
+         "__block.body = __block.body if not isinstance(__block.body[0], ast.If) else __block.body if not isinstance(__block.body[0].test, ast.NameConstant) else __block.body if not __block.body[0].test.value is True else __block.body[0].body;"  ;; remove "if True:" wrapping when sending regions
+       )
        "__last = __block.body[-1];" ;; the last statement
        "__isexpr = isinstance(__last,ast.Expr);" ;; is it an expression?
-       "__block.body.pop() if __isexpr else None;" ;; if so, remove it
+       "_ = __block.body.pop() if __isexpr else None;" ;; if so, remove it
        "exec(compile(__block, '''%s''', mode='exec'));" ;; execute everything else
        "eval(compile(ast.Expression(__last.value), '''%s''', mode='eval')) if __isexpr else None" ;; if it was an expression, it has been removed; now evaluate it
        )
