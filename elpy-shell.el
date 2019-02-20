@@ -485,10 +485,12 @@ complete). Otherwise, does nothing."
                      elpy-shell--captured-output
                      0 (match-beginning 0)))
             (message-log-max))
-        (if (string-empty-p output)
-            (message "No output was produced.")
-          (message "%s" (replace-regexp-in-string "\n\\'" "" output))))
-      (setq-local elpy-shell--captured-output nil)))
+        (if (string-match-p "Traceback (most recent call last):" output)
+            (message "Exception during evaluation.")
+          (if (string-empty-p output)
+              (message "No output was produced.")
+            (message "%s" (replace-regexp-in-string "\n\\'" "" output))))
+        (setq-local elpy-shell--captured-output nil))))
 
   ;; return input unmodified
   string)
