@@ -1125,16 +1125,17 @@ statement that is actually run (blank line, comment line, ...).
      "import pdb as __pdb;__pdb.pm()")))
 
 ;; Fringe indicators
-(define-fringe-bitmap 'elpy-breakpoint-fringe-marker
-   (vector
-           #b00000000
-           #b00111100
-           #b01111110
-           #b01111110
-           #b01111110
-           #b01111110
-           #b00111100
-           #b00000000))
+(when (fboundp 'define-fringe-bitmap)
+  (define-fringe-bitmap 'elpy-breakpoint-fringe-marker
+    (vector
+     #b00000000
+     #b00111100
+     #b01111110
+     #b01111110
+     #b01111110
+     #b01111110
+     #b00111100
+     #b00000000)))
 
 (defcustom elpy-breakpoint-fringe-face 'elpy-breakpoint-fringe-face
    "Face for breakpoints bitmaps appearing on the fringe."
