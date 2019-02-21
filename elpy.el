@@ -3821,7 +3821,10 @@ display the current class and method instead."
      ;; Useless for emacs >= 26.1, as warning are handled fine
      ;; COMPAT: Obsolete variable as of 24.4
      (cond
-      ((version<= "26.1" emacs-version) t)
+      ((version<= "26.1" emacs-version)
+       (setq-default python-flymake-msg-alist
+                     '(("^W[0-9]+" . :warning)
+                       ("^E[0-9]+" . :error))))
       ((boundp 'flymake-warning-predicate)
        (set (make-local-variable 'flymake-warning-predicate) "^W[0-9]"))
       (t
