@@ -149,11 +149,13 @@ the code cell beginnings defined here."
 
 (defun elpy-shell-get-python-version ()
   "Return the python interpreter version"
-  (string-trim
-   (replace-regexp-in-string "Python" ""
-                             (shell-command-to-string
-                              (format "%s --version"
-                                      python-shell-interpreter)))))
+  (let ((version
+         (shell-command-to-string
+          (format "%s --version"
+                  python-shell-interpreter))))
+    (string-match "[0-9]\\.[0-9]\\.[0-9]" version)
+    (match-string 0 version)))
+
 
 (defun elpy-shell-display-buffer ()
   "Display inferior Python process buffer."
