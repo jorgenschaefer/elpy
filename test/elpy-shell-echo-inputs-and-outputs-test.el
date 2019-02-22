@@ -60,21 +60,20 @@
                             (elpy/wait-for-output "OK" 30)
                             (buffer-string))))
     ;; on "a = 2+2" and "4+3" lines
-    (when (version< "3.0.0" (elpy-shell-get-python-version))
-      (set-mark 52)
-      (goto-char 72)
-      (activate-mark)
-      (elpy-shell-kill t)
-      (elpy-shell-send-region-or-buffer)
-      (python-shell-send-string "print('OK')\n")
-      (should (string-match ">>> a = 2\\+2"
-                            (with-current-buffer "*Python*"
-                              (elpy/wait-for-output "OK" 30)
-                              (buffer-string))))
-      (should (string-match "...: 4\\+3"
-                            (with-current-buffer "*Python*"
-                              (buffer-string))))
-      ))))
+    (set-mark 52)
+    (goto-char 72)
+    (activate-mark)
+    (elpy-shell-kill t)
+    (elpy-shell-send-region-or-buffer)
+    (python-shell-send-string "print('OK')\n")
+    (should (string-match ">>> a = 2\\+2"
+                          (with-current-buffer "*Python*"
+                            (elpy/wait-for-output "OK" 30)
+                            (buffer-string))))
+    (should (string-match "...: 4\\+3"
+                          (with-current-buffer "*Python*"
+                            (buffer-string))))
+    )))
 
 (ert-deftest elpy-shell-should-echo-outputs ()
   (when (<= 25 emacs-major-version)
