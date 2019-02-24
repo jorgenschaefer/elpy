@@ -147,16 +147,6 @@ the code cell beginnings defined here."
 (defvar elpy--shell-last-py-buffer nil
   "Help keep track of python buffer when changing to pyshell.")
 
-(defun elpy-shell-get-python-version ()
-  "Return the python interpreter version"
-  (let ((version
-         (shell-command-to-string
-          (format "%s --version"
-                  python-shell-interpreter))))
-    (string-match "[0-9]\\.[0-9]\\.[0-9]" version)
-    (match-string 0 version)))
-
-
 (defun elpy-shell-display-buffer ()
   "Display inferior Python process buffer."
   (display-buffer (process-buffer (elpy-shell-get-or-create-process))
@@ -560,7 +550,7 @@ Prepends a continuation promt if PREPEND-CONT-PROMPT is set."
   "Advice to enable echoing of input in the Python shell."
   (interactive)
   (let* ((append-string ; strip setup code from Python shell
-          (if (string-match "import codecs, os.*__pyfile = codecs.open.*$" string)
+          (if (string-match "import sys, codecs, os.*__pyfile = codecs.open.*$" string)
               (replace-match "" nil nil string)
             string))
          (append-string ; here too
@@ -636,17 +626,15 @@ print) the output of the last expression."
     (python-shell-send-string
      (format
       (concat
-       "import codecs, os, ast;"
+       "import sys, codecs, os, ast;"
        "__pyfile = codecs.open('''%s''', encoding='''%s''');"
        "__code = __pyfile.read().encode('''%s''');"
        "__pyfile.close();"
        (when (and delete temp-file-name)
          (format "os.remove('''%s''');" temp-file-name))
        "__block = ast.parse(__code, '''%s''', mode='exec');"
-       (if (version< (elpy-shell-get-python-version) "3.0.0")
-           "__block.body = __block.body if not isinstance(__block.body[0], ast.If) else __block.body if not isinstance(__block.body[0].test, ast.Name) else __block.body if not __block.body[0].test.id == 'True' else __block.body[0].body;"  ;; remove "if True:" wrapping when sending regions
-         "__block.body = __block.body if not isinstance(__block.body[0], ast.If) else __block.body if not isinstance(__block.body[0].test, ast.NameConstant) else __block.body if not __block.body[0].test.value is True else __block.body[0].body;"  ;; remove "if True:" wrapping when sending regions
-       )
+       ;; Has to ba a oneliner, which make conditionnal statements a bit complicated...
+       " __block.body = (__block.body if not isinstance(__block.body[0], ast.If) else __block.body if not isinstance(__block.body[0].test, ast.Name) else __block.body if not __block.body[0].test.id == 'True' else __block.body[0].body) if sys.version_info[0] < 3 else (__block.body if not isinstance(__block.body[0], ast.If) else __block.body if not isinstance(__block.body[0].test, ast.NameConstant) else __block.body if not __block.body[0].test.value is True else __block.body[0].body);"
        "__last = __block.body[-1];" ;; the last statement
        "__isexpr = isinstance(__last,ast.Expr);" ;; is it an expression?
        "_ = __block.body.pop() if __isexpr else None;" ;; if so, remove it
