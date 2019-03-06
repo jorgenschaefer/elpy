@@ -244,6 +244,30 @@ Python process. This allows the process to start up."
       (when (elpy-project-root)
         (python-shell-send-string
          (format "import sys;sys.path.append('%s')" (elpy-project-root))))
+      ;; Function used to echo the last output
+      (python-shell-send-string
+       (concat
+        "def __elpy_get_last_statement(filename, encoding, delete):\n"
+        "    import sys, codecs, os, ast\n"
+        "    __pyfile = codecs.open(filename, encoding=encoding)\n"
+        "    __code = __pyfile.read().encode(encoding)\n"
+        "    __pyfile.close()\n"
+        "    if delete:\n"
+        "        os.remove(filename)\n"
+        "    __block = ast.parse(__code, '''%s''', mode='exec')\n"
+        "    try:\n"
+        "        if sys.version_info[0] < 3:\n"
+        "            if __block.body[0].test.id == 'True':\n"
+        "                __block.body = __block.body[0].body\n"
+        "        else:\n"
+        "            if __block.body[0].test.value is True:\n"
+        "                __block.body = __block.body[0].body\n"
+        "    except AttributeError:\n"
+        "        pass\n"
+        "    __last = __block.body[-1]\n"
+        "    __isexpr = isinstance(__last,ast.Expr)\n"
+        "    _ = __block.body.pop() if __isexpr else None\n"
+        "    return compile(__block, '''%s''', mode='exec'), compile(ast.Expression(__last.value), '''%s''', mode='eval') if __isexpr else None\n"))
       (get-buffer-process bufname))))
 
 (defun elpy-shell-toggle-dedicated-shell (&optional arg)
@@ -553,7 +577,7 @@ Prepends a continuation promt if PREPEND-CONT-PROMPT is set."
   "Advice to enable echoing of input in the Python shell."
   (interactive)
   (let* ((append-string ; strip setup code from Python shell
-          (if (string-match "import sys, codecs, os.*__pyfile = codecs.open.*$" string)
+          (if (string-match "__elpy_get_last_statement(.*$" string)
               (replace-match "" nil nil string)
             string))
          (append-string ; here too
@@ -627,24 +651,9 @@ print) the output of the last expression."
                             (or (file-remote-p temp-file-name 'localname)
                                 temp-file-name)))))
     (python-shell-send-string
-     (format
-      (concat
-       "import sys, codecs, os, ast;"
-       "__pyfile = codecs.open('''%s''', encoding='''%s''');"
-       "__code = __pyfile.read().encode('''%s''');"
-       "__pyfile.close();"
-       (when (and delete temp-file-name)
-         (format "os.remove('''%s''');" temp-file-name))
-       "__block = ast.parse(__code, '''%s''', mode='exec');"
-       ;; Has to ba a oneliner, which make conditionnal statements a bit complicated...
-       " __block.body = (__block.body if not isinstance(__block.body[0], ast.If) else __block.body if not isinstance(__block.body[0].test, ast.Name) else __block.body if not __block.body[0].test.id == 'True' else __block.body[0].body) if sys.version_info[0] < 3 else (__block.body if not isinstance(__block.body[0], ast.If) else __block.body if not isinstance(__block.body[0].test, ast.NameConstant) else __block.body if not __block.body[0].test.value is True else __block.body[0].body);"
-       "__last = __block.body[-1];" ;; the last statement
-       "__isexpr = isinstance(__last,ast.Expr);" ;; is it an expression?
-       "_ = __block.body.pop() if __isexpr else None;" ;; if so, remove it
-       "exec(compile(__block, '''%s''', mode='exec'));" ;; execute everything else
-       "eval(compile(ast.Expression(__last.value), '''%s''', mode='eval')) if __isexpr else None" ;; if it was an expression, it has been removed; now evaluate it
-       )
-      (or temp-file-name file-name) encoding encoding file-name file-name file-name)
+     (format "toexec, toeval = __elpy_get_last_statement(filename='''%s''', encoding='''%s''', delete=%s);exec(toexec); eval(toeval) if toeval is not None else None"
+             (or temp-file-name file-name) encoding
+             (if (and delete temp-file-name) "True" "False"))
      process)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

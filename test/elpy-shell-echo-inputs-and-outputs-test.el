@@ -80,7 +80,6 @@
   (elpy-testcase ()
     (python-mode)
     (elpy-mode)
-    (setq python-shell-interpreter "python2")
     (setq elpy-shell-echo-input nil)
     (setq elpy-shell-echo-output t)
     (insert "def foo():
@@ -93,7 +92,6 @@
 
     ;; on "1+1"
     (goto-char 18)
-    (elpy-shell-kill t)
     (elpy-shell-send-statement)
     (python-shell-send-string "print('OK')\n")
     (should (string-match "^2" (with-current-buffer "*Python*"
@@ -101,21 +99,18 @@
                                  (buffer-string))))
     ;; on "4+3"
     (goto-char 70)
-    (elpy-shell-kill t)
     (elpy-shell-send-statement)
-    (python-shell-send-string "print('OK')\n")
+    (python-shell-send-string "print('OK2')\n")
     (should (string-match "^7" (with-current-buffer "*Python*"
-                                 (elpy/wait-for-output "OK" 30)
+                                 (elpy/wait-for-output "OK2" 30)
                                  (buffer-string))))
     ;; on "a = 2+2" and "4+3" lines
     (set-mark 52)
     (goto-char 72)
     (activate-mark)
-    (elpy-shell-kill t)
-    (message "use-region: %s" (use-region-p))
     (elpy-shell-send-region-or-buffer)
-    (python-shell-send-string "print('OK')\n")
+    (python-shell-send-string "print('OK3')\n")
     (should (string-match "^7" (with-current-buffer "*Python*"
-                                 (elpy/wait-for-output "OK" 30)
+                                 (elpy/wait-for-output "OK3" 30)
                                  (buffer-string))))
     )))
