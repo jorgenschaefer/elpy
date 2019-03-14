@@ -112,7 +112,6 @@
     (goto-char 72)
     (activate-mark)
     (elpy-shell-kill t)
-    (message "use-region: %s" (use-region-p))
     (elpy-shell-send-region-or-buffer)
     (python-shell-send-string "print('OK')\n")
     (should (string-match "^7" (with-current-buffer "*Python*"
