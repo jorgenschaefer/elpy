@@ -445,7 +445,9 @@ Return non-nil is the shell is running and not busy, nil otherwise."
 (defmacro elpy-shell--with-maybe-echo-output (body)
   "Run BODY and grab shell output according to `elpy-shell-echo-output'."
   `(cl-letf (((symbol-function 'python-shell-send-file)
-              (symbol-function 'elpy-shell-send-file)))
+              (if elpy-shell-echo-output
+                  (symbol-function 'elpy-shell-send-file)
+                (symbol-function 'python-shell-send-file))))
      (let* ((process (elpy-shell--ensure-shell-running))
             (process-buf (process-buffer process))
             (shell-visible (or elpy-shell-display-buffer-after-send
@@ -552,10 +554,14 @@ Prepends a continuation promt if PREPEND-CONT-PROMPT is set."
 (defun elpy-shell--python-shell-send-string-echo-advice (string &optional _process _msg)
   "Advice to enable echoing of input in the Python shell."
   (interactive)
-  (let* ((append-string ; strip setup code from Python shell
-          (if (string-match "import sys, codecs, os.*__pyfile = codecs.open.*$" string)
+  (let* ((append-string ; strip setup code from Elpy
+          (if (string-match "import sys, codecs, os, ast;__pyfile = codecs.open.*$" string)
               (replace-match "" nil nil string)
             string))
+         (append-string ; strip setup code from python.el
+          (if (string-match "import codecs, os;__pyfile = codecs.open(.*;exec(compile(__code, .*$" append-string)
+              (replace-match "" nil nil append-string)
+            append-string))
          (append-string ; here too
           (if (string-match "^# -\\*- coding: utf-8 -\\*-\n*$" append-string)
               (replace-match "" nil nil append-string)
