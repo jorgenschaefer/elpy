@@ -1,5 +1,6 @@
 (ert-deftest elpy-pdb-debug-last-exception-should-debug-last-exception ()
-  (elpy-testcase ((:project project-root "test.py"))
+  (elpy-testcase ((:project project-root "test.py")
+                   (:emacs-required "25.0"))
     (find-file (f-join project-root "test.py"))
     (python-mode)
     (elpy-mode 1)
@@ -20,7 +21,8 @@
       (should (string-match "test.py(3)foo()\n-> c = a/B\n(Pdb)" output)))))
 
 (ert-deftest elpy-pdb-debug-last-exception-should-ignore-breakpoints ()
-  (elpy-testcase ((:project project-root "test.py"))
+  (elpy-testcase ((:project project-root "test.py")
+                   (:emacs-required "25.0"))
     (find-file (f-join project-root "test.py"))
     (python-mode)
     (elpy-mode 1)

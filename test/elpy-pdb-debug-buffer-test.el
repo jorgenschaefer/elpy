@@ -1,5 +1,6 @@
 (ert-deftest elpy-pdb-debug-buffer-should-enter-pdb ()
-  (elpy-testcase ((:project project-root "test.py"))
+  (elpy-testcase ((:project project-root "test.py")
+                   (:emacs-required "25.0"))
     (find-file (f-join project-root "test.py"))
     (python-mode)
     (elpy-mode 1)
@@ -16,7 +17,8 @@
       (should (string-match "-> def foo(a):\n(Pdb)" output)))))
 
 (ert-deftest elpy-pdb-debug-buffer-should-stop-at-the-first-breakpoint ()
-  (elpy-testcase ((:project project-root "test.py"))
+  (elpy-testcase ((:project project-root "test.py")
+                   (:emacs-required "25.0"))
     (find-file (f-join project-root "test.py"))
     (python-mode)
     (elpy-mode 1)
@@ -36,7 +38,8 @@
       (should (string-match "test.py(3)foo()\n-> c = a/b\n(Pdb)" output)))))
 
 (ert-deftest elpy-pdb-debug-buffer-should-continue-with-second-breakpoint ()
-  (elpy-testcase ((:project project-root "test.py"))
+  (elpy-testcase ((:project project-root "test.py")
+                   (:emacs-required "25.0"))
     (find-file (f-join project-root "test.py"))
     (python-mode)
     (elpy-mode 1)
@@ -64,7 +67,8 @@
       (should (string-match "test.py(3)foo()\n-> c = a/b\n(Pdb)" output)))))
 
 (ert-deftest elpy-pdb-debug-buffer-should-forget-previous-breakpoints ()
-  (elpy-testcase ((:project project-root "test.py"))
+  (elpy-testcase ((:project project-root "test.py")
+                   (:emacs-required "25.0"))
     (find-file (f-join project-root "test.py"))
     (python-mode)
     (elpy-mode 1)

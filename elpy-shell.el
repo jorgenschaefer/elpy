@@ -1054,6 +1054,7 @@ switches focus to Python shell buffer."
 ;;;;;;;;;;;;;;;;;;;;;;;
 ;; Debugging features
 
+(when (version<= "25" emacs-version)
 (defun elpy-pdb--clear-breakpoints-from-pdb ()
   "Clean the breakpoints fromm pdb.
 
@@ -1194,9 +1195,7 @@ With a prefix argument, remove all the breakpoints from the current buffer."
           (put-text-property 0 marker-length
                              'display
                              (list 'left-fringe
-                                   (if elpy-breakpoint-fringe-face
-                                       'elpy-breakpoint-fringe-marker
-                                     'filled-square)
+                                   'elpy-breakpoint-fringe-marker
                                    'elpy-breakpoint-fringe-face)
                              marker-string)
           (overlay-put ov 'before-string marker-string)
@@ -1208,6 +1207,7 @@ With a prefix argument, remove all the breakpoints from the current buffer."
   (if (use-region-p)
       (remove-overlays (region-beginning) (region-end) 'elpy-breakpoint t)
     (remove-overlays (point-min) (point-max) 'elpy-breakpoint t)))
+)
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;
