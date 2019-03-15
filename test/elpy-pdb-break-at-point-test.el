@@ -1,4 +1,4 @@
-(ert-deftest elpy-pdb-debug-buffer-and-break-at-point-should-break-at-point ()
+(ert-deftest elpy-pdb-break-at-point-should-break-at-point ()
   (elpy-testcase ((:project project-root "test.py")
                    (:emacs-required "25.0"))
     (find-file (f-join project-root "test.py"))
@@ -12,7 +12,7 @@
             "foo(2)\n")
     ;; goto "c = a/b"
     (goto-char 29)
-    (elpy-pdb-debug-buffer-and-break-at-point)
+    (elpy-pdb-break-at-point)
     (let ((output (with-current-buffer "*Python*"
                     (elpy/wait-for-output "c = a/b\n(Pdb)")
                     (buffer-string))))
@@ -35,7 +35,7 @@
     (elpy-pdb-toggle-breakpoint-at-point)
     ;; goto "c = a/b"
     (goto-char 29)
-    (elpy-pdb-debug-buffer-and-break-at-point)
+    (elpy-pdb-break-at-point)
     (let ((output (with-current-buffer "*Python*"
                     (elpy/wait-for-output "c = a/b\n(Pdb)")
                     (buffer-string))))
