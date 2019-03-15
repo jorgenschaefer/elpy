@@ -1180,7 +1180,7 @@ statement that is actually run (blank line, comment line, ...)."
    (bp-at-line
     (remove-overlays (line-beginning-position) (line-end-position)
                      'elpy-breakpoint t)
-    (message "Added breakpoint at line %s" (line-number-at-pos)))
+    (message "Removed breakpoint at line %s" (line-number-at-pos)))
   ;; Else add a new breakpoint
   (t
    (let* ((ov (make-overlay (line-beginning-position) (line-end-position)))
@@ -1195,7 +1195,7 @@ statement that is actually run (blank line, comment line, ...)."
      (overlay-put ov 'before-string marker-string)
      (overlay-put ov 'priority 200)
      (overlay-put ov 'elpy-breakpoint t)
-     (message "Deleted breakpoint at line %s" (line-number-at-pos)))))))
+     (message "Added breakpoint at line %s" (line-number-at-pos)))))))
 
 (defun elpy-pdb-clear-breakpoints ()
   "Remove the breakpoints in the current region or buffer."
