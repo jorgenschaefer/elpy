@@ -1085,32 +1085,35 @@ if OUTPUT is non-nil, display the prompt after execution."
                      (line-number-at-pos (overlay-start ov)))))
     bp-lines))
 
-(defun elpy-pdb-debug-buffer ()
+(defun elpy-pdb-debug-buffer (&optional arg)
   "Run pdb on the current buffer.
 
 If breakpoints are set in the current buffer, jump to the first one.
-If no breakpoints are set, debug from the bigenning of the script."
-  (interactive)
-  (let ((bp-lines (elpy-pdb--get-breakpoint-positions)))
-    (if (not bp-lines)
-        (elpy-pdb-debug-buffer-from-beginning)
-      (elpy-shell--ensure-shell-running)
-      (save-buffer)
-      (elpy-pdb--clear-breakpoints-from-pdb)
-      (elpy-pdb--start-pdb)
-      (dolist (bp-line bp-lines)
-        (python-shell-send-string-no-output (format "break %s" bp-line)))
-      (python-shell-send-string "continue"))))
+If no breakpoints are set, debug from the beginning of the script.
+
+With a prefix argument, ignore the present breakpoints."
+  (interactive "P")
+  (if arg
+      (elpy-pdb-debug-buffer-from-beginning)
+    (let ((bp-lines (elpy-pdb--get-breakpoint-positions)))
+      (if (not bp-lines)
+          (elpy-pdb-debug-buffer-from-beginning)
+        (elpy-shell--ensure-shell-running)
+        (save-buffer)
+        (elpy-pdb--clear-breakpoints-from-pdb)
+        (elpy-pdb--start-pdb)
+        (dolist (bp-line bp-lines)
+          (python-shell-send-string-no-output (format "break %s" bp-line)))
+        (python-shell-send-string "continue")))))
 
 (defun elpy-pdb-debug-buffer-from-beginning ()
   "Ignore the breakpoints and run pdb on the current buffer."
-  (interactive)
   (elpy-shell--ensure-shell-running)
   (save-buffer)
   (elpy-pdb--clear-breakpoints-from-pdb)
   (elpy-pdb--start-pdb t))
 
-(defun elpy-pdb-debug-buffer-and-break-at-point ()
+(defun elpy-pdb-break-at-point ()
   "Run pdb on the current buffer and break at point.
 
 Ignore the the existing breakpoints.
@@ -1164,42 +1167,43 @@ statement that is actually run (blank line, comment line, ...)."
    "Face for breakpoint bitmaps appearing on the fringe."
    :group 'elpy)
 
-(defun elpy-pdb-toggle-breakpoint-at-point ()
-  "Add or remove a breakpoint at the current line."
-  (interactive)
-  (let ((overlays (overlays-at (point)))
-         bp-at-line)
-    ;; Check if already a breakpoint
-    (while overlays
-      (let ((overlay (car overlays)))
-        (when (overlay-get overlay 'elpy-breakpoint)
-          (setq bp-at-line t))
-        (setq overlays (cdr overlays))))
-  (cond
-   ;; If so, remove it
-   (bp-at-line
-    (remove-overlays (line-beginning-position) (line-end-position)
-                     'elpy-breakpoint t)
-    (message "Removed breakpoint at line %s" (line-number-at-pos)))
-  ;; Else add a new breakpoint
-  (t
-   (let* ((ov (make-overlay (line-beginning-position) (line-end-position)))
-          (marker-string "*fringe-dummy*")
-          (marker-length (length marker-string)))
-     (put-text-property 0 marker-length
-                        'display
-                        (list 'left-fringe
-                              'elpy-breakpoint-fringe-marker
-                              'elpy-breakpoint-fringe-face)
-                        marker-string)
-     (overlay-put ov 'before-string marker-string)
-     (overlay-put ov 'priority 200)
-     (overlay-put ov 'elpy-breakpoint t)
-     (message "Added breakpoint at line %s" (line-number-at-pos)))))))
+(defun elpy-pdb-toggle-breakpoint-at-point (&optional arg)
+  "Add or remove a breakpoint at the current line.
+
+With a prefix argument, remove all the breakpoints from the current buffer."
+  (interactive "P")
+  (if arg
+      (elpy-pdb-clear-breakpoints)
+    (let ((overlays (overlays-at (point)))
+          bp-at-line)
+      ;; Check if already a breakpoint
+      (while overlays
+        (let ((overlay (car overlays)))
+          (when (overlay-get overlay 'elpy-breakpoint)
+            (setq bp-at-line t))
+          (setq overlays (cdr overlays))))
+      (cond
+       ;; If so, remove it
+       (bp-at-line
+        (remove-overlays (line-beginning-position) (line-end-position)
+                         'elpy-breakpoint t))
+       ;; Else add a new breakpoint
+       (t
+        (let* ((ov (make-overlay (line-beginning-position) (line-end-position)))
+              (marker-string "*fringe-dummy*")
+              (marker-length (length marker-string)))
+          (put-text-property 0 marker-length
+                             'display
+                             (list 'left-fringe
+                                   'elpy-breakpoint-fringe-marker
+                                   'elpy-breakpoint-fringe-face)
+                             marker-string)
+          (overlay-put ov 'before-string marker-string)
+          (overlay-put ov 'priority 200)
+          (overlay-put ov 'elpy-breakpoint t)))))))
 
 (defun elpy-pdb-clear-breakpoints ()
   "Remove the breakpoints in the current region or buffer."
-  (interactive)
   (if (use-region-p)
       (remove-overlays (region-beginning) (region-end) 'elpy-breakpoint t)
     (remove-overlays (point-min) (point-max) 'elpy-breakpoint t)))

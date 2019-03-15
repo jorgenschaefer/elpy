@@ -484,6 +484,7 @@ option is `pdb'."
   "Key map for the shell related commands")
 (fset 'elpy-shell-map elpy-shell-map)
 
+
 (defcustom elpy-shell-command-prefix-key "C-c C-y"
 "Prefix key used to call elpy shell related commands.
 
@@ -497,6 +498,17 @@ This option need to bet set through `customize' or `customize-set-variable' to b
   (when key
     (define-key elpy-mode-map (kbd key) 'elpy-shell-map)
   (set var key))))
+
+(defvar elpy-pdb-map
+  (let ((map (make-sparse-keymap)))
+    (define-key map (kbd "g") 'elpy-pdb-debug-buffer)
+    (define-key map (kbd "p") 'elpy-pdb-break-at-point)
+    (define-key map (kbd "e") 'elpy-pdb-debug-last-exception)
+    (define-key map (kbd "b") 'elpy-pdb-toggle-breakpoint-at-point)
+    map)
+  "Key map for the shell related commands")
+(fset 'elpy-pdb-map elpy-pdb-map)
+(define-key elpy-mode-map (kbd "C-c C-g") 'elpy-pdb-map)
 
 (easy-menu-define elpy-menu elpy-mode-map
   "Elpy Mode Menu"
@@ -530,6 +542,15 @@ This option need to bet set through `customize' or `customize-set-variable' to b
       :help "Kill the current Python shell"]
      ["Kill all Python shells" elpy-shell-kill-all
       :help "Kill all Python shells"])
+    ("Debugging"
+     ["Debug buffer" elpy-pdb-debug-buffer
+      :help "Debug the current buffer using pdb"]
+     ["Debug at point" elpy-pdb-break-at-point
+      :help "Debug the current buffer and stop at the current position"]
+     ["Debug last exception" elpy-pdb-debug-last-exception
+      :help "Run post-mortem pdb on the last exception"]
+     ["Add/remove breakpoint" elpy-pdb-toggle-breakpoint-at-point
+      :help "Add or remove a breakpoint at the current position"])
     ("Project"
      ["Find File" elpy-find-file
       :help "Interactively find a file in the current project"]
@@ -560,7 +581,6 @@ This option need to bet set through `customize' or `customize-set-variable' to b
       :help "Move current block or region down"
       :suffix (if (use-region-p) "Region" "Block")])
     "---"
-    ["News" elpy-news t]
     ["Configure" elpy-config t]))
 
 ;;;###autoload

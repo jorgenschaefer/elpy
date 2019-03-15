@@ -556,9 +556,9 @@ currently selected company candidate.
 Debugging
 =========
 
-The builtin `pdb`_ python package is a powerful debugging tool.
-Elpy provides an interface in order to make debugging intuitive on Emacs.
-This interface is only available for Emacs > 25.
+The builtin `pdb`_ python package is a powerful debugging tool. Elpy
+provides a simple interface to `pdb`_ in order to make debugging Python
+easier on Emacs. This interface is only available for Emacs > 25.
 
 .. _pdb: https://docs.python.org/3/library/pdb.html
 
@@ -569,21 +569,12 @@ This interface is only available for Emacs > 25.
    using :command:`elpy-pdb-toggle-breakpoint-at-point`, debugging
    will pause at the beginning of the buffer. Else, debugging will
    stop at the first breakpoint. Once pdb is started, you can then use the
-   `pdb commands`_ to investigate and explore the code.
+   `pdb commands`_ to explore the code.
+
+   With a prefix argument, ignore the breakpoints and always pause at
+   the beginning of the buffer.
 
 .. _pdb commands: https://docs.python.org/3/library/pdb.html#debugger-commands
-
-.. command:: elpy-pdb-debug-buffer-and-break-at-point
-   :kbd:
-
-   Run pdb on the current buffer and stop at the current point. This
-   basically avoid having to put the usual `import
-   pdb;pdb.set_trace()` and removing it afterwards.
-
-.. command:: elpy-pdb-debug-last-exception
-   :kbd:
-
-   Run post-mortem pdb on the last exception.
 
 .. command:: elpy-pdb-toggle-breakpoint-at-point
    :kbd:
@@ -591,13 +582,21 @@ This interface is only available for Emacs > 25.
    Add (or remove) a breakpoint on the current line. Elpy will add a
    red circular marker to the fringe to indicate the presence of the
    breakpoint. You can then use :command:`elpy-pdb-debug-buffer` to
-   start pdb that will pause at each of the breakpoint.
+   start pdb and pause at each of the breakpoint.
 
-.. command:: elpy-pdb-clear-breakpoints
+   With a prefix argument, remove all the breakpoints.
+
+.. command:: elpy-pdb-break-at-point
    :kbd:
 
-   Remove all the breakpoints in the current buffer.
+   Run pdb on the current buffer and stop at the current position.
+   This avoids having to put the usual `import pdb;pdb.set_trace()`
+   and having to remove it afterwards.
 
+.. command:: elpy-pdb-debug-last-exception
+   :kbd:
+
+   Run post-mortem pdb on the last exception.
 
 
 Testing
