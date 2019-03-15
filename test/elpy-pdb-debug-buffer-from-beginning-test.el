@@ -1,6 +1,5 @@
 (ert-deftest elpy-pdb-debug-buffer-from-beginning-should-enter-pdb ()
-  (elpy-testcase ((:project project-root "test.py")
-                   (:emacs-required "25.0"))
+  (elpy-testcase ((:project project-root "test.py"))
     (find-file (f-join project-root "test.py"))
     (python-mode)
     (elpy-mode 1)
@@ -17,8 +16,7 @@
       (should (string-match "-> def foo(a):\n(Pdb)" output)))))
 
 (ert-deftest elpy-pdb-debug-buffer-should-always-begin-at-first-line ()
-  (elpy-testcase ((:project project-root "test.py")
-                   (:emacs-required "25.0"))
+  (elpy-testcase ((:project project-root "test.py"))
     (find-file (f-join project-root "test.py"))
     (python-mode)
     (elpy-mode 1)
@@ -38,8 +36,7 @@
       (should (string-match "-> def foo(a):\n(Pdb)" output)))))
 
 (ert-deftest elpy-pdb-debug-buffer-should-ignore-breakpoints ()
-  (elpy-testcase ((:project project-root "test.py")
-                   (:emacs-required "25.0"))
+  (elpy-testcase ((:project project-root "test.py"))
     (find-file (f-join project-root "test.py"))
     (python-mode)
     (elpy-mode 1)
