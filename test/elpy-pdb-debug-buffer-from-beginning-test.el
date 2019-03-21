@@ -10,7 +10,7 @@
             "  return c\n"
             "\n"
             "foo(2)\n")
-    (elpy-pdb-debug-buffer-from-beginning)
+    (elpy-pdb-debug-buffer t)
     (let ((output (with-current-buffer "*Python*"
                     (elpy/wait-for-output "foo(a):\n(Pdb)")
                     (buffer-string))))
@@ -31,7 +31,7 @@
     ;; set breakpoint at "c = a/b"
     (goto-char 29)
     (elpy-pdb-toggle-breakpoint-at-point)
-    (elpy-pdb-debug-buffer-from-beginning)
+    (elpy-pdb-debug-buffer t)
     (let ((output (with-current-buffer "*Python*"
                     (elpy/wait-for-output "foo(a):\n(Pdb)")
                     (buffer-string))))
@@ -52,7 +52,7 @@
     ;; set breakpoint at "c = a/b"
     (goto-char 29)
     (elpy-pdb-toggle-breakpoint-at-point)
-    (elpy-pdb-debug-buffer-from-beginning)
+    (elpy-pdb-debug-buffer t)
     (python-shell-send-string "continue\n")
     (let ((output (with-current-buffer "*Python*"
                     (elpy/wait-for-output ">>>")

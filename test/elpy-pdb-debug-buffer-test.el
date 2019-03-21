@@ -95,6 +95,6 @@
     (elpy-pdb-debug-buffer)
     ;; pdb should not stop at the first breakpoint
     (let ((output (with-current-buffer "*Python*"
-                    (elpy/wait-for-output "a/n\n(Pdb)")
+                    (elpy/wait-for-output "a/b\n(Pdb)")
                     (buffer-string))))
       (should (string-match "test.py(3)foo()\n-> c = a/b\n(Pdb)" output)))))
