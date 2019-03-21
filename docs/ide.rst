@@ -556,45 +556,44 @@ currently selected company candidate.
 Debugging
 =========
 
-The builtin `pdb`_ python package is a powerful debugging tool. Elpy
-provides a simple interface to `pdb`_ in order to make debugging Python
-easier on Emacs. This interface is only available for Emacs > 25.
+Elpy provides an interface to `pdb`_, the builtin Python debugger.
+Note that this interface is only available for Emacs 25 and above.
 
 .. _pdb: https://docs.python.org/3/library/pdb.html
 
 .. command:: elpy-pdb-debug-buffer
-   :kbd:
+   :kbd: C-c C-g g
 
    Run pdb on the current buffer. If you did not put any breakpoints
-   using :command:`elpy-pdb-toggle-breakpoint-at-point`, debugging
-   will pause at the beginning of the buffer. Else, debugging will
-   stop at the first breakpoint. Once pdb is started, you can then use the
-   `pdb commands`_ to explore the code.
+   using :command:`elpy-pdb-toggle-breakpoint-at-point`, the debugger
+   will pause at the beginning of the buffer. Else, the debugger will
+   pause at the first breakpoint. Once pdb is started, the `pdb
+   commands`_ can be used to step through and investigate the code.
 
-   With a prefix argument, ignore the breakpoints and always pause at
-   the beginning of the buffer.
+   With a prefix argument :kbd:`C-u`, ignore the breakpoints and
+   always pause at the beginning of the buffer.
 
 .. _pdb commands: https://docs.python.org/3/library/pdb.html#debugger-commands
 
 .. command:: elpy-pdb-toggle-breakpoint-at-point
-   :kbd:
+   :kbd: C-c C-g b
 
-   Add (or remove) a breakpoint on the current line. Elpy will add a
-   red circular marker to the fringe to indicate the presence of the
-   breakpoint. You can then use :command:`elpy-pdb-debug-buffer` to
-   start pdb and pause at each of the breakpoint.
+   Add (or remove) a breakpoint on the current line. Elpy adds a red
+   circle to the fringe to indicate the presence of breakpoints.
+   You can then use :command:`elpy-pdb-debug-buffer` to start pdb and
+   pause at each of the breakpoint.
 
-   With a prefix argument, remove all the breakpoints.
+   With a prefix argument :kbd:`C-u`, remove all the breakpoints.
 
 .. command:: elpy-pdb-break-at-point
-   :kbd:
+   :kbd: C-c C-g p
 
-   Run pdb on the current buffer and stop at the current position.
+   Run pdb on the current buffer and pausse at the current position.
    This avoids having to put the usual `import pdb;pdb.set_trace()`
    and having to remove it afterwards.
 
 .. command:: elpy-pdb-debug-last-exception
-   :kbd:
+   :kbd: C-c C-g e
 
    Run post-mortem pdb on the last exception.
 

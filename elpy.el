@@ -484,7 +484,6 @@ option is `pdb'."
   "Key map for the shell related commands")
 (fset 'elpy-shell-map elpy-shell-map)
 
-
 (defcustom elpy-shell-command-prefix-key "C-c C-y"
 "Prefix key used to call elpy shell related commands.
 
