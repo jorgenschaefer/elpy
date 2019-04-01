@@ -1059,10 +1059,10 @@ switches focus to Python shell buffer."
 (defun elpy-pdb--refresh-breakpoints (lines)
   "Add a new breakpoints at lines LINES of the current buffer."
   ;; forget about old breakpoints
-  (python-shell-send-string "import bdb as __bdb; __bdb.Breakpoint.bplist={}; __bdb.Breakpoint.next=1;__bdb.Breakpoint.bpbynumber=[None]")
-  (python-shell-send-string "import pdb; __pdbi = pdb.Pdb()")
+  (python-shell-send-string-no-output "import bdb as __bdb; __bdb.Breakpoint.bplist={}; __bdb.Breakpoint.next=1;__bdb.Breakpoint.bpbynumber=[None]")
+  (python-shell-send-string-no-output "import pdb; __pdbi = pdb.Pdb()")
   (dolist (line lines)
-    (python-shell-send-string
+    (python-shell-send-string-no-output
      (format "__pdbi.set_break('''%s''', %s)" (buffer-file-name) line))))
 
 (defun elpy-pdb--start-pdb (&optional output)
