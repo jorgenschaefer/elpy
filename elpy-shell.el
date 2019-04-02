@@ -1094,7 +1094,7 @@ If no breakpoints are set, debug from the beginning of the script.
 With a prefix argument, ignore the existing breakpoints."
     (interactive "P")
     (if (not (buffer-file-name))
-        (error "Debugging only work for buffer visiting files")
+        (error "Debugging only work for buffers visiting a file")
       (elpy-shell--ensure-shell-running)
       (save-buffer)
       (let ((bp-lines (elpy-pdb--get-breakpoint-positions)))
@@ -1105,7 +1105,7 @@ With a prefix argument, ignore the existing breakpoints."
           (elpy-pdb--refresh-breakpoints bp-lines)
           (elpy-pdb--start-pdb)
           (python-shell-send-string "continue")))
-      (elpy-shell-switch-to-shell)))
+      (elpy-shell-display-buffer)))
 
   (defun elpy-pdb-break-at-point ()
     "Run pdb on the current buffer and break at the current line.
@@ -1115,13 +1115,13 @@ Pdb can directly exit if the current line is not a statement
 that is actually run (blank line, comment line, ...)."
     (interactive)
     (if (not (buffer-file-name))
-        (error "Debugging only work for buffer visiting files")
+        (error "Debugging only work for buffers visiting a file")
       (elpy-shell--ensure-shell-running)
       (save-buffer)
       (elpy-pdb--refresh-breakpoints (list (line-number-at-pos)))
       (elpy-pdb--start-pdb)
       (python-shell-send-string "continue")
-      (elpy-shell-switch-to-shell)))
+      (elpy-shell-display-buffer)))
 
   (defun elpy-pdb-debug-last-exception ()
     "Run post-mortem pdb on the last exception."
@@ -1137,7 +1137,7 @@ that is actually run (blank line, comment line, ...)."
         (error "No traceback on the current shell")
       (python-shell-send-string
        "import pdb as __pdb;__pdb.pm()"))
-    (elpy-shell-switch-to-shell))
+    (elpy-shell-display-buffer))
 
   ;; Fringe indicators
 
