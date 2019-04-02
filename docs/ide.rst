@@ -553,6 +553,49 @@ currently selected company candidate.
    The idle delay in seconds until documentation is updated automatically.
 
 
+Debugging
+=========
+
+Elpy provides an interface to `pdb`_, the builtin Python debugger.
+Note that this interface is only available for Emacs 25 and above.
+
+.. _pdb: https://docs.python.org/3/library/pdb.html
+
+.. command:: elpy-pdb-debug-buffer
+   :kbd: C-c C-g g
+
+   Run pdb on the current buffer. If no breakpoints has been set using
+   :command:`elpy-pdb-toggle-breakpoint-at-point`, the debugger will
+   pause at the beginning of the buffer. Else, the debugger will pause
+   at the first breakpoint. Once pdb is started, the `pdb commands`_
+   can be used to step through and look into the code evaluation.
+
+   With a prefix argument :kbd:`C-u`, ignore the breakpoints and
+   always pause at the beginning of the buffer.
+
+.. _pdb commands: https://docs.python.org/3/library/pdb.html#debugger-commands
+
+.. command:: elpy-pdb-toggle-breakpoint-at-point
+   :kbd: C-c C-g b
+
+   Add (or remove) a breakpoint on the current line. Elpy adds a red
+   circle to the fringe to indicate the presence of a breakpoint. You
+   can then use :command:`elpy-pdb-debug-buffer` to start pdb and
+   pause at each of the breakpoints.
+
+   With a prefix argument :kbd:`C-u`, remove all the breakpoints.
+
+.. command:: elpy-pdb-break-at-point
+   :kbd: C-c C-g p
+
+   Run pdb on the current buffer and pause at the cursor position.
+
+.. command:: elpy-pdb-debug-last-exception
+   :kbd: C-c C-g e
+
+   Run post-mortem pdb on the last exception.
+
+
 Testing
 =======
 
