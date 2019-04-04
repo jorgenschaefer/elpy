@@ -1312,7 +1312,8 @@ this."
 
 This is marked with setup.py or setup.cfg."
   (or (locate-dominating-file default-directory "setup.py")
-      (locate-dominating-file default-directory "setup.cfg")))
+      (locate-dominating-file default-directory "setup.cfg")
+      (locate-dominating-file default-directory "pyproject.toml")))
 
 (defun elpy-project-find-git-root ()
   "Return the current git repository root, if any."
