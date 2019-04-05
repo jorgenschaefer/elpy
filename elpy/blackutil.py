@@ -2,8 +2,8 @@
 
 """
 
-import os
 import sys
+from pkg_resources import parse_version
 
 from elpy.rpc import Fault
 
@@ -23,17 +23,20 @@ def fix_code(code, directory):
 
     """
     if not black:
-        raise Fault('black not installed', code=400)
+        raise Fault("black not installed", code=400)
 
     try:
-        reformatted_source = black.format_file_contents(
-            src_contents=code,
-            line_length=black.DEFAULT_LINE_LENGTH,
-            fast=False
-        )
+        if parse_version(black.__version__) < parse_version("19.0"):
+            reformatted_source = black.format_file_contents(
+                src_contents=code, line_length=black.DEFAULT_LINE_LENGTH, fast=False
+            )
+        else:
+            fm = black.FileMode()
+            reformatted_source = black.format_file_contents(
+                src_contents=code, fast=False, mode=fm
+            )
         return reformatted_source
     except black.NothingChanged:
         return code
     except Exception as e:
-            raise Fault("Error during formatting: {}".format(e),
-                        code=400)
+        raise Fault("Error during formatting: {}".format(e), code=400)
