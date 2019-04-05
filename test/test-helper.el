@@ -77,7 +77,7 @@ Run BODY with that binding."
               ,(elpy-testcase-transform-spec (cdr speclist)
                                              body)
             ,@ (cdr spec)))
-        (t
+        (_
          (error "Bad environment specifier %s" (car spec)))))))
 
 (defmacro elpy-testcase (spec &rest body)
