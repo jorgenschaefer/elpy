@@ -629,7 +629,9 @@ print) the output of the last expression."
     (python-shell-send-string
      (format
       (concat
-       "import sys, codecs, os, ast;"
+       ;; Readline is only necessary for MacOs, see
+       ;; https://github.com/jorgenschaefer/elpy/issues/1550
+       "import sys, codecs, os, ast, readline;"
        "__pyfile = codecs.open('''%s''', encoding='''%s''');"
        "__code = __pyfile.read().encode('''%s''');"
        "__pyfile.close();"
