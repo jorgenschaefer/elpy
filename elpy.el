@@ -2159,23 +2159,11 @@ prefix argument is given, prompt for a symbol from the user."
           (symbol-name symbol)
         nil))))
 
-(defun elpy-doc-get-symbol-at-point ()
-  "Get the symbol at point using dotty syntax."
-  (let ((symbol (symbol-at-point))
-        (symbol-dotty (python-info-current-symbol t)))
-    (when (and symbol symbol-dotty)
-      (let ((symbol (substring-no-properties (symbol-name symbol))))
-        (replace-regexp-in-string (format "%s.*$" symbol)
-                                  symbol
-                                  symbol-dotty)))))
-
 (defun elpy-doc-get-docstring-from-shell ()
-  "Return the docstring for the symbol at point from the shell.
-
-Ask directly the associated shell if it exists."
+  "Return the docstring for the symbol at point using the shell."
   (when (elpy-shell--check-if-shell-available)
     (let* ((process (python-shell-get-process))
-           (symbol (elpy-doc-get-symbol-at-point))
+           (symbol (elpy-doc--symbol-at-point))
            (docstring
             (when symbol
               (python-shell-send-string-no-output
