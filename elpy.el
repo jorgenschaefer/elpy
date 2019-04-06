@@ -2185,6 +2185,11 @@ prefix argument is given, prompt for a symbol from the user."
 ;;;;;;;;;;;;;;;;;;;;;
 ;;; Code reformatting
 
+(defcustom elpy-fix-code-max-line-length 79
+  "Maximum number of line allowed when fixing code."
+  :type 'number
+  :group 'elpy)
+
 (defun elpy-format-code ()
   "Format code using the available formatter."
   (interactive)
@@ -2229,7 +2234,8 @@ root directory."
     (if (use-region-p)
         (let ((new-block (elpy-rpc method
                                    (list (elpy-rpc--region-contents)
-                                         directory)))
+                                         directory
+                                         elpy-fix-code-max-line-length)))
               (beg (region-beginning))
               (end (region-end)))
           (elpy-buffer--replace-region
@@ -2238,7 +2244,8 @@ root directory."
           (deactivate-mark))
       (let ((new-block (elpy-rpc method
                                  (list (elpy-rpc--buffer-contents)
-                                       directory)))
+                                       directory
+                                       elpy-fix-code-max-line-length)))
             (beg (point-min))
             (end (point-max)))
         (elpy-buffer--replace-region beg end new-block)
