@@ -1016,7 +1016,7 @@ item in another window.\n\n")
       (insert "\n\n"))
 
     ;; Syntax checker not available
-    (when (not (executable-find elpy-syntax-check-command))
+    (when (not (executable-find (car (split-string elpy-syntax-check-command))))
       (elpy-insert--para
        "The configured syntax checker could not be found. Elpy uses this "
        "program to provide syntax checks of your programs, so you might "
@@ -1171,7 +1171,8 @@ virtual_env_short"
                                                    black-latest))
             ("Syntax checker" . ,(let ((syntax-checker
                                         (executable-find
-                                         elpy-syntax-check-command)))
+                                         (car (split-string
+                                               elpy-syntax-check-command)))))
                                    (if  syntax-checker
                                        (format "%s (%s)"
                                                (file-name-nondirectory
