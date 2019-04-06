@@ -2167,8 +2167,7 @@ prefix argument is given, prompt for a symbol from the user."
            (docstring
             (when symbol
               (python-shell-send-string-no-output
-               (format "\ntry:\n    help(%s)\nexcept NameError:\n    try:\n        help('%s')\n    except NameError:\n        pass"
-                       symbol symbol)
+               (format "import pydoc, io\noutput = io.StringIO()\nh = pydoc.Helper(output=output)\nh.help(%s)\nprint(output.getvalue())" symbol)
                process))))
       (unless (or (zerop (length docstring))
                   (string-match "Traceback (most recent call last):"

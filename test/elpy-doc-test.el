@@ -42,15 +42,21 @@
     (python-mode)
     (elpy-mode)
     (let ((elpy-get-info-from-shell t)
-          (elpy-get-info-from-shell-timeout 10)
+          (elpy-get-info-from-shell-timeout 1)
           (python-shell-completion-native-enable nil))
       (elpy-shell-get-or-create-process)
-      (message "python: %s" (python-shell-send-string-no-output "def foo(a, b):\n    \"\"\"Foo doc\"\"\"\n    return a + b"))
-      (message "python: %s" (python-shell-send-string-no-output "foo(1, 2)"))
-      (message "python: %s" (python-shell-send-string-no-output "help()"))
-      (message "python: %s" (python-shell-send-string-no-output "help(foo)"))
-      (insert "foo")
-      (message "doc: %s" (elpy-doc-get-docstring-from-shell))
+      (python-shell-send-string "def foo(a, b):\n    \"\"\"Foo doc\"\"\"\n    return a + b")
+      (python-shell-send-string "import os.path")
+      (python-shell-send-string "print('DONE')")
+      (with-current-buffer  "*Python*"
+        (elpy/wait-for-output "DONE"))
+      ;; Get doc for 'foo'
+      (insert "\nfoo")
       (elpy-doc)
       (with-current-buffer "*Python Doc*"
-        (should (re-search-forward "Foo doc"))))))
+        (should (re-search-forward "Foo doc")))
+      ;; Get doc for 'os.path'
+      (insert "\nos.path")
+      (elpy-doc)
+      (with-current-buffer "*Python Doc*"
+        (should (re-search-forward "Help on module posixpath"))))))
