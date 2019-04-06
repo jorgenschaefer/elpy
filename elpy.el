@@ -2185,8 +2185,10 @@ prefix argument is given, prompt for a symbol from the user."
 ;;;;;;;;;;;;;;;;;;;;;
 ;;; Code reformatting
 
-(defcustom elpy-fix-code-max-line-length 79
-  "Maximum number of line allowed when fixing code."
+(defcustom elpy-fix-code-max-line-length nil
+  "Maximum number of line allowed when fixing code.
+
+When nil, use the formatter default value."
   :type 'number
   :group 'elpy)
 

@@ -28,7 +28,8 @@ def fix_code(code, directory, max_line_length=None):
         raise Fault('yapf not installed', code=400)
     style_config = file_resources.GetDefaultStyleForDir(directory or os.getcwd())
     style_dic = style.CreateStyleFromConfig(style_config)
-    style_dic['COLUMN_LIMIT'] = max_line_length
+    if max_line_length is not None:
+        style_dic['COLUMN_LIMIT'] = max_line_length
     def CreateElpyStyle():
         return style_dic
     style._STYLE_NAME_TO_FACTORY['elpy'] = CreateElpyStyle
