@@ -583,33 +583,39 @@ This option need to bet set through `customize' or `customize-set-variable' to b
     ["Configure" elpy-config t]))
 
 ;;;###autoload
+(defvar elpy-enabled-p nil
+  "Is Elpy enabled or not.")
+
 (defun elpy-enable (&optional ignored)
   "Enable Elpy in all future Python buffers."
   (interactive)
-  (when (< emacs-major-version 24)
-    (error "Elpy requires Emacs 24 or newer"))
-  (when ignored
-    (warn "The argument to `elpy-enable' is deprecated, customize `elpy-modules' instead"))
-  (let ((filename (find-lisp-object-file-name 'python-mode
-                                              'symbol-function)))
-    (when (and filename
-               (string-match "/python-mode\\.el\\'"
-                             filename))
-      (error (concat "You are using python-mode.el. "
-                     "Elpy only works with python.el from "
-                     "Emacs 24 and above"))))
-  (elpy-modules-global-init)
-  (define-key inferior-python-mode-map (kbd "C-c C-z") 'elpy-shell-switch-to-buffer)
-  (add-hook 'python-mode-hook 'elpy-mode)
-  (add-hook 'pyvenv-post-activate-hooks 'elpy-rpc--disconnect)
-  (add-hook 'inferior-python-mode-hook 'elpy-shell--enable-output-filter))
+  (unless elpy-enabled-p
+    (when (< emacs-major-version 24)
+      (error "Elpy requires Emacs 24 or newer"))
+    (when ignored
+      (warn "The argument to `elpy-enable' is deprecated, customize `elpy-modules' instead"))
+    (let ((filename (find-lisp-object-file-name 'python-mode
+                                                'symbol-function)))
+      (when (and filename
+                 (string-match "/python-mode\\.el\\'"
+                               filename))
+        (error (concat "You are using python-mode.el. "
+                       "Elpy only works with python.el from "
+                       "Emacs 24 and above"))))
+    (elpy-modules-global-init)
+    (define-key inferior-python-mode-map (kbd "C-c C-z") 'elpy-shell-switch-to-buffer)
+    (add-hook 'python-mode-hook 'elpy-mode)
+    (add-hook 'pyvenv-post-activate-hooks 'elpy-rpc--disconnect)
+    (add-hook 'inferior-python-mode-hook 'elpy-shell--enable-output-filter)
+    (setq elpy-enabled-p t)))
 
 (defun elpy-disable ()
   "Disable Elpy in all future Python buffers."
   (interactive)
   (remove-hook 'python-mode-hook 'elpy-mode)
   (remove-hook 'inferior-python-mode-hook 'elpy-shell--enable-output-filter)
-  (elpy-modules-global-stop))
+  (elpy-modules-global-stop)
+  (setq elpy-enabled-p nil))
 
 ;;;###autoload
 (define-minor-mode elpy-mode
