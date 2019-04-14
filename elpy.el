@@ -582,10 +582,10 @@ This option need to bet set through `customize' or `customize-set-variable' to b
     "---"
     ["Configure" elpy-config t]))
 
-;;;###autoload
 (defvar elpy-enabled-p nil
   "Is Elpy enabled or not.")
 
+;;;###autoload
 (defun elpy-enable (&optional ignored)
   "Enable Elpy in all future Python buffers."
   (interactive)
