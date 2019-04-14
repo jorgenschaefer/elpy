@@ -43,20 +43,20 @@ With `use-package`
 
 .. code-block:: elisp
 
-(use-package elpy
-  :ensure t
-  :init
-  (elpy-enable))
+  (use-package elpy
+    :ensure t
+    :init
+    (elpy-enable))
 
 Or if you want to defer Elpy loading:
 
 .. code-block:: elisp
 
-(use-package elpy
-  :ensure t
-  :defer t
-  :init
-  (advice-add 'python-mode :before 'elpy-enable))
+  (use-package elpy
+    :ensure t
+    :defer t
+    :init
+    (advice-add 'python-mode :before 'elpy-enable))
 
 Manually from Melpa
 -------------------
