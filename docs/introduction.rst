@@ -60,3 +60,11 @@ Congratulations, Elpy is now successfully installed!
 In order to use all the features (such as navigation with ``M-.``),
 you'll need to install some python libraries.  You can do that easily
 by typing ``M-x elpy-config RET``, and following the instructions.
+
+Depending on the modules you are using, ``(elpy-enable)`` can
+significantly slow down Emacs startup. To defer Elpy loading to the
+first python buffer opening, use the following instead:
+.. code-block:: cl
+
+    (package-initialize)
+    (advice-add 'python-mode :before 'elpy-enable)
