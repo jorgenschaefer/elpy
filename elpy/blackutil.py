@@ -4,6 +4,8 @@
 
 import sys
 from pkg_resources import parse_version
+import configparser
+import os
 
 from elpy.rpc import Fault
 
@@ -24,34 +26,27 @@ def fix_code(code, directory):
     """
     if not black:
         raise Fault("black not installed", code=400)
-
     # Get black config from pyproject.toml
-    import configparser
-    import os
     line_length = black.DEFAULT_LINE_LENGTH
-    version = set()
     string_normalization = True
-    # root = black.find_project_root((directory,))
-    pyproject_path = os.path.join(directory, "pyproject.toml")
     parser = configparser.ConfigParser()
+    pyproject_path = os.path.join(directory, "pyproject.toml")
     if parser.read(pyproject_path):
         if parser.has_option("tool.black", "line-length"):
             line_length = parser.getint("tool.black", "line-length")
-        # if parser.has_option("tool.black", "target-version"):
-        #     version = parser.get("tool.black", "target-version")
-        #     version = black.TargetVersion.__getattr__(version.upper())
         if parser.has_option("tool.black", "skip-string-normalization"):
-            string_normalization = not parser.getboolean("tool.black", "skip-string-normalization")
-
+            string_normalization = not parser.getboolean(
+                "tool.black", "skip-string-normalization"
+            )
     try:
         if parse_version(black.__version__) < parse_version("19.0"):
             reformatted_source = black.format_file_contents(
                 src_contents=code, line_length=line_length, fast=False
             )
         else:
-            fm = black.FileMode(line_length=line_length,
-                                target_versions=version,
-                                string_normalization=string_normalization)
+            fm = black.FileMode(
+                line_length=line_length, string_normalization=string_normalization
+            )
             reformatted_source = black.format_file_contents(
                 src_contents=code, fast=False, mode=fm
             )
