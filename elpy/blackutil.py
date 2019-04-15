@@ -4,7 +4,12 @@
 
 import sys
 from pkg_resources import parse_version
-import configparser
+try:
+    # python 3
+    import configparser
+except ImportError:
+    # python 2
+    import ConfigParser as configparser
 import os
 
 from elpy.rpc import Fault
