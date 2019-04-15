@@ -9,7 +9,8 @@
   (add-to-list 'process-environment "ELPY_TEST=1"))
 
 ;; coverage
-(when (require 'undercover nil t)
+(when (and (require 'undercover nil t)
+           (version<= "25" emacs-version))
   (undercover "*.el"))
 
 (require 'elpy)
