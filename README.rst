@@ -12,6 +12,13 @@ Emacs Lisp as well as Python.
 .. image:: https://coveralls.io/repos/jorgenschaefer/elpy/badge.png?branch=master
    :target: https://coveralls.io/r/jorgenschaefer/elpy?branch=master
 
+.. image:: https://melpa.org/packages/elpy-badge.svg
+   :target: https://melpa.org/#/elpy
+
+.. image:: https://stable.melpa.org/packages/elpy-badge.svg
+   :target: https://stable.melpa.org/#/elpy
+
+
 Documentation
 =============
 
