@@ -28,6 +28,14 @@ class BLACKTestCase(BackendTestCase):
         for src, expected in testdata:
             self._assert_format(src, expected)
 
+    def test_perfect_code(self):
+        testdata = [
+            ('x = 123\n', 'x = 123\n'),
+            ('x = 1\ny = 2\n', 'x = 1\ny = 2\n'),
+        ]
+        for src, expected in testdata:
+            self._assert_format(src, expected)
+
     def _assert_format(self, src, expected):
         new_block = blackutil.fix_code(src, os.getcwd())
         self.assertEqual(new_block, expected)
