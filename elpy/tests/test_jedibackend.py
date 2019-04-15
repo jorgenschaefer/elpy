@@ -14,6 +14,7 @@ from elpy.tests.support import RPCGetCompletionsTests
 from elpy.tests.support import RPCGetCompletionDocstringTests
 from elpy.tests.support import RPCGetCompletionLocationTests
 from elpy.tests.support import RPCGetDocstringTests
+from elpy.tests.support import RPCGetOnelineDocstringTests
 from elpy.tests.support import RPCGetDefinitionTests
 from elpy.tests.support import RPCGetAssignmentTests
 from elpy.tests.support import RPCGetCalltipTests
@@ -50,20 +51,23 @@ class TestRPCGetCompletionLocation(RPCGetCompletionLocationTests,
 class TestRPCGetDocstring(RPCGetDocstringTests,
                           JediBackendTestCase):
 
-    def check_docstring(self, docstring):
+    def __init__(self, *args, **kwargs):
+        super(TestRPCGetDocstring, self).__init__(*args, **kwargs)
         if sys.version_info >= (3, 6):
-            JSON_LOADS_DOCSTRING = (
+            self.JSON_LOADS_DOCSTRING = (
                 'loads(s, *, encoding=None, cls=None, '
                 'object_hook=None, parse_float=None,'
             )
         else:
-            JSON_LOADS_DOCSTRING = (
+            self.JSON_LOADS_DOCSTRING = (
                 'loads(s, encoding=None, cls=None, '
                 'object_hook=None, parse_float=None,'
             )
+
+    def check_docstring(self, docstring):
         lines = docstring.splitlines()
         self.assertEqual(lines[0], 'Documentation for json.loads:')
-        self.assertEqual(lines[2], JSON_LOADS_DOCSTRING)
+        self.assertEqual(lines[2], self.JSON_LOADS_DOCSTRING)
 
     @mock.patch("elpy.jedibackend.run_with_debug")
     def test_should_not_return_empty_docstring(self, run_with_debug):
@@ -73,6 +77,51 @@ class TestRPCGetDocstring(RPCGetDocstringTests,
         run_with_debug.return_value = [location]
         filename = self.project_file("test.py", "print")
         docstring = self.backend.rpc_get_docstring(filename, "print", 0)
+        self.assertIsNone(docstring)
+
+
+class TestRPCGetOnelineDocstring(RPCGetOnelineDocstringTests,
+                                 JediBackendTestCase):
+
+    def __init__(self, *args, **kwargs):
+        super(TestRPCGetOnelineDocstring, self).__init__(*args, **kwargs)
+        if sys.version_info >= (3, 6):
+            self.JSON_LOADS_DOCSTRING = (
+                'Deserialize ``s`` (a ``str``, ``bytes`` or'
+                ' ``bytearray`` instance containing a JSON'
+                ' document) to a Python object.'
+            )
+            self.JSON_DOCSTRING = (
+                "JSON (JavaScript Object Notation) <http://json.org>"
+                " is a subset of JavaScript syntax (ECMA-262"
+                " 3rd edition) used as a lightweight data interchange format.")
+        elif sys.version_info >= (3, 0):
+            self.JSON_LOADS_DOCSTRING = (
+                'Deserialize ``s`` (a ``str`` instance '
+                'containing a JSON document) to a Python object.'
+            )
+            self.JSON_DOCSTRING = (
+                "JSON (JavaScript Object Notation) <http://json.org>"
+                " is a subset of JavaScript syntax (ECMA-262"
+                " 3rd edition) used as a lightweight data interchange format.")
+        else:
+            self.JSON_LOADS_DOCSTRING = (
+                'Deserialize ``s`` (a ``str`` or ``unicode`` '
+                'instance containing a JSON document) to a Python object.'
+            )
+            self.JSON_DOCSTRING = (
+                "JSON (JavaScript Object Notation) <http://json.org>"
+                " is a subset of JavaScript syntax (ECMA-262"
+                " 3rd edition) used as a lightweight data interchange format.")
+
+    @mock.patch("elpy.jedibackend.run_with_debug")
+    def test_should_not_return_empty_docstring(self, run_with_debug):
+        location = mock.MagicMock()
+        location.full_name = "testthing"
+        location.docstring.return_value = ""
+        run_with_debug.return_value = [location]
+        filename = self.project_file("test.py", "print")
+        docstring = self.backend.rpc_get_oneline_docstring(filename, "print", 0)
         self.assertIsNone(docstring)
 
 

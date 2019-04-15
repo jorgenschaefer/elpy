@@ -833,6 +833,47 @@ class RPCGetDocstringTests(GenericRPCTests):
         self.assertIsNone(docstring)
 
 
+class RPCGetOnelineDocstringTests(GenericRPCTests):
+    METHOD = "rpc_get_oneline_docstring"
+
+    def check_docstring(self, docstring):
+
+        self.assertEqual(docstring['doc'],
+                         self.JSON_LOADS_DOCSTRING)
+
+    def check_module_docstring(self, docstring):
+
+        self.assertEqual(docstring['doc'],
+                         self.JSON_DOCSTRING)
+
+    def test_should_get_oneline_docstring(self):
+        source, offset = source_and_offset(
+            "import json\njson.loads_|_(")
+        filename = self.project_file("test.py", source)
+        docstring = self.backend.rpc_get_oneline_docstring(filename,
+                                                           source,
+                                                           offset)
+        self.check_docstring(docstring)
+
+    def test_should_get_oneline_docstring_for_modules(self):
+        source, offset = source_and_offset(
+            "import json_|_\njson.loads(")
+        filename = self.project_file("test.py", source)
+        docstring = self.backend.rpc_get_oneline_docstring(filename,
+                                                           source,
+                                                           offset)
+        self.check_module_docstring(docstring)
+
+    def test_should_return_none_for_bad_identifier(self):
+        source, offset = source_and_offset(
+            "froblgoo_|_(\n")
+        filename = self.project_file("test.py", source)
+        docstring = self.backend.rpc_get_oneline_docstring(filename,
+                                                           source,
+                                                           offset)
+        self.assertIsNone(docstring)
+
+
 class RPCGetNamesTests(GenericRPCTests):
     METHOD = "rpc_get_names"
 
