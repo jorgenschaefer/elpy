@@ -1081,8 +1081,8 @@ if OUTPUT is non-nil, display the prompt after execution."
            (bp-lines '()))
       (dolist (ov overlays)
         (when (overlay-get ov 'elpy-breakpoint)
-          (add-to-list 'bp-lines
-                       (line-number-at-pos (overlay-start ov)))))
+          (push (line-number-at-pos (overlay-start ov))
+                bp-lines)))
       bp-lines))
 
   (defun elpy-pdb-debug-buffer (&optional arg)
