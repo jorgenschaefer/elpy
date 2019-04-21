@@ -673,17 +673,17 @@ import warnings
 warnings.filterwarnings('ignore', category=FutureWarning)
 
 try:
-    import xmlrpclib
+    import urllib2 as urllib
 except ImportError:
-    import xmlrpc.client as xmlrpclib
+    import urllib.request as urllib
 
 from distutils.version import LooseVersion
 
 
 def latest(package, version=None):
     try:
-        with xmlrpclib.ServerProxy('https://pypi.python.org/pypi') as pypi:
-            latest = pypi.package_releases(package)[0]
+        response = urllib.urlopen('https://pypi.org/pypi/{package}/json'.format(package=package)).read()
+        latest = json.loads(response)['info']['version']
         if version is None or LooseVersion(version) < LooseVersion(latest):
             return latest
         else:
