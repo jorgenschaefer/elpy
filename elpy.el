@@ -1087,7 +1087,8 @@ virtual_env_short"
                                             elpy-config--get-config)))))
         (when return-value
           (let ((data (ignore-errors
-                        (let ((json-array-type 'list))
+                        (let ((json-array-type 'list)
+                              (json-encoding-pretty-print nil))  ;; Link to bug https://github.com/jorgenschaefer/elpy/issues/1521
                           (goto-char (point-min))
                           (json-read)))))
             (if (not data)
@@ -2644,10 +2645,11 @@ Returns a PROMISE object."
       (elpy-rpc--register-callback elpy-rpc--call-id promise)
       (process-send-string
        (get-buffer-process (current-buffer))
+       (let ((json-encoding-pretty-print nil))  ;; Link to bug https://github.com/jorgenschaefer/elpy/issues/1521
        (concat (json-encode `((id . ,elpy-rpc--call-id)
                               (method . ,method-name)
                               (params . ,params)))
-               "\n")))
+               "\n"))))
     promise))
 
 (defun elpy-rpc--register-callback (call-id promise)
@@ -2795,7 +2797,8 @@ RPC calls with the event."
             (goto-char (point-min))
             (condition-case _err
                 (progn
-                  (setq json (let ((json-array-type 'list))
+                  (setq json (let ((json-array-type 'list)
+                                   (json-encoding-pretty-print nil))  ;; Link to bug https://github.com/jorgenschaefer/elpy/issues/1521
                                (json-read)))
                   (if (listp json)
                       (setq  line-end (1+ (point))
