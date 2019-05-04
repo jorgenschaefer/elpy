@@ -881,13 +881,10 @@ item in another window.\n\n")
                (not (gethash "elpy_version" config)))
       (elpy-insert--para
        "The Python interpreter could not find the elpy module. "
-       "Make sure the module is installed"
-       (if (gethash "virtual_env" config)
-           " in the current virtualenv.\n"
-         ".\n"))
-      (insert "\n")
-      (widget-create 'elpy-insert--pip-button :package "elpy")
-      (insert "\n\n"))
+       "Please report to: "
+       "https://github.com/jorgenschaefer/elpy/issues/new."
+       "\n")
+      (insert "\n"))
 
     ;; Bad backend version
     (when (and (gethash "elpy_version" config)
@@ -897,9 +894,7 @@ item in another window.\n\n")
         (elpy-insert--para
          "The Elpy backend is version " elpy-python-version " while "
          "the Emacs package is " elpy-version ". This is incompatible. "
-         (if (version< elpy-python-version elpy-version)
-             "Please upgrade the Python module."
-           "Please upgrade the Emacs Lisp package.")
+         "Please report to: https://github.com/jorgenschaefer/elpy/issues/new."
          "\n")))
 
     ;; Otherwise unparseable output.
