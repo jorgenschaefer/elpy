@@ -10,6 +10,7 @@ Contents:
    :maxdepth: 2
 
    introduction
+   quickstart
    concepts
    editing
    ide
