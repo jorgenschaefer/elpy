@@ -1,25 +1,23 @@
 Quickstart
 ==========
 
-Elpy will automatically be enabled when opening a python file (ending with `.py`).
-
-Elpy will out-of-the-box provides code completion, syntax error highlighting and display of function signature in the modeline.
+Once installed, Elpy will automatically provide code completion, syntax error highlighting and function signature (in the modeline) for python files.
 
 Useful keybindings
 ------------------
 
-`C-c C-d` will display the inline documentation for the thing currently under the cursor (function or module).
-The documentation will pop in a different buffer, that can be closed with `q`.
+Elpy has quite a lot of keybindings, but the following ones should be enough to get you started:
 
-`C-c C-c` will evaluate the current script (or region if you have something selected) in an interactive python shell.
-A buffer with the python shell will pop in a different buffer.
-You can switch between your python script and the shell with `C-c C-z`.
+`C-c C-c` evaluates the current script (or region if something is selected) in an interactive python shell. The python shell is automatically displayed aside of your script (if not already there).
 
+`C-RET` evaluates the current statement (current line plus the following nested lines).
+
+`C-c C-z` switches between your script and the interactive shell.
+
+`C-c C-d` displays documentation for the thing under cursor (function or module). The documentation will pop in a different buffer, that can be closed with `q`.
 
 Go further
 ----------
 
-Elpy provides a set of modules, that are not all activated by default.
-You can check which one are available and activate new ones using Emacs configuration system: `M-x customize-variable RET elpy-modules RET`
-
-Todo: Add a word on some interesting advanced functionnalities
+Elpy offers a lot of features, including code navigation, debugging, testing, refactoring, profiling and support for virtual environments.
+Feel free to explore the documentation, everything is there !
