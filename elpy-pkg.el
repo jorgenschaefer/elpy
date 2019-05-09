@@ -1,4 +1,4 @@
-(define-package "elpy" "1.28.0"
+(define-package "elpy" "1.29.1"
                 "Emacs Python Development Environment"
                 '((company "0.9.2")
                   (emacs "24.4")

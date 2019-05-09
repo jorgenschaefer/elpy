@@ -34,12 +34,38 @@ Once you have these basics, you can go on to install Elpy.
 Installation
 ============
 
+With use-package
+----------------
+
+Simply add the following lines to you ``.emacs``:
+
+.. code-block:: elisp
+
+  (use-package elpy
+    :ensure t
+    :init
+    (elpy-enable))
+
+Or if you want to defer Elpy loading:
+
+.. code-block:: elisp
+
+  (use-package elpy
+    :ensure t
+    :defer t
+    :init
+    (advice-add 'python-mode :before 'elpy-enable))
+
+
+Manually from Melpa
+-------------------
+
 The main Elpy package is installed via the Emacs package interface,
 ``package.el``. First, you have to add Elpy's package archive to your
 list of archives, though. Add the following code to your ``.emacs``
 file and restart Emacs:
 
-.. code-block:: cl
+.. code-block:: elisp
 
    (require 'package)
    (add-to-list 'package-archives
@@ -50,12 +76,30 @@ copy of the archive contents, and ``M-x package-install RET elpy RET``
 to install elpy. If you want to enable Elpy by default, you can simply
 add the following to your .emacs:
 
-.. code-block:: cl
+.. code-block:: elisp
 
    (package-initialize)
    (elpy-enable)
 
 Congratulations, Elpy is now successfully installed!
+
+
+From apt (Debian ≥10 an Ubuntu ≥18.10)
+--------------------------------------
+
+Users of Debian ≥10 or Ubuntu ≥18.10 can skip the instructions above
+this line and may simply install Elpy and all of its recommended
+dependencies with the following command:::
+
+  sudo apt install elpa-elpy
+
+Elpy can then be activated by running ``M-x elpy-enable``.
+This can be made automatic by adding the following to your ``.emacs``:
+
+.. code-block:: elisp
+
+  (elpy-enable)
+
 
 In order to use all the features (such as navigation with ``M-.``),
 you'll need to install some python libraries.  You can do that easily

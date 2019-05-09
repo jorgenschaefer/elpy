@@ -635,9 +635,7 @@ print) the output of the last expression."
     (python-shell-send-string
      (format
       (concat
-       ;; Readline is only necessary for MacOs, see
-       ;; https://github.com/jorgenschaefer/elpy/issues/1550
-       "import sys, codecs, os, ast, readline;"
+       "import sys, codecs, os, ast;"
        "__pyfile = codecs.open('''%s''', encoding='''%s''');"
        "__code = __pyfile.read().encode('''%s''');"
        "__pyfile.close();"
@@ -810,17 +808,17 @@ Otherwise, skips forward to the next code line and sends the
 corresponding statement."
   (interactive)
   (elpy-shell--ensure-shell-running)
-  (when (not elpy-shell-echo-input) (elpy-shell--append-to-shell-output "\n"))
-  (let ((beg (progn (elpy-shell--nav-beginning-of-statement)
-                    (save-excursion
-                      (beginning-of-line)
-                      (point))))
-        (end (progn (elpy-shell--nav-end-of-statement) (point))))
-    (unless (eq beg end)
-      (elpy-shell--flash-and-message-region beg end)
+  (elpy-shell--nav-beginning-of-statement)
+  ;; Make sure there is a statement to send
+  (when (not (looking-at "[[:space:]]*$"))
+    (when (not elpy-shell-echo-input) (elpy-shell--append-to-shell-output "\n"))
+    (let ((beg (save-excursion (beginning-of-line) (point)))
+          (end (progn (elpy-shell--nav-end-of-statement) (point))))
+      (unless (eq beg end)
+        (elpy-shell--flash-and-message-region beg end)
         (elpy-shell--with-maybe-echo
          (python-shell-send-string (python-shell-buffer-substring beg end)))))
-  (python-nav-forward-statement))
+    (python-nav-forward-statement)))
 
 (defun elpy-shell-send-top-statement-and-step ()
   "Send the current or next top-level statement to the Python shell and step.
@@ -1083,8 +1081,8 @@ if OUTPUT is non-nil, display the prompt after execution."
            (bp-lines '()))
       (dolist (ov overlays)
         (when (overlay-get ov 'elpy-breakpoint)
-          (add-to-list 'bp-lines
-                       (line-number-at-pos (overlay-start ov)))))
+          (push (line-number-at-pos (overlay-start ov))
+                bp-lines)))
       bp-lines))
 
   (defun elpy-pdb-debug-buffer (&optional arg)

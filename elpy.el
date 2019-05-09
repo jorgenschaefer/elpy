@@ -4,7 +4,7 @@
 
 ;; Author: Jorgen Schaefer <contact@jorgenschaefer.de>
 ;; URL: https://github.com/jorgenschaefer/elpy
-;; Version: 1.28.0
+;; Version: 1.29.1
 ;; Keywords: Python, IDE, Languages, Tools
 ;; Package-Requires: ((company "0.9.2") (emacs "24.4") (find-file-in-project "3.3")  (highlight-indentation "0.5.0") (pyvenv "1.3") (yasnippet "0.8.0") (s "1.12.0"))
 
@@ -53,7 +53,7 @@
 (require 'pyvenv)
 (require 'find-file-in-project)
 
-(defconst elpy-version "1.28.0"
+(defconst elpy-version "1.29.1"
   "The version of the Elpy lisp code.")
 
 ;;;;;;;;;;;;;;;;;;;;;;
@@ -582,34 +582,40 @@ This option need to bet set through `customize' or `customize-set-variable' to b
     "---"
     ["Configure" elpy-config t]))
 
+(defvar elpy-enabled-p nil
+  "Is Elpy enabled or not.")
+
 ;;;###autoload
 (defun elpy-enable (&optional ignored)
   "Enable Elpy in all future Python buffers."
   (interactive)
-  (when (< emacs-major-version 24)
-    (error "Elpy requires Emacs 24 or newer"))
-  (when ignored
-    (warn "The argument to `elpy-enable' is deprecated, customize `elpy-modules' instead"))
-  (let ((filename (find-lisp-object-file-name 'python-mode
-                                              'symbol-function)))
-    (when (and filename
-               (string-match "/python-mode\\.el\\'"
-                             filename))
-      (error (concat "You are using python-mode.el. "
-                     "Elpy only works with python.el from "
-                     "Emacs 24 and above"))))
-  (elpy-modules-global-init)
-  (define-key inferior-python-mode-map (kbd "C-c C-z") 'elpy-shell-switch-to-buffer)
-  (add-hook 'python-mode-hook 'elpy-mode)
-  (add-hook 'pyvenv-post-activate-hooks 'elpy-rpc--disconnect)
-  (add-hook 'inferior-python-mode-hook 'elpy-shell--enable-output-filter))
+  (unless elpy-enabled-p
+    (when (< emacs-major-version 24)
+      (error "Elpy requires Emacs 24 or newer"))
+    (when ignored
+      (warn "The argument to `elpy-enable' is deprecated, customize `elpy-modules' instead"))
+    (let ((filename (find-lisp-object-file-name 'python-mode
+                                                'symbol-function)))
+      (when (and filename
+                 (string-match "/python-mode\\.el\\'"
+                               filename))
+        (error (concat "You are using python-mode.el. "
+                       "Elpy only works with python.el from "
+                       "Emacs 24 and above"))))
+    (elpy-modules-global-init)
+    (define-key inferior-python-mode-map (kbd "C-c C-z") 'elpy-shell-switch-to-buffer)
+    (add-hook 'python-mode-hook 'elpy-mode)
+    (add-hook 'pyvenv-post-activate-hooks 'elpy-rpc--disconnect)
+    (add-hook 'inferior-python-mode-hook 'elpy-shell--enable-output-filter)
+    (setq elpy-enabled-p t)))
 
 (defun elpy-disable ()
   "Disable Elpy in all future Python buffers."
   (interactive)
   (remove-hook 'python-mode-hook 'elpy-mode)
   (remove-hook 'inferior-python-mode-hook 'elpy-shell--enable-output-filter)
-  (elpy-modules-global-stop))
+  (elpy-modules-global-stop)
+  (setq elpy-enabled-p nil))
 
 ;;;###autoload
 (define-minor-mode elpy-mode
@@ -667,17 +673,17 @@ import warnings
 warnings.filterwarnings('ignore', category=FutureWarning)
 
 try:
-    import xmlrpclib
+    import urllib2 as urllib
 except ImportError:
-    import xmlrpc.client as xmlrpclib
+    import urllib.request as urllib
 
 from distutils.version import LooseVersion
 
 
 def latest(package, version=None):
     try:
-        with xmlrpclib.ServerProxy('https://pypi.python.org/pypi') as pypi:
-            latest = pypi.package_releases(package)[0]
+        response = urllib.urlopen('https://pypi.org/pypi/{package}/json'.format(package=package)).read()
+        latest = json.loads(response)['info']['version']
         if version is None or LooseVersion(version) < LooseVersion(latest):
             return latest
         else:
@@ -875,13 +881,10 @@ item in another window.\n\n")
                (not (gethash "elpy_version" config)))
       (elpy-insert--para
        "The Python interpreter could not find the elpy module. "
-       "Make sure the module is installed"
-       (if (gethash "virtual_env" config)
-           " in the current virtualenv.\n"
-         ".\n"))
-      (insert "\n")
-      (widget-create 'elpy-insert--pip-button :package "elpy")
-      (insert "\n\n"))
+       "Please report to: "
+       "https://github.com/jorgenschaefer/elpy/issues/new."
+       "\n")
+      (insert "\n"))
 
     ;; Bad backend version
     (when (and (gethash "elpy_version" config)
@@ -891,9 +894,7 @@ item in another window.\n\n")
         (elpy-insert--para
          "The Elpy backend is version " elpy-python-version " while "
          "the Emacs package is " elpy-version ". This is incompatible. "
-         (if (version< elpy-python-version elpy-version)
-             "Please upgrade the Python module."
-           "Please upgrade the Emacs Lisp package.")
+         "Please report to: https://github.com/jorgenschaefer/elpy/issues/new."
          "\n")))
 
     ;; Otherwise unparseable output.
@@ -1016,7 +1017,7 @@ item in another window.\n\n")
       (insert "\n\n"))
 
     ;; Syntax checker not available
-    (when (not (executable-find elpy-syntax-check-command))
+    (when (not (executable-find (car (split-string elpy-syntax-check-command))))
       (elpy-insert--para
        "The configured syntax checker could not be found. Elpy uses this "
        "program to provide syntax checks of your programs, so you might "
@@ -1081,7 +1082,8 @@ virtual_env_short"
                                             elpy-config--get-config)))))
         (when return-value
           (let ((data (ignore-errors
-                        (let ((json-array-type 'list))
+                        (let ((json-array-type 'list)
+                              (json-encoding-pretty-print nil))  ;; Link to bug https://github.com/jorgenschaefer/elpy/issues/1521
                           (goto-char (point-min))
                           (json-read)))))
             (if (not data)
@@ -1171,7 +1173,8 @@ virtual_env_short"
                                                    black-latest))
             ("Syntax checker" . ,(let ((syntax-checker
                                         (executable-find
-                                         elpy-syntax-check-command)))
+                                         (car (split-string
+                                               elpy-syntax-check-command)))))
                                    (if  syntax-checker
                                        (format "%s (%s)"
                                                (file-name-nondirectory
@@ -2637,10 +2640,11 @@ Returns a PROMISE object."
       (elpy-rpc--register-callback elpy-rpc--call-id promise)
       (process-send-string
        (get-buffer-process (current-buffer))
+       (let ((json-encoding-pretty-print nil))  ;; Link to bug https://github.com/jorgenschaefer/elpy/issues/1521
        (concat (json-encode `((id . ,elpy-rpc--call-id)
                               (method . ,method-name)
                               (params . ,params)))
-               "\n")))
+               "\n"))))
     promise))
 
 (defun elpy-rpc--register-callback (call-id promise)
@@ -2788,7 +2792,8 @@ RPC calls with the event."
             (goto-char (point-min))
             (condition-case _err
                 (progn
-                  (setq json (let ((json-array-type 'list))
+                  (setq json (let ((json-array-type 'list)
+                                   (json-encoding-pretty-print nil))  ;; Link to bug https://github.com/jorgenschaefer/elpy/issues/1521
                                (json-read)))
                   (if (listp json)
                       (setq  line-end (1+ (point))
