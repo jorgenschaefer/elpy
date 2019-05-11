@@ -365,12 +365,7 @@ class RPCGetCompletionsTests(GenericRPCTests):
         completions = self.backend.rpc_get_completions(filename,
                                                        source,
                                                        offset)
-        if compat.PYTHON3:
-            expected = ["processing"]
-        else:
-            expected = ["file", "processing"]
-        self.assertEqual(sorted([cand['suffix'] for cand in completions]),
-                         sorted(expected))
+        self.assertIn("processing", [cand['suffix'] for cand in completions])
 
     def test_should_complete_packages_for_import(self):
         source, offset = source_and_offset("import email.mi_|_")
