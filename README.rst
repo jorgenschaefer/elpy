@@ -43,7 +43,7 @@ First, install the required Python packages:::
   pip install yapf
   pip install black
 
-One-line install: **pip install jedi flake8 autopep8 black yapf**
+One-line install: ``pip install jedi flake8 autopep8 black yapf``
 
 With `use-package`
 ------------------
