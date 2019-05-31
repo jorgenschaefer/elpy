@@ -9,6 +9,10 @@ Emacs Lisp as well as Python.
 .. image:: https://secure.travis-ci.org/jorgenschaefer/elpy.svg?branch=master
    :target: http://travis-ci.org/jorgenschaefer/elpy?branch=master
 
+.. image:: https://readthedocs.org/projects/elpy/badge/?version=latest
+   :target: https://elpy.readthedocs.io/en/latest/?badge=latest
+   :alt: Documentation Status
+
 .. image:: https://coveralls.io/repos/jorgenschaefer/elpy/badge.svg?branch=master
    :target: https://coveralls.io/r/jorgenschaefer/elpy?branch=master
 
