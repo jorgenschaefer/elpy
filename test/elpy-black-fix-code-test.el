@@ -103,7 +103,7 @@
     (elpy-testcase ()
        ;; create pyproject.toml
        (with-current-buffer (find-file-noselect "pyproject.toml")
-         (insert "[tool.black]\nline-length = 10")
+         (insert "[tool.black]\nline-length = 10\nexclude = '''\n'''\n")
          (save-buffer))
        (set-buffer-string-with-point
         "_|_print(1, 2, 3, 4, 5, 6, 7)"
