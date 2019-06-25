@@ -7,7 +7,11 @@ from pkg_resources import parse_version
 
 import os
 
-import toml
+try:
+    import toml
+except ImportError:
+    toml = None
+
 from elpy.rpc import Fault
 
 BLACK_NOT_SUPPORTED = sys.version_info < (3, 6)
@@ -31,7 +35,7 @@ def fix_code(code, directory):
     line_length = black.DEFAULT_LINE_LENGTH
     string_normalization = True
     pyproject_path = os.path.join(directory, "pyproject.toml")
-    if os.path.exists(pyproject_path):
+    if toml is not None and os.path.exists(pyproject_path):
         pyproject_config = toml.load(pyproject_path)
         black_config = pyproject_config.get("tool", {}).get("black", {})
         if "line-length" in black_config:
