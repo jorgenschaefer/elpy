@@ -118,8 +118,8 @@ class GenericRPCTests(object):
 
         self.rpc(filename, source, offset)
 
-    @unittest.skipIf((3, 3) <= sys.version_info < (3, 4),
-                     "Bug in jedi for Python 3.3")
+    # @unittest.skipIf((3, 3) <= sys.version_info < (3, 4),
+    #                  "Bug in jedi for Python 3.3")
     def test_should_not_fail_for_relative_import(self):
         source, offset = source_and_offset(
             "from .. import foo_|_"
@@ -390,8 +390,8 @@ class RPCGetCompletionsTests(GenericRPCTests):
         self.assertEqual([cand['suffix'] for cand in completions],
                          [])
 
-    @unittest.skipIf((3, 3) <= sys.version_info < (3, 4),
-                     "Bug in jedi for Python 3.3")
+    # @unittest.skipIf((3, 3) <= sys.version_info < (3, 4),
+    #                  "Bug in jedi for Python 3.3")
     def test_should_not_fail_for_short_module(self):
         source, offset = source_and_offset("from .. import foo_|_")
         filename = self.project_file("test.py", source)
@@ -692,8 +692,6 @@ class RPCGetAssignmentTests(GenericRPCTests):
 class RPCGetCalltipTests(GenericRPCTests):
     METHOD = "rpc_get_calltip"
 
-    @unittest.skipIf(sys.version_info >= (3, 0),
-                     "Bug in Jedi 0.9.0")
     def test_should_get_calltip(self):
         source, offset = source_and_offset(
             "import threading\nthreading.Thread(_|_")
@@ -706,8 +704,6 @@ class RPCGetCalltipTests(GenericRPCTests):
 
         self.assertEqual(calltip, expected)
 
-    @unittest.skipIf(sys.version_info >= (3, 0),
-                     "Bug in Jedi 0.9.0")
     def test_should_get_calltip_even_after_parens(self):
         source, offset = source_and_offset(
             "import threading\nthreading.Thread(foo()_|_")
@@ -719,8 +715,6 @@ class RPCGetCalltipTests(GenericRPCTests):
 
         self.assertEqual(self.THREAD_CALLTIP, actual)
 
-    @unittest.skipIf(sys.version_info >= (3, 0),
-                     "Bug in Jedi 0.9.0")
     def test_should_get_calltip_at_closing_paren(self):
         source, offset = source_and_offset(
             "import threading\nthreading.Thread(_|_)")
