@@ -1,5 +1,5 @@
-flake8==3.5.0
-jedi==0.13.3
-rope==0.11.0
-autopep8==1.4.3
-yapf==0.26.0
+flake8==3.7.7
+jedi==0.14.0
+rope==0.14.0
+autopep8==1.4.4
+yapf==0.27.0
