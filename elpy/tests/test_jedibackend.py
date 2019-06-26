@@ -55,13 +55,15 @@ class TestRPCGetDocstring(RPCGetDocstringTests,
         super(TestRPCGetDocstring, self).__init__(*args, **kwargs)
         if sys.version_info >= (3, 6):
             self.JSON_LOADS_DOCSTRING = (
-                'loads(s, *, encoding=None, cls=None, '
-                'object_hook=None, parse_float=None,'
+                'loads(s, encoding=None, cls=None, object_hook=None, '
+                'parse_float=None, parse_int=None, parse_constant=None, '
+                'object_pairs_hook=None, kw)'
             )
         else:
             self.JSON_LOADS_DOCSTRING = (
-                'loads(s, encoding=None, cls=None, '
-                'object_hook=None, parse_float=None,'
+                'loads(s, encoding=None, cls=None, object_hook=None, '
+                'parse_float=None, parse_int=None, parse_constant=None, '
+                'object_pairs_hook=None, kw)'
             )
 
     def check_docstring(self, docstring):
@@ -168,8 +170,8 @@ class TestRPCGetAssignment(RPCGetAssignmentTests,
 
 class TestRPCGetCalltip(RPCGetCalltipTests,
                         JediBackendTestCase):
-    KEYS_CALLTIP = {'index': 0,
-                    'params': [''],
+    KEYS_CALLTIP = {'index': None,
+                    'params': [],
                     'name': u'keys'}
     RADIX_CALLTIP = {'index': None,
                      'params': [],
@@ -178,14 +180,14 @@ class TestRPCGetCalltip(RPCGetCalltipTests,
                    'params': [u'a', u'b'],
                    'name': u'add'}
     if compat.PYTHON3:
-        THREAD_CALLTIP = {"name": "Thread",
-                          "params": ["group=None",
-                                     "target=None",
-                                     "name=None",
-                                     "args=()",
-                                     "kwargs=None",
-                                     "daemon=None"],
-                          "index": 0}
+        THREAD_CALLTIP = {'name': 'Thread',
+                          'index': 0,
+                          'params': ['group: None = ...',
+                                     'target: Optional[Callable[..., Any]] = ...',
+                                     'name: Optional[str] = ...',
+                                     'args: Iterable = ...',
+                                     'kwargs: Mapping[str, Any] = ...',
+                                     'daemon: Optional[bool] = ...']}
     else:
         THREAD_CALLTIP = {"name": "Thread",
                           "params": ["group=None",
