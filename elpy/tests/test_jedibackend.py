@@ -189,14 +189,13 @@ class TestRPCGetCalltip(RPCGetCalltipTests,
                                      'kwargs: Mapping[str, Any] = ...',
                                      'daemon: Optional[bool] = ...']}
     else:
-        THREAD_CALLTIP = {"name": "Thread",
-                          "params": ["group=None",
-                                     "target=None",
-                                     "name=None",
-                                     "args=()",
-                                     "kwargs=None",
-                                     "verbose=None"],
-                          "index": 0}
+        THREAD_CALLTIP = {'index': 0,
+                          'name': u'Thread',
+                          'params': [u'group: None = ...',
+                                     u'target: Optional[Callable[..., Any]] = ...',
+                                     u'name: Optional[str] = ...',
+                                     u'args: Iterable = ...',
+                                     u'kwargs: Mapping[str, Any] = ...']}
 
     def test_should_not_fail_with_get_subscope_by_name(self):
         # Bug #677 / jedi#628

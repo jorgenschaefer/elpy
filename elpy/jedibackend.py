@@ -81,7 +81,8 @@ class JediBackend(object):
         if (
                 locations and
                 (locations[0].module_path is None
-                 or locations[0].module_name == 'builtins')
+                 or locations[0].module_name == 'builtins'
+                 or locations[0].module_name == '__builtin__')
         ):
             locations = run_with_debug(jedi, 'goto_assignments',
                                        source=source, line=line,

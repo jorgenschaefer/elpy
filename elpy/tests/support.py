@@ -343,7 +343,7 @@ class RPCGetCompletionsTests(GenericRPCTests):
         for candidate in expected:
             self.assertIn(candidate, actual)
 
-    if sys.version_info >= (3, 5):
+    if sys.version_info >= (3, 5) or sys.version_info < (3, 0):
         JSON_COMPLETIONS = ["SONDecoder", "SONEncoder", "SONDecodeError"]
     else:
         JSON_COMPLETIONS = ["SONDecoder", "SONEncoder"]
@@ -378,8 +378,12 @@ class RPCGetCompletionsTests(GenericRPCTests):
         completions = self.backend.rpc_get_completions(filename,
                                                        source,
                                                        offset)
+        if sys.version_info < (3, 0):
+            compl = [u'me', u'METext']
+        else:
+            compl = ['me']
         self.assertEqual([cand['suffix'] for cand in completions],
-                         ["me"])
+                         compl)
 
     def test_should_not_complete_for_import(self):
         source, offset = source_and_offset("import foo.Conf_|_")
