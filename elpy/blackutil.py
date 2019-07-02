@@ -4,13 +4,13 @@
 
 import sys
 from pkg_resources import parse_version
-try:
-    # python 3
-    import configparser
-except ImportError:
-    # python 2
-    import ConfigParser as configparser
+
 import os
+
+try:
+    import toml
+except ImportError:
+    toml = None
 
 from elpy.rpc import Fault
 
@@ -34,27 +34,24 @@ def fix_code(code, directory):
     # Get black config from pyproject.toml
     line_length = black.DEFAULT_LINE_LENGTH
     string_normalization = True
-    parser = configparser.ConfigParser()
     pyproject_path = os.path.join(directory, "pyproject.toml")
-    if parser.read(pyproject_path):
-        if parser.has_option("tool.black", "line-length"):
-            line_length = parser.getint("tool.black", "line-length")
-        if parser.has_option("tool.black", "skip-string-normalization"):
-            string_normalization = not parser.getboolean(
-                "tool.black", "skip-string-normalization"
-            )
+    if toml is not None and os.path.exists(pyproject_path):
+        pyproject_config = toml.load(pyproject_path)
+        black_config = pyproject_config.get("tool", {}).get("black", {})
+        if "line-length" in black_config:
+            line_length = black_config["line-length"]
+        if "skip-string-normalization" in black_config:
+            string_normalization = not black_config["skip-string-normalization"]
     try:
         if parse_version(black.__version__) < parse_version("19.0"):
             reformatted_source = black.format_file_contents(
-                src_contents=code, line_length=line_length, fast=False
-            )
+                src_contents=code, line_length=line_length, fast=False)
         else:
             fm = black.FileMode(
-                line_length=line_length, string_normalization=string_normalization
-            )
+                line_length=line_length,
+                string_normalization=string_normalization)
             reformatted_source = black.format_file_contents(
-                src_contents=code, fast=False, mode=fm
-            )
+                src_contents=code, fast=False, mode=fm)
         return reformatted_source
     except black.NothingChanged:
         return code
