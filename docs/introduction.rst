@@ -8,7 +8,7 @@ Overview
 ========
 
 Elpy is an extension for the Emacs_ text editor to work with Python_
-projects. This documentation tries to explain how to use Elpy to work
+projects. This documentation explains how to use Elpy to work
 on Python project using Emacs, but it does not aim to be an
 introduction to either Emacs or Python.
 
@@ -109,5 +109,15 @@ by typing ``M-x elpy-config RET``, and following the instructions.
 Configuration
 =============
 
-Elpy uses Emacs' built-in customization interface.
-Just run ``M-x elpy-config`` to configure it.
+You can easily configure Elpy to your own preferences.
+All options are available through a unified interface, accessible with the following command:
+
+.. command:: elpy-config
+
+   Show the current Elpy configuration, point out possible problems,
+   and provide a quick interface to relevant customization options.
+
+   Missing packages can be installed right from this interface. Be
+   aware that this does use your currently-selected virtual env. If
+   there is no current virtual env, it will suggest installing
+   packages globally. This is rarely what you want.

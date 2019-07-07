@@ -106,9 +106,9 @@ documentation is a good place for further information.
 
 .. option:: elpy-get-info-from-shell
 
-    If t, use the shell to gather docstrings and completions. Normally elpy
+    If `t`, use the shell to gather docstrings and completions. Normally elpy
     provides completion and documentation using static code analysis (from
-    jedi). With this option set to t, elpy will add the completion candidates
+    jedi). With this option, elpy will add the completion candidates
     and the docstrings from the associated python shell. This allows to have
     decent completion candidates and documentation when the static code analysis
     fails. the static code analysis fails.
@@ -117,7 +117,7 @@ documentation is a good place for further information.
 Navigation
 ==========
 
-Elpy supports some advanced navigation features inside Python
+Elpy supports advanced navigation features.
 projects.
 
 .. command:: elpy-goto-definition
@@ -148,7 +148,7 @@ projects.
    Search the buffer for a list of definitions of classes and functions.
 
 
-If you use an Emacs version superior to 25, elpy will define the
+If you use an Emacs version superior to 25, Elpy will define the
 necessary backends for the `xref`_ package.
 
 .. command:: xref-find-definitions
@@ -544,7 +544,7 @@ Elpy provides a single interface to documentation.
    With a prefix argument, Elpy will skip all the guessing and just
    prompt the user for a string to look up in pydoc.
 
-If the `autodoc` module is enabled (not the case by default) the
+If the `autodoc` module is enabled (not by default) the
 documentation is automatically updated with the symbol at point or the
 currently selected company candidate.
 
@@ -569,14 +569,14 @@ Special methods
 ---------------
 
 Elpy provides a large range of templates for special class methods (``__init__``, ``__call__``, ``__add__``, ...).
-To call them, simply insert `_` followed by the method name (for example ``_init``) and hit ``TAB``.
+To call them, simply type ``_`` followed by the method name (for example ``_init``) and hit ``TAB``.
 
 
 Other useful snippets
 ---------------------
 
 - ``enc``: Encoding statement
-- ``env``: Hasbang statement
+- ``env``: Hashbang statement
 - ``from``: Import statement
 - ``pdb``: Snippet to run pdb at the current script position
 - ``super``: Super statement to call parent methods
