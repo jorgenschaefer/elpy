@@ -34,7 +34,7 @@ Features
 - `Interactive Python shell`_
 - `Virtualenv support`_
 - `On-the-fly syntax checking`_
-- `Documentation display`_
+- `Access to documentation`_
 - `Debugging`_
 - `Test running`_
 - `Profiling`_
@@ -45,7 +45,7 @@ Features
 .. _Code Navigation: https://elpy.readthedocs.io/en/latest/ide.html#navigation
 .. _On-the-fly syntax checking: https://elpy.readthedocs.io/en/latest/ide.html#syntax-checking
 .. _Interactive Python shell: https://elpy.readthedocs.io/en/latest/ide.html#interactive-python
-.. _Documentation display: https://elpy.readthedocs.io/en/latest/ide.html#documentation
+.. _Access to documentation: https://elpy.readthedocs.io/en/latest/ide.html#documentation
 .. _Debugging: https://elpy.readthedocs.io/en/latest/ide.html#debugging
 .. _Test running: https://elpy.readthedocs.io/en/latest/ide.html#testing
 .. _Profiling: https://elpy.readthedocs.io/en/latest/ide.html#profiling
@@ -71,7 +71,7 @@ Elpy relies on some python packages that need to be installed as well:
 
   pip install jedi rope flake8 autopep8 yapf black
 
-For other alternatives, see the `documentation`_.
+For other installation alternatives, see the `documentation`_.
 
 .. _documentation: https://elpy.readthedocs.io/en/latest/introduction.html#installation
 
@@ -81,7 +81,7 @@ Quickstart
 
 Once installed, Elpy will automatically provide code completion, syntax error highlighting and code hinting (in the modeline) for python files. Elpy offers a lot of features, but the following keybindings should be enough to get started:
 
-- :kbd:`C-c C-c` evaluates the current script (or region if something is selected) in an interactive python shell. The python shell will be automatically displayed aside of your script (if not already there).
+- :kbd:`C-c C-c` evaluates the current script (or region if something is selected) in an interactive python shell. The python shell will be automatically displayed aside of your script.
 - :kbd:`C-RET` evaluates the current statement (current line plus the following nested lines).
 - :kbd:`C-c C-z` switches between your script and the interactive shell.
 - :kbd:`C-c C-d` displays documentation for the thing under cursor (function or module). The documentation will pop in a different buffer, that can be closed with :kbd:`q`.
