@@ -104,3 +104,10 @@ This can be made automatic by adding the following to your ``.emacs``:
 In order to use all the features (such as navigation with ``M-.``),
 you'll need to install some python libraries.  You can do that easily
 by typing ``M-x elpy-config RET``, and following the instructions.
+
+
+Configuration
+=============
+
+Elpy uses Emacs' built-in customization interface.
+Just run ``M-x elpy-config`` to configure it.

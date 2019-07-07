@@ -15,6 +15,9 @@ Contents:
    editing
    ide
    extending
+   customization_tips
+   FAQ
+
 
 
 Indices and tables
