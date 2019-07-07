@@ -1,0 +1,7 @@
+# -*- mode: snippet -*-
+# name: _instancecheck
+# key: _instancecheck
+# group: Special methods
+# --
+def __instancecheck__(self, instance):
+    return $0

@@ -553,6 +553,38 @@ currently selected company candidate.
    The idle delay in seconds until documentation is updated automatically.
 
 
+Snippets
+========
+
+Elpy uses yasnippet_ to provide code templates that helps writing common pieces of code faster.
+To use them, just type the template key and hit ``TAB`` to expand it.
+You may then be asked to fill some fields in the template, just hit ``TAB`` when you are done to procede to the next field.
+
+The sequel presents a list of templates provided by Elpy.
+
+.. _yasnippet: https://github.com/joaotavora/yasnippet
+
+
+Special methods
+---------------
+
+Elpy provides a large range of templates for special class methods (``__init__``, ``__call__``, ``__add__``, ...).
+To call them, simply insert `_` followed by the method name (for example ``_init``) and hit ``TAB``.
+
+
+Other useful snippets
+---------------------
+
+- ``enc``: Encoding statement
+- ``env``: Hasbang statement
+- ``from``: Import statement
+- ``pdb``: Snippet to run pdb at the current script position
+- ``super``: Super statement to call parent methods
+- ``def``: Function definition
+- ``class``: Class definition
+- ``defs``: Class method definition
+
+
 Debugging
 =========
 

@@ -1,0 +1,7 @@
+# -*- mode: snippet -*-
+# name: _ne
+# key: _ne
+# group: Special methods
+# --
+def __ne__(self, other):
+    return $0

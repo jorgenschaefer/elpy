@@ -1,0 +1,7 @@
+# -*- mode: snippet -*-
+# name: _int
+# key: _int
+# group: Special methods
+# --
+def __int__(self):
+    $0

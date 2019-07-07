@@ -1,0 +1,7 @@
+# -*- mode: snippet -*-
+# name: _le
+# key: _le
+# group: Special methods
+# --
+def __le__(self, other):
+    return $0

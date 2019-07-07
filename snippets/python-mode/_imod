@@ -1,0 +1,7 @@
+# -*- mode: snippet -*-
+# name: _imod
+# key: _imod
+# group: Special methods
+# --
+def __imod__(self, other):
+    return $0

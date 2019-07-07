@@ -1,0 +1,7 @@
+# -*- mode: snippet -*-
+# name: _del
+# key: _del
+# group: Special methods
+# --
+def __del__(self):
+    $0

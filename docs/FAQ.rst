@@ -7,7 +7,7 @@ Q: Can I tell elpy not to load one of the minor modes it enables by default?
 ============================================================================
 
 **A:** You can simply remove the appropriate symbol from
-`elpy-modules`.
+``elpy-modules``.
 
 
 Q: How do I make Elpy work well with org-mode?

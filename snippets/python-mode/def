@@ -1,0 +1,7 @@
+# -*- mode: snippet -*-
+# name: def function(...):
+# key: def
+# group: Definitions
+# --
+def ${1:funcname}(${2:arg}):
+    ${3:pass}

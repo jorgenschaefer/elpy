@@ -1,0 +1,7 @@
+# -*- mode: snippet -*-
+# name: _rfloordiv
+# key: _rfloordiv
+# group: Special methods
+# --
+def __rfloordiv__(self, other):
+    return $0

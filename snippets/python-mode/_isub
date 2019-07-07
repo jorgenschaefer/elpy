@@ -1,0 +1,7 @@
+# -*- mode: snippet -*-
+# name: _isub
+# key: _isub
+# group: Special methods
+# --
+def __isub__(self, other):
+    return $0

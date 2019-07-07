@@ -1,0 +1,7 @@
+# -*- mode: snippet -*-
+# name: _rmul
+# key: _rmul
+# group: Special methods
+# --
+def __rmul__(self, other):
+    return $0
