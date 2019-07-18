@@ -3736,8 +3736,7 @@ and return the list."
      (eldoc-add-command-completions "company-")
      (eldoc-add-command-completions "python-indent-dedent-line-backspace")
      (set (make-local-variable 'company-frontends)
-          (delq 'company-echo-metadata-frontend
-                (mapcar #'identity company-frontends)))
+          (remq 'company-echo-metadata-frontend company-frontends))
      (set (make-local-variable 'eldoc-documentation-function)
           'elpy-eldoc-documentation)
      (eldoc-mode 1))
