@@ -1,0 +1,7 @@
+# -*- mode: snippet -*-
+# name: _ixor
+# key: _ixor
+# group: Special methods
+# --
+def __ixor__(self, other):
+    return $0

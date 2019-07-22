@@ -34,7 +34,7 @@ In the following table, ``|`` refers to the position of point.
 
 Expression-based commands will also work on strings, tuples,
 dictionaries, or any balanced groups of parentheses. This works for
-all movement keys (:kbd:`f`, :kbd:`b`, :kbd:`n`, :kbd:`p``), with
+all movement keys (:kbd:`f`, :kbd:`b`, :kbd:`n`, :kbd:`p`), with
 *next* and *previous* moving to the next or previous group of parens.
 It also works with forward and backward deletion (:kbd:`d` and
 :kbd:`DEL`/:kbd:`<backspace>`, respectively) for character and word

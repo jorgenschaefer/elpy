@@ -106,9 +106,9 @@ documentation is a good place for further information.
 
 .. option:: elpy-get-info-from-shell
 
-    If t, use the shell to gather docstrings and completions. Normally elpy
+    If `t`, use the shell to gather docstrings and completions. Normally elpy
     provides completion and documentation using static code analysis (from
-    jedi). With this option set to t, elpy will add the completion candidates
+    jedi). With this option, elpy will add the completion candidates
     and the docstrings from the associated python shell. This allows to have
     decent completion candidates and documentation when the static code analysis
     fails. the static code analysis fails.
@@ -117,8 +117,7 @@ documentation is a good place for further information.
 Navigation
 ==========
 
-Elpy supports some advanced navigation features inside Python
-projects.
+Elpy supports advanced navigation features.
 
 .. command:: elpy-goto-definition
    :kbd: M-.
@@ -148,7 +147,7 @@ projects.
    Search the buffer for a list of definitions of classes and functions.
 
 
-If you use an Emacs version superior to 25, elpy will define the
+If you use an Emacs version superior to 25, Elpy will define the
 necessary backends for the `xref`_ package.
 
 .. command:: xref-find-definitions
@@ -544,13 +543,45 @@ Elpy provides a single interface to documentation.
    With a prefix argument, Elpy will skip all the guessing and just
    prompt the user for a string to look up in pydoc.
 
-If the `autodoc` module is enabled (not the case by default) the
+If the `autodoc` module is enabled (not by default) the
 documentation is automatically updated with the symbol at point or the
 currently selected company candidate.
 
 .. option:: elpy-autodoc-delay
 
    The idle delay in seconds until documentation is updated automatically.
+
+
+Snippets
+========
+
+Elpy uses yasnippet_ to provide code templates that helps writing common pieces of code faster.
+You can access a template by typing a "template key" and hitting ``TAB`` to expand it.
+You may then be asked to fill some fields in the template, just hit ``TAB`` when you are done to procede to the next field.
+
+The sequel presents a list of templates provided by Elpy.
+
+.. _yasnippet: https://github.com/joaotavora/yasnippet
+
+
+Special methods
+---------------
+
+Elpy provides a large range of templates for special class methods (``__init__``, ``__call__``, ``__add__``, ...).
+To call them, simply type ``_`` followed by the method name (for example ``_init``) and hit ``TAB``.
+
+
+Other useful snippets
+---------------------
+
+- ``enc``: Encoding statement
+- ``env``: Hashbang statement
+- ``from``: Import statement
+- ``pdb``: Snippet to run pdb at the current script position
+- ``super``: Super statement to call parent methods
+- ``def``: Function definition
+- ``class``: Class definition
+- ``defs``: Class method definition
 
 
 Debugging
@@ -646,8 +677,6 @@ your last compile command whenever you save a file.
 Refactoring
 ===========
 
-Elpy supports various forms of refactoring Python code.
-
 .. command:: elpy-multiedit-python-symbol-at-point
    :kbd: C-c C-e
 
@@ -683,15 +712,18 @@ Elpy supports various forms of refactoring Python code.
 .. _black: https://github.com/ambv/black
 
 
-.. command:: elpy-refactor
-   :kbd: C-c C-r r
 
-   Run the Elpy refactoring interface for Python code.
+Profiling
+=========
 
-   This command uses `rope`_ package and provides various refactoring
-   options depending on the context.
+Elpy allows to profile python scripts asynchronously using `cProfile`.
 
-.. _rope: https://github.com/python-rope/rope
+.. command:: elpy-profile-buffer-or-region
+
+   Send the current buffer or region to the profiler and display the result with
+   ``elpy-profile-visualizer``.
+   The default visualizer is `snakeviz`_, a browser-based graphical profile viewer that can be installed with `pip install snakeviz`.
+.. _snakeviz: https://jiffyclub.github.io/snakeviz/
 
 
 Django
@@ -713,17 +745,3 @@ Can also start `runserver` automatically and you can give an ip address and port
    Start the development server command, `runserver`. Default arguments are `127.0.0.1` for
    ip address and `8000` for port. These can be changed via ``elpy-django-server-ipaddr`` and
    ``elpy-django-server-port``.
-
-
-Profiling
-=========
-
-Elpy allows one to profile asynchronously python scripts using `cProfile`.
-
-.. command:: elpy-profile-buffer-or-region
-
-   Send the current buffer or region to the profiler and display the result with
-   ``elpy-profile-visualizer``.
-   The default visualizer is `snakeviz`_, a browser-based graphical profile viewer that can be installed with `pip install snakeviz`.
-   If the profiling fails, the python error output is displayed.
-.. _snakeviz: https://jiffyclub.github.io/snakeviz/

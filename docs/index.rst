@@ -11,10 +11,13 @@ Contents:
 
    introduction
    quickstart
-   concepts
    editing
    ide
+   concepts
    extending
+   customization_tips
+   FAQ
+
 
 
 Indices and tables

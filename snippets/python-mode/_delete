@@ -1,0 +1,7 @@
+# -*- mode: snippet -*-
+# name: _delete
+# key: _delete
+# group: Special methods
+# --
+def __delete__(self, instance):
+    $0

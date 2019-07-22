@@ -1,0 +1,7 @@
+# -*- mode: snippet -*-
+# name: _index
+# key: _index
+# group: Special methods
+# --
+def __index__(self):
+    return $0

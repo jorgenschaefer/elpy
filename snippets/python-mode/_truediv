@@ -1,0 +1,7 @@
+# -*- mode: snippet -*-
+# name: _truediv
+# key: _truediv
+# group: Special methods
+# --
+def __truediv__(self, other):
+    return $0

@@ -1,0 +1,7 @@
+# -*- mode: snippet -*-
+# name: _oct
+# key: _oct
+# group: Special methods
+# --
+def __oct__(self):
+    return $0

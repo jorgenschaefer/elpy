@@ -4,24 +4,6 @@ Concepts
 
 .. default-domain:: el
 
-Configuration
-=============
-
-You can easily configure Elpy to your own preferences. All *Customize
-Options* below are accessible via this interface. Elpy builds heavily
-upon existing extensions for Emacs. The configuration interface tries
-to include the options for those as well.
-
-.. command:: elpy-config
-
-   Show the current Elpy configuration, point out possible problems,
-   and provide a quick interface to relevant customization options.
-
-   Missing packages can be installed right from this interface. Be
-   aware that this does use your currently-selected virtual env. If
-   there is no current virtual env, it will suggest installing
-   packages globally. This is rarely what you want.
-
 The RPC Process
 ===============
 
@@ -80,11 +62,13 @@ Backends
 ========
 
 For introspection and analysis of Python sources, Elpy mainly relies
-on `Jedi`_.
-`Jedi`_ is known to have some problems coping with badly-formatted
-Python.
+on `Jedi`_, a python package for static code analysis.
+
+Due to the dynamic nature of python and its minimalist structure syntax, python code can be difficult to understand in certain situations.
+Jedi documentation provides some tips_ to make jedi job easier.
 
 .. _Jedi: https://github.com/davidhalter/jedi/
+.. _tips: https://jedi.readthedocs.io/en/latest/docs/features.html#recipes
 
 
 Virtual Envs

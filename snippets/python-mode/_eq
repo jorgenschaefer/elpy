@@ -1,0 +1,7 @@
+# -*- mode: snippet -*-
+# name: _eq
+# key: _eq
+# group: Special methods
+# --
+def __eq__(self, other):
+    return $0

@@ -1,0 +1,7 @@
+# -*- mode: snippet -*-
+# name: _slots
+# key: _slots
+# group: Class attributes
+# --
+__slots__ = ($1)
+$0

@@ -1,0 +1,7 @@
+# -*- mode: snippet -*-
+# name: _imul
+# key: _imul
+# group: Special methods
+# --
+def __imul__(self, other):
+    return $0

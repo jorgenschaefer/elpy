@@ -1,0 +1,7 @@
+# -*- mode: snippet -*-
+# name: _lt
+# key: _lt
+# group: Special methods
+# --
+def __lt__(self, other):
+    return $0

@@ -1,0 +1,7 @@
+# -*- mode: snippet -*-
+# name: _gt
+# key: _gt
+# group: Special methods
+# --
+def __gt__(self, other):
+    return $0
