@@ -118,7 +118,6 @@ Navigation
 ==========
 
 Elpy supports advanced navigation features.
-projects.
 
 .. command:: elpy-goto-definition
    :kbd: M-.
@@ -557,7 +556,7 @@ Snippets
 ========
 
 Elpy uses yasnippet_ to provide code templates that helps writing common pieces of code faster.
-To use them, just type the template key and hit ``TAB`` to expand it.
+You can access a template by typing a "template key" and hitting ``TAB`` to expand it.
 You may then be asked to fill some fields in the template, just hit ``TAB`` when you are done to procede to the next field.
 
 The sequel presents a list of templates provided by Elpy.
@@ -717,14 +716,13 @@ Refactoring
 Profiling
 =========
 
-Elpy allows one to profile asynchronously python scripts using `cProfile`.
+Elpy allows to profile python scripts asynchronously using `cProfile`.
 
 .. command:: elpy-profile-buffer-or-region
 
    Send the current buffer or region to the profiler and display the result with
    ``elpy-profile-visualizer``.
    The default visualizer is `snakeviz`_, a browser-based graphical profile viewer that can be installed with `pip install snakeviz`.
-   If the profiling fails, the python error output is displayed.
 .. _snakeviz: https://jiffyclub.github.io/snakeviz/
 
 

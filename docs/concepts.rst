@@ -65,7 +65,7 @@ For introspection and analysis of Python sources, Elpy mainly relies
 on `Jedi`_, a python package for static code analysis.
 
 Due to the dynamic nature of python and its minimalist structure syntax, python code can be difficult to understand in certain situations.
-Jedi documentation provides some tips_ to makes jedi job easier.
+Jedi documentation provides some tips_ to make jedi job easier.
 
 .. _Jedi: https://github.com/davidhalter/jedi/
 .. _tips: https://jedi.readthedocs.io/en/latest/docs/features.html#recipes
