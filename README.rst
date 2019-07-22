@@ -36,9 +36,9 @@ Features
 - `On-the-fly syntax checking`_
 - `Access to documentation`_
 - `Debugging`_
-- `Test running`_
+- `Testing`_
 - `Profiling`_
-- Snippet Expansion (using `yasnippet`_)
+- `Snippet Expansion`_
 - Code hinting
 
 .. _Code completion: https://elpy.readthedocs.io/en/latest/ide.html#completion
@@ -47,16 +47,16 @@ Features
 .. _Interactive Python shell: https://elpy.readthedocs.io/en/latest/ide.html#interactive-python
 .. _Access to documentation: https://elpy.readthedocs.io/en/latest/ide.html#documentation
 .. _Debugging: https://elpy.readthedocs.io/en/latest/ide.html#debugging
-.. _Test running: https://elpy.readthedocs.io/en/latest/ide.html#testing
+.. _Testing: https://elpy.readthedocs.io/en/latest/ide.html#testing
 .. _Profiling: https://elpy.readthedocs.io/en/latest/ide.html#profiling
 .. _Virtualenv support: https://elpy.readthedocs.io/en/latest/concepts.html#virtual-envs
-.. _yasnippet: https://github.com/joaotavora/yasnippet
+.. _Snippet Expansion: https://elpy.readthedocs.io/en/latest/ide.html#snippets
 
 
 Installation
 ============
 
-The most straightforward way of installing elpy is to use `use-package`:
+Elpy is available on Melpa, the most straightforward way to install it is to use `use-package`:
 
 .. code-block:: elisp
 
@@ -81,10 +81,10 @@ Quickstart
 
 Once installed, Elpy will automatically provide code completion, syntax error highlighting and code hinting (in the modeline) for python files. Elpy offers a lot of features, but the following keybindings should be enough to get started:
 
-- :kbd:`C-c C-c` evaluates the current script (or region if something is selected) in an interactive python shell. The python shell will be automatically displayed aside of your script.
+- :kbd:`C-c C-c` evaluates the current python script (or region if something is selected) in an interactive python shell. The python shell is automatically displayed aside of your script.
 - :kbd:`C-RET` evaluates the current statement (current line plus the following nested lines).
 - :kbd:`C-c C-z` switches between your script and the interactive shell.
-- :kbd:`C-c C-d` displays documentation for the thing under cursor (function or module). The documentation will pop in a different buffer, that can be closed with :kbd:`q`.
+- :kbd:`C-c C-d` displays documentation for the thing under cursor. The documentation will pop in a different buffer, that can be closed with :kbd:`q`.
 
 Please have a look at the documentation at `Readthedocs`_ if you want to know more about what Elpy can do.
 
