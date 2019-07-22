@@ -37,7 +37,7 @@ Installation
 With use-package
 ----------------
 
-Simply add the following lines to you ``.emacs``:
+Simply add the following lines to you ``.emacs`` (or ``.emacs.d/init.el``, or equivalent):
 
 .. code-block:: elisp
 
