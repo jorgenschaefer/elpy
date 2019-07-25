@@ -109,9 +109,9 @@ documentation is a good place for further information.
     If `t`, use the shell to gather docstrings and completions. Normally elpy
     provides completion and documentation using static code analysis (from
     jedi). With this option, elpy will add the completion candidates
-    and the docstrings from the associated python shell. This allows to have
-    decent completion candidates and documentation when the static code analysis
-    fails. the static code analysis fails.
+    and the docstrings from the associated python shell; This activates
+    fallback completion candidates for cases when the static code analysis
+    fails.
 
 
 Navigation

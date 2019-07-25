@@ -296,7 +296,7 @@ this feature."
 (defcustom elpy-get-info-from-shell nil
   "If t, use the shell to gather docstrings and completions.
 
-Normally elpy provides completion and documentation using static code analysis (from jedi). With this option set to t, elpy will add the completion candidates and the docstrings from the associated python shell. This allows to have decent completion candidates and documentation when the static code analysis fails."
+Normally elpy provides completion and documentation using static code analysis (from jedi). With this option set to t, elpy will add the completion candidates and the docstrings from the associated python shell; This activates fallback completion candidates for cases when static code analysis fails."
   :type 'boolean
   :group 'elpy)
 
