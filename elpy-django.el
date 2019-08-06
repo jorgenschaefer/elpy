@@ -231,9 +231,10 @@ Return the correct string format here."
                              "-c" (format "import %s" django-settings-env)))
     (error (format "Unable to import DJANGO_SETTINGS_MODULE: '%s'"
                    django-settings-env)))
-  (s-trim (shell-command-to-string
-                       (format "%s -c '%s'" elpy-rpc-python-command
-                               django-import-cmd))))
+  (let ((django-import-cmd "import django;django.setup();from django.conf import settings;print(settings.TEST_RUNNER)"))
+    (s-trim (shell-command-to-string
+             (format "%s -c '%s'" elpy-rpc-python-command
+                     django-import-cmd)))))
 
 (defun elpy-django--get-default-settings-path ()
   "Return the default settings path (from running `manage.py')."
