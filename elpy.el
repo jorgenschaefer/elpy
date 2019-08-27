@@ -500,14 +500,14 @@ This option need to bet set through `customize' or `customize-set-variable' to b
 
 (defvar elpy-pdb-map
   (let ((map (make-sparse-keymap)))
-    (define-key map (kbd "g") 'elpy-pdb-debug-buffer)
+    (define-key map (kbd "d") 'elpy-pdb-debug-buffer)
     (define-key map (kbd "p") 'elpy-pdb-break-at-point)
     (define-key map (kbd "e") 'elpy-pdb-debug-last-exception)
     (define-key map (kbd "b") 'elpy-pdb-toggle-breakpoint-at-point)
     map)
   "Key map for the shell related commands")
 (fset 'elpy-pdb-map elpy-pdb-map)
-(define-key elpy-mode-map (kbd "C-c C-g") 'elpy-pdb-map)
+(define-key elpy-mode-map (kbd "C-c C-u") 'elpy-pdb-map)
 
 (easy-menu-define elpy-menu elpy-mode-map
   "Elpy Mode Menu"
