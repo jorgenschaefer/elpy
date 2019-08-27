@@ -30,7 +30,10 @@
 
 (defcustom elpy-profile-visualizer "snakeviz"
   "Visualizer for elpy profile results."
-  :type 'str
+  :type '(choice (const :tag "Snakeviz" "snakeviz")
+                 (const :tag "RunSnakeRun" "runsnake")
+                 (const :tag "pyprof2calltree" "pyprof2calltree -k -i")
+                 (string :tag "Other"))
   :group 'elpy)
 
 ;;;;;;;;;;;;;;;;;;;;;;
