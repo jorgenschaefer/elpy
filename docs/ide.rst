@@ -722,7 +722,7 @@ Elpy allows to profile python scripts asynchronously using `cProfile`.
 
    Send the current buffer or region to the profiler and display the result with
    ``elpy-profile-visualizer``.
-   The default visualizer is `snakeviz`_, a browser-based graphical profile viewer that can be installed with `pip install snakeviz`.
+   The default visualizer is `snakeviz`_, a browser-based graphical profile viewer that can be installed with `pip install snakeviz`. RunSnakeRun (Python-2 only GTK GUI) and pyprof2calltree (uses QCacheGrind or KCacheGrind for display) are supported alternatives and can be similarly installed with pip.
 .. _snakeviz: https://jiffyclub.github.io/snakeviz/
 
 
