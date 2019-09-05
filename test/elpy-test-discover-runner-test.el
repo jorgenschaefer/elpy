@@ -12,7 +12,7 @@
       (elpy-test-discover-runner "/project/root/" nil nil nil)
 
       (should (equal command
-                     '("python" "-m" "unittest" "discover")))
+                     (list python-shell-interpreter "-m" "unittest" "discover")))
       (should (equal top "/project/root/")))))
 
 (ert-deftest elpy-test-discover-runner-should-run-test-module ()
@@ -28,7 +28,7 @@
                                  nil)
 
       (should (equal command
-                     '("python" "-m" "unittest"
+                     (list python-shell-interpreter "-m" "unittest"
                        "package.module")))
       (should (equal top "/project/root/")))))
 
@@ -45,7 +45,7 @@
                                  "TestClass")
 
       (should (equal command
-                     '("python" "-m" "unittest"
+                     (list python-shell-interpreter "-m" "unittest"
                        "package.module.TestClass")))
       (should (equal top "/project/root/")))))
 
@@ -62,6 +62,6 @@
                                  "TestClass.test_method")
 
       (should (equal command
-                     '("python" "-m" "unittest"
+                     (list python-shell-interpreter "-m" "unittest"
                        "package.module.TestClass.test_method")))
       (should (equal top "/project/root/")))))

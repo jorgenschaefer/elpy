@@ -325,8 +325,10 @@ edited instead. Setting this variable to nil disables this feature."
   :safe 'elpy-test-runner-p
   :group 'elpy)
 
-(defcustom elpy-test-discover-runner-command '("python" "-m" "unittest")
-  "The command to use for `elpy-test-discover-runner'."
+(defcustom elpy-test-discover-runner-command '("python-shell-interpreter" "-m" "unittest")
+  "The command to use for `elpy-test-discover-runner'.
+If the string \"python-shell-interpreter\" is present, it will be replaced with
+the value of `python-shell-interpreter'."
   :type '(repeat string)
   :group 'elpy)
 
@@ -2010,6 +2012,15 @@ This uses the `elpy-test-runner-p' symbol property."
                         (cons command args)
                         " "))))
 
+(defun elpy-test-get-discover-runner ()
+  "Return the test discover runner from `elpy-test-discover-runner-command'."
+  (cl-loop
+   for string in elpy-test-discover-runner-command
+   if (string= string "python-shell-interpreter")
+   collect python-shell-interpreter
+   else
+   collect string))
+
 (defun elpy-test-discover-runner (top _file module test)
   "Test the project using the python unittest discover runner.
 
@@ -2021,7 +2032,7 @@ This requires Python 2.7 or later."
                (t "discover"))))
     (apply #'elpy-test-run
            top
-           (append elpy-test-discover-runner-command
+           (append (elpy-test-get-discover-runner)
                    (list test)))))
 (put 'elpy-test-discover-runner 'elpy-test-runner-p t)
 
