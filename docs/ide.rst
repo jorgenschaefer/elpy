@@ -593,7 +593,7 @@ Note that this interface is only available for Emacs 25 and above.
 .. _pdb: https://docs.python.org/3/library/pdb.html
 
 .. command:: elpy-pdb-debug-buffer
-   :kbd: C-c C-g g
+   :kbd: C-c C-u d
 
    Run pdb on the current buffer. If no breakpoints has been set using
    :command:`elpy-pdb-toggle-breakpoint-at-point`, the debugger will
@@ -607,7 +607,7 @@ Note that this interface is only available for Emacs 25 and above.
 .. _pdb commands: https://docs.python.org/3/library/pdb.html#debugger-commands
 
 .. command:: elpy-pdb-toggle-breakpoint-at-point
-   :kbd: C-c C-g b
+   :kbd: C-c C-u b
 
    Add (or remove) a breakpoint on the current line. Elpy adds a red
    circle to the fringe to indicate the presence of a breakpoint. You
@@ -617,12 +617,12 @@ Note that this interface is only available for Emacs 25 and above.
    With a prefix argument :kbd:`C-u`, remove all the breakpoints.
 
 .. command:: elpy-pdb-break-at-point
-   :kbd: C-c C-g p
+   :kbd: C-c C-u p
 
    Run pdb on the current buffer and pause at the cursor position.
 
 .. command:: elpy-pdb-debug-last-exception
-   :kbd: C-c C-g e
+   :kbd: C-c C-u e
 
    Run post-mortem pdb on the last exception.
 
