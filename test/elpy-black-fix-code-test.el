@@ -4,7 +4,8 @@
     (setq *elpy-black-fix-code--black-supported*
           (not (string< (or (getenv "TRAVIS_PYTHON_VERSION")
                             (with-temp-buffer
-                              (call-process "python" nil '(t t) nil "--version")
+                              (call-process elpy-rpc-python-command
+                                            nil '(t t) nil "--version")
                               (goto-char (point-min))
                               (re-search-forward "\\([0-9.]+\\)" nil t)
                               (or (match-string 1) "")))
