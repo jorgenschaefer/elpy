@@ -25,8 +25,12 @@ class JediBackend(object):
     """
     name = "jedi"
 
-    def __init__(self, project_root):
+    def __init__(self, project_root, environment_path):
         self.project_root = project_root
+        self.environment = None
+        if environment_path:
+            self.environment = jedi.create_environment(environment_path,
+                                                       safe=False)
         self.completions = {}
         sys.path.append(project_root)
 
@@ -34,7 +38,8 @@ class JediBackend(object):
         line, column = pos_to_linecol(source, offset)
         proposals = run_with_debug(jedi, 'completions',
                                    source=source, line=line, column=column,
-                                   path=filename, encoding='utf-8')
+                                   path=filename, encoding='utf-8',
+                                   environment=self.environment)
         if proposals is None:
             return []
         self.completions = dict((proposal.name, proposal)
@@ -63,7 +68,8 @@ class JediBackend(object):
         line, column = pos_to_linecol(source, offset)
         locations = run_with_debug(jedi, 'goto_definitions',
                                    source=source, line=line, column=column,
-                                   path=filename, encoding='utf-8')
+                                   path=filename, encoding='utf-8',
+                                   environment=self.environment)
         if locations and locations[-1].docstring():
             return ('Documentation for {0}:\n\n'.format(
                 locations[-1].full_name) + locations[-1].docstring())
@@ -74,7 +80,8 @@ class JediBackend(object):
         line, column = pos_to_linecol(source, offset)
         locations = run_with_debug(jedi, 'goto_definitions',
                                    source=source, line=line, column=column,
-                                   path=filename, encoding='utf-8')
+                                   path=filename, encoding='utf-8',
+                                   environment=self.environment)
         # goto_definitions() can return silly stuff like __builtin__
         # for int variables, so we fall back on goto() in those
         # cases. See issue #76.
@@ -87,7 +94,8 @@ class JediBackend(object):
             locations = run_with_debug(jedi, 'goto_assignments',
                                        source=source, line=line,
                                        column=column,
-                                       path=filename, encoding='utf-8')
+                                       path=filename, encoding='utf-8',
+                                       environment=self.environment)
         if not locations:
             return None
         else:
@@ -113,7 +121,9 @@ class JediBackend(object):
         line, column = pos_to_linecol(source, offset)
         locations = run_with_debug(jedi, 'goto_assignments',
                                    source=source, line=line, column=column,
-                                   path=filename, encoding='utf-8')
+                                   path=filename, encoding='utf-8',
+                                   environment=self.environment)
+
         if not locations:
             return None
         else:
@@ -139,7 +149,8 @@ class JediBackend(object):
         line, column = pos_to_linecol(source, offset)
         calls = run_with_debug(jedi, 'call_signatures',
                                source=source, line=line, column=column,
-                               path=filename, encoding='utf-8')
+                               path=filename, encoding='utf-8',
+                               environment=self.environment)
         if calls:
             call = calls[0]
         else:
@@ -159,10 +170,13 @@ class JediBackend(object):
         line, column = pos_to_linecol(source, offset)
         definitions = run_with_debug(jedi, 'goto_definitions',
                                      source=source, line=line, column=column,
-                                     path=filename, encoding='utf-8')
+                                     path=filename, encoding='utf-8',
+                                     environment=self.environment)
         assignments = run_with_debug(jedi, 'goto_assignments',
                                      source=source, line=line, column=column,
-                                     path=filename, encoding='utf-8')
+                                     path=filename, encoding='utf-8',
+                                     environment=self.environment)
+
         if definitions:
             definition = definitions[0]
         else:
@@ -224,7 +238,8 @@ class JediBackend(object):
         line, column = pos_to_linecol(source, offset)
         uses = run_with_debug(jedi, 'usages',
                               source=source, line=line, column=column,
-                              path=filename, encoding='utf-8')
+                              path=filename, encoding='utf-8',
+                              environment=self.environment)
         if uses is None:
             return None
         result = []

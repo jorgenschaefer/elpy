@@ -25,7 +25,8 @@ from elpy.tests.support import RPCGetNamesTests
 class JediBackendTestCase(BackendTestCase):
     def setUp(self):
         super(JediBackendTestCase, self).setUp()
-        self.backend = jedibackend.JediBackend(self.project_root)
+        env = jedi.get_default_environment().path
+        self.backend = jedibackend.JediBackend(self.project_root, env)
 
 
 class TestInit(JediBackendTestCase):

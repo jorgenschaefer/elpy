@@ -236,6 +236,11 @@ and not an interactive shell like ipython."
                  (string :tag "Other"))
   :safe (lambda (val)
           (member val '("python" "python2" "python3" "pythonw")))
+  :set (lambda (var val)                ;
+         (set-default var val)
+         (when (fboundp 'elpy-rpc-restart)
+           ;; because `elpy-rpc-restart` is defined after this variable
+           (elpy-rpc-restart)))
   :group 'elpy)
 
 (defcustom elpy-rpc-pythonpath (file-name-directory (locate-library "elpy"))
@@ -608,6 +613,7 @@ This option need to bet set through `customize' or `customize-set-variable' to b
     (define-key inferior-python-mode-map (kbd "C-c C-z") 'elpy-shell-switch-to-buffer)
     (add-hook 'python-mode-hook 'elpy-mode)
     (add-hook 'pyvenv-post-activate-hooks 'elpy-rpc--disconnect)
+    (add-hook 'pyvenv-post-deactivate-hooks 'elpy-rpc--disconnect)
     (add-hook 'inferior-python-mode-hook 'elpy-shell--enable-output-filter)
     ;; Enable Elpy-mode in the opened python buffer
     (dolist (buffer (buffer-list))
@@ -701,7 +707,7 @@ def latest(package, version=None):
 
 
 config = {}
-config['python_rpc_version'] = ('{major}.{minor}.{micro}'
+config['rpc_python_version'] = ('{major}.{minor}.{micro}'
                             .format(major=sys.version_info[0],
                                     minor=sys.version_info[1],
                                     micro=sys.version_info[2]))
@@ -847,9 +853,9 @@ item in another window.\n\n")
   "Insert help text and widgets for configuration problems."
   (when (not config)
     (setq config (elpy-config--get-config)))
-  (let* ((python-rpc-version (gethash "python_rpc_version" config))
-         (rope-pypi-package  (if (and python-rpc-version
-                                      (string-match "^3\\." python-rpc-version))
+  (let* ((rpc-python-version (gethash "rpc_python_version" config))
+         (rope-pypi-package  (if (and rpc-python-version
+                                      (string-match "^3\\." rpc-python-version))
                                  "rope_py3k"
                                "rope")))
 
@@ -857,14 +863,14 @@ item in another window.\n\n")
     (insert "\n")
 
     ;; Python not found
-    (when (not (gethash "python_rpc_executable" config))
+    (when (not (gethash "rpc_python_executable" config))
       (elpy-insert--para
        "Elpy can not find the configured Python interpreter. Please make "
        "sure that the variable `elpy-rpc-python-command' points to a "
        "command in your PATH. You can change the variable below.\n\n"))
 
     ;; No virtual env
-    (when (and (gethash "python_rpc_executable" config)
+    (when (and (gethash "rpc_python_executable" config)
                (not (gethash "virtual_env" config)))
       (elpy-insert--para
        "You have not activated a virtual env. While Elpy supports this, "
@@ -874,7 +880,7 @@ item in another window.\n\n")
 
     ;; No virtual env, but ~/.local/bin not in PATH
     (when (and (not (memq system-type '(ms-dos windows-nt)))
-               (gethash "python_rpc_executable" config)
+               (gethash "rpc_python_executable" config)
                (not pyvenv-virtual-env)
                (not (or (member (expand-file-name "~/.local/bin")
                                 exec-path)
@@ -888,7 +894,7 @@ item in another window.\n\n")
        "PATH -- and then do `elpy-rpc-restart'.\n\n"))
 
     ;; Python found, but can't find the elpy module
-    (when (and (gethash "python_rpc_executable" config)
+    (when (and (gethash "rpc_python_executable" config)
                (not (gethash "elpy_version" config)))
       (elpy-insert--para
        "The Python interpreter could not find the elpy module. "
@@ -936,7 +942,7 @@ item in another window.\n\n")
       (insert "\n\n"))
 
     ;; Requested backend unavailable
-    (when (and (gethash "python_rpc_executable" config)
+    (when (and (gethash "rpc_python_executable" config)
                (not (gethash "jedi_version" config)))
       (elpy-insert--para
        "The jedi package is not available. Completion and code navigation will"
@@ -1050,13 +1056,15 @@ item in another window.\n\n")
 This returns a hash table with the following keys (all strings):
 
 emacs_version
-python_rpc
-python_rpc_version
-python_rpc_executable
+elpy_version
 python_interactive
 python_interactive_version
 python_interactive_executable
-elpy_version
+rpc_venv
+rpc_venv_short
+rpc_python
+rpc_python_version
+rpc_python_executable
 jedi_version
 rope_version
 virtual_env
@@ -1064,10 +1072,17 @@ virtual_env_short"
   (with-temp-buffer
     (let ((config (make-hash-table :test #'equal)))
       (puthash "emacs_version" emacs-version config)
-      (puthash "python_rpc" elpy-rpc-python-command config)
-      (puthash "python_rpc_executable"
-               (executable-find elpy-rpc-python-command)
-               config)
+      (let ((rpc-venv (elpy-rpc-get-or-create-venv)))
+        (puthash "rpc_venv" rpc-venv config)
+        (if rpc-venv
+            (puthash "rpc_venv_short"
+                     (file-name-nondirectory rpc-venv) config)
+          (puthash "rpc_venv_short" nil config)))
+      (with-elpy-rpc-venv-activated
+       (puthash "rpc_python" elpy-rpc-python-command config)
+       (puthash "rpc_python_executable"
+                (executable-find elpy-rpc-python-command)
+                config))
       (let ((interactive-python (if (boundp 'python-python-command)
                                     python-python-command
                                   python-shell-interpreter)))
@@ -1089,41 +1104,48 @@ virtual_env_short"
         (if venv
             (puthash "virtual_env_short" (file-name-nondirectory venv) config)
           (puthash "virtual_env_short" nil config)))
-      (let ((return-value (ignore-errors
-                            (let ((process-environment
-                                   (elpy-rpc--environment))
-                                  (default-directory "/"))
-                              (call-process elpy-rpc-python-command
-                                            nil
-                                            (current-buffer)
-                                            nil
-                                            "-c"
-                                            elpy-config--get-config)))))
-        (when return-value
-          (let ((data (ignore-errors
-                        (let ((json-array-type 'list)
-                              (json-encoding-pretty-print nil))  ;; Link to bug https://github.com/jorgenschaefer/elpy/issues/1521
-                          (goto-char (point-min))
-                          (json-read)))))
-            (if (not data)
-                (puthash "error_output" (buffer-string) config)
-              (dolist (pair data)
-                (puthash (symbol-name (car pair)) (cdr pair) config))))))
+      (with-elpy-rpc-venv-activated
+       (let ((return-value (ignore-errors
+                             (let ((process-environment
+                                    (elpy-rpc--environment))
+                                   (default-directory "/"))
+                               (call-process elpy-rpc-python-command
+                                             nil
+                                             (current-buffer)
+                                             nil
+                                             "-c"
+                                             elpy-config--get-config)))))
+         (when return-value
+           (let ((data (ignore-errors
+                         (let ((json-array-type 'list)
+                               (json-false nil)
+                               (json-encoding-pretty-print nil))  ;; Link to bug https://github.com/jorgenschaefer/elpy/issues/1521
+                           (goto-char (point-min))
+                           (json-read)))))
+             (if (not data)
+                 (puthash "error_output" (buffer-string) config)
+               (dolist (pair data)
+                 (puthash (symbol-name (car pair)) (cdr pair) config)))))))
       config)))
 
 (defun elpy-config--insert-configuration-table (&optional config)
   "Insert a table describing the current Elpy config."
   (when (not config)
     (setq config (elpy-config--get-config)))
-  (let ((emacs-version (gethash "emacs_version" config))
-        (python-rpc-version (gethash "python_rpc_version" config))
-        (python-rpc (gethash "python_rpc" config))
-        (python-rpc-executable (gethash "python_rpc_executable" config))
+  (let (
+        (emacs-version (gethash "emacs_version" config))
+        (elpy-python-version (gethash "elpy_version" config))
+        (virtual-env (gethash "virtual_env" config))
+        (virtual-env-short (gethash "virtual_env_short" config))
         (python-interactive (gethash "python_interactive" config))
         (python-interactive-version (gethash "python_interactive_version" config))
         (python-interactive-executable (gethash "python_interactive_executable"
                                                 config))
-        (elpy-python-version (gethash "elpy_version" config))
+        (rpc-python (gethash "rpc_python" config))
+        (rpc-python-executable (gethash "rpc_python_executable" config))
+        (rpc-python-version (gethash "rpc_python_version" config))
+        (rpc-venv (gethash "rpc_venv" config))
+        (rpc-venv-short (gethash "rpc_venv_short" config))
         (jedi-version (gethash "jedi_version" config))
         (jedi-latest (gethash "jedi_latest" config))
         (rope-version (gethash "rope_version" config))
@@ -1134,8 +1156,6 @@ virtual_env_short"
         (yapf-latest (gethash "yapf_latest" config))
         (black-version (gethash "black_version" config))
         (black-latest (gethash "black_latest" config))
-        (virtual-env (gethash "virtual_env" config))
-        (virtual-env-short (gethash "virtual_env_short" config))
         table maxwidth)
     (setq table
           `(("Emacs" . ,emacs-version)
@@ -1172,19 +1192,23 @@ virtual_env_short"
                           python-interactive))
                  (t
                   "Not configured")))
-            (("RPC Python" (lambda ()
+            ("RPC virtualenv"
+              . ,(format "%s (%s)"
+                      rpc-venv-short
+                      rpc-venv))
+            ((" Python" (lambda ()
                              (customize-variable
                               'elpy-rpc-python-command)))
              . ,(cond
-                 (python-rpc-executable
+                 (rpc-python-executable
                   (format "%s %s (%s)"
-                          python-rpc
-                          python-rpc-version
-                          python-rpc-executable))
-                 (python-rpc-executable
-                  python-rpc-executable)
-                 (python-rpc
-                  (format "%s (not found)" python-rpc))
+                          rpc-python
+                          rpc-python-version
+                          rpc-python-executable))
+                 (rpc-python-executable
+                  rpc-python-executable)
+                 (rpc-python
+                  (format "%s (not found)" rpc-python))
                  (t
                   (format "Not configured"))))
             (" Jedi" . ,(elpy-config--package-link "jedi"
@@ -1303,7 +1327,7 @@ PyPI, or nil if that's VERSION."
   "A button that runs pip (or an alternative)."
   :button-prefix "["
   :button-suffix "]"
-  :format "%[run%] %v"
+  :format "%[%v%]"
   :value-create 'elpy-insert--pip-button-value-create
   :action 'elpy-insert--pip-button-action)
 
@@ -1314,33 +1338,28 @@ PyPI, or nil if that's VERSION."
          (upgrade-option (if do-upgrade
                              "--upgrade "
                            ""))
-         (do-user-install (not (or (getenv "VIRTUAL_ENV")
-                                   pyvenv-virtual-env)))
-         (user-option (if do-user-install
-                          "--user "
-                        ""))
-
          (command (cond
                    ((= (call-process elpy-rpc-python-command
                                      nil nil nil
                                      "-m" "pip" "--help")
                        0)
-                    (format "%s -m pip install %s%s%s"
+                    (format "%s -m pip install %s%s"
                             elpy-rpc-python-command
-                            user-option
                             upgrade-option
                             python-package))
                    ((executable-find "easy_install")
-                    (format "easy_install %s%s"
-                            user-option python-package))
+                    (format "easy_install %s" python-package))
                    (t
                     (error "Neither easy_install nor pip found")))))
     (widget-put widget :command command)
-    (insert command)))
+    (if do-upgrade
+        (insert (format "Update %s" python-package))
+      (insert (format "Install %s" python-package)))))
 
 (defun elpy-insert--pip-button-action (widget &optional _event)
   "The :action option for the pip button widget."
-  (async-shell-command (widget-get widget :command)))
+  (with-elpy-rpc-venv-activated
+   (async-shell-command (widget-get widget :command))))
 
 ;;;;;;;;;;;;
 ;;; Projects
@@ -2660,6 +2679,21 @@ This maps call IDs to functions.")
 (defvar elpy-rpc--jedi-available nil
   "Whether jedi is available or not.")
 
+(defun elpy-rpc--get-package-list ()
+  "Return the list of packages to be installed in the RPC."
+  (let ((rpc-python-version (elpy-rpc--get-python-version)))
+    (if (version< rpc-python-version "3.6.0")
+        '("jedi" "flake8" "autopep8" "yapf" "rope")
+        '("jedi" "flake8" "autopep8" "yapf" "black" "rope"))))
+
+(defun elpy-rpc--get-python-version ()
+  "Return the RPC python version."
+  (with-temp-buffer
+    (call-process elpy-rpc-python-command nil t nil "--version")
+    (goto-char (point-min))
+    (re-search-forward "Python \\([0-9.]+\\)")
+    (match-string 1)))
+
 (defun elpy-rpc (method params &optional success error)
   "Call METHOD with PARAMS in the backend.
 
@@ -2779,40 +2813,42 @@ died, this will kill the process and buffer."
 (defun elpy-rpc--open (library-root python-command)
   "Start a new RPC process and return the associated buffer."
   (elpy-rpc--cleanup-buffers)
-  (let* ((full-python-command (executable-find python-command))
-         (name (format " *elpy-rpc [project:%s python:%s]*"
-                       library-root
-                       full-python-command))
-         (new-elpy-rpc-buffer (generate-new-buffer name))
-         (proc nil))
-    (when (not full-python-command)
-      (error "Can't find Python command, configure `elpy-rpc-python-command'"))
-    (with-current-buffer new-elpy-rpc-buffer
-      (setq elpy-rpc--buffer-p t
-            elpy-rpc--buffer (current-buffer)
-            elpy-rpc--backend-library-root library-root
-            elpy-rpc--backend-python-command full-python-command
-            default-directory "/"
-            proc (condition-case err
-                     (let ((process-connection-type nil)
-                           (process-environment (elpy-rpc--environment)))
-                       (start-process name
-                                      (current-buffer)
-                                      full-python-command
-                                      "-W" "ignore"
-                                      "-m" "elpy.__main__"))
-                   (error
-                    (elpy-config-error
-                     "Elpy can't start Python (%s: %s)"
-                     (car err) (cadr err)))))
-      (set-process-query-on-exit-flag proc nil)
-      (set-process-sentinel proc #'elpy-rpc--sentinel)
-      (set-process-filter proc #'elpy-rpc--filter)
-      (elpy-rpc-init library-root
-                     (lambda (result)
-                       (setq elpy-rpc--jedi-available
-                             (cdr (assq 'jedi_available result))))))
-    new-elpy-rpc-buffer))
+  (with-elpy-rpc-venv-activated
+   (let* ((full-python-command (executable-find python-command))
+          (name (format " *elpy-rpc [project:%s environment:%s]*"
+                        library-root
+                        (or deactivated-environment
+                            "global")))
+          (new-elpy-rpc-buffer (generate-new-buffer name))
+          (proc nil))
+     (when (not full-python-command)
+       (error "Can't find Python command, configure `elpy-rpc-python-command'"))
+     (with-current-buffer new-elpy-rpc-buffer
+       (setq elpy-rpc--buffer-p t
+             elpy-rpc--buffer (current-buffer)
+             elpy-rpc--backend-library-root library-root
+             elpy-rpc--backend-python-command full-python-command
+             default-directory "/"
+             proc (condition-case err
+                      (let ((process-connection-type nil)
+                            (process-environment (elpy-rpc--environment)))
+                        (start-process name
+                                       (current-buffer)
+                                       full-python-command
+                                       "-W" "ignore"
+                                       "-m" "elpy.__main__"))
+                    (error
+                     (elpy-config-error
+                      "Elpy can't start Python (%s: %s)"
+                      (car err) (cadr err)))))
+       (set-process-query-on-exit-flag proc nil)
+       (set-process-sentinel proc #'elpy-rpc--sentinel)
+       (set-process-filter proc #'elpy-rpc--filter)
+       (elpy-rpc-init library-root deactivated-environment
+                      (lambda (result)
+                        (setq elpy-rpc--jedi-available
+                              (cdr (assq 'jedi_available result))))))
+     new-elpy-rpc-buffer)))
 
 (defun elpy-rpc--cleanup-buffers ()
   "Close RPC buffers that have not been used in five minutes."
@@ -2865,6 +2901,7 @@ RPC calls with the event."
             (condition-case _err
                 (progn
                   (setq json (let ((json-array-type 'list)
+                                   (json-false nil)
                                    (json-encoding-pretty-print nil))  ;; Link to bug https://github.com/jorgenschaefer/elpy/issues/1521
                                (json-read)))
                   (if (listp json)
@@ -3097,8 +3134,59 @@ protocol if the buffer is larger than
   "Disconnect rpc process from elpy buffers."
   (dolist (buf (buffer-list))
     (with-current-buffer buf
-      (when (memq 'elpy-mode minor-mode-list)
+      (when elpy-mode
         (setq elpy-rpc--buffer nil)))))
+
+(defun elpy-rpc-get-or-create-venv ()
+  "Return Elpy's RPC virtualenv.
+
+Create the virtualenv if it does not exist yet."
+  (let* ((venv-dir (concat (file-name-as-directory (pyvenv-workon-home))
+                           "elpy-rpc-venv"))
+         (venv-exist (file-exists-p venv-dir))
+         (venv-python-path-command-file (concat
+                                         (file-name-as-directory venv-dir)
+                                         "elpy-rpc-python-path-command"))
+         (venv-python-path-command
+          (when (file-exists-p venv-python-path-command-file)
+            (with-temp-buffer
+              (insert-file-contents venv-python-path-command-file)
+              (buffer-string))))
+         (venv-need-update (and venv-exist
+                                (not (string= venv-python-path-command
+                                              elpy-rpc-python-command)))))
+    ;; Delete obsolete rpc venv
+    (when venv-need-update
+      (delete-directory (format "%s/%s"
+                                (pyvenv-workon-home)
+                                "elpy-rpc-venv")
+                        t)
+      (setq venv-exist nil))
+    ;; Create a new rpc venv if necessary
+    (unless venv-exist
+      (let ((deact-venv pyvenv-virtual-env))
+        ;; Create the venv
+        (message "Elpy is creating the RPC virtualenv... (It may take a while, but should only happen once in a while)")
+        (save-window-excursion
+          (pyvenv-create "elpy-rpc-venv" elpy-rpc-python-command))
+        ;; Install the dependencies
+        (message "Elpy is installing the RPC dependencies...")
+        (with-temp-buffer
+          (when (/= (apply 'call-process elpy-rpc-python-command nil t nil
+                           "-m" "pip" "install" "--upgrade"
+                           (elpy-rpc--get-package-list))
+                    0)
+            (error "Elpy failed to install the RPC dependencies:\n %s"
+                   (buffer-substring (point-min) (point-max)))))
+        ;; Add a file to keep track of the `elpy-rpc-python-command` used
+        (with-temp-file venv-python-path-command-file
+          (insert elpy-rpc-python-command))
+        ;; Deactivate the rpc venv
+        (if deact-venv
+            (pyvenv-activate (directory-file-name deact-venv))
+          (pyvenv-deactivate))
+        (message "Done")))
+    venv-dir))
 
 ;; RPC API functions
 
@@ -3112,7 +3200,7 @@ protocol if the buffer is larger than
       (ignore-errors
         (kill-buffer buffer)))))
 
-(defun elpy-rpc-init (library-root &optional success error)
+(defun elpy-rpc-init (library-root environment &optional success error)
   "Initialize the backend.
 
 This has to be called as the first method, else Elpy won't be
@@ -3121,7 +3209,8 @@ able to respond to other calls."
             ;; This uses a vector because otherwise, json-encode in
             ;; older Emacsen gets seriously confused, especially when
             ;; backend is nil.
-            (vector `((project_root . ,(expand-file-name library-root))))
+            (vector `((project_root . ,(expand-file-name library-root))
+                      (environment . ,(when environment (expand-file-name environment)))))
             success error))
 
 (defun elpy-rpc-get-calltip (&optional success error)
@@ -4016,6 +4105,40 @@ display the current class and method instead."
      (pyvenv-mode 1))
     (`global-stop
      (pyvenv-mode -1))))
+
+(defmacro with-elpy-rpc-venv-activated (&rest body)
+  "Run BODY with Elpy's RPC virtualenv activated.
+
+The current virtualenv name is bounded to the
+`deactivated-environment' variable during the execution of
+BODY."
+  `(if (not (executable-find elpy-rpc-python-command))
+       (error "Cannot find executable '%s', please set 'elpy-rpc-python-command' to an existing executable." elpy-rpc-python-command)
+    (let ((venv-was-activated pyvenv-virtual-env)
+         (pyvenv-post-activate-hooks (remq 'elpy-rpc--disconnect
+                                           pyvenv-post-activate-hooks))
+         (pyvenv-post-deactivate-hooks (remq 'elpy-rpc--disconnect
+                                             pyvenv-post-deactivate-hooks))
+         (deactivated-environment
+          (or pyvenv-virtual-env
+              ;; global env
+              (directory-file-name
+               (file-name-directory
+                (directory-file-name
+                 (file-name-directory
+                  (executable-find elpy-rpc-python-command))))))))
+     (pyvenv-activate (elpy-rpc-get-or-create-venv))
+     (let (venv-err result)
+       (condition-case err
+           (setq result (progn ,@body))
+         (error (setq venv-err (car (cdr err)))))
+       (if venv-was-activated
+           (pyvenv-activate (directory-file-name
+                             deactivated-environment))
+         (pyvenv-deactivate))
+       (when venv-err
+         (error venv-err))
+       result))))
 
 ;;;;;;;;;;;;;;;;;;;;;
 ;;; Module: Yasnippet
