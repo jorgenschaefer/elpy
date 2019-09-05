@@ -557,7 +557,7 @@ Snippets
 
 Elpy uses yasnippet_ to provide code templates that helps writing common pieces of code faster.
 You can access a template by typing a "template key" and hitting ``TAB`` to expand it.
-You may then be asked to fill some fields in the template, just hit ``TAB`` when you are done to procede to the next field.
+You may then be asked to fill some fields in the template, just hit ``TAB`` when you are done to proceed to the next field.
 
 The sequel presents a list of templates provided by Elpy.
 
@@ -716,7 +716,7 @@ Refactoring
 Profiling
 =========
 
-Elpy allows to profile python scripts asynchronously using `cProfile`.
+Elpy allows one to profile python scripts asynchronously using `cProfile`.
 
 .. command:: elpy-profile-buffer-or-region
 
