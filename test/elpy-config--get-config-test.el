@@ -2,19 +2,22 @@
   (elpy-testcase ()
     (let ((config (elpy-config--get-config)))
       (dolist (key '("emacs_version"
-                     "python_rpc"
-                     "python_rpc_version"
-                     "python_rpc_executable"
+                     "elpy_version"
+                     "virtual_env"
+                     "virtual_env_short"
                      "python_interactive"
                      "python_interactive_version"
                      "python_interactive_executable"
-                     "elpy_version"
+                     "rpc_venv"
+                     "rpc_venv_short"
+                     "rpc_python"
+                     "rpc_python_version"
+                     "rpc_python_executable"
                      "jedi_version"
                      "jedi_latest"
                      "rope_version"
                      "rope_latest"
-                     "virtual_env"
-                     "virtual_env_short"))
+                     ))
         (should (not (eq :not-set (gethash key config :not-set))))))))
 
 (ert-deftest elpy-config--get-config-should-set-pythonpath ()
@@ -22,8 +25,15 @@
     (mletf* ((elpy-rpc--environment () "test-environment")
              (environment nil)
              (call-process (&rest ignored)
-                           (setq environment process-environment)))
+                           (when (stringp process-environment)
+                             (setq environment process-environment))))
 
       (elpy-config--get-config)
 
       (should (equal environment "test-environment")))))
+
+(ert-deftest elpy-config--get-config-should-be-evaluated-in-the-rpc-venv ()
+  (elpy-testcase ()
+    (should (string-match "elpy-rpc-venv/bin/python"
+                          (gethash "rpc_python_executable"
+                                   (elpy-config--get-config))))))
