@@ -15,6 +15,6 @@
           (promise (elpy-promise nil)))
 
       (run-at-time 0.1 nil 'elpy-promise-resolve promise t)
-      (elpy-promise-wait promise 1)
+      (elpy-promise-wait promise 5)
 
       (should (elpy-promise-resolved-p promise)))))

@@ -1,6 +1,5 @@
-flake8==3.7.7
-jedi==0.14.0
+flake8==3.7.8
+jedi==0.15.1
 rope_py3k==0.9.4-1
 autopep8==1.4.4
-yapf==0.27
-black==19.3b0
+yapf==0.28

@@ -48,20 +48,18 @@ before_install:
   - evm install $EVM_EMACS --use --skip
   - cask --verbose        # verbose only needed because of cask bug
 install:
-  - pip install jedi
+  - pip install -r requirements-dev.txt
+  - if [[ "$TRAVIS_PYTHON_VERSION" == 2.* ]] ; then
+      pip install -r requirements.txt ;
+    fi
   - if [[ "$TRAVIS_PYTHON_VERSION" == 2.6 ]] ; then
       pip install unittest2 ;
     fi
-  - if [[ "$TRAVIS_PYTHON_VERSION" == 2.* ]] ; then
-      pip install rope ;
-    fi
   - if [[ "$TRAVIS_PYTHON_VERSION" == 3.* ]] ; then
-      pip install rope_py3k ;
+      pip install -r requirements3.txt ;
     fi
-  - pip install autopep8
-  - pip install yapf
   - if [[ "$TRAVIS_PYTHON_VERSION" > 3.6 || "$TRAVIS_PYTHON_VERSION" == 3.6 ]] ; then
-      pip install black ;
+      pip install -r requirements3.6.txt ;
     fi
   - pip install coveralls
 script:
