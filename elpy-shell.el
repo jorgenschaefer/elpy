@@ -234,7 +234,7 @@ Python process. This allows the process to start up."
     (if proc
         proc
       (when (not (executable-find python-shell-interpreter))
-        (error "Python shell interpreter `%s' cannot be found. Please set `python-shell-interpreter' to an valid python binary."
+        (error "Python shell interpreter `%s' cannot be found. Please set `python-shell-interpreter' to a valid python binary."
                python-shell-interpreter))
       (let ((default-directory (or (and elpy-shell-use-project-root
                                         (elpy-project-root))
