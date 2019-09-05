@@ -66,6 +66,19 @@ class TestRPCGetDocstring(RPCGetDocstringTests,
                 'object_pairs_hook: Optional[Callable[[List[Tuple[str, Any]]], '
                 'Any]]=...)'
             )
+        elif sys.version_info >= (3, 5):
+            self.JSON_LOADS_DOCSTRING = (
+                'loads(s, encoding=None, cls=None, object_hook=None, '
+                'parse_float=None, parse_int=None, parse_constant=None, '
+                'object_pairs_hook=None, *, object_hook: '
+                'Optional[Callable[[Dict[str, Any]], Any]]=..., '
+                'parse_float: Optional[Callable[[str], Any]]=..., '
+                'parse_int: Optional[Callable[[str], Any]]=..., '
+                'parse_constant: Optional[Callable[[str], Any]]=..., '
+                'strict: bool=..., '
+                'object_pairs_hook: Optional[Callable[[List[Tuple[str, Any]]], '
+                'Any]]=...)'
+            )
         else:
             self.JSON_LOADS_DOCSTRING = (
                 'loads(s, encoding=None, cls=None, object_hook=None, '

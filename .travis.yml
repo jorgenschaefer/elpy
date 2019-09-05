@@ -51,11 +51,15 @@ install:
   - pip install -r requirements-dev.txt
   - if [[ "$TRAVIS_PYTHON_VERSION" == 2.* ]] ; then
       pip install -r requirements.txt ;
-    else
-      pip install -r requirements3.txt ;
     fi
   - if [[ "$TRAVIS_PYTHON_VERSION" == 2.6 ]] ; then
       pip install unittest2 ;
+    fi
+  - if [[ "$TRAVIS_PYTHON_VERSION" == 3.* ]] ; then
+      pip install -r requirements3.txt ;
+    fi
+  - if [[ "$TRAVIS_PYTHON_VERSION" > 3.6 || "$TRAVIS_PYTHON_VERSION" == 3.6 ]] ; then
+      pip install -r requirements3.6.txt ;
     fi
   - pip install coveralls
 script:
