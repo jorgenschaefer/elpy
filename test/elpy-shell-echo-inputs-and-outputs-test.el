@@ -80,7 +80,6 @@
   (elpy-testcase ()
     (python-mode)
     (elpy-mode)
-    (setq python-shell-interpreter "python2")
     (setq elpy-shell-echo-input nil)
     (setq elpy-shell-echo-output t)
     (insert "def foo():
