@@ -1,8 +1,8 @@
 ;;; elpy-shell.el --- Interactive Python support for elpy -*- lexical-binding: t -*-
 ;;
-;; Copyright (C) 2012-2016  Jorgen Schaefer
+;; Copyright (C) 2012-2019  Jorgen Schaefer
 ;;
-;; Author: Jorgen Schaefer <contact@jorgenschaefer.de>, Rainer Gemulla <rgemulla@gmx.de>
+;; Author: Jorgen Schaefer <contact@jorgenschaefer.de>, Rainer Gemulla <rgemulla@gmx.de>, Gaby Launay <gaby.launay@protonmail.com>
 ;; URL: https://github.com/jorgenschaefer/elpy
 ;;
 ;; This program is free software; you can redistribute it and/or
@@ -25,7 +25,6 @@
 ;;; Code:
 
 (eval-when-compile (require 'subr-x))
-(require 'pyvenv)
 (require 'python)
 
 ;;;;;;;;;;;;;;;;;;;;;;
@@ -1225,5 +1224,4 @@ region or buffer."
 (make-obsolete 'elpy-use-cpython nil "Jan 2017")
 
 (provide 'elpy-shell)
-
 ;;; elpy-shell.el ends here

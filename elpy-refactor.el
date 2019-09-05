@@ -1,6 +1,6 @@
 ;;; elpy-refactor.el --- Refactoring mode for Elpy
 
-;; Copyright (C) 2013-2016  Jorgen Schaefer
+;; Copyright (C) 2013-2019  Jorgen Schaefer
 
 ;; Author: Jorgen Schaefer <contact@jorgenschaefer.de>
 ;; URL: https://github.com/jorgenschaefer/elpy

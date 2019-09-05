@@ -1,6 +1,6 @@
 ;;; elpy-profile.el --- Profiling capabilitiss for elpy
 
-;; Copyright (C) 2013-2016  Jorgen Schaefer
+;; Copyright (C) 2013-2019  Jorgen Schaefer
 
 ;; Author: Gaby Launay <gaby.launay@tutanota.com>
 ;; URL: https://github.com/jorgenschaefer/elpy

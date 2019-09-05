@@ -1,6 +1,6 @@
 ;;; elpy-django.el --- Django extension for elpy
 
-;; Copyright (C) 2013-2016  Jorgen Schaefer
+;; Copyright (C) 2013-2019  Jorgen Schaefer
 
 ;; Author: Daniel Gopar <gopardaniel@gmail.com>
 ;; URL: https://github.com/jorgenschaefer/elpy

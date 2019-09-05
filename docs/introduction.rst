@@ -109,9 +109,9 @@ by typing ``M-x elpy-config RET``, and following the instructions.
 Configuration
 =============
 
-You can easily configure Elpy to your own preferences.
-All options are available through a unified interface, accessible
-with the following command:
+You can easily configure Elpy to your own preferences. All options are
+available through a unified interface, accessible with the following
+command:
 
 .. command:: elpy-config
 

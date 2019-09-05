@@ -2,7 +2,7 @@
 """
 Emacs Lisp Domain for Sphinx
 
-Copyright 2014 by Jorgen Schäfer
+Copyright 2014-2019 by Jorgen Schäfer
 
 """
 
