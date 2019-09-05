@@ -3,4 +3,4 @@
 # key: pdb
 # group: Debug
 # --
-import pdb; pdb.set_trace()
+__import__("pdb").set_trace()
