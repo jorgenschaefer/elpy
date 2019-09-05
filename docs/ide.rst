@@ -700,8 +700,9 @@ Refactoring
 
    Format code using the available formatter.
 
-   This command formats code using `yapf`_ , `autopep8`_ or `black`_
-   formatter. If a region is selected, only that region is formatted.
+   This command formats code using the first formatter found amongst
+   `yapf`_ , `autopep8`_ and `black`_.
+   If a region is selected, only that region is formatted.
    Otherwise current buffer is formatted.
 
    `yapf`_ and `autopep8`_ can be configured with style files placed in
