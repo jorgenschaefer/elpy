@@ -1,7 +1,7 @@
 (source gnu)
 (source melpa)
 
-(package "elpy" "1.30.0" "Emacs Python Development Environment")
+(package "elpy" "1.31.0" "Emacs Python Development Environment")
 
 (depends-on "company" "0.9.10")
 (depends-on "find-file-in-project" "5.7.4")
