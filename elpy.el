@@ -54,7 +54,7 @@
 (require 'find-file-in-project)
 
 (defconst elpy-version "1.31.0"
-  "The version of the Elpy lisp code.")
+  "The version of the Elpy Lisp code.")
 
 ;;;;;;;;;;;;;;;;;;;;;;
 ;;; User customization
@@ -389,7 +389,7 @@ option is `pdb'."
                                             (propertize "r" 'face 'bold))
                                     'elpy-refactor))
     map)
-  "Key map for the refactor command")
+  "Key map for the refactor command.")
 
 (defvar elpy-mode-map
   (let ((map (make-sparse-keymap)))
@@ -483,7 +483,7 @@ option is `pdb'."
     (define-key map (kbd "C-b") 'elpy-shell-send-buffer-and-step)
     (define-key map (kbd "C-S-B") 'elpy-shell-send-buffer-and-step-and-go)
     map)
-  "Key map for the shell related commands")
+  "Key map for the shell related commands.")
 (fset 'elpy-shell-map elpy-shell-map)
 
 (defcustom elpy-shell-command-prefix-key "C-c C-y"
@@ -507,7 +507,7 @@ This option need to bet set through `customize' or `customize-set-variable' to b
     (define-key map (kbd "e") 'elpy-pdb-debug-last-exception)
     (define-key map (kbd "b") 'elpy-pdb-toggle-breakpoint-at-point)
     map)
-  "Key map for the shell related commands")
+  "Key map for the shell related commands.")
 (fset 'elpy-pdb-map elpy-pdb-map)
 (define-key elpy-mode-map (kbd "C-c C-u") 'elpy-pdb-map)
 
@@ -588,13 +588,13 @@ This option need to bet set through `customize' or `customize-set-variable' to b
   "Is Elpy enabled or not.")
 
 ;;;###autoload
-(defun elpy-enable (&optional ignored)
+(defun elpy-enable (&optional _ignored)
   "Enable Elpy in all future Python buffers."
   (interactive)
   (unless elpy-enabled-p
     (when (< emacs-major-version 24)
       (error "Elpy requires Emacs 24 or newer"))
-    (when ignored
+    (when _ignored
       (warn "The argument to `elpy-enable' is deprecated, customize `elpy-modules' instead"))
     (let ((filename (find-lisp-object-file-name 'python-mode
                                                 'symbol-function)))
@@ -701,7 +701,7 @@ def latest(package, version=None):
 
 
 config = {}
-config['python_version'] = ('{major}.{minor}.{micro}'
+config['python_rpc_version'] = ('{major}.{minor}.{micro}'
                             .format(major=sys.version_info[0],
                                     minor=sys.version_info[1],
                                     micro=sys.version_info[2]))
@@ -764,6 +764,8 @@ json.dump(config, sys.stdout)
 (defun elpy-config-error (&optional fmt &rest args)
   "Note a configuration problem.
 
+FMT is the formating string.
+
 This will show a message in the minibuffer that tells the user to
 use \\[elpy-config]."
   (let ((msg (if fmt
@@ -808,6 +810,7 @@ a customize buffer, but has some more options."
   (message "Elpy %s (use M-x elpy-config for details)" elpy-version))
 
 (defun elpy-config--insert-help ()
+  "Insert the customization help."
   (let ((start (point)))
     ;; Help display from `customize-browse'
     (widget-insert (format "\
@@ -844,9 +847,9 @@ item in another window.\n\n")
   "Insert help text and widgets for configuration problems."
   (when (not config)
     (setq config (elpy-config--get-config)))
-  (let* ((python-version (gethash "python_version" config))
-         (rope-pypi-package  (if (and python-version
-                                      (string-match "^3\\." python-version))
+  (let* ((python-rpc-version (gethash "python_rpc_version" config))
+         (rope-pypi-package  (if (and python-rpc-version
+                                      (string-match "^3\\." python-rpc-version))
                                  "rope_py3k"
                                "rope")))
 
@@ -1048,10 +1051,11 @@ This returns a hash table with the following keys (all strings):
 
 emacs_version
 python_rpc
+python_rpc_version
 python_rpc_executable
 python_interactive
+python_interactive_version
 python_interactive_executable
-python_version (RPC)
 elpy_version
 jedi_version
 rope_version
@@ -1069,6 +1073,13 @@ virtual_env_short"
                                   python-shell-interpreter)))
         (puthash "python_interactive"
                  interactive-python
+                 config)
+        (puthash "python_interactive_version"
+                 (let ((pversion (shell-command-to-string
+                                  (format "%s --version"
+                                          python-shell-interpreter))))
+                   (when (string-match "[0-9.]+" pversion)
+                     (match-string 0 pversion)))
                  config)
         (puthash "python_interactive_executable"
                  (executable-find interactive-python)
@@ -1105,10 +1116,11 @@ virtual_env_short"
   (when (not config)
     (setq config (elpy-config--get-config)))
   (let ((emacs-version (gethash "emacs_version" config))
-        (python-version (gethash "python_version" config))
+        (python-rpc-version (gethash "python_rpc_version" config))
         (python-rpc (gethash "python_rpc" config))
         (python-rpc-executable (gethash "python_rpc_executable" config))
         (python-interactive (gethash "python_interactive" config))
+        (python-interactive-version (gethash "python_interactive_version" config))
         (python-interactive-executable (gethash "python_interactive_executable"
                                                 config))
         (elpy-python-version (gethash "elpy_version" config))
@@ -1126,33 +1138,7 @@ virtual_env_short"
         (virtual-env-short (gethash "virtual_env_short" config))
         table maxwidth)
     (setq table
-          `(("Virtualenv" . ,(if (gethash "virtual_env" config)
-                                 (format "%s (%s)"
-                                         virtual-env-short
-                                         virtual-env)
-                               "None"))
-            ("RPC Python" . ,(cond
-                              (python-version
-                               (format "%s (%s)"
-                                       python-version
-                                       python-rpc-executable))
-                              (python-rpc-executable
-                               python-rpc-executable)
-                              (python-rpc
-                               (format "%s (not found)" python-rpc))
-                              (t
-                               (format "Not configured"))))
-            ("Interactive Python" . ,(cond
-                                      (python-interactive-executable
-                                       (format "%s (%s)"
-                                               python-interactive
-                                               python-interactive-executable))
-                                      (python-interactive
-                                       (format "%s (not found)"
-                                               python-interactive))
-                                      (t
-                                       "Not configured")))
-            ("Emacs" . ,emacs-version)
+          `(("Emacs" . ,emacs-version)
             ("Elpy" . ,(cond
                         ((and elpy-python-version elpy-version
                               (equal elpy-python-version elpy-version))
@@ -1164,22 +1150,62 @@ virtual_env_short"
                         (t
                          (format "Not found (Python), %s (Emacs Lisp)"
                                  elpy-version))))
-            ("Jedi" . ,(elpy-config--package-link "jedi"
+            (("Virtualenv" (lambda ()
+                             (call-interactively 'pyvenv-workon)
+                             (elpy-config)))
+                            . ,(if (gethash "virtual_env" config)
+                                 (format "%s (%s)"
+                                         virtual-env-short
+                                         virtual-env)
+                               "None"))
+            (("Interactive Python" (lambda ()
+                                     (customize-variable
+                                      'python-shell-interpreter)))
+             . ,(cond
+                 (python-interactive-executable
+                  (format "%s %s (%s)"
+                          python-interactive
+                          python-interactive-version
+                          python-interactive-executable))
+                 (python-interactive
+                  (format "%s (not found)"
+                          python-interactive))
+                 (t
+                  "Not configured")))
+            (("RPC Python" (lambda ()
+                             (customize-variable
+                              'elpy-rpc-python-command)))
+             . ,(cond
+                 (python-rpc-executable
+                  (format "%s %s (%s)"
+                          python-rpc
+                          python-rpc-version
+                          python-rpc-executable))
+                 (python-rpc-executable
+                  python-rpc-executable)
+                 (python-rpc
+                  (format "%s (not found)" python-rpc))
+                 (t
+                  (format "Not configured"))))
+            (" Jedi" . ,(elpy-config--package-link "jedi"
                                                   jedi-version
                                                   jedi-latest))
-            ("Rope" . ,(elpy-config--package-link "rope"
+            (" Rope" . ,(elpy-config--package-link "rope"
                                                   rope-version
                                                   rope-latest))
-            ("Autopep8" . ,(elpy-config--package-link "autopep8"
+            (" Autopep8" . ,(elpy-config--package-link "autopep8"
                                                       autopep8-version
                                                       autopep8-latest))
-            ("Yapf" . ,(elpy-config--package-link "yapf"
+            (" Yapf" . ,(elpy-config--package-link "yapf"
                                                   yapf-version
                                                   yapf-latest))
-            ("Black" . ,(elpy-config--package-link "black"
+            (" Black" . ,(elpy-config--package-link "black"
                                                    black-version
                                                    black-latest))
-            ("Syntax checker" . ,(let ((syntax-checker
+            (("Syntax checker" (lambda ()
+                                 (customize-variable 'elpy-syntax-check-command)))
+
+              . ,(let ((syntax-checker
                                         (executable-find
                                          (car (split-string
                                                elpy-syntax-check-command)))))
@@ -1192,14 +1218,23 @@ virtual_env_short"
                                              elpy-syntax-check-command))))))
     (setq maxwidth 0)
     (dolist (row table)
-      (when (> (length (car row))
-               maxwidth)
-        (setq maxwidth (length (car row)))))
+      (let (length)
+        (if (stringp (car row))
+            (setq length (length (car row)))
+          (setq length (length (car (car row)))))
+        (when (> length maxwidth)
+          (setq maxwidth length ))))
     (dolist (row table)
-      (insert (car row)
-              (make-string (- maxwidth (length (car row)))
-                           ?.)
-              ": "
+      (if (stringp (car row))
+          (insert (car row)
+                  (make-string (- maxwidth (length (car row)))
+                               ?.))
+        (widget-create 'elpy-insert--generic-button
+                       :button-name (car (car row))
+                       :function (car (cdr (car row))))
+        (insert (make-string (- maxwidth (length (car (car row))))
+                     ?.)))
+      (insert ": "
               (cdr row)
               "\n"))))
 
@@ -1230,7 +1265,7 @@ PyPI, or nil if that's VERSION."
        ,@body)))
 
 (defun elpy-insert--para (&rest messages)
-  "Insert a bunch of text and then fill it."
+  "Insert MESSAGES, a list of strings, and then fill it."
   (let ((start (point)))
     (mapc (lambda (obj)
             (if (stringp obj)
@@ -1247,6 +1282,22 @@ PyPI, or nil if that's VERSION."
                       'face 'header-line)
           "\n"
           "\n"))
+
+(define-widget 'elpy-insert--generic-button 'item
+  "A button that run a rgiven function."
+  :button-prefix ""
+  :button-suffix ""
+  :format "%[%v%]"
+  :value-create 'elpy-insert--generic-button-value-create
+  :action 'elpy-insert--generic-button-action)
+
+(defun elpy-insert--generic-button-value-create (widget)
+  "The :value-create option for the customize button widget."
+  (insert (widget-get widget :button-name)))
+
+(defun elpy-insert--generic-button-action (widget &optional _event)
+  "The :action option for the customize button widget."
+  (funcall (widget-get widget :function)))
 
 (define-widget 'elpy-insert--pip-button 'item
   "A button that runs pip (or an alternative)."
@@ -1295,7 +1346,7 @@ PyPI, or nil if that's VERSION."
 ;;; Projects
 
 (defvar elpy-project--variable-name-history nil
-  "The history for `elpy-project--read-project-variable'")
+  "The history for `elpy-project--read-project-variable'.")
 
 (defun elpy-project-root ()
   "Return the root of the current buffer's project.
@@ -1361,7 +1412,7 @@ so that import package.module will pick up module.py."
                                           dir))))))
 
 (defun elpy-project--read-project-variable (prompt)
-  "Prompt the user for a variable name to set project-wide."
+  "Prompt the user for a variable name to set project-wide using PROMPT."
   (let* ((prefixes (mapcar (lambda (cust)
                              (nth 2 cust))
                            elpy-config--related-custom-groups))
@@ -1379,7 +1430,7 @@ so that import package.module will pick up module.py."
       'elpy-project--variable-name-history))))
 
 (defun elpy-project--read-variable-value (prompt variable)
-  "Read the value for VARIABLE from the user."
+  "Read the value for VARIABLE from the user using PROMPT."
   (let ((custom-type (get variable 'custom-type)))
     (if custom-type
         (widget-prompt-value (if (listp custom-type)
@@ -1488,8 +1539,8 @@ This combines
 (defun elpy-find-file (&optional dwim)
   "Efficiently find a file in the current project.
 
-With prefix argument, tries to guess what kind of file the user
-wants to open.
+With prefix argument (or DWIM non-nil), tries to guess what kind of
+file the user wants to open.
 
 On an import line, it opens the file of that module.
 
@@ -1620,7 +1671,7 @@ or the project root if WHOLE-PROJECT-P is non-nil (interactively,
 with a prefix argument)."
   (interactive "P")
   (when (not (buffer-file-name))
-    (error "Can't check a buffer without a file."))
+    (error "Can't check a buffer without a file"))
   (save-some-buffers (not compilation-ask-about-save) nil)
   (let ((process-environment (python-shell-calculate-process-environment))
         (exec-path (python-shell-calculate-exec-path))
@@ -1688,7 +1739,7 @@ with a prefix argument)."
 (defun elpy-goto-location (filename offset &optional other-window-p)
   "Show FILENAME at OFFSET to the user.
 
-If other-window-p is non-nil, show the same in other window."
+If OTHER-WINDOW-P is non-nil, show the same in other window."
   (ring-insert find-tag-marker-ring (point-marker))
   (let ((buffer (find-file-noselect filename)))
     (if other-window-p
@@ -1792,6 +1843,7 @@ indentation levels."
     (elpy--nav-move-line-vertically -1)))
 
 (defun elpy--nav-move-line-vertically (dir)
+  "Move the current line vertically in direction DIR."
   (let* ((beg (point-at-bol))
          (end (point-at-bol 2))
          (col (current-column))
@@ -1802,6 +1854,7 @@ indentation levels."
     (goto-char (+ (point) col))))
 
 (defun elpy--nav-move-region-vertically (beg end dir)
+  "Move the current region vertically in direction DIR."
   (let* ((point-before-mark (< (point) (mark)))
          (beg (save-excursion
                 (goto-char beg)
@@ -1857,6 +1910,7 @@ indentation levels."
       (backward-char))))
 
 (defadvice keyboard-quit (before collapse-region activate)
+  "Abort elpy selection by indentation on quit."
   (when (eq last-command 'elpy-nav-expand-to-indentation)
     (goto-char elpy-nav-expand--initial-position)))
 
@@ -1978,6 +2032,7 @@ directory is not nil."
         (list top nil nil nil)))))
 
 (defun elpy-test--current-test-name ()
+  "Return the name of the test at point."
   (let ((name (python-info-current-defun)))
     (if (and name
              (string-match "\\`\\([^.]+\\.[^.]+\\)\\." name))
@@ -2134,7 +2189,7 @@ prefix argument is given, prompt for a symbol from the user."
                   (elpy-doc--symbol-at-point)))))
     (if doc
         (elpy-doc--show doc)
-      (error "No documentation found."))))
+      (error "No documentation found"))))
 
 (defun elpy-doc--read-identifier-from-minibuffer (initial)
   "Read a pydoc-able identifier from the minibuffer."
@@ -2471,11 +2526,11 @@ Also, switch to that buffer."
   "Return a new promise.
 
 A promise is an object with a success and error callback. If the
-promise is resolved using `elpy-promise-resolve', its success
+promise is resolved using `elpy-promise-resolve', the SUCCESS
 callback is called with the given value. The current buffer is
 restored, too.
 
-If the promise is rejected using `elpy-promise-reject', its error
+If the promise is rejected using `elpy-promise-reject', the ERROR
 callback is called. For this function, the current buffer is not
 necessarily restored, as it is also called when the buffer does
 not exist anymore."
@@ -2487,7 +2542,7 @@ not exist anymore."
           ))
 
 (defun elpy-promise-p (obj)
-  "Return non-nil if the argument is a promise object."
+  "Return non-nil if OBJ is a promise object."
   (and (vectorp obj)
        (= (length obj) 5)
        (eq (aref obj 0) elpy-promise-marker)))
@@ -2568,13 +2623,13 @@ See http://debbugs.gnu.org/cgi/bugreport.cgi?bug=17647"
 ;; with JSON-RPC responses.
 
 (defvar elpy-rpc--call-id 0
-  "Call id of the last elpy-rpc call.
+  "Call id of the last call to `elpy-rpc`.
 
 Used to associate responses to callbacks.")
 (make-variable-buffer-local 'elpy-rpc--call-id)
 
 (defvar elpy-rpc--buffer-p nil
-  "True iff the current buffer is an elpy-rpc buffer.")
+  "Non-nil if the current buffer is an elpy-rpc buffer.")
 (make-variable-buffer-local 'elpy-rpc--buffer-p)
 
 (defvar elpy-rpc--buffer nil
@@ -3166,7 +3221,7 @@ Returns a possible multi-line docstring."
             success error))
 
 (defun elpy-rpc-get-usages (&optional success error)
-  "Return the symbol under point usages as a list"
+  "Return the symbol under point usages as a list."
   (elpy-rpc "get_usages"
             (list buffer-file-name
                   (elpy-rpc--buffer-contents)
@@ -3388,8 +3443,7 @@ Make sure global-init is called first."
 It should not be necessary to see (Python Elpy yas company ElDoc) all the
 time.
 
-If you need your modeline, you can set the variable `elpy-remove-modeline-lighter' to nil
-"
+If you need your modeline, you can set the variable `elpy-remove-modeline-lighter' to nil"
 
   (interactive)
   (when elpy-remove-modeline-lighter
@@ -3406,6 +3460,7 @@ If you need your modeline, you can set the variable `elpy-remove-modeline-lighte
 ;;; Module: Sane Defaults
 
 (defun elpy-module-sane-defaults (command &rest _args)
+  "Module for sane Emacs default for python."
   (pcase command
     (`buffer-init
      ;; Set `forward-sexp-function' to nil in python-mode. See
@@ -3578,10 +3633,10 @@ here, and return the \"name\" as used by the backend."
 (defun elpy-company-post-complete-parens (annotation name)
   "Complete functions, classes, and callable instances with parentheses.
 
-Add parentheses in case ANNOTATION is \"class\", \"function\", or \"instance\",
-unless the completion is already looking at a left parenthesis,
-or unless NAME is a Python exception outside a reasonably formed raise statement,
-or unless NAME is no callable instance."
+Add parentheses in case ANNOTATION is \"class\", \"function\", or
+\"instance\",unless the completion is already looking at a left
+ parenthesis,or unless NAME is a Python exception outside a reasonably
+ formed raise statement,or unless NAME is no callable instance."
   (when (not (looking-at-p "\("))
     (cond ((string= annotation "function")
            (insert "()")
@@ -3904,15 +3959,13 @@ display the current class and method instead."
             "/"))))
 
 (defun elpy-flymake-next-error ()
-  "Move forward to the next Flymake error and show a
-description."
+  "Move forward to the next Flymake error and show a description."
   (interactive)
   (flymake-goto-next-error)
   (elpy-flymake-show-error))
 
 (defun elpy-flymake-previous-error ()
-  "Move backward to the previous Flymake error and show a
-description."
+  "Move backward to the previous Flymake error and show a description."
   (interactive)
   (flymake-goto-prev-error)
   (elpy-flymake-show-error))

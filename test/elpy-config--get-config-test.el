@@ -3,10 +3,11 @@
     (let ((config (elpy-config--get-config)))
       (dolist (key '("emacs_version"
                      "python_rpc"
+                     "python_rpc_version"
                      "python_rpc_executable"
                      "python_interactive"
+                     "python_interactive_version"
                      "python_interactive_executable"
-                     "python_version"
                      "elpy_version"
                      "jedi_version"
                      "jedi_latest"
