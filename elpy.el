@@ -701,7 +701,7 @@ def latest(package, version=None):
 
 
 config = {}
-config['python_version'] = ('{major}.{minor}.{micro}'
+config['python_rpc_version'] = ('{major}.{minor}.{micro}'
                             .format(major=sys.version_info[0],
                                     minor=sys.version_info[1],
                                     micro=sys.version_info[2]))
@@ -844,9 +844,9 @@ item in another window.\n\n")
   "Insert help text and widgets for configuration problems."
   (when (not config)
     (setq config (elpy-config--get-config)))
-  (let* ((python-version (gethash "python_version" config))
-         (rope-pypi-package  (if (and python-version
-                                      (string-match "^3\\." python-version))
+  (let* ((python-rpc-version (gethash "python_rpc_version" config))
+         (rope-pypi-package  (if (and python-rpc-version
+                                      (string-match "^3\\." python-rpc-version))
                                  "rope_py3k"
                                "rope")))
 
@@ -1048,10 +1048,11 @@ This returns a hash table with the following keys (all strings):
 
 emacs_version
 python_rpc
+python_rpc_version
 python_rpc_executable
 python_interactive
+python_interactive_version
 python_interactive_executable
-python_version (RPC)
 elpy_version
 jedi_version
 rope_version
@@ -1069,6 +1070,13 @@ virtual_env_short"
                                   python-shell-interpreter)))
         (puthash "python_interactive"
                  interactive-python
+                 config)
+        (puthash "python_interactive_version"
+                 (let ((pversion (shell-command-to-string
+                                  (format "%s --version"
+                                          python-shell-interpreter))))
+                   (string-match "[0-9.]+" pversion)
+                   (match-string 0 pversion))
                  config)
         (puthash "python_interactive_executable"
                  (executable-find interactive-python)
@@ -1105,10 +1113,11 @@ virtual_env_short"
   (when (not config)
     (setq config (elpy-config--get-config)))
   (let ((emacs-version (gethash "emacs_version" config))
-        (python-version (gethash "python_version" config))
+        (python-rpc-version (gethash "python_rpc_version" config))
         (python-rpc (gethash "python_rpc" config))
         (python-rpc-executable (gethash "python_rpc_executable" config))
         (python-interactive (gethash "python_interactive" config))
+        (python-interactive-version (gethash "python_interactive_version" config))
         (python-interactive-executable (gethash "python_interactive_executable"
                                                 config))
         (elpy-python-version (gethash "elpy_version" config))
@@ -1126,33 +1135,7 @@ virtual_env_short"
         (virtual-env-short (gethash "virtual_env_short" config))
         table maxwidth)
     (setq table
-          `(("Virtualenv" . ,(if (gethash "virtual_env" config)
-                                 (format "%s (%s)"
-                                         virtual-env-short
-                                         virtual-env)
-                               "None"))
-            ("RPC Python" . ,(cond
-                              (python-version
-                               (format "%s (%s)"
-                                       python-version
-                                       python-rpc-executable))
-                              (python-rpc-executable
-                               python-rpc-executable)
-                              (python-rpc
-                               (format "%s (not found)" python-rpc))
-                              (t
-                               (format "Not configured"))))
-            ("Interactive Python" . ,(cond
-                                      (python-interactive-executable
-                                       (format "%s (%s)"
-                                               python-interactive
-                                               python-interactive-executable))
-                                      (python-interactive
-                                       (format "%s (not found)"
-                                               python-interactive))
-                                      (t
-                                       "Not configured")))
-            ("Emacs" . ,emacs-version)
+          `(("Emacs" . ,emacs-version)
             ("Elpy" . ,(cond
                         ((and elpy-python-version elpy-version
                               (equal elpy-python-version elpy-version))
@@ -1164,22 +1147,62 @@ virtual_env_short"
                         (t
                          (format "Not found (Python), %s (Emacs Lisp)"
                                  elpy-version))))
-            ("Jedi" . ,(elpy-config--package-link "jedi"
+            (("Virtualenv" (lambda ()
+                             (call-interactively 'pyvenv-workon)
+                             (elpy-config)))
+                            . ,(if (gethash "virtual_env" config)
+                                 (format "%s (%s)"
+                                         virtual-env-short
+                                         virtual-env)
+                               "None"))
+            (("Interactive Python" (lambda ()
+                                     (customize-variable
+                                      'python-shell-interpreter)))
+             . ,(cond
+                 (python-interactive-executable
+                  (format "%s %s (%s)"
+                          python-interactive
+                          python-interactive-version
+                          python-interactive-executable))
+                 (python-interactive
+                  (format "%s (not found)"
+                          python-interactive))
+                 (t
+                  "Not configured")))
+            (("RPC Python" (lambda ()
+                             (customize-variable
+                              'elpy-rpc-python-command)))
+             . ,(cond
+                 (python-rpc-executable
+                  (format "%s %s (%s)"
+                          python-rpc
+                          python-rpc-version
+                          python-rpc-executable))
+                 (python-rpc-executable
+                  python-rpc-executable)
+                 (python-rpc
+                  (format "%s (not found)" python-rpc))
+                 (t
+                  (format "Not configured"))))
+            (" Jedi" . ,(elpy-config--package-link "jedi"
                                                   jedi-version
                                                   jedi-latest))
-            ("Rope" . ,(elpy-config--package-link "rope"
+            (" Rope" . ,(elpy-config--package-link "rope"
                                                   rope-version
                                                   rope-latest))
-            ("Autopep8" . ,(elpy-config--package-link "autopep8"
+            (" Autopep8" . ,(elpy-config--package-link "autopep8"
                                                       autopep8-version
                                                       autopep8-latest))
-            ("Yapf" . ,(elpy-config--package-link "yapf"
+            (" Yapf" . ,(elpy-config--package-link "yapf"
                                                   yapf-version
                                                   yapf-latest))
-            ("Black" . ,(elpy-config--package-link "black"
+            (" Black" . ,(elpy-config--package-link "black"
                                                    black-version
                                                    black-latest))
-            ("Syntax checker" . ,(let ((syntax-checker
+            (("Syntax checker" (lambda ()
+                                 (customize-variable 'elpy-syntax-check-command)))
+
+              . ,(let ((syntax-checker
                                         (executable-find
                                          (car (split-string
                                                elpy-syntax-check-command)))))
@@ -1192,14 +1215,23 @@ virtual_env_short"
                                              elpy-syntax-check-command))))))
     (setq maxwidth 0)
     (dolist (row table)
-      (when (> (length (car row))
-               maxwidth)
-        (setq maxwidth (length (car row)))))
+      (let (length)
+        (if (stringp (car row))
+            (setq length (length (car row)))
+          (setq length (length (car (car row)))))
+        (when (> length maxwidth)
+          (setq maxwidth length ))))
     (dolist (row table)
-      (insert (car row)
-              (make-string (- maxwidth (length (car row)))
-                           ?.)
-              ": "
+      (if (stringp (car row))
+          (insert (car row)
+                  (make-string (- maxwidth (length (car row)))
+                               ?.))
+        (widget-create 'elpy-insert--generic-button
+                       :button-name (car (car row))
+                       :function (car (cdr (car row))))
+        (insert (make-string (- maxwidth (length (car (car row))))
+                     ?.)))
+      (insert ": "
               (cdr row)
               "\n"))))
 
@@ -1247,6 +1279,22 @@ PyPI, or nil if that's VERSION."
                       'face 'header-line)
           "\n"
           "\n"))
+
+(define-widget 'elpy-insert--generic-button 'item
+  "A button that run a rgiven function."
+  :button-prefix ""
+  :button-suffix ""
+  :format "%[%v%]"
+  :value-create 'elpy-insert--generic-button-value-create
+  :action 'elpy-insert--generic-button-action)
+
+(defun elpy-insert--generic-button-value-create (widget)
+  "The :value-create option for the customize button widget."
+  (insert (widget-get widget :button-name)))
+
+(defun elpy-insert--generic-button-action (widget &optional _event)
+  "The :action option for the customize button widget."
+  (funcall (widget-get widget :function)))
 
 (define-widget 'elpy-insert--pip-button 'item
   "A button that runs pip (or an alternative)."
