@@ -1212,6 +1212,291 @@ region or buffer."
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;
+;; Variable explorer
+
+(defcustom elpy-ve-row-max-height 10
+  "Maximum height of a variable explorer row."
+  :group 'elpy
+  :type 'number)
+
+(defvar elpy-ve-get-variables-code
+  "def __elpy_get_variables():
+    import json
+    try:
+        import numpy as np
+        NUMPY = True
+    except:
+        NUMPY = False
+    import pprint
+    try:
+        # python2
+        from StringIO import StringIO
+    except ImportError:
+        # python3
+        from io import StringIO
+    locs = globals().copy()
+    ret = {}
+    for var, val in locs.items():
+        typ = None
+        tmp_str = StringIO()
+        # filter out builtins, module and functions
+        if var == '_' or '__' in var or '<module' in str(val) or '<function' in str(val):
+            continue
+        # Deal with Numpy arrays
+        if NUMPY:
+            if isinstance(val, np.ndarray):
+                typ = '{}{}'.format(type(val).__name__, list(val.shape))
+        # Deal with lists and tuples
+        if typ is None:
+            try:
+                len(val)
+                typ = '{}[{}]'.format(type(val).__name__, len(val))
+            except:
+                typ = type(val).__name__
+        # Deal with strings
+        if isinstance(val, str):
+            val = '\"{}\"'.format(val)
+        else:
+            pprint.pprint(val, tmp_str)
+            val = tmp_str.getvalue()
+        ret[var] = [val, typ]
+    return json.dumps(ret)
+print(__elpy_get_variables())"
+  "Code used to get the variables defined in the current shell.")
+
+(defvar elpy-ve--variables-cache nil
+  "Cache for the variable explorer variables.")
+
+(defvar elpy-ve-gathering-data-from-shell nil
+  "Non-nil when Elpy is asking for data from the shell.")
+
+(defun elpy-ve-get-variables-from-shell ()
+  "Return the variables defined in the current python interpreter.
+
+Variables are sorted alphabetically."
+  (setq elpy-ve-gathering-data-from-shell t)
+  (let ((vars (python-shell-send-string-no-output elpy-ve-get-variables-code))
+        (json-array-type 'list))
+    (setq elpy-ve--variables-cache
+          (sort
+           (condition-case err
+               (json-read-from-string vars)
+             (error (error "Error while retrieving variables from the shell, aborting")))
+           (lambda (elem1 elem2)
+             (< (string-to-char (symbol-name (car elem1)))
+                (string-to-char (symbol-name (car elem2)))))))))
+
+(defun elpy-ve--truncate-string (string width)
+  "Truncate STRING to fit in WIDTH."
+  (let ((column-content-width (- width 2)))
+    (if (> (length string) column-content-width)
+        (concat
+         (substring string 0 (- column-content-width 3))
+         "...")
+      string)))
+
+(defun elpy-ve--insert-separator (width)
+  "Insert a horizontal separator of width WIDTH."
+  (concat
+   (propertize (s-repeat width "-")
+               'face 'font-lock-comment-face)
+   "
+"))
+
+(defun elpy-ve--insert-varname (varname varname-long width)
+  "Insert a variable name.
+
+VARNAME-LONG is the variable name while
+VARNAME is the variable name trimmed to be WIDTH long."
+  (concat
+   " "
+   (propertize varname
+               'face 'font-lock-keyword-face
+               'elpy-ve-variable varname-long)
+   (s-repeat (- width (length varname)) " ")))
+
+(defun elpy-ve--insert-vartype (vartype width)
+  "Insert the variable type VARTYPE.
+
+Ensure that it fills WIDTH."
+  (concat
+   (propertize vartype 'face 'font-lock-variable-name-face)
+   (s-repeat (- width (length vartype)) " ")))
+
+(defun elpy-ve--display-a-variable (var width)
+  "Display the variable VAR using columns of width WIDTH."
+  (let* ((varname-long (string-trim (symbol-name (car var))))
+         (varname (elpy-ve--truncate-string varname-long width))
+         (varval (string-trim (car (cdr var))))
+         (vartype-long (string-trim (car (cdr (cdr var)))))
+         (vartype (elpy-ve--truncate-string vartype-long width)))
+    (insert
+     (concat
+      ;; separator
+      (elpy-ve--insert-separator (* width 4))
+      ;; variable name
+      (elpy-ve--insert-varname varname varname-long width)
+      ;; variable type
+      (elpy-ve--insert-vartype vartype width)))
+    ;; variable value
+    (let* ((first t)
+           (all-lines (split-string varval "\n"))
+           (cropped (> (length all-lines) elpy-ve-row-max-height))
+           (lines (if cropped
+                      (reverse (nthcdr (- (length all-lines) elpy-ve-row-max-height)
+                                       (reverse all-lines)))
+                    all-lines)))
+      (dolist (line lines)
+        (let* ((line (elpy-ve--truncate-string line
+                                               (* 2 width))))
+          (insert
+           (concat
+            (if (not first)
+                (s-repeat (+ 1 (* width 2)) " ")
+              (setq first nil)
+              "")
+            line
+            "
+"))))
+      ;; if cropped, add an indicator
+      (when cropped
+        (insert
+         (concat
+          (s-repeat (+ 1 (* width 2)) " ")
+          "...
+")
+         )))))
+
+(defun elpy-ve--display-a-detailled-variable (var)
+  "Display the variable VAR in a detailled view."
+  (let* ((varname (symbol-name (car var)))
+         (varval (car (cdr var)))
+         (vartype (car (cdr (cdr var)))))
+    (insert
+     (concat
+      ;; separator
+      (elpy-ve--insert-separator 80)
+      ;; variable name
+      (elpy-ve--insert-varname varname nil (length varname))
+      "  "
+      ;; variable type
+      (elpy-ve--insert-vartype vartype (length vartype))
+      "
+"
+      ;; separator
+      (elpy-ve--insert-separator 80)))
+    ;; variable value
+    (dolist (line (split-string varval "\n"))
+      (insert
+       (concat
+        " "
+        line
+        "
+"
+        )))))
+
+(defun elpy-ve-display-variable-explorer ()
+  "Display the variable explorer."
+  (interactive)
+  ;; check if shell is started
+  (unless (get-buffer-process (format "*%s*"
+                                      (python-shell-get-process-name nil)))
+    (error "No shell runnning"))
+  ;; check if the shell is available
+  (when (not (elpy-shell--check-if-shell-available))
+    (error "Shell is not currently available"))
+  (let ((vars (elpy-ve-get-variables-from-shell)))
+    (when (= (length vars) 0)
+      (error "No variables found in the current shell"))
+    (switch-to-buffer-other-window
+     (get-buffer-create  "*Elpy Variable Explorer*"))
+    (let ((inhibit-read-only t)
+          (width (/ (window-width) 4)))
+      (erase-buffer)
+      (dolist (var vars) (elpy-ve--display-a-variable var width))
+      (insert (elpy-ve--insert-separator (* width 4)))
+      (elpy-ve-mode)
+      (goto-char (point-min))
+      (elpy-ve-goto-next-entry))))
+
+(defun elpy-ve-goto-next-entry ()
+  "Go to the next entry of the variable explorer."
+  (interactive)
+  (let ((current-pos (point)))
+    (if (re-search-forward "^ [^- ]" nil t)
+        (forward-char -1)
+      (goto-char current-pos)
+      (error "No next entry"))))
+
+(defun elpy-ve-goto-prev-entry ()
+  "Go to the previous entry of the variable explorer."
+  (interactive)
+  (let ((current-pos (point)))
+    (if (re-search-backward "^ [^- ]" nil t)
+        (forward-char 1)
+      (goto-char current-pos)
+      (error "No previous entry"))))
+
+(defun elpy-ve-display-variable-at-point ()
+  "Display a detailled view of the variable at point in another buffer."
+  (interactive)
+  (beginning-of-line)
+  (forward-char 1)
+  (when (not (get-text-property (point) 'elpy-ve-variable))
+    (elpy-ve-goto-prev-entry))
+  (let* ((varname (intern (get-text-property (point) 'elpy-ve-variable)))
+         (var (cdr (assoc varname elpy-ve--variables-cache)))
+         (bufname "*Elpy Variable Explorer[detail]*"))
+    (let ((pop-up-windows t))
+      (display-buffer (get-buffer-create bufname)))
+    (with-current-buffer bufname
+      (let ((inhibit-read-only t))
+        (erase-buffer)
+        (elpy-ve--display-a-detailled-variable (cons varname var))
+        (elpy-ve-detail-mode)
+        (goto-char (point-min))
+        (forward-line 1)))))
+
+(defun elpy-ve-quit-all-windows ()
+  "Close all variable explorer buffers."
+  (interactive)
+  (cl-loop for buffer being the buffers do
+           (when (and (buffer-name buffer)
+                      (string-match "\\*Elpy Variable Explorer.*\\*"
+                                    (buffer-name buffer)))
+             (with-current-buffer buffer
+               (if (get-buffer-window buffer)
+                   (quit-restore-window)
+                 (kill-buffer buffer))))))
+
+(defvar elpy-ve-mode-map
+  (let ((map (make-sparse-keymap)))
+    (define-key map [remap next-line] 'elpy-ve-goto-next-entry)
+    (define-key map [remap previous-line] 'elpy-ve-goto-prev-entry)
+    (define-key map (kbd "q") 'elpy-ve-quit-all-windows)
+    (define-key map (kbd "RET") 'elpy-ve-display-variable-at-point)
+    map)
+  "Keymap for `elpy-ve-mode'.")
+
+(define-derived-mode elpy-ve-mode fundamental-mode "Elpy variable explorer"
+  "Major mode for displaying Elpy's variable explorer.
+
+\\{elpy-ve-mode-map}"
+  (read-only-mode))
+
+(defvar elpy-ve-detail-mode-map
+  (let ((map (make-sparse-keymap)))
+    (define-key map (kbd "q") 'quit-window)
+    map)
+  "Keymap for `elpy-ve-detail-mode'.")
+
+(define-derived-mode elpy-ve-detail-mode fundamental-mode "Elpy detailed variable display"
+  "Major mode for displaying Elpy's detailled variables.
+
+\\{elpy-ve-detail-mode-map}"
+  (read-only-mode))
+
+;;;;;;;;;;;;;;;;;;;;;;;
 ;; Deprecated functions
 
 (defun elpy-use-ipython (&optional _ipython)

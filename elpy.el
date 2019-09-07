@@ -417,6 +417,7 @@ option is `pdb'."
     (define-key map (kbd "C-c C-z") 'elpy-shell-switch-to-shell)
     (define-key map (kbd "C-c C-k") 'elpy-shell-kill)
     (define-key map (kbd "C-c C-K") 'elpy-shell-kill-all)
+    (define-key map (kbd "C-c C-a") 'elpy-ve-display-variable-explorer)
     (define-key map (kbd "C-c C-r") elpy-refactor-map)
     (define-key map (kbd "C-c C-x") elpy-django-mode-map)
 
@@ -539,6 +540,8 @@ This option need to bet set through `customize' or `customize-set-variable' to b
       :help "Send the current region or the whole buffer to Python"]
      ["Send Definition" python-shell-send-defun
       :help "Send current definition to Python"]
+     ["Variable explorer" elpy-ve-display-variable-explorer
+      :help "Display the variable explorer"]
      ["Kill Python shell" elpy-shell-kill
       :help "Kill the current Python shell"]
      ["Kill all Python shells" elpy-shell-kill-all
