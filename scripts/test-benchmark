@@ -1,0 +1,6 @@
+#!/bin/bash
+
+set -e
+cd "$(dirname "$0")/.."
+
+cask exec emacs -Q --batch -l scripts/elpy-test-benchmark.el

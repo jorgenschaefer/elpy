@@ -18,7 +18,7 @@
                          (elpy-mode)
                          (elpy-config)
                          (let ((output (with-current-buffer  "*Elpy Config*"
-                                         (elpy/wait-for-output "Only")
+                                         (elpy/wait-for-output "Options")
                                          (buffer-string))))
                            (should (equal elpy-syntax-check-command "/foo/bar/flake8"))
                            (should (string-match "python.*\ -m pip install.*flake8" output))))))

@@ -128,10 +128,8 @@ for that file."
   (goto-char end))
 
 (defun elpy/wait-for-output (output &optional max-wait)
-  (when (not max-wait)
-    (setq max-wait 10))
   (let ((end (time-add (current-time)
-                       (seconds-to-time max-wait))))
+                       (seconds-to-time (or max-wait 10)))))
     (while (and (time-less-p (current-time)
                              end)
                 (save-excursion
