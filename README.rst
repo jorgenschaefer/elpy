@@ -35,6 +35,7 @@ Features
 - `Virtualenv support`_
 - `On-the-fly syntax checking`_
 - `Access to documentation`_
+- `Variable explorer`_
 - `Debugging`_
 - `Testing`_
 - `Profiling`_
@@ -46,6 +47,7 @@ Features
 .. _On-the-fly syntax checking: https://elpy.readthedocs.io/en/latest/ide.html#syntax-checking
 .. _Interactive Python shell: https://elpy.readthedocs.io/en/latest/ide.html#interactive-python
 .. _Access to documentation: https://elpy.readthedocs.io/en/latest/ide.html#documentation
+.. _Variable explorer: https://elpy.readthedocs.io/en/latest/ide.html#variable-explorer
 .. _Debugging: https://elpy.readthedocs.io/en/latest/ide.html#debugging
 .. _Testing: https://elpy.readthedocs.io/en/latest/ide.html#testing
 .. _Profiling: https://elpy.readthedocs.io/en/latest/ide.html#profiling
