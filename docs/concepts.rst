@@ -18,6 +18,12 @@ You can see them both in the process list (:kbd:`M-x list-process`) as
 well as in the buffer list (:kbd:`C-x C-b`) as buffers named
 ``*elpy-rpc[...]*``.
 
+RPC processes are used to provide code completion, documentation and
+other features. To do so, they use python packages (jedi, yapf,
+rope, ...) that are installed in a dedicated virtualenv named
+``elpy-rpc-venv``. Those packages can be updated through the
+configuration panel (accessible through :kbd:`M-x elpy-config`).
+
 By default, Elpy will also find the :index:`library root` of the
 current file and pass that to the RPC functions. The library root is
 the directory from which the current file can be imported.

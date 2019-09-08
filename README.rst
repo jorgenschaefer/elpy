@@ -65,12 +65,6 @@ Elpy is available on Melpa, the most straightforward way to install it is to use
     :init
     (elpy-enable))
 
-Elpy relies on some python packages that need to be installed as well:
-
-.. code-block:: bash
-
-  pip install jedi rope flake8 autopep8 yapf black
-
 For other installation alternatives, see the `documentation`_.
 
 .. _documentation: https://elpy.readthedocs.io/en/latest/introduction.html#installation

@@ -11,13 +11,20 @@ fi
 
 pip install --upgrade pip setuptools
 
-if python -c 'import sys ; exit(not sys.version_info >= (3, 0))'
-then
-    pip install -r requirements3.txt --upgrade
-else
-    pip install -r requirements.txt --upgrade
-fi
+pip install -r requirements.txt --upgrade
+pip install -r requirements-rpc.txt --upgrade
 pip install -r requirements-dev.txt --upgrade
+# For python2
+if python -c 'import sys ; exit(sys.version_info < (3, 0))'
+then
+    pip install -r requirements-dev2.txt --upgrade
+fi
+# For python >= 3.6
+if python -c 'import sys ; exit(not sys.version_info >= (3, 6))'
+then
+    pip install -r requirements-rpc3.6.txt --upgrade
+fi
+virtualenv ~/.virtualenvs/elpy-test-venv
 
 cask
 cask update

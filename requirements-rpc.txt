@@ -1,5 +1,4 @@
-flake8==3.7.8
 jedi==0.15.1
-rope_py3k==0.9.4-1
+rope==0.14.0
 autopep8==1.4.4
 yapf==0.28

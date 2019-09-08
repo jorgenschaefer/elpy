@@ -48,22 +48,32 @@ class TestRPCEcho(ServerTestCase):
 class TestRPCInit(ServerTestCase):
     @mock.patch("elpy.jedibackend.JediBackend")
     def test_should_set_project_root(self, JediBackend):
-        self.srv.rpc_init({"project_root": "/project/root"})
+        self.srv.rpc_init({"project_root": "/project/root",
+                           "environment": "/project/env"})
 
         self.assertEqual("/project/root", self.srv.project_root)
 
+    @mock.patch("jedi.create_environment")
+    def test_should_set_project_env(self, create_environment):
+        self.srv.rpc_init({"project_root": "/project/root",
+                           "environment": "/project/env"})
+
+        create_environment.assert_called_with("/project/env", safe=False)
+
     @mock.patch("elpy.jedibackend.JediBackend")
     def test_should_initialize_jedi(self, JediBackend):
-        self.srv.rpc_init({"project_root": "/project/root"})
+        self.srv.rpc_init({"project_root": "/project/root",
+                           "environment": "/project/env"})
 
-        JediBackend.assert_called_with("/project/root")
+        JediBackend.assert_called_with("/project/root", "/project/env")
 
 
     @mock.patch("elpy.jedibackend.JediBackend")
     def test_should_use_jedi_if_available(self, JediBackend):
         JediBackend.return_value.name = "jedi"
 
-        self.srv.rpc_init({"project_root": "/project/root"})
+        self.srv.rpc_init({"project_root": "/project/root",
+                           "environment": "/project/env"})
 
         self.assertEqual("jedi", self.srv.backend.name)
 
@@ -76,7 +86,8 @@ class TestRPCInit(ServerTestCase):
         server.jedibackend = None
 
         try:
-            self.srv.rpc_init({"project_root": "/project/root"})
+            self.srv.rpc_init({"project_root": "/project/root",
+                               "environment": "/project/env"})
         finally:
             server.jedibackend = old_jedi
 

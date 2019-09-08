@@ -2,7 +2,6 @@ language: python
 
 python:
   - 2.7
-  - 3.4
   - 3.5
   - 3.6
 
@@ -48,20 +47,17 @@ before_install:
   - evm install $EVM_EMACS --use --skip
   - cask --verbose        # verbose only needed because of cask bug
 install:
-  - pip install -r requirements-dev.txt
-  - if [[ "$TRAVIS_PYTHON_VERSION" == 2.* ]] ; then
-      pip install -r requirements.txt ;
+  - pip install -r requirements.txt --upgrade
+  - pip install -r requirements-rpc.txt --upgrade
+  - pip install -r requirements-dev.txt --upgrade
+  - if [[ "$TRAVIS_PYTHON_VERSION" > 3.5 ]] ; then
+      pip install -r requirements-rpc3.6.txt --upgrade ;
     fi
-  - if [[ "$TRAVIS_PYTHON_VERSION" == 2.6 ]] ; then
-      pip install unittest2 ;
-    fi
-  - if [[ "$TRAVIS_PYTHON_VERSION" == 3.* ]] ; then
-      pip install -r requirements3.txt ;
-    fi
-  - if [[ "$TRAVIS_PYTHON_VERSION" > 3.6 || "$TRAVIS_PYTHON_VERSION" == 3.6 ]] ; then
-      pip install -r requirements3.6.txt ;
+  - if [[ "$TRAVIS_PYTHON_VERSION" < 3 ]] ; then
+      pip install -r requirements-dev2.txt --upgrade ;
     fi
   - pip install coveralls
+  - virtualenv ~/.virtualenvs/elpy-test-venv
 script:
   - nosetests
   - PYTHONPATH="`pwd`" cask exec ert-runner

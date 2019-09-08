@@ -109,15 +109,14 @@ by typing ``M-x elpy-config RET``, and following the instructions.
 Configuration
 =============
 
-You can easily configure Elpy to your own preferences.
-All options are available through a unified interface, accessible with the following command:
+You can easily configure Elpy to your own preferences. All options are
+available through a unified interface, accessible with the following
+command:
 
 .. command:: elpy-config
 
    Show the current Elpy configuration, point out possible problems,
    and provide a quick interface to relevant customization options.
 
-   Missing packages can be installed right from this interface. Be
-   aware that this does use your currently-selected virtual env. If
-   there is no current virtual env, it will suggest installing
-   packages globally. This is rarely what you want.
+   Packages needed by Elpy can be installed and updated from this
+   interface.
