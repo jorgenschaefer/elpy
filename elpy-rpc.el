@@ -252,8 +252,22 @@ binaries used to create the virtualenv."
       (let ((deact-venv pyvenv-virtual-env))
         ;; Create the venv
         (message "Elpy is creating the RPC virtualenv... (This may take a while, but should only happen once in a while)")
-        (save-window-excursion
-          (pyvenv-create "elpy-rpc-venv" elpy-rpc-python-command))
+        ;; temporary workaround (waiting for  https://github.com/jorgenschaefer/pyvenv/pull/90 to be merged)
+        ;; (save-window-excursion
+        ;;   (pyvenv-create "elpy-rpc-venv" elpy-rpc-python-command))
+        (cond
+         ((executable-find "virtualenv")
+          (with-current-buffer (generate-new-buffer "*virtualenv*")
+            (call-process "virtualenv" nil t t
+                          "-p" elpy-rpc-python-command venv-dir)))
+         ((= 0 (call-process elpy-rpc-python-command nil nil nil
+                             "-m" "venv" "-h"))
+          (with-current-buffer (generate-new-buffer "*venv*")
+            (call-process elpy-rpc-python-command nil t t
+                          "-m" "venv" venv-dir)))
+         (t
+          (error "Elpy necessitates the 'virtualenv' python package, please install it with `pip install virtualenv`")))
+        (pyvenv-activate venv-dir)
         ;; Install the dependencies
         (message "Elpy is installing the RPC dependencies...")
         (with-temp-buffer
