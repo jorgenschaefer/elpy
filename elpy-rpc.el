@@ -267,6 +267,7 @@ binaries used to create the virtualenv."
                           "-m" "venv" venv-dir)))
          (t
           (error "Elpy necessitates the 'virtualenv' python package, please install it with `pip install virtualenv`")))
+        (pyvenv-activate venv-dir)
         ;; Add a file to keep track of the `elpy-rpc-python-command` used
         (with-temp-file venv-python-path-command-file
           (insert elpy-rpc-python-command))
