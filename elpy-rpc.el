@@ -267,7 +267,9 @@ binaries used to create the virtualenv."
                           "-m" "venv" venv-dir)))
          (t
           (error "Elpy necessitates the 'virtualenv' python package, please install it with `pip install virtualenv`")))
-        (pyvenv-activate venv-dir)
+        ;; Add a file to keep track of the `elpy-rpc-python-command` used
+        (with-temp-file venv-python-path-command-file
+          (insert elpy-rpc-python-command))
         ;; Install the dependencies
         (message "Elpy is installing the RPC dependencies...")
         (with-temp-buffer
@@ -275,16 +277,11 @@ binaries used to create the virtualenv."
                            "-m" "pip" "install" "--upgrade"
                            (elpy-rpc--get-package-list))
                     0)
-            (error "Elpy failed to install the RPC dependencies:\n %s"
-                   (buffer-substring (point-min) (point-max)))))
-        ;; Add a file to keep track of the `elpy-rpc-python-command` used
-        (with-temp-file venv-python-path-command-file
-          (insert elpy-rpc-python-command))
+            (message "Elpy failed to install some RPC dependencies, please check `elpy-config` if some functionalities don't work.")))
         ;; Deactivate the rpc venv
         (if deact-venv
             (pyvenv-activate (directory-file-name deact-venv))
-          (pyvenv-deactivate))
-        (message "Done")))
+          (pyvenv-deactivate))))
     venv-dir))
 
 
