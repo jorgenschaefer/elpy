@@ -1,17 +1,17 @@
 ;;; -*-coding: utf-8-*-
 
-(ert-deftest elpy-with-rpc-venv-activated-should-temporarily-activate-the-rpc-venv ()
+(ert-deftest elpy-with-rpc-virtualenv-activated-should-temporarily-activate-the-rpc-virtualenv ()
   (elpy-testcase ()
     (let ((current-venv pyvenv-virtual-env-name))
-    (with-elpy-rpc-venv-activated
+    (with-elpy-rpc-virtualenv-activated
      (should (string= pyvenv-virtual-env-name "elpy-rpc-venv")))
     (should (string= pyvenv-virtual-env-name current-venv)))))
 
-(ert-deftest elpy-with-rpc-venv-activated-should-handle-errors ()
+(ert-deftest elpy-with-rpc-virtualenv-activated-should-handle-errors ()
   (elpy-testcase ()
     (let ((current-venv pyvenv-virtual-env-name))
       (condition-case nil
-          (with-elpy-rpc-venv-activated
+          (with-elpy-rpc-virtualenv-activated
            (error "nope"))
           (error t))
     (should (string= pyvenv-virtual-env-name current-venv)))))

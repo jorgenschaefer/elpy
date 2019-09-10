@@ -26,7 +26,7 @@
         (should (equal elpy-rpc--buffer (current-buffer)))
         (should (equal elpy-rpc--backend-library-root "/tmp"))
         (should (equal elpy-rpc--backend-python-command
-                       (with-elpy-rpc-venv-activated
+                       (with-elpy-rpc-virtualenv-activated
                         (executable-find elpy-rpc-python-command))))
         (should (equal default-directory "/"))
         (should (equal exit-flag-disabled-for 'test-process))
@@ -48,7 +48,7 @@
 
       (should (equal environment "test-environment")))))
 
-(ert-deftest elpy-rpc--open-should-include-venv-name ()
+(ert-deftest elpy-rpc--open-should-include-virtualenv-name ()
   (elpy-testcase ()
     (let ((buf (elpy-rpc--open "/tmp" elpy-rpc-python-command)))
       (should (string-match (directory-file-name
@@ -60,11 +60,11 @@
       (should
        (equal (buffer-local-value 'elpy-rpc--backend-python-command
                                   buf)
-              (with-elpy-rpc-venv-activated
+              (with-elpy-rpc-virtualenv-activated
                (executable-find elpy-rpc-python-command)))))))
 
-(ert-deftest elpy-rpc--open-should-open-in-a-dedicated-venv ()
+(ert-deftest elpy-rpc--open-should-open-in-a-dedicated-virtualenv ()
   (elpy-testcase ()
     (elpy-rpc--get-rpc-buffer)
-    (with-elpy-rpc-venv-activated
+    (with-elpy-rpc-virtualenv-activated
      (should (string= "elpy-rpc-venv" pyvenv-virtual-env-name)))))

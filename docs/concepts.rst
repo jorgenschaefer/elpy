@@ -44,6 +44,16 @@ There are a few options and commands related to the RPC process.
    Please do note that this is *not* an interactive interpreter, so do
    not set this to ``"ipython"`` or similar.
 
+.. option:: elpy-rpc-venv-path
+
+   Path to the virtualenv used by the RPC.
+   This defaults to a virtualenv named ``"elpy-rpc-venv"``, created in
+   the current workon home (returned by ``(pyvenv-workon-home)``).
+
+   If it does not exist, the virtualenv will be created using
+   ``elpy-rpc-python-command'` and populated with the needed
+   packages from ``(elpy-rpc--get-package-list)``.")
+
 .. option:: elpy-rpc-large-buffer-size
 
    The size in character starting from which Elpy will transfer buffer
