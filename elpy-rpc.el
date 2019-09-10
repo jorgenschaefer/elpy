@@ -28,6 +28,9 @@
 ;;
 ;;; Code:
 
+(require 'json)
+(require 'pyvenv)
+
 (defcustom elpy-rpc-maximum-buffer-age (* 5 60)
   "Seconds after which Elpy automatically closes an unused RPC buffer.
 
