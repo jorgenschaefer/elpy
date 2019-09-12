@@ -259,15 +259,15 @@ binaries used to create the virtualenv."
         ;; (save-window-excursion
         ;;   (pyvenv-create "elpy-rpc-venv" elpy-rpc-python-command))
         (cond
-         ((executable-find "virtualenv")
-          (with-current-buffer (generate-new-buffer "*virtualenv*")
-            (call-process "virtualenv" nil t t
-                          "-p" elpy-rpc-python-command venv-dir)))
          ((= 0 (call-process elpy-rpc-python-command nil nil nil
                              "-m" "venv" "-h"))
           (with-current-buffer (generate-new-buffer "*venv*")
             (call-process elpy-rpc-python-command nil t t
                           "-m" "venv" venv-dir)))
+         ((executable-find "virtualenv")
+          (with-current-buffer (generate-new-buffer "*virtualenv*")
+            (call-process "virtualenv" nil t t
+                          "-p" elpy-rpc-python-command venv-dir)))
          (t
           (error "Elpy necessitates the 'virtualenv' python package, please install it with `pip install virtualenv`")))
         (pyvenv-activate venv-dir)
