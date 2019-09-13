@@ -230,8 +230,8 @@ changed since the virtualenv creation.
 An additional file `elpy-rpc-python-path-command' is added in the
 virtualenv directory in order to keep track of the python
 binaries used to create the virtualenv."
-  (let* ((venv-dir (concat (file-name-as-directory (pyvenv-workon-home))
-                           "elpy-rpc-venv"))
+  (let* ((venv-dir (expand-file-name (concat (file-name-as-directory (pyvenv-workon-home))
+                           "elpy-rpc-venv")))
          (venv-exist (file-exists-p venv-dir))
          (venv-python-path-command-file (concat
                                          (file-name-as-directory venv-dir)
@@ -246,8 +246,8 @@ binaries used to create the virtualenv."
                                               elpy-rpc-python-command)))))
     ;; Delete the rpc virtualenv if obsolete
     (when venv-need-update
-      (delete-directory (concat (file-name-as-directory (pyvenv-workon-home))
-                                "elpy-rpc-venv")
+      (delete-directory (expand-file-name (concat (file-name-as-directory (pyvenv-workon-home))
+                                "elpy-rpc-venv"))
                         t)
       (setq venv-exist nil))
     ;; Create a new rpc venv if necessary
