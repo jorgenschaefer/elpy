@@ -171,10 +171,7 @@ This maps call IDs to functions.")
 ;;;;;;;;;;;;;;;;;;;
 ;;; RPC virualenv
 
-(defcustom elpy-rpc-virtualenv-path
-  (lambda ()
-    (concat (file-name-as-directory (pyvenv-workon-home))
-            "elpy-rpc-venv"))
+(defcustom elpy-rpc-virtualenv-path #'elpy-rpc-default-virtualenv-path
   "Path to the virtualenv used by the RPC.
 
 It can also be a function returning the path to the virtualenv.
@@ -185,6 +182,11 @@ packages from `elpy-rpc--get-package-list'."
   :type '(choice (string :tag "Virtualenv path")
                 (function :tag "Function returning the virtualenv path"))
   :group 'elpy)
+
+(defun elpy-rpc-default-virtualenv-path ()
+  "Return the default virtualenv path."
+  (expand-file-name
+   (locate-user-emacs-file "elpy/rpc-venv")))
 
 (defun elpy-rpc-get-virtualenv-path ()
   "Return the RPC virutalenv path to use."
@@ -253,10 +255,11 @@ An additional file `elpy-rpc-python-path-command' is added in the
 virtualenv directory in order to keep track of the python
 binaries used to create the virtualenv."
   (let* ((rpc-venv-path (elpy-rpc-get-virtualenv-path))
-         (is-default-rpc-venv (and rpc-venv-path
-                                   (string-match "elpy-rpc-venv$"
-                                                 rpc-venv-path)))
          (is-venv-exist (file-exists-p rpc-venv-path))
+         (is-default-rpc-venv
+          (and rpc-venv-path
+               (string= rpc-venv-path
+                        (elpy-rpc-default-virtualenv-path))))
          (venv-python-path-command-file (concat
                                          (file-name-as-directory
                                           rpc-venv-path)
@@ -271,13 +274,14 @@ binaries used to create the virtualenv."
                                 (not (string= venv-python-path-command
                                               elpy-rpc-python-command))))
          (venv-creation-allowed (and
-                                 (not is-venv-exist)
-                                 (y-or-n-p
-                                  (if is-default-rpc-venv
-                                      (format "Elpy needs a virtualenv to provide static code analysis, create one in '%s' ?" rpc-venv-path)
-                                    (format
-                                     "`elpy-rpc-virtualenv-path' was set to '%s', but this virtualenv does not exist, create it ?"
-                                     rpc-venv-path))))))
+                                 (or (not is-venv-exist)
+                                     venv-need-update)
+                                 (or
+                                  is-default-rpc-venv
+                                  (y-or-n-p
+                                   (format
+                                    "`elpy-rpc-virtualenv-path' was set to '%s', but this virtualenv does not exist, create it ?"
+                                    rpc-venv-path))))))
     ;; Delete the rpc virtualenv if obsolete
     (when venv-need-update
       (delete-directory rpc-venv-path t)
@@ -288,10 +292,9 @@ binaries used to create the virtualenv."
           (message "Please indicate the virtualenv you wish to use with `elpy-rpc-virtualenv-path'.")
         (let ((deact-venv pyvenv-virtual-env))
           ;; Create the venv
-          (message "Elpy is creating the RPC virtualenv in '%s'" rpc-venv-path)
-          ;; temporary workaround (waiting for  https://github.com/jorgenschaefer/pyvenv/pull/90 to be merged)
-          ;; (save-window-excursion
-          ;;   (pyvenv-create elpy-rpc-venv-name elpy-rpc-python-command))
+          (message "Elpy is %s the RPC virtualenv ('%s')"
+                   (if venv-need-update "updating" "creating")
+                   rpc-venv-path)
           (cond
            ((= 0 (call-process elpy-rpc-python-command nil nil nil
                                "-m" "venv" "-h"))
