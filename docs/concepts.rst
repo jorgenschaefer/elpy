@@ -20,8 +20,8 @@ well as in the buffer list (:kbd:`C-x C-b`) as buffers named
 
 RPC processes are used to provide code completion, documentation and
 other features. To do so, they use python packages (jedi, yapf,
-rope, ...) that are installed in a dedicated virtualenv named
-``elpy-rpc-venv``. Those packages can be updated through the
+rope, ...) that are installed in a dedicated virtualenv in
+``.emacs.d/elpy/rpc-venv``. Those packages can be updated through the
 configuration panel (accessible through :kbd:`M-x elpy-config`).
 
 By default, Elpy will also find the :index:`library root` of the
@@ -47,7 +47,7 @@ There are a few options and commands related to the RPC process.
 .. option:: elpy-rpc-venv-path
 
    Path to the virtualenv used by the RPC.
-   This defaults to a virtualenv named ``"elpy-rpc-venv"``, created in
+   This defaults to a virtualenv in ``".emacs.d/elpy/rpc-venv"``, created in
    the current workon home (returned by ``(pyvenv-workon-home)``).
 
    If it does not exist, the virtualenv will be created using

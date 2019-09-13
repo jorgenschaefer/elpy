@@ -2,13 +2,13 @@
 
 (ert-deftest elpy-rpc-get-virtualenv-should-return-virtualenv ()
   (elpy-testcase ()
-    (should (string-match "elpy-rpc-venv" (elpy-rpc-get-or-create-virtualenv)))))
+    (should (string-match "elpy/rpc-venv" (elpy-rpc-get-or-create-virtualenv)))))
 
 (ert-deftest elpy-rpc-get-virtualenv-should-create-the-virtualenv-if-necessary ()
   (elpy-testcase ()
-    (should (string-match "elpy-rpc-venv" (elpy-rpc-get-or-create-virtualenv)))
+    (should (string-match "elpy/rpc-venv" (elpy-rpc-get-or-create-virtualenv)))
     (delete-directory (elpy-rpc-get-or-create-virtualenv) t nil)
-    (should (string-match "elpy-rpc-venv" (elpy-rpc-get-or-create-virtualenv)))
+    (should (string-match "elpy/rpc-venv" (elpy-rpc-get-or-create-virtualenv)))
     (should (file-exists-p (elpy-rpc-get-or-create-virtualenv)))))
 
 (ert-deftest elpy-rpc-get-virtualenv-should-not-reinstall-the-virtualenv-every-time ()
@@ -38,10 +38,11 @@
      ;; the cookie file
      (with-temp-file venv-python-path-command-file
        (insert "Another python command")))
-   (mletf* ((message (mess) (setq messages (concat messages mess)))
+   (mletf* ((message (mess &rest rest)
+                     (setq messages (concat messages (apply 'format mess rest))))
             (messages ""))
      (elpy-rpc-get-or-create-virtualenv)
-     (should (string-match "lpy is creating the RPC virtualenv" messages)))))
+     (should (string-match "lpy is \\(creating\\|updating\\) the RPC virtualenv" messages)))))
 
 (ert-deftest elpy-rpc-get-virtualenv-should-NOT-update-the-virtualenv-when-it-is-not-the-default-venv ()
   (elpy-testcase ()

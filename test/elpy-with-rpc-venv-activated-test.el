@@ -4,7 +4,7 @@
   (elpy-testcase ()
     (let ((current-venv pyvenv-virtual-env-name))
     (with-elpy-rpc-virtualenv-activated
-     (should (string= pyvenv-virtual-env-name "elpy-rpc-venv")))
+     (should (string= pyvenv-virtual-env-name "rpc-venv")))
     (should (string= pyvenv-virtual-env-name current-venv)))))
 
 (ert-deftest elpy-with-rpc-virtualenv-activated-should-handle-errors ()

@@ -67,4 +67,4 @@
   (elpy-testcase ()
     (elpy-rpc--get-rpc-buffer)
     (with-elpy-rpc-virtualenv-activated
-     (should (string= "elpy-rpc-venv" pyvenv-virtual-env-name)))))
+     (should (string= "rpc-venv" pyvenv-virtual-env-name)))))
