@@ -19,10 +19,11 @@ well as in the buffer list (:kbd:`C-x C-b`) as buffers named
 ``*elpy-rpc[...]*``.
 
 RPC processes are used to provide code completion, documentation and
-other features. To do so, they use python packages (jedi, yapf,
-rope, ...) that are installed in a dedicated virtualenv in
-``.emacs.d/elpy/rpc-venv``. Those packages can be updated through the
-configuration panel (accessible through :kbd:`M-x elpy-config`).
+other features. To do so, they use python packages (jedi, yapf, rope, ...)
+that are installed in a dedicated virtualenv
+(``.emacs.d/elpy/rpc-venv`` by default). Those packages can be updated
+through the configuration panel (accessible through :kbd:`M-x
+elpy-config`).
 
 By default, Elpy will also find the :index:`library root` of the
 current file and pass that to the RPC functions. The library root is
@@ -44,15 +45,19 @@ There are a few options and commands related to the RPC process.
    Please do note that this is *not* an interactive interpreter, so do
    not set this to ``"ipython"`` or similar.
 
-.. option:: elpy-rpc-venv-path
+.. option:: elpy-rpc-virtualenv-path
 
    Path to the virtualenv used by the RPC.
-   This defaults to a virtualenv in ``".emacs.d/elpy/rpc-venv"``, created in
-   the current workon home (returned by ``(pyvenv-workon-home)``).
+   This defaults to a virtualenv in ``".emacs.d/elpy/rpc-venv"``.
 
    If it does not exist, the virtualenv will be created using
    ``elpy-rpc-python-command'` and populated with the needed
    packages from ``(elpy-rpc--get-package-list)``.")
+
+   Before version 1.32, elpy was starting the RPC in the current
+   environment. You can get this behavior back by setting
+   ``elpy-rpc-virtualenv-path`` to ``(lambda () (or pyvenv-virtual-env
+   (elpy-rpc-default-virtualenv-path)))``.
 
 .. option:: elpy-rpc-large-buffer-size
 
