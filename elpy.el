@@ -970,7 +970,8 @@ virtual_env_short"
         (puthash "rpc_virtualenv" rpc-venv config)
         (if rpc-venv
             (puthash "rpc_virtualenv_short"
-                     (file-name-nondirectory rpc-venv) config)
+                     (file-name-nondirectory (directory-file-name rpc-venv))
+                       config)
           (puthash "rpc_virtualenv_short" nil config)))
       (with-elpy-rpc-virtualenv-activated
        (puthash "rpc_python" elpy-rpc-python-command config)
