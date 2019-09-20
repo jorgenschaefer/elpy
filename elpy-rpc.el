@@ -171,29 +171,56 @@ This maps call IDs to functions.")
 ;;;;;;;;;;;;;;;;;;;
 ;;; RPC virualenv
 
-(defcustom elpy-rpc-virtualenv-path #'elpy-rpc-default-virtualenv-path
+(defcustom elpy-rpc-virtualenv-path 'default
   "Path to the virtualenv used by the RPC.
 
-It can also be a function returning the path to the virtualenv.
+Can be `default' (create a dedicated virtualenv in \".emacs.d/elpy\"),
+`global' (use the global system environment), `current' (use the
+currently active environment), a virtualenv path or a function
+returning a virtualenv path.
 
-If it does not exist, the virtualenv will be created using
-`elpy-rpc-python-command' and populated with the needed
-packages from `elpy-rpc--get-package-list'."
-  :type '(choice (string :tag "Virtualenv path")
-                (function :tag "Function returning the virtualenv path"))
+If the default virtual environment does not exist, it will be
+created using `elpy-rpc-python-command' and populated with the
+needed packages from `elpy-rpc--get-package-list'."
+
+  :type '(choice (const :tag "Dedicated environment" default)
+                 (const :tag "Global environment" global)
+                 (const :tag "Current environment" current)
+                 (string :tag "Virtualenv path")
+                 (function :tag "Function returning the virtualenv path"))
   :group 'elpy)
 
 (defun elpy-rpc-default-virtualenv-path ()
   "Return the default virtualenv path."
-  (expand-file-name
-   (locate-user-emacs-file "elpy/rpc-venv")))
+  (expand-file-name (locate-user-emacs-file "elpy/rpc-venv")))
 
 (defun elpy-rpc-get-virtualenv-path ()
   "Return the RPC virutalenv path to use."
-  (expand-file-name
-   (if (stringp elpy-rpc-virtualenv-path)
-       elpy-rpc-virtualenv-path
-       (funcall elpy-rpc-virtualenv-path))))
+  (cond
+   ((eq elpy-rpc-virtualenv-path 'default)
+    (elpy-rpc-default-virtualenv-path))
+   ((eq elpy-rpc-virtualenv-path 'global)
+    (let ((deact-venv pyvenv-virtual-env))
+      (when deact-venv (pyvenv-deactivate))
+      (prog1
+          (directory-file-name
+           (file-name-directory
+            (directory-file-name
+             (file-name-directory
+              (executable-find elpy-rpc-python-command)))))
+        (when deact-venv (pyvenv-activate deact-venv)))))
+   ((eq elpy-rpc-virtualenv-path 'current)
+    (directory-file-name
+     (file-name-directory
+      (directory-file-name
+       (file-name-directory
+        (executable-find elpy-rpc-python-command))))))
+   ((stringp elpy-rpc-virtualenv-path)
+    (expand-file-name elpy-rpc-virtualenv-path))
+   ((functionp elpy-rpc-virtualenv-path)
+    (expand-file-name (funcall elpy-rpc-virtualenv-path)))
+   (t
+    (error "Invalid value for `elpy-rpc-virtualenv-path', please set it to a proper value using customize"))))
 
 (defun elpy-rpc--get-package-list ()
   "Return the list of packages to be installed in the RPC virtualenv."

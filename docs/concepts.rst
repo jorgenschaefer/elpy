@@ -50,14 +50,13 @@ There are a few options and commands related to the RPC process.
    Path to the virtualenv used by the RPC.
    This defaults to a virtualenv in ``".emacs.d/elpy/rpc-venv"``.
 
-   If it does not exist, the virtualenv will be created using
-   ``elpy-rpc-python-command'` and populated with the needed
-   packages from ``(elpy-rpc--get-package-list)``.")
+   Can be a path, a function returning a path, ``'global`` (use the
+   global system environment) or ``'current`` (use the currently
+   active environment).
 
-   Before version 1.32, elpy was starting the RPC in the current
-   environment. You can get this behavior back by setting
-   ``elpy-rpc-virtualenv-path`` to ``(lambda () (or pyvenv-virtual-env
-   (elpy-rpc-default-virtualenv-path)))``.
+   If the default virtual environment does not exist, it will be
+   created using ``elpy-rpc-python-command'` and populated with the
+   needed packages from ``(elpy-rpc--get-package-list)``.
 
 .. option:: elpy-rpc-large-buffer-size
 
