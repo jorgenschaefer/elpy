@@ -142,7 +142,7 @@
                          "variable_shell variable_script")))
       ;; Test function completions
       (insert "\nfunction")
-      (sleep-for 1)
+      (sleep-for 0.1)
       (let* ((cand (elpy-rpc-get-completions))
              (ext-cand (elpy-company--add-interpreter-completions-candidates cand)))
         (should (string= (mapconcat (lambda (cand) (cdr (assoc 'name cand)))
