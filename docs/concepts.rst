@@ -22,7 +22,7 @@ RPC processes are used to provide code completion, documentation and
 other features. To do so, they use python packages (jedi, yapf, rope, ...)
 that are installed in a dedicated virtualenv
 (``.emacs.d/elpy/rpc-venv`` by default). Those packages can be updated
-through the configuration panel (accessible through :kbd:`M-x
+through the configuration panel (accessible with :kbd:`M-x
 elpy-config`).
 
 By default, Elpy will also find the :index:`library root` of the
@@ -48,15 +48,15 @@ There are a few options and commands related to the RPC process.
 .. option:: elpy-rpc-virtualenv-path
 
    Path to the virtualenv used by the RPC.
-   This defaults to a virtualenv in ``".emacs.d/elpy/rpc-venv"``.
 
-   Can be a path, a function returning a path, ``'global`` (use the
-   global system environment) or ``'current`` (use the currently
-   active environment).
+   Can be `default` (create a dedicated virtualenv
+   ``.emacs.d/elpy/rpc-venv``), `global` (use the global system
+   environment), `current` (use the currently active environment), a
+   virtualenv path or a function returning a virtualenv path.
 
    If the default virtual environment does not exist, it will be
-   created using ``elpy-rpc-python-command'` and populated with the
-   needed packages from ``(elpy-rpc--get-package-list)``.
+   created using `elpy-rpc-python-command` and populated with the
+   needed packages from `elpy-rpc--get-package-list`.
 
 .. option:: elpy-rpc-large-buffer-size
 

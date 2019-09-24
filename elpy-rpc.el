@@ -287,28 +287,24 @@ binaries used to create the virtualenv."
           (and rpc-venv-path
                (string= rpc-venv-path
                         (elpy-rpc-default-virtualenv-path))))
-         (venv-python-path-command-file (concat
-                                         (file-name-as-directory
-                                          rpc-venv-path)
-                                         "elpy-rpc-python-path-command"))
+         (venv-python-path-command-file
+          (concat (file-name-as-directory rpc-venv-path)
+                  "elpy-rpc-python-path-command"))
          (venv-python-path-command
           (when (file-exists-p venv-python-path-command-file)
             (with-temp-buffer
               (insert-file-contents venv-python-path-command-file)
               (buffer-string))))
-         (venv-need-update (and is-venv-exist
-                                is-default-rpc-venv
-                                (not (string= venv-python-path-command
-                                              elpy-rpc-python-command))))
-         (venv-creation-allowed (and
-                                 (or (not is-venv-exist)
-                                     venv-need-update)
-                                 (or
-                                  is-default-rpc-venv
-                                  (y-or-n-p
-                                   (format
-                                    "`elpy-rpc-virtualenv-path' was set to '%s', but this virtualenv does not exist, create it ?"
-                                    rpc-venv-path))))))
+         (venv-need-update
+          (and is-venv-exist
+               is-default-rpc-venv
+               (not (string= venv-python-path-command
+                             elpy-rpc-python-command))))
+         (venv-creation-allowed
+          (and (or (not is-venv-exist) venv-need-update)
+               (or is-default-rpc-venv
+                   (y-or-n-p
+                    (format "`elpy-rpc-virtualenv-path' was set to '%s', but this virtualenv does not exist, create it ?" rpc-venv-path))))))
     ;; Delete the rpc virtualenv if obsolete
     (when venv-need-update
       (delete-directory rpc-venv-path t)
@@ -318,45 +314,52 @@ binaries used to create the virtualenv."
       (if (not venv-creation-allowed)
           (message "Please indicate the virtualenv you wish to use with `elpy-rpc-virtualenv-path'.")
         (let ((deact-venv pyvenv-virtual-env))
-          ;; Create the venv
           (message "Elpy is %s the RPC virtualenv ('%s')"
                    (if venv-need-update "updating" "creating")
                    rpc-venv-path)
-          (cond
-           ((= 0 (call-process elpy-rpc-python-command nil nil nil
-                               "-m" "venv" "-h"))
-            (with-current-buffer (generate-new-buffer "*venv*")
-              (call-process elpy-rpc-python-command nil t t
-                            "-m" "venv" rpc-venv-path)))
-           ((executable-find "virtualenv")
-            (with-current-buffer (generate-new-buffer "*virtualenv*")
-              (call-process "virtualenv" nil t t
-                            "-p" elpy-rpc-python-command rpc-venv-path)))
-           (t
-            (error "Elpy necessitates the 'virtualenv' python package, please install it with `pip install virtualenv`")))
+          (elpy-rpc--create-virtualenv rpc-venv-path venv-need-update)
           (pyvenv-activate rpc-venv-path)
           ;; Add a file to keep track of the `elpy-rpc-python-command` used
           (with-temp-file venv-python-path-command-file
             (insert elpy-rpc-python-command))
-          ;; Install the dependencies
-          ;;   safeguard to be sure we don't install stuff in the wrong venv
+          ;; safeguard to be sure we don't install stuff in the wrong venv
           (when (file-equal-p pyvenv-virtual-env rpc-venv-path)
-            (if (y-or-n-p "Automatically install the RPC dependencies from PyPI (needed for completion, autoformatting and documentation) ? ")
-                (with-temp-buffer
-                  (message "Elpy is installing the RPC dependencies...")
-                  (when (/= (apply 'call-process elpy-rpc-python-command
-                                   nil t nil
-                                   "-m" "pip" "install" "--upgrade"
-                                   (elpy-rpc--get-package-list))
-                            0)
-                    (message "Elpy failed to install some of the RPC dependencies, please use `elpy-config' to install them.")))
-              (message "Some of Elpy's functionnalities will not work, please use `elpy-config' to install the needed python dependencies.")))
+            (elpy-rpc--install-dependencies))
           ;; Deactivate the rpc venv
           (if deact-venv
               (pyvenv-activate (directory-file-name deact-venv))
             (pyvenv-deactivate)))))
     rpc-venv-path))
 
+(defun elpy-rpc--create-virtualenv (rpc-venv-path venv-need-update)
+  "Create a virtualenv for the RPC in RPC-VENV-PATH.
+
+if VENV-NEED-UPDATE is not nil, update the virtualenv."
+  (cond
+   ((= 0 (call-process elpy-rpc-python-command nil nil nil
+                       "-m" "venv" "-h"))
+    (with-current-buffer (generate-new-buffer "*venv*")
+      (call-process elpy-rpc-python-command nil t t
+                    "-m" "venv" rpc-venv-path)))
+   ((executable-find "virtualenv")
+    (with-current-buffer (generate-new-buffer "*virtualenv*")
+      (call-process "virtualenv" nil t t
+                    "-p" elpy-rpc-python-command rpc-venv-path)))
+   (t
+    (error "Elpy necessitates the 'virtualenv' python package, please install it with `pip install virtualenv`"))))
+
+(defun elpy-rpc--install-dependencies ()
+  "Install the RPC dependencies in the current virtualenv."
+  (if (y-or-n-p "Automatically install the RPC dependencies from PyPI (needed for completion, autoformatting and documentation) ? ")
+      (with-temp-buffer
+        (message "Elpy is installing the RPC dependencies...")
+        (when (/= (apply 'call-process elpy-rpc-python-command
+                         nil t nil
+                         "-m" "pip" "install" "--upgrade"
+                         (elpy-rpc--get-package-list))
+                  0)
+          (message "Elpy failed to install some of the RPC dependencies, please use `elpy-config' to install them.")))
+    (message "Some of Elpy's functionnalities will not work, please use `elpy-config' to install the needed python dependencies.")))
 
 ;;;;;;;;;;;;;;;;;;;
 ;;; Promise objects
