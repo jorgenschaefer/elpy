@@ -31,10 +31,6 @@
         (elpy-mode 1)
         (elpy-shell-toggle-dedicated-shell 1)
         (setq shell-buff2 (process-buffer (elpy-shell-get-or-create-process))))
-      (defun yes-or-no-p (&rest args)
-        t)
-      (defun y-or-n-p (&rest args)
-        t)
       (elpy-shell-kill-all)
       (should (not (and
                     (get-buffer-process shell-buff1)
@@ -56,10 +52,6 @@
 	(elpy-mode 1)
         (elpy-shell-toggle-dedicated-shell 1)
 	(setq shell-buff2 (process-buffer (elpy-shell-get-or-create-process))))
-      (defun yes-or-no-p (&rest args)
-	t)
-      (defun y-or-n-p (&rest args)
-	t)
       (elpy-shell-kill-all t)
       (should (not (and
 		    (buffer-name shell-buff1)
