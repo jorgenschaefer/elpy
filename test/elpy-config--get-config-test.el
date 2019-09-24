@@ -8,8 +8,8 @@
                      "python_interactive"
                      "python_interactive_version"
                      "python_interactive_executable"
-                     "rpc_venv"
-                     "rpc_venv_short"
+                     "rpc_virtualenv"
+                     "rpc_virtualenv_short"
                      "rpc_python"
                      "rpc_python_version"
                      "rpc_python_executable"
@@ -32,8 +32,8 @@
 
       (should (equal environment "test-environment")))))
 
-(ert-deftest elpy-config--get-config-should-be-evaluated-in-the-rpc-venv ()
+(ert-deftest elpy-config--get-config-should-be-evaluated-in-the-rpc-virtualenv ()
   (elpy-testcase ()
-    (should (string-match "elpy-rpc-venv/bin/python"
+    (should (string-match "elpy/rpc-venv/bin/python"
                           (gethash "rpc_python_executable"
                                    (elpy-config--get-config))))))

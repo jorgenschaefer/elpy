@@ -956,8 +956,8 @@ elpy_version
 python_interactive
 python_interactive_version
 python_interactive_executable
-rpc_venv
-rpc_venv_short
+rpc_virtualenv
+rpc_virtualenv_short
 rpc_python
 rpc_python_version
 rpc_python_executable
@@ -968,13 +968,14 @@ virtual_env_short"
   (with-temp-buffer
     (let ((config (make-hash-table :test #'equal)))
       (puthash "emacs_version" emacs-version config)
-      (let ((rpc-venv (elpy-rpc-get-or-create-venv)))
-        (puthash "rpc_venv" rpc-venv config)
+      (let ((rpc-venv (elpy-rpc-get-or-create-virtualenv)))
+        (puthash "rpc_virtualenv" rpc-venv config)
         (if rpc-venv
-            (puthash "rpc_venv_short"
-                     (file-name-nondirectory rpc-venv) config)
-          (puthash "rpc_venv_short" nil config)))
-      (with-elpy-rpc-venv-activated
+            (puthash "rpc_virtualenv_short"
+                     (file-name-nondirectory (directory-file-name rpc-venv))
+                       config)
+          (puthash "rpc_virtualenv_short" nil config)))
+      (with-elpy-rpc-virtualenv-activated
        (puthash "rpc_python" elpy-rpc-python-command config)
        (puthash "rpc_python_executable"
                 (executable-find elpy-rpc-python-command)
@@ -1000,7 +1001,7 @@ virtual_env_short"
         (if venv
             (puthash "virtual_env_short" (file-name-nondirectory venv) config)
           (puthash "virtual_env_short" nil config)))
-      (with-elpy-rpc-venv-activated
+      (with-elpy-rpc-virtualenv-activated
        (let ((return-value (ignore-errors
                              (let ((process-environment
                                     (elpy-rpc--environment))
@@ -1039,8 +1040,8 @@ virtual_env_short"
         (rpc-python (gethash "rpc_python" config))
         (rpc-python-executable (gethash "rpc_python_executable" config))
         (rpc-python-version (gethash "rpc_python_version" config))
-        (rpc-venv (gethash "rpc_venv" config))
-        (rpc-venv-short (gethash "rpc_venv_short" config))
+        (rpc-virtualenv (gethash "rpc_virtualenv" config))
+        (rpc-virtualenv-short (gethash "rpc_virtualenv_short" config))
         (jedi-version (gethash "jedi_version" config))
         (jedi-latest (gethash "jedi_latest" config))
         (rope-version (gethash "rope_version" config))
@@ -1089,8 +1090,8 @@ virtual_env_short"
                   "Not configured")))
             ("RPC virtualenv"
               . ,(format "%s (%s)"
-                      rpc-venv-short
-                      rpc-venv))
+                      rpc-virtualenv-short
+                      rpc-virtualenv))
             ((" Python" (lambda ()
                              (customize-variable
                               'elpy-rpc-python-command)))
@@ -1253,7 +1254,7 @@ PyPI, or nil if that's VERSION."
 
 (defun elpy-insert--pip-button-action (widget &optional _event)
   "The :action option for the pip button widget."
-  (with-elpy-rpc-venv-activated
+  (with-elpy-rpc-virtualenv-activated
    (async-shell-command (widget-get widget :command))))
 
 ;;;;;;;;;;;;
