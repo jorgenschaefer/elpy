@@ -172,3 +172,8 @@ for that file."
 
 (setq yas-verbosity 0)
 (setq yas-snippet-dirs ())
+
+
+;; Avoid asking stuff during tests
+(defun yes-or-no-p (&rest args) t)
+(defun y-or-n-p (&rest args) t)
