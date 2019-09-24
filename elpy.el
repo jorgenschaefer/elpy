@@ -169,7 +169,9 @@ These will be checked in turn. The first directory found is used."
               (const :tag "Mercurial project root (.hg)"
                      elpy-project-find-hg-root)
               (const :tag "Subversion project root (.svn)"
-                     elpy-project-find-svn-root))
+                     elpy-project-find-svn-root)
+              (const :tag "Django project root (manage.py, django-admin.py)"
+                     elpy-project-find-django-root))
   :group 'elpy)
 
 (make-obsolete-variable 'elpy-company-hide-modeline
@@ -1284,7 +1286,7 @@ this."
 (defun elpy-project-find-python-root ()
   "Return the current Python project root, if any.
 
-This is marked with setup.py, setup.cfg or pyproject.toml."
+This is marked with 'setup.py', 'setup.cfg' or 'pyproject.toml'."
   (or (locate-dominating-file default-directory "setup.py")
       (locate-dominating-file default-directory "setup.cfg")
       (locate-dominating-file default-directory "pyproject.toml")))
@@ -3245,6 +3247,13 @@ display the current class and method instead."
 (defun elpy-module-django (command &rest _args)
   "Module to provide Django support."
   (pcase command
+    (`global-init
+     (add-to-list 'elpy-project-root-finder-functions
+                  'elpy-project-find-django-root t))
+    (`global-stop
+     (setq elpy-project-root-finder-functions
+           (remove 'elpy-project-find-django-root
+                   elpy-project-root-finder-functions)))
     (`buffer-init
      (elpy-django-setup))
     (`buffer-stop
