@@ -230,8 +230,9 @@ changed since the virtualenv creation.
 An additional file `elpy-rpc-python-path-command' is added in the
 virtualenv directory in order to keep track of the python
 binaries used to create the virtualenv."
-  (let* ((venv-dir (expand-file-name (concat (file-name-as-directory (pyvenv-workon-home))
-                           "elpy-rpc-venv")))
+  (let* ((venv-dir (expand-file-name (concat (file-name-as-directory
+                                              (pyvenv-workon-home))
+                                             "elpy-rpc-venv")))
          (venv-exist (file-exists-p venv-dir))
          (venv-python-path-command-file (concat
                                          (file-name-as-directory venv-dir)
@@ -247,7 +248,7 @@ binaries used to create the virtualenv."
     ;; Delete the rpc virtualenv if obsolete
     (when venv-need-update
       (delete-directory (expand-file-name (concat (file-name-as-directory (pyvenv-workon-home))
-                                "elpy-rpc-venv"))
+                                                  "elpy-rpc-venv"))
                         t)
       (setq venv-exist nil))
     ;; Create a new rpc venv if necessary
@@ -277,13 +278,15 @@ binaries used to create the virtualenv."
         ;; Install the dependencies
         ;; safeguard to be sure we don't install stuff in the wrong venv
         (when (string= pyvenv-virtual-env-name "elpy-rpc-venv")
-          (message "Elpy is installing the RPC dependencies...")
-          (with-temp-buffer
-            (when (/= (apply 'call-process elpy-rpc-python-command nil t nil
-                             "-m" "pip" "install" "--upgrade"
-                             (elpy-rpc--get-package-list))
-                      0)
-              (message "Elpy failed to install some RPC dependencies, please check `elpy-config` if some functionalities don't work."))))
+          (if (y-or-n-p "Automatically install the RPC dependencies from PyPI (needed for completion, autoformatting and documentation) ? ")
+              (with-temp-buffer
+                (message "Elpy is installing the RPC dependencies...")
+                (when (/= (apply 'call-process elpy-rpc-python-command nil t nil
+                                 "-m" "pip" "install" "--upgrade"
+                                 (elpy-rpc--get-package-list))
+                          0)
+                  (message "Elpy failed to install some of the RPC dependencies, please use `elpy-config' to install them.")))
+            (message "Some of Elpy's functionnalities will not work, please use `elpy-config' to install the needed python dependencies.")))
         ;; Deactivate the rpc venv
         (if deact-venv
             (pyvenv-activate (directory-file-name deact-venv))
