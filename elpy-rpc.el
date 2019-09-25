@@ -697,6 +697,13 @@ RPC calls with the event."
                 (delete-region (point-min) line-end)
                 (elpy-rpc--handle-unexpected-line line))))))))))
 
+(defmacro elpy-insert--popup (buffer-name &rest body)
+  "Pop up a help buffer named BUFFER-NAME and execute BODY in it."
+  (declare (indent 1))
+  `(with-help-window ,buffer-name
+     (with-current-buffer standard-output
+       ,@body)))
+
 (defun elpy-rpc--check-backend-version (rpc-version)
   "Check that we are using the right version."
   (when (not (equal rpc-version elpy-version))

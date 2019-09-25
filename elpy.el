@@ -1177,13 +1177,6 @@ PyPI, or nil if that's VERSION."
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Elpy Formatted Insertion
 
-(defmacro elpy-insert--popup (buffer-name &rest body)
-  "Pop up a help buffer named BUFFER-NAME and execute BODY in it."
-  (declare (indent 1))
-  `(with-help-window ,buffer-name
-     (with-current-buffer standard-output
-       ,@body)))
-
 (defun elpy-insert--para (&rest messages)
   "Insert MESSAGES, a list of strings, and then fill it."
   (let ((start (point)))
