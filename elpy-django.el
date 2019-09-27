@@ -266,10 +266,18 @@ it will prompt for other flags/arguments to run."
             elpy-django-always-prompt
             (member cmd elpy-django-commands-with-req-arg))
     (setq cmd (concat cmd " " (read-shell-command (concat cmd ": ") "--noinput"))))
+  ;;
   (cond ((string= cmd "shell")
          (run-python (concat elpy-django-command " shell -i python") t t))
         (t
-         (compile (concat elpy-django-command " " cmd)))))
+         (let* ((program (car (split-string elpy-django-command)))
+                (args (cdr (split-string elpy-django-command)))
+                (buffer-name (format "django-%s" (car (split-string cmd)))))
+           (when (get-buffer (format "*%s*" buffer-name))
+             (kill-buffer (format "*%s*" buffer-name)))
+           (pop-to-buffer
+            (apply 'make-comint buffer-name program nil
+                   (append args (split-string cmd))))))))
 
 (defun elpy-django-runserver (arg)
   "Start the server and automatically add the ipaddr and port.

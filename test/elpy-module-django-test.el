@@ -1,5 +1,6 @@
 ;; Better way of doing tests? Since, I actually need a Django project
 ;; to test out the `runserver' command
+
 (ert-deftest elpy-module-django-buffer-init ()
   "elpy-django should not be activated since it won't find the
 `manage.py' file."
@@ -36,15 +37,19 @@ default to `django-admin.py'."
     (should (string= "django-admin.py" elpy-django-command))))
 
 (ert-deftest elpy-module-django-command ()
-  (mletf* ((compile (arg) arg)
-           (output (elpy-django-command "migrate")))
+  (mletf* ((output nil)
+           (make-comint (bufname prog ignore cmd &rest rest)
+                        (setq output (concat prog " " cmd))))
+          (elpy-django-command "migrate")
           (should (string= output "django-admin.py migrate"))))
 
 (ert-deftest elpy-module-django-commands-with-required-arg ()
   (dolist (cmd elpy-django-commands-with-req-arg)
-    (mletf* ((compile (arg) arg)
-             (read-shell-command (arg1 agr2) "test")
-             (output (elpy-django-command cmd)))
+    (mletf* ((output nil)
+             (make-comint (bufname prog ignore cmd &rest rest)
+                          (setq output (concat prog " " cmd " " (car rest))))
+             (read-shell-command (arg1 agr2) "test"))
+            (elpy-django-command cmd)
             (should (string= output (concat "django-admin.py " cmd " test"))))))
 
 ;; Test the parsing. Also, another way of shortening string?
@@ -139,4 +144,3 @@ keys as regular expression"
                     (elpy-django--get-test-runner)))
 
           (should (equal (length elpy-django--test-runner-cache) 7))))
-          
