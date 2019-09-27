@@ -3,10 +3,11 @@
 
 (ert-deftest elpy-rpc-get-virtualenv-path-should-return-default-path ()
   (elpy-testcase ()
-    (should (string-match "elpy/rpc-venv" (elpy-rpc-get-virtualenv-path)))
-    (pyvenv-workon "elpy-test-venv")
-    (should (string-match "elpy/rpc-venv" (elpy-rpc-get-virtualenv-path)))
-    (pyvenv-deactivate)))
+    (let ((elpy-rpc-virtualenv-path 'default))
+      (should (string-match "elpy/rpc-venv" (elpy-rpc-get-virtualenv-path)))
+      (pyvenv-workon "elpy-test-venv")
+      (should (string-match "elpy/rpc-venv" (elpy-rpc-get-virtualenv-path)))
+      (pyvenv-deactivate))))
 
 (ert-deftest elpy-rpc-get-virtualenv-path-should-return-current-venv-path ()
   (elpy-testcase ()

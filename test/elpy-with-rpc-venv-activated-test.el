@@ -2,7 +2,8 @@
 
 (ert-deftest elpy-with-rpc-virtualenv-activated-should-temporarily-activate-the-rpc-virtualenv ()
   (elpy-testcase ()
-    (let ((current-venv pyvenv-virtual-env-name))
+    (let ((elpy-rpc-virtualenv-path 'default)
+          (current-venv pyvenv-virtual-env-name))
     (with-elpy-rpc-virtualenv-activated
      (should (string= pyvenv-virtual-env-name "rpc-venv")))
     (should (string= pyvenv-virtual-env-name current-venv)))))

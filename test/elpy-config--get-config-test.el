@@ -34,6 +34,7 @@
 
 (ert-deftest elpy-config--get-config-should-be-evaluated-in-the-rpc-virtualenv ()
   (elpy-testcase ()
-    (should (string-match "elpy/rpc-venv/bin/python"
-                          (gethash "rpc_python_executable"
-                                   (elpy-config--get-config))))))
+    (let ((elpy-rpc-virtualenv-path 'default))
+      (should (string-match "elpy/rpc-venv/bin/python"
+                            (gethash "rpc_python_executable"
+                                     (elpy-config--get-config)))))))
