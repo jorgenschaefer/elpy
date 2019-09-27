@@ -741,6 +741,8 @@ Can also start `runserver` automatically and you can give an ip address and port
    :kbd: C-c C-x c
 
    Choose what command you'd like to run via `django-admin.py` or `manage.py`.
+   Please note that for compatibility reasons, the `shell` command will use
+   python (instead of ipython by default).
 
 .. command:: elpy-django-runserver
    :kbd: C-c C-x r
