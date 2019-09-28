@@ -258,7 +258,14 @@ The Shell Buffer
    By default, Elpy tries to find the root directory of the current project
    (git, svn or hg repository, python package or projectile project) and
    starts the python interpreter here. This behaviour can be suppressed
-   with the option ``elpy-shell-use-project-root``.
+   with the option ``elpy-shell-starting-directory``.
+
+.. option:: elpy-shell-starting-directory
+
+   Govern the directory in which Python shells will be started.
+   Can be ``'project-root`` (default) to use the current project root,
+   ``'current-directory`` to use the buffer current directory, or a
+   string indicating a specific path.
 
 .. command:: elpy-shell-toggle-dedicated-shell
 

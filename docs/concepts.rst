@@ -49,9 +49,9 @@ There are a few options and commands related to the RPC process.
 
    Path to the virtualenv used by the RPC.
 
-   Can be `default` (create a dedicated virtualenv
-   ``.emacs.d/elpy/rpc-venv``), `global` (use the global system
-   environment), `current` (use the currently active environment), a
+   Can be `'default` (create a dedicated virtualenv
+   ``.emacs.d/elpy/rpc-venv``), `'global` (use the global system
+   environment), `'current` (use the currently active environment), a
    virtualenv path or a function returning a virtualenv path.
 
    If the default virtual environment does not exist, it will be

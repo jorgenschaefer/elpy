@@ -99,13 +99,28 @@ in the Python shell."
   :type 'integer
   :group 'elpy)
 
+
+(defcustom elpy-shell-starting-directory 'project-root
+  "Directory in which Python shells will be started.
+
+Can be `project-root' (default) to use the current project root,
+`current-directory' to use the buffer current directory, or a
+string indicating a specific path."
+  :type '(choice (const :tag "Project root" project-root)
+                 (const :tag "Current directory" current-directory)
+                 (string :tag "Specific directory"))
+  :group 'elpy)
+
 (defcustom elpy-shell-use-project-root t
   "Whether to use project root as default directory when starting a Python shells.
 
-The project root is determined using `elpy-project-root`. If this variable is set to
-nil, the current directory is used instead."
+The project root is determined using `elpy-project-root`. If this
+variable is set to nil, the current directory is used instead."
   :type 'boolean
   :group 'elpy)
+(make-obsolete-variable 'elpy-shell-use-project-root
+                        'elpy-shell-starting-directory
+                        "1.32.0")
 
 (defcustom elpy-shell-cell-boundary-regexp
   (concat "^\\(?:"
@@ -235,9 +250,17 @@ Python process. This allows the process to start up."
       (when (not (executable-find python-shell-interpreter))
         (error "Python shell interpreter `%s' cannot be found. Please set `python-shell-interpreter' to a valid python binary."
                python-shell-interpreter))
-      (let ((default-directory (or (and elpy-shell-use-project-root
-                                        (elpy-project-root))
-                                   default-directory)))
+      (let ((default-directory
+              (cond ((eq elpy-shell-starting-directory 'project-root)
+                     (or (elpy-project-root)
+                         default-directory))
+                    ((eq elpy-shell-starting-directory 'current-buffer)
+                     default-directory)
+                    ((stringp elpy-shell-starting-directory)
+                     (file-name-as-directory
+                      (expand-file-name elpy-shell-starting-directory)))
+                    (t
+                     (error "Wrong value for `elpy-shell-starting-directory', please check this variable documentation and set it to a proper value")))))
         (run-python (python-shell-parse-command) nil t))
       (when sit (sit-for sit))
       (when (elpy-project-root)
