@@ -883,7 +883,14 @@ This includes `elpy-rpc-pythonpath' in the PYTHONPATH, if set."
                                        old-pythonpath)
                              elpy-rpc-pythonpath)))
       (cons (concat "PYTHONPATH=" new-pythonpath)
-            process-environment))))
+            (append process-environment
+                    (when (and (string-equal system-type "windows-nt")
+                               (>= (string-match-p
+                                    (regexp-quote "utf-8")
+                                    (format "%s" buffer-file-coding-system))) 0)
+                      (list
+                       "PYTHONIOENCODING=utf-8"
+                       "PYTHONLEGACYWINDOWSSTDIO=1")))))))
 
 (defun elpy-rpc--buffer-contents ()
   "Return the contents of the current buffer.
