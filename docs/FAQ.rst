@@ -79,7 +79,6 @@ Install dependencies
     (package-install 'yasnippet)
     (package-install 'pyvenv)
     (package-install 'highlight-indentation)
-    (package-install 'find-file-in-project)
     (package-install 's)
 
 Get latest code from github
