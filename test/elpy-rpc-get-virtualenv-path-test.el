@@ -21,10 +21,10 @@
 (ert-deftest elpy-rpc-get-virtualenv-path-should-return-global-venv-path ()
   (elpy-testcase ()
     (let ((elpy-rpc-virtualenv-path 'global))
-      (should (string-match "\\(travis/virtualenv/python\\|.virtualenvs/elpy\\)"
+      (should-not (string-match "\\(travis/virtualenv\\|.virtualenvs\\)"
                             (elpy-rpc-get-virtualenv-path)))
       (pyvenv-workon "elpy-test-venv")
-      (should (string-match "\\(travis/virtualenv/python\\|.virtualenvs/elpy\\)"
+      (should-not (string-match "\\(travis/virtualenv\\|.virtualenvs\\)"
                             (elpy-rpc-get-virtualenv-path)))
       (pyvenv-deactivate))))
 

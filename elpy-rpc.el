@@ -200,15 +200,12 @@ needed packages from `elpy-rpc--get-package-list'."
    ((eq elpy-rpc-virtualenv-path 'default)
     (elpy-rpc-default-virtualenv-path))
    ((eq elpy-rpc-virtualenv-path 'global)
-    (let ((deact-venv pyvenv-virtual-env))
-      (when deact-venv (pyvenv-deactivate))
-      (prog1
-          (directory-file-name
-           (file-name-directory
-            (directory-file-name
-             (file-name-directory
-              (executable-find elpy-rpc-python-command)))))
-        (when deact-venv (pyvenv-activate deact-venv)))))
+    (let ((exec-path (reverse exec-path)))
+      (directory-file-name
+       (file-name-directory
+        (directory-file-name
+         (file-name-directory
+          (executable-find elpy-rpc-python-command)))))))
    ((eq elpy-rpc-virtualenv-path 'current)
     (directory-file-name
      (file-name-directory

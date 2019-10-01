@@ -1089,9 +1089,11 @@ virtual_env_short"
                  (t
                   "Not configured")))
             ("RPC virtualenv"
-              . ,(format "%s (%s)"
-                      rpc-virtualenv-short
-                      rpc-virtualenv))
+             . ,(format "%s (%s)"
+                        (if (eq elpy-rpc-virtualenv-path 'global)
+                            "system"
+                          rpc-virtualenv-short)
+                        rpc-virtualenv))
             ((" Python" (lambda ()
                              (customize-variable
                               'elpy-rpc-python-command)))
