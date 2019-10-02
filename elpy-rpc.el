@@ -174,17 +174,17 @@ This maps call IDs to functions.")
 (defcustom elpy-rpc-virtualenv-path 'default
   "Path to the virtualenv used by the RPC.
 
-Can be `default' (create a dedicated virtualenv in \".emacs.d/elpy\"),
-`global' (use the global system environment), `current' (use the
-currently active environment), a virtualenv path or a function
-returning a virtualenv path.
+Can be `default' (create a dedicated virtualenv in
+\".emacs.d/elpy\"), `system' (use the system environment),
+`current' (use the currently active environment), a virtualenv
+path or a function returning a virtualenv path.
 
 If the default virtual environment does not exist, it will be
 created using `elpy-rpc-python-command' and populated with the
 needed packages from `elpy-rpc--get-package-list'."
 
   :type '(choice (const :tag "Dedicated environment" default)
-                 (const :tag "Global environment" global)
+                 (const :tag "Global environment" system)
                  (const :tag "Current environment" current)
                  (string :tag "Virtualenv path")
                  (function :tag "Function returning the virtualenv path"))
@@ -199,7 +199,8 @@ needed packages from `elpy-rpc--get-package-list'."
   (cond
    ((eq elpy-rpc-virtualenv-path 'default)
     (elpy-rpc-default-virtualenv-path))
-   ((eq elpy-rpc-virtualenv-path 'global)
+   ((or (eq elpy-rpc-virtualenv-path 'system)
+        (eq elpy-rpc-virtualenv-path 'global))  ;; for backward compatibility
     (let ((exec-path (reverse exec-path)))
       (directory-file-name
        (file-name-directory
@@ -582,7 +583,7 @@ died, this will kill the process and buffer."
           (name (format " *elpy-rpc [project:%s environment:%s]*"
                         library-root
                         (or deactivated-environment
-                            "global")))
+                            "system")))
           (new-elpy-rpc-buffer (generate-new-buffer name))
           (proc nil))
      (when (not full-python-command)

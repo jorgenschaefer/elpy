@@ -1090,7 +1090,8 @@ virtual_env_short"
                   "Not configured")))
             ("RPC virtualenv"
              . ,(format "%s (%s)"
-                        (if (eq elpy-rpc-virtualenv-path 'global)
+                        (if (or (eq elpy-rpc-virtualenv-path 'system)
+                                (eq elpy-rpc-virtualenv-path 'global))  ;; for backward compatibility
                             "system"
                           rpc-virtualenv-short)
                         rpc-virtualenv))
