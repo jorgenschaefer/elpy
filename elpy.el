@@ -445,7 +445,7 @@ This option need to bet set through `customize' or `customize-set-variable' to b
                  "Send Region to Python"
                "Send Buffer to Python")
       :help "Send the current region or the whole buffer to Python"]
-     ["Send Definition" python-shell-send-defun
+     ["Send Definition" elpy-shell-send-defun
       :help "Send current definition to Python"]
      ["Kill Python shell" elpy-shell-kill
       :help "Kill the current Python shell"]
