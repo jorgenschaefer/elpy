@@ -117,19 +117,19 @@ yet, you will have to install Elpy from sources.
    git clone https://github.com/USER/elpy.git
    cd elpy
 
-   Then switch to the branch associated to the PR you want to try:
+Then check out the branch associated to the PR you want to try:
 
 .. code-block:: bash
 
    git checkout BRANCH_NAME
 
-- Add Elpy's sources to the Emacs load path:
+- Now switch to Emacs and add Elpy's sources to the load path:
 
 .. code-block:: elisp
 
    (add-to-list 'load-path "/path/to/elpy")
 
-- And finally, load Elpy files:
+- Finally, load Elpy files:
 
 .. code-block:: elisp
 
