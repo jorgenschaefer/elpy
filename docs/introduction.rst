@@ -57,6 +57,27 @@ Or if you want to defer Elpy loading:
     (advice-add 'python-mode :before 'elpy-enable))
 
 
+From apt (Debian ≥10 an Ubuntu ≥18.10)
+--------------------------------------
+
+Users of Debian ≥10 or Ubuntu ≥18.10 can skip the instructions above
+this line and may simply install Elpy and all of its recommended
+dependencies with the following command:::
+
+  sudo apt install elpa-elpy
+
+Elpy can then be activated by running ``M-x elpy-enable``.
+This can be made automatic by adding the following to your ``.emacs``:
+
+.. code-block:: elisp
+
+  (elpy-enable)
+
+
+In order to use all the features (such as navigation with ``M-.``),
+you'll need to install some python libraries.  You can do that easily
+by typing ``M-x elpy-config RET``, and following the instructions.
+
 Manually from Melpa
 -------------------
 
@@ -83,27 +104,41 @@ add the following to your .emacs:
 
 Congratulations, Elpy is now successfully installed!
 
+Manually from sources
+---------------------
 
-From apt (Debian ≥10 an Ubuntu ≥18.10)
---------------------------------------
+If you want to test a specific branch or a PR that has not been merged
+yet, you will have to install Elpy from sources.
 
-Users of Debian ≥10 or Ubuntu ≥18.10 can skip the instructions above
-this line and may simply install Elpy and all of its recommended
-dependencies with the following command:::
+- First, clone the repository containing the branch you are interested in:
 
-  sudo apt install elpa-elpy
+.. code-block:: bash
 
-Elpy can then be activated by running ``M-x elpy-enable``.
-This can be made automatic by adding the following to your ``.emacs``:
+   git clone https://github.com/USER/elpy.git
+   cd elpy
+
+   Then switch to the branch associated to the PR you want to try:
+
+.. code-block:: bash
+
+   git checkout BRANCH_NAME
+
+- Add Elpy's sources to the Emacs load path:
 
 .. code-block:: elisp
 
-  (elpy-enable)
+   (add-to-list 'load-path "/path/to/elpy")
 
+- And finally, load Elpy files:
 
-In order to use all the features (such as navigation with ``M-.``),
-you'll need to install some python libraries.  You can do that easily
-by typing ``M-x elpy-config RET``, and following the instructions.
+.. code-block:: elisp
+
+   (load "elpy")
+   (load "elpy-rpc")
+   (load "elpy-shell")
+   (load "elpy-profile")
+   (load "elpy-refactor")
+   (load "elpy-django")
 
 
 Configuration
