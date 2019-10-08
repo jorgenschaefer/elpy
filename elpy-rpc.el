@@ -250,6 +250,8 @@ BODY."
                                                pyvenv-post-deactivate-hooks))
            (deactivated-environment
             (or pyvenv-virtual-env
+                (when (string-equal system-type "windows-nt")
+                  (executable-find elpy-rpc-python-command))
                 ;; global env
                 (directory-file-name
                  (file-name-directory
