@@ -238,33 +238,42 @@ needed packages from `elpy-rpc--get-package-list'."
 (defmacro with-elpy-rpc-virtualenv-activated (&rest body)
   "Run BODY with Elpy's RPC virtualenv activated.
 
-The current virtualenv name is bounded to the
-`deactivated-environment' variable during the execution of
-BODY."
+During the execution of BODY,`current-environment' is bounded to
+the current virtualenv path and `current-environment-is-deactivated'
+is non-nil if the current virtualenv has been deactivated (it is
+not if the RPC virtualenv and the current virtualenv are the same)."
   `(if (not (executable-find elpy-rpc-python-command))
        (error "Cannot find executable '%s', please set 'elpy-rpc-python-command' to an existing executable." elpy-rpc-python-command)
-     (let ((venv-was-activated pyvenv-virtual-env)
-           (pyvenv-post-activate-hooks (remq 'elpy-rpc--disconnect
-                                             pyvenv-post-activate-hooks))
-           (pyvenv-post-deactivate-hooks (remq 'elpy-rpc--disconnect
-                                               pyvenv-post-deactivate-hooks))
-           (deactivated-environment
-            (or pyvenv-virtual-env
-                ;; global env
-                (directory-file-name
-                 (file-name-directory
-                  (directory-file-name
-                   (file-name-directory
-                    (executable-find elpy-rpc-python-command))))))))
-       (pyvenv-activate (elpy-rpc-get-or-create-virtualenv))
+     (let* ((venv-was-activated pyvenv-virtual-env)
+            (pyvenv-post-activate-hooks (remq 'elpy-rpc--disconnect
+                                              pyvenv-post-activate-hooks))
+            (pyvenv-post-deactivate-hooks (remq 'elpy-rpc--disconnect
+                                                pyvenv-post-deactivate-hooks))
+            (current-environment
+             (or pyvenv-virtual-env
+                 ;; virtualenv activated outside of Emacs
+                 (getenv "VIRTUAL_ENV")
+                 ;; global env
+                 (directory-file-name
+                  (file-name-directory
+                   (directory-file-name
+                    (file-name-directory
+                     (executable-find elpy-rpc-python-command)))))))
+            ;; No need to change of venv if they are the same
+            (same-venv (file-equal-p current-environment
+                                     (elpy-rpc-get-or-create-virtualenv)))
+            (current-environment-is-deactivated (not same-venv)))
+       (when (not same-venv)
+         (pyvenv-activate (elpy-rpc-get-or-create-virtualenv)))
        (let (venv-err result)
          (condition-case err
              (setq result (progn ,@body))
            (error (setq venv-err (car (cdr err)))))
-         (if venv-was-activated
-             (pyvenv-activate (directory-file-name
-                               deactivated-environment))
-           (pyvenv-deactivate))
+         (when (not same-venv)
+           (if venv-was-activated
+               (pyvenv-activate (directory-file-name
+                                 current-environment))
+             (pyvenv-deactivate)))
          (when venv-err
            (error venv-err))
          result))))
@@ -582,8 +591,7 @@ died, this will kill the process and buffer."
    (let* ((full-python-command (executable-find python-command))
           (name (format " *elpy-rpc [project:%s environment:%s]*"
                         library-root
-                        (or deactivated-environment
-                            "system")))
+                        current-environment))
           (new-elpy-rpc-buffer (generate-new-buffer name))
           (proc nil))
      (when (not full-python-command)
@@ -609,7 +617,9 @@ died, this will kill the process and buffer."
        (set-process-query-on-exit-flag proc nil)
        (set-process-sentinel proc #'elpy-rpc--sentinel)
        (set-process-filter proc #'elpy-rpc--filter)
-       (elpy-rpc-init library-root deactivated-environment
+       (elpy-rpc-init library-root
+                      (when current-environment-is-deactivated
+                        current-environment)
                       (lambda (result)
                         (setq elpy-rpc--jedi-available
                               (cdr (assq 'jedi_available result))))))

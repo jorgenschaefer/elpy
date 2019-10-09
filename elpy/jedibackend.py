@@ -28,7 +28,7 @@ class JediBackend(object):
     def __init__(self, project_root, environment_path):
         self.project_root = project_root
         self.environment = None
-        if environment_path:
+        if environment_path is not None:
             self.environment = jedi.create_environment(environment_path,
                                                        safe=False)
         self.completions = {}
