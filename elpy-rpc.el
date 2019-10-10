@@ -238,7 +238,7 @@ needed packages from `elpy-rpc--get-package-list'."
 (defmacro with-elpy-rpc-virtualenv-activated (&rest body)
   "Run BODY with Elpy's RPC virtualenv activated.
 
-During the execution of BODY,`current-environment' is bounded to
+During the execution of BODY, `current-environment' is bounded to
 the current virtualenv path and `current-environment-is-deactivated'
 is non-nil if the current virtualenv has been deactivated (it is
 not if the RPC virtualenv and the current virtualenv are the same)."

@@ -837,9 +837,9 @@ item in another window.\n\n")
                      :package python-shell-interpreter)
       (insert "\n\n"))
 
-    ;; Using anaconda and dedicated RPC virtualenv
+    ;; Using anaconda and a dedicated virtualenv for the RPC
     ;; (see https://github.com/jorgenschaefer/elpy/pull/1688)
-    (when (and (string-match "anaconda"
+    (when (and (string-match "[Aa]naconda"
                              (gethash "python_interactive_executable" config))
                (not (eq elpy-rpc-virtualenv-path 'current)))
       (elpy-insert--para
