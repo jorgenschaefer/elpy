@@ -58,6 +58,9 @@ There are a few options and commands related to the RPC process.
    created using `elpy-rpc-python-command` and populated with the
    needed packages from `elpy-rpc--get-package-list`.
 
+   For Anaconda users on Windows, the only supported option is `'current`.
+   Please put `(setq elpy-rpc-virtualenv-path 'current)` in your init file.
+
 .. option:: elpy-rpc-large-buffer-size
 
    The size in character starting from which Elpy will transfer buffer
