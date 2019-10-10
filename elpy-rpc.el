@@ -238,10 +238,12 @@ needed packages from `elpy-rpc--get-package-list'."
 (defmacro with-elpy-rpc-virtualenv-activated (&rest body)
   "Run BODY with Elpy's RPC virtualenv activated.
 
-During the execution of BODY, `current-environment' is bounded to
-the current virtualenv path and `current-environment-is-deactivated'
-is non-nil if the current virtualenv has been deactivated (it is
-not if the RPC virtualenv and the current virtualenv are the same)."
+During the execution of BODY the following variables are available:
+- `current-environment': current environment path.
+- `current-environment-binaries': current environment python binaries path.
+- `current-environment-is-deactivated': non-nil if the current
+  environment has been deactivated (it is not if the RPC environment and
+  the current environment are the same)."
   `(if (not (executable-find elpy-rpc-python-command))
        (error "Cannot find executable '%s', please set 'elpy-rpc-python-command' to an existing executable." elpy-rpc-python-command)
      (let* ((venv-was-activated pyvenv-virtual-env)
@@ -249,26 +251,25 @@ not if the RPC virtualenv and the current virtualenv are the same)."
                                               pyvenv-post-activate-hooks))
             (pyvenv-post-deactivate-hooks (remq 'elpy-rpc--disconnect
                                                 pyvenv-post-deactivate-hooks))
+            (current-environment-binaries (executable-find
+                                           elpy-rpc-python-command))
             (current-environment
-             (or pyvenv-virtual-env
-                 ;; virtualenv activated outside of Emacs
-                 (getenv "VIRTUAL_ENV")
-                 ;; global env
-                 (directory-file-name
-                  (file-name-directory
-                   (directory-file-name
-                    (file-name-directory
-                     (executable-find elpy-rpc-python-command)))))))
+             (directory-file-name
+              (file-name-directory
+               (directory-file-name
+                (file-name-directory
+                 current-environment-binaries)))))
             ;; No need to change of venv if they are the same
             (same-venv (file-equal-p current-environment
                                      (elpy-rpc-get-or-create-virtualenv)))
-            (current-environment-is-deactivated (not same-venv)))
+            current-environment-is-deactivated)
        (when (not same-venv)
-         (pyvenv-activate (elpy-rpc-get-or-create-virtualenv)))
+         (pyvenv-activate (elpy-rpc-get-or-create-virtualenv))
+         (setq current-environment-is-deactivated t))
        (let (venv-err result)
          (condition-case err
              (setq result (progn ,@body))
-           (error (setq venv-err (car (cdr err)))))
+           (error (setq venv-err (format "%s" err))))
          (when (not same-venv)
            (if venv-was-activated
                (pyvenv-activate (directory-file-name
@@ -619,7 +620,7 @@ died, this will kill the process and buffer."
        (set-process-filter proc #'elpy-rpc--filter)
        (elpy-rpc-init library-root
                       (when current-environment-is-deactivated
-                        current-environment)
+                        current-environment-binaries)
                       (lambda (result)
                         (setq elpy-rpc--jedi-available
                               (cdr (assq 'jedi_available result))))))
@@ -938,17 +939,22 @@ protocol if the buffer is larger than
       (ignore-errors
         (kill-buffer buffer)))))
 
-(defun elpy-rpc-init (library-root environment &optional success error)
+(defun elpy-rpc-init (library-root environment-binaries &optional success error)
   "Initialize the backend.
 
 This has to be called as the first method, else Elpy won't be
-able to respond to other calls."
+able to respond to other calls.
+
++LIBRARY-ROOT is the current project root,
++ENVIRONMENT-BINARIES is the path to the python binaries of the environment to work in."
   (elpy-rpc "init"
             ;; This uses a vector because otherwise, json-encode in
             ;; older Emacsen gets seriously confused, especially when
             ;; backend is nil.
             (vector `((project_root . ,(expand-file-name library-root))
-                      (environment . ,(when environment (expand-file-name environment)))))
+                      (environment . ,(when environment-binaries
+                                        (expand-file-name
+                                         environment-binaries)))))
             success error))
 
 

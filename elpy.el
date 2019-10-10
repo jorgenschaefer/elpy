@@ -837,25 +837,6 @@ item in another window.\n\n")
                      :package python-shell-interpreter)
       (insert "\n\n"))
 
-    ;; Using anaconda and a dedicated virtualenv for the RPC
-    ;; (see https://github.com/jorgenschaefer/elpy/pull/1688)
-    (when (and (string-match "[Aa]naconda"
-                             (gethash "python_interactive_executable" config))
-               (not (eq elpy-rpc-virtualenv-path 'current)))
-      (elpy-insert--para
-       "You appear to be using Anaconda with a dedicated virtualenv for "
-       "the RPC process. If you experience issues with completion and access "
-       "to documentation, please set `elpy-rpc-virtualenv-path' to `current'."
-       "\n")
-      (insert "\n")
-      (widget-create 'elpy-insert--generic-button
-                     :button-name "Set `elpy-rpc-virtualenv-path' to `current'"
-                     :function (lambda ()
-                                 (setq elpy-rpc-virtualenv-path 'current)
-                                 (elpy-rpc-restart)
-                                 (elpy-config)))
-      (insert "\n\n"))
-
     ;; Requested backend unavailable
     (when (and (gethash "rpc_python_executable" config)
                (not (gethash "jedi_version" config)))
