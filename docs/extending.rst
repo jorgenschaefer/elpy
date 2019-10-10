@@ -72,3 +72,8 @@ and run the ``setup`` script in it:
 
 
 You can now run ``./scripts/test`` to run Elpy's test suite.
+
+If you cannot (or do not want to) use virtual environments on your
+system, you can set the environment variable
+ELPY_TEST_DONT_USE_VIRTUALENV to skip tests involving virtual
+environments: ``ELPY_TEST_DONT_USE_VIRTUALENV=t ./scripts/test``.

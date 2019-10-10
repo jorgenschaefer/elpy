@@ -10,6 +10,14 @@
 (require 'elpy)
 ;; Travis regularly has some lag for some reason.
 (setq elpy-rpc-timeout 10)
+;; If the environment variable `ELPY_TEST_DONT_USE_VIRTUALENV' is
+;; defined, don't check for features involving virtualenvs.
+;; This permits testing on platforms that do not allow virtualenvs
+;; (for the Debian package for example)
+(setq elpy-test-dont-use-virtualenv (getenv "ELPY_TEST_DONT_USE_VIRTUALENV"))
+(when elpy-test-dont-use-virtualenv
+  (message "ELPY_TEST_DONT_USE_VIRTUALENV is set, skipping tests using virtualenvs.")
+  (setq elpy-rpc-virtualenv-path 'system))
 
 (defmacro mletf* (bindings &rest body)
   "Liket `cl-letf*', just with a slightly more concise function syntax.

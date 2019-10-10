@@ -63,9 +63,10 @@
               (with-elpy-rpc-virtualenv-activated
                (executable-find elpy-rpc-python-command)))))))
 
-(ert-deftest elpy-rpc--open-should-open-in-a-dedicated-virtualenv ()
-  (elpy-testcase ()
-    (let ((elpy-rpc-virtualenv-path 'default))
-      (elpy-rpc--get-rpc-buffer)
-      (with-elpy-rpc-virtualenv-activated
-       (should (string= "rpc-venv" pyvenv-virtual-env-name))))))
+(when (not elpy-test-dont-use-virtualenv)
+  (ert-deftest elpy-rpc--open-should-open-in-a-dedicated-virtualenv ()
+    (elpy-testcase ()
+      (let ((elpy-rpc-virtualenv-path 'default))
+        (elpy-rpc--get-rpc-buffer)
+        (with-elpy-rpc-virtualenv-activated
+         (should (string= "rpc-venv" pyvenv-virtual-env-name)))))))
