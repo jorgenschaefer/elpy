@@ -833,7 +833,7 @@ corresponding statement."
   (elpy-shell--nav-beginning-of-statement)
   ;; Make sure there is a statement to send
   (unless (looking-at "[[:space:]]*$")
-    (unless elpy-shell-echo-input) (elpy-shell--append-to-shell-output "\n")
+    (unless elpy-shell-echo-input (elpy-shell--append-to-shell-output "\n"))
     (let ((beg (save-excursion (beginning-of-line) (point)))
           (end (progn (elpy-shell--nav-end-of-statement) (point))))
       (unless (eq beg end)
@@ -990,7 +990,7 @@ __name__ == '__main__' to be false to avoid accidental execution
 of code. With prefix argument, this code is executed."
   (interactive "P")
   (elpy-shell--ensure-shell-running)
-  (unless elpy-shell-echo-input) (elpy-shell--append-to-shell-output "\n")
+  (unless elpy-shell-echo-input (elpy-shell--append-to-shell-output "\n"))
   (let ((if-main-regex "^if +__name__ +== +[\"']__main__[\"'] *:")
         (has-if-main-and-removed nil))
     (if (use-region-p)

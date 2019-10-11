@@ -41,6 +41,7 @@
     ;; on "for i in range(10):"
     (goto-char 30)
     (elpy-shell-kill t)
+    ;; Send statement
     (elpy-shell-send-statement)
     (python-shell-send-string "print('OK')\n")
     (should (string-match ">>> for i in range(10):"
