@@ -657,9 +657,9 @@ advantages this brings.
 .. command:: elpy-set-test-runner
 
    This changes the current test runner. Elpy supports the standard
-   unittest discovery runner, the Django discovery runner, nose and
-   py.test. You can also write your own, as described in :ref:`Writing
-   Test Runners`.
+   unittest discovery runner, the Django discovery runner, nose,
+   green, py.test and Twisted trial. You can also write your own, as
+   described in :ref:`Writing Test Runners`.
 
    Note on Django runners: Elpy tries to find `manage.py` within your project
    structure. If it's unable to find it, it falls back to `django-admin.py`.
