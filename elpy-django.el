@@ -192,7 +192,7 @@ The result is memoized on project root and `DJANGO_SETTINGS_MODULE'"
         (django-settings-env (getenv "DJANGO_SETTINGS_MODULE"))
         (default-directory (elpy-project-root)))
     ;; If no Django settings has been set, then nothing will work. Warn user
-    (when (not django-settings-env)
+    (unless django-settings-env
       (error "Please set environment variable `DJANGO_SETTINGS_MODULE' if you'd like to run the test runner"))
 
     (let* ((runner-key (list default-directory django-settings-env))

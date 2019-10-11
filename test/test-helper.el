@@ -10,6 +10,14 @@
 (require 'elpy)
 ;; Travis regularly has some lag for some reason.
 (setq elpy-rpc-timeout 10)
+;; If the environment variable `ELPY_TEST_DONT_USE_VIRTUALENV' is
+;; defined, don't check for features involving virtualenvs.
+;; This permits testing on platforms that do not allow virtualenvs
+;; (for the Debian package for example)
+(setq elpy-test-dont-use-virtualenv (getenv "ELPY_TEST_DONT_USE_VIRTUALENV"))
+(when elpy-test-dont-use-virtualenv
+  (message "ELPY_TEST_DONT_USE_VIRTUALENV is set, skipping tests using virtualenvs.")
+  (setq elpy-rpc-virtualenv-path 'system))
 
 (defmacro mletf* (bindings &rest body)
   "Liket `cl-letf*', just with a slightly more concise function syntax.
@@ -48,11 +56,11 @@ Run BODY with that binding."
        (unwind-protect
            (progn ,@body)
          (dolist (proc (process-list))
-           (when (not (member proc ,old-process-list))
+           (unless (member proc ,old-process-list)
              (kill-process proc)))
          (let ((kill-buffer-query-functions nil))
            (dolist (buf (buffer-list))
-             (when (not (member buf ,old-buffer-list))
+             (unless (member buf ,old-buffer-list)
                (kill-buffer buf))))))))
 
 (defun elpy-testcase-transform-spec (speclist body)
@@ -69,7 +77,7 @@ Run BODY with that binding."
               ,(elpy-testcase-transform-spec (cdr speclist)
                                              body))))
         (`:emacs-required
-         (when (not (version< emacs-version (cadr spec)))
+         (unless (version< emacs-version (cadr spec))
            (elpy-testcase-transform-spec (cdr speclist)
 					 body)))
         (`:teardown
@@ -118,7 +126,7 @@ for that file."
                        (cadr spec)))
            (fullname (format "%s/%s" basedir filename))
            (dirname (file-name-directory fullname)))
-      (when (not (file-directory-p dirname))
+      (unless (file-directory-p dirname)
         (make-directory dirname t))
       (write-region contents nil fullname))))
 
