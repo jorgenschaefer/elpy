@@ -5,7 +5,7 @@
     (let ((elpy-rpc-virtualenv-path 'default))
       (should (string-match "elpy/rpc-venv" (elpy-rpc-get-or-create-virtualenv))))))
 
-(when (not elpy-test-dont-use-virtualenv)
+(unless elpy-test-dont-use-virtualenv
   (ert-deftest elpy-rpc-get-virtualenv-should-create-the-virtualenv-if-necessary ()
     (elpy-testcase ()
       (let ((elpy-rpc-virtualenv-path 'default))
@@ -27,7 +27,7 @@
      (should-not (string-match "lpy is creating the RPC virtualenv"
                                messages)))))
 
-(when (not elpy-test-dont-use-virtualenv)
+(unless elpy-test-dont-use-virtualenv
   (ert-deftest elpy-rpc-get-virtualenv-should-not-perturbate-the-current-virtualenv ()
     (elpy-testcase ()
       (let ((old-venv pyvenv-virtual-env))
@@ -38,7 +38,7 @@
             (pyvenv-workon old-venv)
           (pyvenv-deactivate))))))
 
-(when (not elpy-test-dont-use-virtualenv)
+(unless elpy-test-dont-use-virtualenv
   (ert-deftest elpy-rpc-get-virtualenv-should-update-the-virtualenv-when-rpc-command-change ()
     (elpy-testcase ()
      (let ((elpy-rpc-virtualenv-path 'default))
@@ -57,20 +57,21 @@
                (elpy-rpc-get-or-create-virtualenv)
                (should (string-match "lpy is \\(creating\\|updating\\) the RPC virtualenv" messages)))))))
 
-(when (not elpy-test-dont-use-virtualenv)
+(unless elpy-test-dont-use-virtualenv
   (ert-deftest elpy-rpc-get-virtualenv-should-NOT-update-the-virtualenv-when-it-is-not-the-default-venv ()
     (elpy-testcase ()
      (let ((elpy-rpc-virtualenv-path (concat
-                                      (file-name-as-directory (pyvenv-workon-home))
+                                      (file-name-as-directory
+                                       (pyvenv-workon-home))
                                       "elpy-test-venv")))
-     (mletf* ((message (mess &rest rest)
+       (mletf* ((message (mess &rest rest)
                          (setq messages
                                (concat messages (apply 'format mess rest))))
-              (messages ""))
-       (elpy-rpc-get-or-create-virtualenv)
-       (should-not (string-match "lpy is installing the RPC virtualenv" messages)))))))
+                (messages ""))
+               (elpy-rpc-get-or-create-virtualenv)
+               (should-not (string-match "lpy is installing the RPC virtualenv" messages)))))))
 
-(when (not elpy-test-dont-use-virtualenv)
+(unless elpy-test-dont-use-virtualenv
   (ert-deftest elpy-rpc-get-virtualenv-should-ask-before-creating-venvs ()
     (elpy-testcase ()
      (mletf* ((elpy-rpc-virtualenv-path "other-venv")

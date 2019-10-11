@@ -263,14 +263,14 @@ During the execution of BODY the following variables are available:
             (same-venv (file-equal-p current-environment
                                      (elpy-rpc-get-or-create-virtualenv)))
             current-environment-is-deactivated)
-       (when (not same-venv)
+       (unless same-venv
          (pyvenv-activate (elpy-rpc-get-or-create-virtualenv))
          (setq current-environment-is-deactivated t))
        (let (venv-err result)
          (condition-case err
              (setq result (progn ,@body))
            (error (setq venv-err (format "%s" err))))
-         (when (not same-venv)
+         (unless same-venv
            (if venv-was-activated
                (pyvenv-activate (directory-file-name
                                  current-environment))
@@ -422,7 +422,7 @@ not exist anymore."
 
 (defun elpy-promise-resolve (promise value)
   "Resolve PROMISE with VALUE."
-  (when (not (elpy-promise-resolved-p promise))
+  (unless (elpy-promise-resolved-p promise)
     (unwind-protect
         (let ((success-callback (elpy-promise-success-callback promise)))
           (when success-callback
@@ -435,7 +435,7 @@ not exist anymore."
 
 (defun elpy-promise-reject (promise reason)
   "Reject PROMISE because of REASON."
-  (when (not (elpy-promise-resolved-p promise))
+  (unless (elpy-promise-resolved-p promise)
     (unwind-protect
         (let ((error-callback (elpy-promise-error-callback promise)))
           (when error-callback
@@ -475,7 +475,7 @@ See http://debbugs.gnu.org/cgi/bugreport.cgi?bug=17647"
 If SUCCESS and optionally ERROR is given, return immediately and
 call those when a result is available. Otherwise, wait for a
 result and return that."
-  (when (not error)
+  (unless error
     (setq error #'elpy-rpc--default-error-callback))
   (if success
       (elpy-rpc--call method params success error)
@@ -532,16 +532,16 @@ Returns a PROMISE object."
   "Register for PROMISE to be called when CALL-ID returns.
 
 Must be called in an elpy-rpc buffer."
-  (when (not elpy-rpc--buffer-p)
+  (unless elpy-rpc--buffer-p
     (error "Must be called in RPC buffer"))
-  (when (not elpy-rpc--backend-callbacks)
+  (unless elpy-rpc--backend-callbacks
     (setq elpy-rpc--backend-callbacks (make-hash-table :test #'equal)))
   (puthash call-id promise elpy-rpc--backend-callbacks))
 
 (defun elpy-rpc--get-rpc-buffer ()
   "Return the RPC buffer associated with the current buffer,
 creating one if necessary."
-  (when (not (elpy-rpc--process-buffer-p elpy-rpc--buffer))
+  (unless (elpy-rpc--process-buffer-p elpy-rpc--buffer)
     (setq elpy-rpc--buffer
           (or (elpy-rpc--find-buffer (elpy-library-root)
                                      elpy-rpc-python-command)
@@ -595,7 +595,7 @@ died, this will kill the process and buffer."
                         current-environment))
           (new-elpy-rpc-buffer (generate-new-buffer name))
           (proc nil))
-     (when (not full-python-command)
+     (unless full-python-command
        (error "Can't find Python command, configure `elpy-rpc-python-command'"))
      (with-current-buffer new-elpy-rpc-buffer
        (setq elpy-rpc--buffer-p t
@@ -715,7 +715,7 @@ RPC calls with the event."
 
 (defun elpy-rpc--check-backend-version (rpc-version)
   "Check that we are using the right version."
-  (when (not (equal rpc-version elpy-version))
+  (unless (equal rpc-version elpy-version)
     (elpy-insert--popup "*Elpy Version Mismatch*"
       (elpy-insert--header "Elpy Version Mismatch")
       (elpy-insert--para
@@ -737,7 +737,7 @@ RPC calls with the event."
 
 This is usually an error or backtrace."
   (let ((buf (get-buffer "*Elpy Output*")))
-    (when (not buf)
+    (unless buf
       (elpy-insert--popup "*Elpy Output*"
         (elpy-insert--header "Output from Backend")
         (elpy-insert--para
@@ -759,7 +759,7 @@ This is usually an error or backtrace."
         (error-object (cdr (assq 'error json)))
         (result (cdr (assq 'result json))))
     (let ((promise (gethash call-id elpy-rpc--backend-callbacks)))
-      (when (not promise)
+      (unless promise
         (error "Received a response for unknown call-id %s" call-id))
       (remhash call-id elpy-rpc--backend-callbacks)
       (if error-object
@@ -872,7 +872,7 @@ This is usually an error or backtrace."
                           ")\n")
                   (insert (format "%s(\n    %s\n)\n"
                                   function-name function-args)))))
-            (when (not (= 0 (current-column)))
+            (unless (= 0 (current-column))
               (insert "\n"))
             (insert "```"))
           (setq elpy-rpc--last-error-popup (float-time))))))))

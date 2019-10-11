@@ -32,7 +32,7 @@
 
       (should (equal environment "test-environment")))))
 
-(when (not elpy-test-dont-use-virtualenv)
+(unless elpy-test-dont-use-virtualenv
   (ert-deftest elpy-config--get-config-should-be-evaluated-in-the-rpc-virtualenv ()
     (elpy-testcase ()
       (let ((elpy-rpc-virtualenv-path 'default))

@@ -19,7 +19,7 @@
                (elpy-snippet-split-args
                 (buffer-substring-no-properties start end))))))
         class method args)
-    (when (not current-arglist)
+    (unless current-arglist
       (setq current-arglist '(("self"))))
     (if (and current-defun
              (string-match "^\\(.*\\)\\.\\(.*\\)$" current-defun))

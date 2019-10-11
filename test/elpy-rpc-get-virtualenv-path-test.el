@@ -1,7 +1,7 @@
 ;;; -*-coding: utf-8-*-
 
 
-(when (not elpy-test-dont-use-virtualenv)
+(unless elpy-test-dont-use-virtualenv
   (ert-deftest elpy-rpc-get-virtualenv-path-should-return-default-path ()
     (elpy-testcase ()
       (let ((elpy-rpc-virtualenv-path 'default)
@@ -13,7 +13,7 @@
             (pyvenv-activate old-venv)
           (pyvenv-deactivate))))))
 
-(when (not elpy-test-dont-use-virtualenv)
+(unless elpy-test-dont-use-virtualenv
   (ert-deftest elpy-rpc-get-virtualenv-path-should-return-current-venv-path ()
     (elpy-testcase ()
       (let ((elpy-rpc-virtualenv-path 'current)
@@ -39,13 +39,13 @@
           (pyvenv-activate old-venv)
         (pyvenv-deactivate)))))
 
-(when (not elpy-test-dont-use-virtualenv)
+(unless elpy-test-dont-use-virtualenv
  (ert-deftest elpy-rpc-get-virtualenv-path-should-return-custom-venv ()
    (elpy-testcase ()
      (let ((elpy-rpc-virtualenv-path "elpy-test-venv"))
        (should (string-match "elpy-test-venv" (elpy-rpc-get-virtualenv-path)))))))
 
-(when (not elpy-test-dont-use-virtualenv)
+(unless elpy-test-dont-use-virtualenv
  (ert-deftest elpy-rpc-get-virtualenv-path-should-return-custom-venv-with-fun ()
    (elpy-testcase ()
      (let ((elpy-rpc-virtualenv-path (lambda () "elpy-test-venv")))

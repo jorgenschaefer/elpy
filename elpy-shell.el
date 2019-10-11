@@ -247,7 +247,7 @@ Python process. This allows the process to start up."
          (proc (get-buffer-process bufname)))
     (if proc
         proc
-      (when (not (executable-find python-shell-interpreter))
+      (unless (executable-find python-shell-interpreter)
         (error "Python shell interpreter `%s' cannot be found. Please set `python-shell-interpreter' to a valid python binary."
                python-shell-interpreter))
       (let ((default-directory
@@ -527,7 +527,7 @@ complete). Otherwise, does nothing."
 
 Unless NO-FONT-LOCK is set, formats STRING as shell input.
 Prepends a continuation promt if PREPEND-CONT-PROMPT is set."
-  (when (not (string-empty-p string))
+  (unless (string-empty-p string)
   (let* ((process (elpy-shell-get-or-create-process))
          (process-buf (process-buffer process))
          (mark-point (process-mark process)))
@@ -832,8 +832,8 @@ corresponding statement."
   (elpy-shell--ensure-shell-running)
   (elpy-shell--nav-beginning-of-statement)
   ;; Make sure there is a statement to send
-  (when (not (looking-at "[[:space:]]*$"))
-    (when (not elpy-shell-echo-input) (elpy-shell--append-to-shell-output "\n"))
+  (unless (looking-at "[[:space:]]*$")
+    (unless elpy-shell-echo-input) (elpy-shell--append-to-shell-output "\n")
     (let ((beg (save-excursion (beginning-of-line) (point)))
           (end (progn (elpy-shell--nav-end-of-statement) (point))))
       (unless (eq beg end)
@@ -916,7 +916,7 @@ below point and send the group around this statement."
               ;; single line
               (elpy-shell-send-statement-and-step)
             ;; multiple lines
-            (when (not elpy-shell-echo-input)
+            (unless elpy-shell-echo-input
               (elpy-shell--append-to-shell-output "\n"))
             (elpy-shell--with-maybe-echo
              (python-shell-send-region beg end))
@@ -950,7 +950,7 @@ variables `elpy-shell-cell-boundary-regexp' and
     (if beg
         (progn
           (elpy-shell--flash-and-message-region beg end)
-          (when (not elpy-shell-echo-input)
+          (unless elpy-shell-echo-input
             (elpy-shell--append-to-shell-output "\n"))
           (elpy-shell--with-maybe-echo
            (python-shell-send-region beg end))
@@ -990,7 +990,7 @@ __name__ == '__main__' to be false to avoid accidental execution
 of code. With prefix argument, this code is executed."
   (interactive "P")
   (elpy-shell--ensure-shell-running)
-  (when (not elpy-shell-echo-input) (elpy-shell--append-to-shell-output "\n"))
+  (unless elpy-shell-echo-input) (elpy-shell--append-to-shell-output "\n")
   (let ((if-main-regex "^if +__name__ +== +[\"']__main__[\"'] *:")
         (has-if-main-and-removed nil))
     (if (use-region-p)
@@ -1037,7 +1037,7 @@ switches focus to Python shell buffer."
   (let ((orig (point)))
     (setq current-prefix-arg my-prefix-arg)
     (call-interactively step-fun)
-    (when (not step)
+    (unless step
       (goto-char orig)))
   (when go
     (elpy-shell-switch-to-shell)))

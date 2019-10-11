@@ -56,11 +56,11 @@ Run BODY with that binding."
        (unwind-protect
            (progn ,@body)
          (dolist (proc (process-list))
-           (when (not (member proc ,old-process-list))
+           (unless (member proc ,old-process-list)
              (kill-process proc)))
          (let ((kill-buffer-query-functions nil))
            (dolist (buf (buffer-list))
-             (when (not (member buf ,old-buffer-list))
+             (unless (member buf ,old-buffer-list)
                (kill-buffer buf))))))))
 
 (defun elpy-testcase-transform-spec (speclist body)
@@ -77,7 +77,7 @@ Run BODY with that binding."
               ,(elpy-testcase-transform-spec (cdr speclist)
                                              body))))
         (`:emacs-required
-         (when (not (version< emacs-version (cadr spec)))
+         (unless (version< emacs-version (cadr spec))
            (elpy-testcase-transform-spec (cdr speclist)
 					 body)))
         (`:teardown
@@ -126,7 +126,7 @@ for that file."
                        (cadr spec)))
            (fullname (format "%s/%s" basedir filename))
            (dirname (file-name-directory fullname)))
-      (when (not (file-directory-p dirname))
+      (unless (file-directory-p dirname)
         (make-directory dirname t))
       (write-region contents nil fullname))))
 

@@ -23,7 +23,7 @@
          "pass")
         (should venv-has-been-activated)))))
 
-(when (not elpy-test-dont-use-virtualenv)
+(unless elpy-test-dont-use-virtualenv
   (ert-deftest elpy-with-rpc-virtualenv-activated-should-temporarily-activate-the-rpc-virtualenv ()
     (elpy-testcase ()
       (let ((elpy-rpc-virtualenv-path 'default)

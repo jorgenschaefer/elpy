@@ -59,7 +59,7 @@
           (message  "[%s] Profiling failed" filename)
           (display-buffer  "*elpy-profile-log*"))
       (message  "[%s] Profiling succeeded" filename)
-      (when (not dont-display)
+      (unless dont-display
         (elpy-profile--display-profiling prof-file)))))
 
 (defun elpy-profile--file (file &optional in-dir dont-display)

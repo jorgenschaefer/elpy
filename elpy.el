@@ -546,7 +546,7 @@ virtualenv.
 
 \\{elpy-mode-map}"
   :lighter " Elpy"
-  (when (not (derived-mode-p 'python-mode))
+  (unless (derived-mode-p 'python-mode)
     (error "Elpy only works with `python-mode'"))
   (when (boundp 'xref-backend-functions)
     (add-hook 'xref-backend-functions #'elpy--xref-backend nil t))
@@ -747,7 +747,7 @@ item in another window.\n\n")
 
 (defun elpy-config--insert-configuration-problems (&optional config)
   "Insert help text and widgets for configuration problems."
-  (when (not config)
+  (unless config
     (setq config (elpy-config--get-config)))
   (let* ((rpc-python-version (gethash "rpc_python_version" config))
          (rope-pypi-package  (if (and rpc-python-version
@@ -759,7 +759,7 @@ item in another window.\n\n")
     (insert "\n")
 
     ;; Python not found
-    (when (not (gethash "rpc_python_executable" config))
+    (unless (gethash "rpc_python_executable" config)
       (elpy-insert--para
        "Elpy can not find the configured Python interpreter. Please make "
        "sure that the variable `elpy-rpc-python-command' points to a "
@@ -870,7 +870,7 @@ item in another window.\n\n")
 
 
     ;; No autopep8 available
-    (when (not (gethash "autopep8_version" config))
+    (unless (gethash "autopep8_version" config)
       (elpy-insert--para
        "The autopep8 package is not available. Commands using this will "
        "not work.\n")
@@ -890,7 +890,7 @@ item in another window.\n\n")
       (insert "\n\n"))
 
     ;; No yapf available
-    (when (not (gethash "yapf_version" config))
+    (unless (gethash "yapf_version" config)
       (elpy-insert--para
        "The yapf package is not available. Commands using this will "
        "not work.\n")
@@ -910,7 +910,7 @@ item in another window.\n\n")
       (insert "\n\n"))
 
     ;; No black available
-    (when (not (gethash "black_version" config))
+    (unless (gethash "black_version" config)
       (elpy-insert--para
        "The black package is not available. Commands using this will "
        "not work.\n")
@@ -930,7 +930,7 @@ item in another window.\n\n")
       (insert "\n\n"))
 
     ;; Syntax checker not available
-    (when (not (executable-find (car (split-string elpy-syntax-check-command))))
+    (unless (executable-find (car (split-string elpy-syntax-check-command)))
       (elpy-insert--para
        "The configured syntax checker could not be found. Elpy uses this "
        "program to provide syntax checks of your programs, so you might "
@@ -1027,7 +1027,7 @@ virtual_env_short"
 
 (defun elpy-config--insert-configuration-table (&optional config)
   "Insert a table describing the current Elpy config."
-  (when (not config)
+  (unless config
     (setq config (elpy-config--get-config)))
   (let ((emacs-version (gethash "emacs_version" config))
         (elpy-python-version (gethash "elpy_version" config))
@@ -1269,7 +1269,7 @@ See `elpy-project-root-finder-functions' for a way to configure
 how the project root is found. You can also set the variable
 `elpy-project-root' in, for example, .dir-locals.el to override
 this."
-  (when (not elpy-project-root)
+  (unless elpy-project-root
     (setq elpy-project-root
           (run-hook-with-args-until-success
            'elpy-project-root-finder-functions)))
@@ -1508,7 +1508,7 @@ A test file is named test_<name>.py if the current file is
   (catch 'return
     (let (full-name directory file)
       (setq full-name (buffer-file-name))
-      (when (not full-name)
+      (unless full-name
         (throw 'return nil))
       (setq full-name (expand-file-name full-name)
             directory (file-name-directory full-name)
@@ -1581,7 +1581,7 @@ Returns a full path name for that module."
 or the project root if WHOLE-PROJECT-P is non-nil (interactively,
 with a prefix argument)."
   (interactive "P")
-  (when (not (buffer-file-name))
+  (unless (buffer-file-name)
     (error "Can't check a buffer without a file"))
   (save-some-buffers (not compilation-ask-about-save) nil)
   (let ((process-environment (python-shell-calculate-process-environment))
@@ -1833,7 +1833,7 @@ indentation levels."
     (beginning-of-line)
     (push-mark (point) nil t)
     (goto-char end)
-    (when (not (= (point) (line-beginning-position)))
+    (unless (= (point) (line-beginning-position))
       (end-of-line))))
 
 (defun elpy-nav-indent-shift-right (&optional _count)
@@ -2080,21 +2080,21 @@ If there is no documentation for the symbol at point, or if a
 prefix argument is given, prompt for a symbol from the user."
   (interactive)
   (let ((doc nil))
-    (when (not current-prefix-arg)
+    (unless current-prefix-arg
       (setq doc (elpy-rpc-get-docstring))
-      (when (not doc)
+      (unless doc
         (save-excursion
           (python-nav-backward-up-list)
           (setq doc (elpy-rpc-get-docstring))))
-      (when (not doc)
+      (unless doc
         (setq doc (elpy-rpc-get-pydoc-documentation
                    (elpy-doc--symbol-at-point))))
-      (when (not doc)
+      (unless doc
         (save-excursion
           (python-nav-backward-up-list)
           (setq doc (elpy-rpc-get-pydoc-documentation
                      (elpy-doc--symbol-at-point))))))
-    (when (not doc)
+    (unless doc
       (setq doc (elpy-rpc-get-pydoc-documentation
                  (elpy-doc--read-identifier-from-minibuffer
                   (elpy-doc--symbol-at-point)))))
@@ -2389,7 +2389,7 @@ name."
            "The symbol '" name "' was found in multiple files. Editing "
            "all locations:\n\n")
           (maphash (lambda (key _value)
-                     (when (not (member key filenames))
+                     (unless (member key filenames)
                        (setq filenames (cons key filenames))))
                    locations)
           (dolist (filename (sort filenames #'string<))
@@ -2604,7 +2604,7 @@ This is needed to get information on the identifier with jedi
   "Run the global-init method of Elpy modules.
 
 Make sure this only happens once."
-  (when (not elpy-modules-initialized-p)
+  (unless elpy-modules-initialized-p
     (elpy-modules-run 'global-init)
     (setq elpy-modules-initialized-p t)))
 
@@ -2827,7 +2827,7 @@ Add parentheses in case ANNOTATION is \"class\", \"function\", or
 \"instance\",unless the completion is already looking at a left
  parenthesis,or unless NAME is a Python exception outside a reasonably
  formed raise statement,or unless NAME is no callable instance."
-  (when (not (looking-at-p "\("))
+  (unless (looking-at-p "\(")
     (cond ((string= annotation "function")
            (insert "()")
            (backward-char 1))
@@ -2849,7 +2849,7 @@ Add parentheses in case ANNOTATION is \"class\", \"function\", or
            ;; backend to eliminate the `elpy-rpc-get-calltip' call below.
            (insert "()")
            (backward-char 1)
-           (when (not (elpy-rpc-get-calltip))
+           (unless (elpy-rpc-get-calltip)
              (backward-char 1)
              (delete-char 2))))))
 
@@ -3070,7 +3070,7 @@ display the current class and method instead."
      (when (version< emacs-version "26.1")
        (elpy-modules-remove-modeline-lighter 'flymake-mode))
      ;; Add our initializer function.
-     (when (not (version<= "26.1" emacs-version))
+     (unless (version<= "26.1" emacs-version)
        (add-to-list 'flymake-allowed-file-name-masks
                     '("\\.py\\'" elpy-flymake-python-init))))
 
@@ -3138,7 +3138,7 @@ display the current class and method instead."
 
 (defun elpy-flymake-python-init ()
   ;; Make sure it's not a remote buffer as flymake would not work
-  (when (not (file-remote-p buffer-file-name))
+  (unless (file-remote-p buffer-file-name)
     (let* ((temp-file (flymake-init-create-temp-buffer-copy
                        'flymake-create-temp-inplace)))
       (list python-check-command
@@ -3219,7 +3219,7 @@ display the current class and method instead."
 
      ;; yas-snippet-dirs can be a string for a single directory. Make
      ;; sure it's a list in that case so we can add our own entry.
-     (when (not (listp yas-snippet-dirs))
+     (unless (listp yas-snippet-dirs)
        (setq yas-snippet-dirs (list yas-snippet-dirs)))
      (add-to-list 'yas-snippet-dirs
                   (concat (file-name-directory (locate-library "elpy"))
@@ -3337,51 +3337,51 @@ display the current class and method instead."
 ;; Emacs version is 24.4.
 
 ;; Functions for Emacs 24 before 24.3
-(when (not (fboundp 'python-info-current-defun))
+(unless (fboundp 'python-info-current-defun)
   (defalias 'python-info-current-defun 'python-current-defun))
 
-(when (not (fboundp 'python-nav-forward-statement))
+(unless (fboundp 'python-nav-forward-statement)
   (defun python-nav-forward-statement (&rest ignored)
     "Function added in Emacs 24.3"
     (error "Enhanced Python navigation only available in Emacs 24.3+")))
 
-(when (not (fboundp 'python-nav-backward-up-list))
+(unless (fboundp 'python-nav-backward-up-list)
   (defun python-nav-backward-up-list ()
     "Compatibility function for older Emacsen"
     (ignore-errors
       (backward-up-list))))
 
-(when (not (fboundp 'python-shell-calculate-exec-path))
+(unless (fboundp 'python-shell-calculate-exec-path)
   (defun python-shell-calculate-exec-path ()
     "Compatibility function for older Emacsen."
     exec-path))
 
-(when (not (fboundp 'python-shell-calculate-process-environment))
+(unless (fboundp 'python-shell-calculate-process-environment)
   (defun python-shell-calculate-process-environment ()
     "Compatibility function for older Emacsen."
     process-environment))
 
-(when (not (fboundp 'python-shell-get-process-name))
+(unless (fboundp 'python-shell-get-process-name)
   (defun python-shell-get-process-name (_dedicated)
     "Compatibility function for older Emacsen."
     "Python"))
 
-(when (not (fboundp 'python-shell-parse-command))
+(unless (fboundp 'python-shell-parse-command)
   (defun python-shell-parse-command ()
     "Compatibility function for older Emacsen."
     python-python-command))
 
-(when (not (fboundp 'python-shell-send-buffer))
+(unless (fboundp 'python-shell-send-buffer)
   (defun python-shell-send-buffer (&optional _arg)
     (python-send-buffer)))
 
-(when (not (fboundp 'python-shell-send-string))
+(unless (fboundp 'python-shell-send-string)
   (defalias 'python-shell-send-string 'python-send-string))
 
-(when (not (fboundp 'python-indent-shift-right))
+(unless (fboundp 'python-indent-shift-right)
   (defalias 'python-indent-shift-right 'python-shift-right))
 
-(when (not (fboundp 'python-indent-shift-left))
+(unless (fboundp 'python-indent-shift-left)
   (defalias 'python-indent-shift-left 'python-shift-left))
 
 ;; Emacs 24.2 made `locate-dominating-file' accept a predicate instead
@@ -3434,7 +3434,7 @@ which we're looking."
   )
 
 ;; highlight-indentation 0.5 does not use modes yet
-(when (not (fboundp 'highlight-indentation-mode))
+(unless (fboundp 'highlight-indentation-mode)
   (defun highlight-indentation-mode (on-or-off)
     (cond
      ((and (> on-or-off 0)
