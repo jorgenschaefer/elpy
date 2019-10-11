@@ -238,33 +238,43 @@ needed packages from `elpy-rpc--get-package-list'."
 (defmacro with-elpy-rpc-virtualenv-activated (&rest body)
   "Run BODY with Elpy's RPC virtualenv activated.
 
-The current virtualenv name is bounded to the
-`deactivated-environment' variable during the execution of
-BODY."
+During the execution of BODY the following variables are available:
+- `current-environment': current environment path.
+- `current-environment-binaries': current environment python binaries path.
+- `current-environment-is-deactivated': non-nil if the current
+  environment has been deactivated (it is not if the RPC environment and
+  the current environment are the same)."
   `(if (not (executable-find elpy-rpc-python-command))
        (error "Cannot find executable '%s', please set 'elpy-rpc-python-command' to an existing executable." elpy-rpc-python-command)
-     (let ((venv-was-activated pyvenv-virtual-env)
-           (pyvenv-post-activate-hooks (remq 'elpy-rpc--disconnect
-                                             pyvenv-post-activate-hooks))
-           (pyvenv-post-deactivate-hooks (remq 'elpy-rpc--disconnect
-                                               pyvenv-post-deactivate-hooks))
-           (deactivated-environment
-            (or pyvenv-virtual-env
-                ;; global env
-                (directory-file-name
-                 (file-name-directory
-                  (directory-file-name
-                   (file-name-directory
-                    (executable-find elpy-rpc-python-command))))))))
-       (pyvenv-activate (elpy-rpc-get-or-create-virtualenv))
+     (let* ((venv-was-activated pyvenv-virtual-env)
+            (pyvenv-post-activate-hooks (remq 'elpy-rpc--disconnect
+                                              pyvenv-post-activate-hooks))
+            (pyvenv-post-deactivate-hooks (remq 'elpy-rpc--disconnect
+                                                pyvenv-post-deactivate-hooks))
+            (current-environment-binaries (executable-find
+                                           elpy-rpc-python-command))
+            (current-environment
+             (directory-file-name
+              (file-name-directory
+               (directory-file-name
+                (file-name-directory
+                 current-environment-binaries)))))
+            ;; No need to change of venv if they are the same
+            (same-venv (file-equal-p current-environment
+                                     (elpy-rpc-get-or-create-virtualenv)))
+            current-environment-is-deactivated)
+       (when (not same-venv)
+         (pyvenv-activate (elpy-rpc-get-or-create-virtualenv))
+         (setq current-environment-is-deactivated t))
        (let (venv-err result)
          (condition-case err
              (setq result (progn ,@body))
-           (error (setq venv-err (car (cdr err)))))
-         (if venv-was-activated
-             (pyvenv-activate (directory-file-name
-                               deactivated-environment))
-           (pyvenv-deactivate))
+           (error (setq venv-err (format "%s" err))))
+         (when (not same-venv)
+           (if venv-was-activated
+               (pyvenv-activate (directory-file-name
+                                 current-environment))
+             (pyvenv-deactivate)))
          (when venv-err
            (error venv-err))
          result))))
@@ -582,8 +592,7 @@ died, this will kill the process and buffer."
    (let* ((full-python-command (executable-find python-command))
           (name (format " *elpy-rpc [project:%s environment:%s]*"
                         library-root
-                        (or deactivated-environment
-                            "system")))
+                        current-environment))
           (new-elpy-rpc-buffer (generate-new-buffer name))
           (proc nil))
      (when (not full-python-command)
@@ -609,7 +618,9 @@ died, this will kill the process and buffer."
        (set-process-query-on-exit-flag proc nil)
        (set-process-sentinel proc #'elpy-rpc--sentinel)
        (set-process-filter proc #'elpy-rpc--filter)
-       (elpy-rpc-init library-root deactivated-environment
+       (elpy-rpc-init library-root
+                      (when current-environment-is-deactivated
+                        current-environment-binaries)
                       (lambda (result)
                         (setq elpy-rpc--jedi-available
                               (cdr (assq 'jedi_available result))))))
@@ -928,17 +939,22 @@ protocol if the buffer is larger than
       (ignore-errors
         (kill-buffer buffer)))))
 
-(defun elpy-rpc-init (library-root environment &optional success error)
+(defun elpy-rpc-init (library-root environment-binaries &optional success error)
   "Initialize the backend.
 
 This has to be called as the first method, else Elpy won't be
-able to respond to other calls."
+able to respond to other calls.
+
++LIBRARY-ROOT is the current project root,
++ENVIRONMENT-BINARIES is the path to the python binaries of the environment to work in."
   (elpy-rpc "init"
             ;; This uses a vector because otherwise, json-encode in
             ;; older Emacsen gets seriously confused, especially when
             ;; backend is nil.
             (vector `((project_root . ,(expand-file-name library-root))
-                      (environment . ,(when environment (expand-file-name environment)))))
+                      (environment . ,(when environment-binaries
+                                        (expand-file-name
+                                         environment-binaries)))))
             success error))
 
 

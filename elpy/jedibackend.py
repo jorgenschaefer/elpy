@@ -25,11 +25,11 @@ class JediBackend(object):
     """
     name = "jedi"
 
-    def __init__(self, project_root, environment_path):
+    def __init__(self, project_root, environment_binaries_path):
         self.project_root = project_root
         self.environment = None
-        if environment_path:
-            self.environment = jedi.create_environment(environment_path,
+        if environment_binaries_path is not None:
+            self.environment = jedi.create_environment(environment_binaries_path,
                                                        safe=False)
         self.completions = {}
         sys.path.append(project_root)
