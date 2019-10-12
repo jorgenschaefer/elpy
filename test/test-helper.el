@@ -7,6 +7,12 @@
 					    elpy-dir
 					    (getenv "PYTHONPATH")))
   (add-to-list 'process-environment "ELPY_TEST=1"))
+
+;; coverage
+(when (and (require 'undercover nil t)
+           (version<= "25" emacs-version))
+  (undercover "*.el"))
+
 (require 'elpy)
 ;; Travis regularly has some lag for some reason.
 (setq elpy-rpc-timeout 10)
