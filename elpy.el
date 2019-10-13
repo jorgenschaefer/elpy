@@ -2657,10 +2657,20 @@ If you need your modeline, you can set the variable `elpy-remove-modeline-lighte
      ;; http://debbugs.gnu.org/db/13/13642.html
      (set (make-local-variable 'forward-sexp-function) nil)
      ;; PEP8 recommends two spaces in front of inline comments.
-     (set (make-local-variable 'comment-inline-offset) 2))
+     (set (make-local-variable 'comment-inline-offset) 2)
+     ;; Few if any python projects use Makefile, better let the compile
+     ;; run the current script
+     (set (make-local-variable 'compile-command)
+          (if buffer-file-name
+              (concat "python " (shell-quote-argument buffer-file-name))
+            "python "))
+     ;; Python debugger should be invoked as a module script
+     (set (make-local-variable 'gud-pdb-command-name) "python -m pdb"))
     (`buffer-stop
      (kill-local-variable 'forward-sexp-function)
-     (kill-local-variable 'comment-inline-offset))))
+     (kill-local-variable 'comment-inline-offset)
+     (kill-local-variable 'compile-command)
+     (kill-local-variable 'gud-pdb-command-name))))
 
 ;;;;;;;;;;;;;;;;;;;
 ;;; Module: Company
