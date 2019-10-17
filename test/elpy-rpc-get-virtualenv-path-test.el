@@ -30,10 +30,8 @@
   (elpy-testcase ()
     (let ((elpy-rpc-virtualenv-path 'system)
           (old-venv pyvenv-virtual-env))
-      (should-not (string-match "\\(travis/virtualenv\\|.virtualenvs\\)"
-                            (elpy-rpc-get-virtualenv-path)))
       (pyvenv-workon "elpy-test-venv")
-      (should-not (string-match "\\(travis/virtualenv\\|.virtualenvs\\)"
+      (should-not (string-match "elpy-test-venv"
                             (elpy-rpc-get-virtualenv-path)))
       (if old-venv
           (pyvenv-activate old-venv)

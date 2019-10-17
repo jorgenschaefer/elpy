@@ -44,4 +44,4 @@
           (should-not (file-exists-p (concat
                                       (file-name-as-directory rpc-venv-path)
                                       "additional-file")))
-          (should (string= messages "Are you sure you want to reinstall the virtualenv in '/home/glaunay/.virtualenvs/elpy-test-venv' (every manual modifications will be lost) ? `elpy-rpc-virtualenv-path' was set to '/home/glaunay/.virtualenvs/elpy-test-venv', but this virtualenv does not exist, create it ? Automatically install the RPC dependencies from PyPI (needed for completion, autoformatting and documentation) ? ")))))))
+          (should (= 0 (string-match "Are you sure you want to reinstall the virtualenv in '[^']*' (every manual modifications will be lost) \\? `elpy-rpc-virtualenv-path' was set to '[^']*', but this virtualenv does not exist, create it \\? Automatically install the RPC dependencies from PyPI (needed for completion, autoformatting and documentation) \\? " messages))))))))
