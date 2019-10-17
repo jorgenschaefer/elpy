@@ -8,7 +8,7 @@
 (depends-on "highlight-indentation" "0.7.0")
 (depends-on "pyvenv" "1.2")
 (depends-on "yasnippet" "0.13.0")
-(depends-on "s" "1.12.0")
+(depends-on "s" "1.11.0")
 
 (development
  (depends-on "f")
