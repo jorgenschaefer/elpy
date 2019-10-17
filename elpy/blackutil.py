@@ -3,7 +3,13 @@
 """
 
 import sys
-from pkg_resources import parse_version
+
+# in case pkg_resources is not properly installed
+# (see https://github.com/jorgenschaefer/elpy/issues/1674).
+try:
+    from pkg_resources import parse_version
+except ImportError:
+    parse_version = None
 
 import os
 
@@ -31,6 +37,10 @@ def fix_code(code, directory):
     """
     if not black:
         raise Fault("black not installed", code=400)
+    if not parse_version:
+        raise Fault("`pkg_resources` could not be imported, "
+                    "please reinstall Elpy RPC virtualenv with"
+                    " `M-x elpy-rpc-reinstall-virtualenv`", code=400)
     # Get black config from pyproject.toml
     line_length = black.DEFAULT_LINE_LENGTH
     string_normalization = True
