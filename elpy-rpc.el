@@ -260,8 +260,10 @@ During the execution of BODY the following variables are available:
                 (file-name-directory
                  current-environment-binaries)))))
             ;; No need to change of venv if they are the same
-            (same-venv (file-equal-p current-environment
-                                     (elpy-rpc-get-or-create-virtualenv)))
+            (same-venv (or (string= current-environment
+                                     (elpy-rpc-get-virtualenv-path))
+                           (file-equal-p current-environment
+                                         (elpy-rpc-get-virtualenv-path))))
             current-environment-is-deactivated)
        (unless same-venv
          (pyvenv-activate (elpy-rpc-get-or-create-virtualenv))
@@ -312,7 +314,7 @@ binaries used to create the virtualenv."
           (and (or (not is-venv-exist) venv-need-update)
                (or is-default-rpc-venv
                    (y-or-n-p
-                    (format "`elpy-rpc-virtualenv-path' was set to '%s', but this virtualenv does not exist, create it ?" rpc-venv-path))))))
+                    (format "`elpy-rpc-virtualenv-path' was set to '%s', but this virtualenv does not exist, create it ? " rpc-venv-path))))))
     ;; Delete the rpc virtualenv if obsolete
     (when venv-need-update
       (delete-directory rpc-venv-path t)
@@ -325,7 +327,7 @@ binaries used to create the virtualenv."
           (message "Elpy is %s the RPC virtualenv ('%s')"
                    (if venv-need-update "updating" "creating")
                    rpc-venv-path)
-          (elpy-rpc--create-virtualenv rpc-venv-path venv-need-update)
+          (elpy-rpc--create-virtualenv rpc-venv-path)
           (pyvenv-activate rpc-venv-path)
           ;; Add a file to keep track of the `elpy-rpc-python-command` used
           (with-temp-file venv-python-path-command-file
@@ -333,28 +335,30 @@ binaries used to create the virtualenv."
           ;; safeguard to be sure we don't install stuff in the wrong venv
           (when (file-equal-p pyvenv-virtual-env rpc-venv-path)
             (elpy-rpc--install-dependencies))
+          (elpy-rpc-restart)
           ;; Deactivate the rpc venv
           (if deact-venv
               (pyvenv-activate (directory-file-name deact-venv))
             (pyvenv-deactivate)))))
     rpc-venv-path))
 
-(defun elpy-rpc--create-virtualenv (rpc-venv-path venv-need-update)
-  "Create a virtualenv for the RPC in RPC-VENV-PATH.
-
-if VENV-NEED-UPDATE is not nil, update the virtualenv."
-  (cond
-   ((= 0 (call-process elpy-rpc-python-command nil nil nil
-                       "-m" "venv" "-h"))
-    (with-current-buffer (generate-new-buffer "*venv*")
-      (call-process elpy-rpc-python-command nil t t
-                    "-m" "venv" rpc-venv-path)))
-   ((executable-find "virtualenv")
-    (with-current-buffer (generate-new-buffer "*virtualenv*")
-      (call-process "virtualenv" nil t t
-                    "-p" elpy-rpc-python-command rpc-venv-path)))
-   (t
-    (error "Elpy necessitates the 'virtualenv' python package, please install it with `pip install virtualenv`"))))
+(defun elpy-rpc--create-virtualenv (rpc-venv-path)
+  "Create a virtualenv for the RPC in RPC-VENV-PATH."
+  ;; venv cannot create a proper virtualenv from inside another virtualenv
+  (let ((elpy-rpc-virtualenv-path 'global))
+    (with-elpy-rpc-virtualenv-activated
+     (cond
+      ((= 0 (call-process elpy-rpc-python-command nil nil nil
+                          "-m" "venv" "-h"))
+       (with-current-buffer (generate-new-buffer "*venv*")
+         (call-process elpy-rpc-python-command nil t t
+                       "-m" "venv" rpc-venv-path)))
+      ((executable-find "virtualenv")
+       (with-current-buffer (generate-new-buffer "*virtualenv*")
+         (call-process "virtualenv" nil t t
+                       "-p" elpy-rpc-python-command rpc-venv-path)))
+      (t
+       (error "Elpy necessitates the 'virtualenv' python package, please install it with `pip install virtualenv`"))))))
 
 (defun elpy-rpc--install-dependencies ()
   "Install the RPC dependencies in the current virtualenv."
@@ -368,6 +372,22 @@ if VENV-NEED-UPDATE is not nil, update the virtualenv."
                   0)
           (message "Elpy failed to install some of the RPC dependencies, please use `elpy-config' to install them.")))
     (message "Some of Elpy's functionnalities will not work, please use `elpy-config' to install the needed python dependencies.")))
+
+(defun elpy-rpc-reinstall-virtualenv ()
+  "Re-install the RPC virtualenv."
+  (interactive)
+  (let ((rpc-venv-path (elpy-rpc-get-virtualenv-path)))
+    (when
+        (cond
+         ((or (eq elpy-rpc-virtualenv-path 'system)
+              (eq elpy-rpc-virtualenv-path 'global)) ;; backward compatibility
+          (error "Cannot reinstall the system environment, please reinstall the necessary packages manually"))
+         ((string= (elpy-rpc-default-virtualenv-path) rpc-venv-path)
+          t)
+         (t
+          (y-or-n-p (format "Are you sure you want to reinstall the virtualenv in '%s' (every manual modifications will be lost) ? " rpc-venv-path))))
+      (delete-directory rpc-venv-path t)
+      (elpy-rpc-get-or-create-virtualenv))))
 
 ;;;;;;;;;;;;;;;;;;;
 ;;; Promise objects

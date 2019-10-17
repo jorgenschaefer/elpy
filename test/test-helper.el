@@ -7,6 +7,20 @@
 					    elpy-dir
 					    (getenv "PYTHONPATH")))
   (add-to-list 'process-environment "ELPY_TEST=1"))
+;; Travis is using virtualenvs to test specific version of python
+;; we need to use it as the system environment
+(advice-add 'elpy-rpc-get-virtualenv-path
+            :around (lambda (fun &rest args)
+                      (if (and (getenv "TRAVIS")
+                               (or (eq elpy-rpc-virtualenv-path 'global)
+                                   (eq elpy-rpc-virtualenv-path 'system)))
+                          (expand-file-name
+                           (concat
+                            "~/virtualenv/"
+                            "python"
+                            (getenv "TRAVIS_PYTHON_VERSION")))
+                        (apply fun args))))
+
 (require 'elpy)
 ;; Travis regularly has some lag for some reason.
 (setq elpy-rpc-timeout 10)
@@ -35,6 +49,12 @@
                           binding))
                       bindings)
      ,@body))
+
+;; Print elpy configuration
+(mletf* ((y-or-n-p (&rest rest) t))
+  (elpy-config)
+  (with-current-buffer "*Elpy Config*"
+    (message (buffer-substring-no-properties (point-min) (point-max)))))
 
 (defmacro with-temp-dir (name &rest body)
   "Create a temporary directory and bind the symbol NAME to the path.
