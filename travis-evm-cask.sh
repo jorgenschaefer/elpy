@@ -23,4 +23,4 @@ git clone https://github.com/rejeep/evm.git /home/travis/.evm
 evm config path /tmp
 evm install emacs-24.3-travis --use --skip
 
-curl -fsSkL https://raw.githubusercontent.com/cask/cask/master/go | python
+curl -fsSkL https://raw.github.com/cask/cask/master/go | python

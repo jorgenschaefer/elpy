@@ -1,5 +1,10 @@
 language: python
 
+sudo: false
+
+# needed for emacs26 to work
+dist: trusty
+
 python:
   - 2.7
   - 3.5
@@ -28,11 +33,18 @@ matrix:
         dist: xenial
         python: 3.7
         env: EVM_EMACS=emacs-25.3-travis
-      # emacs 26.1 doesn't seem to start on xenial
       # - sudo: required
       #   dist: xenial
       #   python: 3.7
       #   env: EVM_EMACS=emacs-26.1-travis
+      # - sudo: required
+      #   dist: xenial
+      #   python: 3.7
+      #   env: EVM_EMACS=emacs-26.2-travis
+      # - sudo: required
+      #   dist: xenial
+      #   python: 3.7
+      #   env: EVM_EMACS=emacs-26.3-travis
 
 env:
   # - EVM_EMACS=emacs-24.4-travis
@@ -40,9 +52,10 @@ env:
   - EVM_EMACS=emacs-25.1-travis
   - EVM_EMACS=emacs-25.2-travis
   - EVM_EMACS=emacs-25.3-travis
-  # - EVM_EMACS=emacs-26.1-travis
+  - EVM_EMACS=emacs-26.1-travis
+  - EVM_EMACS=emacs-26.2-travis
+  - EVM_EMACS=emacs-26.3-travis
 before_install:
-  # - curl -fsSkL https://gist.github.com/rejeep/ebcd57c3af83b049833b/raw > travis.sh && source ./travis.sh
   - source ./travis-evm-cask.sh
   - evm install $EVM_EMACS --use --skip
   - cask --verbose        # verbose only needed because of cask bug
