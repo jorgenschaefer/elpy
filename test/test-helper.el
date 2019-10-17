@@ -36,6 +36,12 @@
                       bindings)
      ,@body))
 
+;; Print elpy configuration
+(mletf* ((y-or-n-p (&rest rest) t))
+  (elpy-config)
+  (with-current-buffer "*Elpy Config*"
+    (print (buffer-string))))
+
 (defmacro with-temp-dir (name &rest body)
   "Create a temporary directory and bind the symbol NAME to the path.
 
