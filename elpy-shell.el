@@ -388,8 +388,8 @@ BEGIN and END refer to the region of the current buffer containing the code bein
   (eq (string-match-p "^\\s-*@[A-Za-z]" (thing-at-point 'line)) 0))
 
 (defun elpy-shell--current-line-decorated-defun-p ()
-  (save-excursion (and (python-nav-backward-statement)
-                       (elpy-shell--current-line-decorator-p))))
+  (save-excursion  (python-nav-backward-statement)
+                   (elpy-shell--current-line-decorator-p)))
 
 (defun elpy-shell--current-line-indented-p ()
   (eq (string-match-p "\\s-+[^\\s-]+" (thing-at-point 'line)) 0))
