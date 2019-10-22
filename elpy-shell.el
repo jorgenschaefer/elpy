@@ -384,6 +384,13 @@ BEGIN and END refer to the region of the current buffer containing the code bein
 (defun elpy-shell--current-line-else-or-elif-p ()
   (eq (string-match-p "\\s-*el\\(?:se:\\|if[^\w]\\)" (thing-at-point 'line)) 0))
 
+(defun elpy-shell--current-line-decorator-p ()
+  (eq (string-match-p "^\\s-*@[A-Za-z]" (thing-at-point 'line)) 0))
+
+(defun elpy-shell--current-line-decorated-defun-p ()
+  (save-excursion (and (python-nav-backward-statement)
+                       (elpy-shell--current-line-decorator-p))))
+
 (defun elpy-shell--current-line-indented-p ()
   (eq (string-match-p "\\s-+[^\\s-]+" (thing-at-point 'line)) 0))
 
@@ -691,7 +698,8 @@ there."
   (python-nav-beginning-of-statement)
   (let ((p))
     (while (and (not (eq p (point)))
-                (elpy-shell--current-line-else-or-elif-p))
+                (or (elpy-shell--current-line-else-or-elif-p)
+                    (elpy-shell--current-line-decorated-defun-p)))
       (elpy-nav-backward-block)
       (setq p (point)))))
 
@@ -705,6 +713,10 @@ statement (e.g., after calling
         (p))
     (while (and (not (eq p (point)))
                 continue)
+      ;; if on a decorator, move to the associated function
+      (when (elpy-shell--current-line-decorator-p)
+        (elpy-nav-forward-block))
+
       ;; check if there is a another block at the same indentation level
       (setq p (point))
       (elpy-nav-forward-block)
@@ -786,7 +798,11 @@ definition and returns t. Otherwise, retains point position and
 returns nil.
 
 See `elpy-shell--nav-beginning-of-def' for details."
-  (elpy-shell--nav-beginning-of-def 'elpy-shell--current-line-defun-p))
+  (when (or (elpy-shell--nav-beginning-of-def 'elpy-shell--current-line-defun-p)
+            (elpy-shell--current-line-decorator-p))
+    (when (elpy-shell--current-line-decorated-defun-p)
+      (python-nav-backward-statement))
+    t))
 
 (defun elpy-shell--nav-beginning-of-defclass ()
   "Move point to the beginning of the current class definition.
