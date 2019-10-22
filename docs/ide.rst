@@ -323,8 +323,9 @@ for each combination of: whether or not the point should move after sending
 
    Send the current statement to the Python shell and keep point position. Here
    statement refers to the Python statement the point is on, including
-   potentially nested statements and, if point is on an if/elif/else clause, the
-   entire if statement (with all its elif/else clauses).
+   potentially nested statements. If point is on an if/elif/else clause send the
+   entire if statement (with all its elif/else clauses). If point is on a
+   decorated function, send the decorator as well.
 
 .. command:: elpy-shell-send-statement-and-step
    :kbd: C-c C-y C-e
