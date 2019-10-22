@@ -1,4 +1,4 @@
-(ert-deftest elpy-shell-send-statement-should-send-statement-at-point ()
+(ert-deftest elpy-shell-send-defun-should-send-defun-at-point ()
   (elpy-testcase ()
     (python-mode)
     (elpy-mode)
@@ -16,37 +16,35 @@
     ;; on "a = 2+2"
     (goto-char 52)
     (elpy-shell-kill t)
-    (elpy-shell-send-statement)
-    (python-shell-send-string "print(a)\n")
-    (python-shell-send-string "print('OK')\n")
-    (should (string-match ">>> 4"
-                          (with-current-buffer "*Python*"
-                            (elpy/wait-for-output "OK" 30)
-                            (buffer-string))))
-    ;; on "for i in range(10):"
-    (goto-char 30)
-    (elpy-shell-kill t)
-    (elpy-shell-send-statement)
-    (python-shell-send-string "print(b)\n")
-    (python-shell-send-string "print('OK')\n")
-    (should (string-match ">>> 13"
-                          (with-current-buffer "*Python*"
-                            (elpy/wait-for-output "OK" 30)
-                            (buffer-string))))
-    (python-shell-send-string "del b")
-    ;; on "def foo():"
-    (goto-char 6)
-    (elpy-shell-kill t)
-    (elpy-shell-send-statement)
+    (elpy-shell-send-defun)
     (python-shell-send-string "foo()\n")
     (python-shell-send-string "print('OK')\n")
     (should (string-match ">>> 13"
                           (with-current-buffer "*Python*"
                             (elpy/wait-for-output "OK" 30)
                             (buffer-string))))
-    ))
+    ;; on "for i in range(10):"
+    (goto-char 30)
+    (elpy-shell-kill t)
+    (elpy-shell-send-defun)
+    (python-shell-send-string "foo()\n")
+    (python-shell-send-string "print('OK')\n")
+    (should (string-match ">>> 13"
+                          (with-current-buffer "*Python*"
+                            (elpy/wait-for-output "OK" 30)
+                            (buffer-string))))
+    ;; on "def foo():"
+    (goto-char 6)
+    (elpy-shell-kill t)
+    (elpy-shell-send-defun)
+    (python-shell-send-string "foo()\n")
+    (python-shell-send-string "print('OK')\n")
+    (should (string-match ">>> 13"
+                          (with-current-buffer "*Python*"
+                            (elpy/wait-for-output "OK" 30)
+                            (buffer-string))))))
 
-(ert-deftest elpy-shell-send-statement-should-send-statement-and-decorator ()
+(ert-deftest elpy-shell-send-defun-should-send-defun-and-decorator ()
   (elpy-testcase ()
     (python-mode)
     (elpy-mode)
@@ -68,13 +66,39 @@ def foo():
     print(b)
 ")
 
-    ;; on "foo"
+    ;; on "a = 2+2"
     (elpy-shell-kill t)
     ;; send deco definition
     (goto-char 4)
-    (elpy-shell-send-statement)
+    (elpy-shell-send-defun)
+    (goto-char 145)
+    (elpy-shell-send-defun)
+    (python-shell-send-string "foo()\n")
+    (python-shell-send-string "print('OK')\n")
+    (should (string-match "in decorator"
+                          (with-current-buffer "*Python*"
+                            (elpy/wait-for-output "OK" 30)
+                            (buffer-string))))
+    ;; on "for i in range(10):"
+    (elpy-shell-kill t)
+    ;; send deco definition
+    (goto-char 4)
+    (elpy-shell-send-defun)
+    (goto-char 119)
+    (elpy-shell-send-defun)
+    (python-shell-send-string "foo()\n")
+    (python-shell-send-string "print('OK')\n")
+    (should (string-match "in decorator"
+                          (with-current-buffer "*Python*"
+                            (elpy/wait-for-output "OK" 30)
+                            (buffer-string))))
+    ;; on "def foo():"
+    (elpy-shell-kill t)
+    ;; send deco definition
+    (goto-char 4)
+    (elpy-shell-send-defun)
     (goto-char 96)
-    (elpy-shell-send-statement)
+    (elpy-shell-send-defun)
     (python-shell-send-string "foo()\n")
     (python-shell-send-string "print('OK')\n")
     (should (string-match "in decorator"
@@ -86,7 +110,7 @@ def foo():
     ;; send deco definition
     (goto-char 4)
     (elpy-shell-send-statement)
-    (goto-char 86)
+    (goto-char 87)
     (elpy-shell-send-statement)
     (python-shell-send-string "foo()\n")
     (python-shell-send-string "print('OK')\n")
