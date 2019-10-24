@@ -29,10 +29,11 @@ inside the project root.
    ``tests`` subdirectory. If the current file is already called
    ``test_foo.py``, it will try and find a ``foo.py`` nearby.
 
-   This command uses `find-file-in-project`_ under the hood, so see
-   there for more options.
+   This command uses `projectile`_ or `find-file-in-project`_ under the hood, so you
+   need one of them to be installed.
 
 .. _find-file-in-project: https://github.com/technomancy/find-file-in-project
+.. _projectile: https://github.com/bbatsov/projectile
 
 .. command:: elpy-rgrep-symbol
    :kbd: C-c C-s

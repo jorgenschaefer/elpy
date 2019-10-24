@@ -58,6 +58,9 @@
   (elpy-testcase ((:project project-root "module.py" "test_module.py"))
     (find-file (f-join project-root "module.py"))
 
+    (fmakunbound 'projectile-find-file)
+    (defun find-file-in-project ())
+    (require 'find-file-in-project)
     (elpy-find-file t)
 
     (should (f-equal? (buffer-file-name)
@@ -67,6 +70,8 @@
   (elpy-testcase ()
     ;; The test failed on Travis in 24.3 because the function was not
     ;; defined. Weird. Well, call it in explicitly.
+    (fmakunbound 'projectile-find-file)
+    (defun find-file-in-project ())
     (require 'find-file-in-project)
     (mletf* ((ffip-called nil)
              (find-file-in-project () (setq ffip-called t)))
@@ -74,3 +79,16 @@
       (elpy-find-file)
 
       (should ffip-called))))
+
+(ert-deftest elpy-find-file-should-call-projectile ()
+  (elpy-testcase ()
+    ;; The test failed on Travis in 24.3 because the function was not
+    ;; defined. Weird. Well, call it in explicitly.
+    (fmakunbound 'find-file-in-project)
+    (defun projectile-find-file ())
+    (when (require 'projectile nil t)
+    (mletf* ((projectile-called nil)
+             (projectile-find-file () (setq projectile-called t)))
+
+     (elpy-find-file)
+     (should projectile-called)))))
