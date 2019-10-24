@@ -2,12 +2,14 @@
 (require 'package)
 (setq package-archives '(("MELPA"        . "https://melpa.org/packages/")))
 (package-initialize)
+(package-refresh-contents)
 ;; Install dependencies
 (package-install 'company)
 (package-install 'highlight-indentation)
 (package-install 'pyvenv)
 (package-install 'yasnippet)
 (package-install 's)
+(package-install 'f)
 ;; Install optional dependencies
 (package-install 'find-file-in-project)
 (package-install 'projectile)
