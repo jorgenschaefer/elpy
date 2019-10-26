@@ -261,7 +261,7 @@ During the execution of BODY the following variables are available:
                  current-environment-binaries)))))
             ;; No need to change of venv if they are the same
             (same-venv (or (string= current-environment
-                                     (elpy-rpc-get-virtualenv-path))
+                                    (elpy-rpc-get-virtualenv-path))
                            (file-equal-p current-environment
                                          (elpy-rpc-get-virtualenv-path))))
             current-environment-is-deactivated)
@@ -271,7 +271,10 @@ During the execution of BODY the following variables are available:
        (let (venv-err result)
          (condition-case err
              (setq result (progn ,@body))
-           (error (setq venv-err (format "%s" err))))
+           (error (setq venv-err
+                        (if (stringp err)
+                            err
+                          (car (cdr err))))))
          (unless same-venv
            (if venv-was-activated
                (pyvenv-activate (directory-file-name
@@ -339,26 +342,56 @@ binaries used to create the virtualenv."
           ;; Deactivate the rpc venv
           (if deact-venv
               (pyvenv-activate (directory-file-name deact-venv))
-            (pyvenv-deactivate)))))
+            (pyvenv-deactivate))
+          (message "Done"))))
     rpc-venv-path))
 
 (defun elpy-rpc--create-virtualenv (rpc-venv-path)
   "Create a virtualenv for the RPC in RPC-VENV-PATH."
   ;; venv cannot create a proper virtualenv from inside another virtualenv
-  (let ((elpy-rpc-virtualenv-path 'global))
+  (let* ((elpy-rpc-virtualenv-path 'global)
+         success
+         (elpy-venv-buffname-visible "*elpy-virtualenv*")
+         (elpy-venv-buffname (concat " " elpy-venv-buffname-visible)))
+    (condition-case nil
+        (progn
+          (kill-buffer elpy-venv-buffname-visible)
+          (kill-buffer elpy-venv-buffname))
+      (error nil))
     (with-elpy-rpc-virtualenv-activated
      (cond
       ((= 0 (call-process elpy-rpc-python-command nil nil nil
                           "-m" "venv" "-h"))
-       (with-current-buffer (generate-new-buffer "*venv*")
-         (call-process elpy-rpc-python-command nil t t
-                       "-m" "venv" rpc-venv-path)))
+       (with-current-buffer (get-buffer-create elpy-venv-buffname)
+         (insert (concat "Running '" elpy-rpc-python-command " -m venv "
+                         rpc-venv-path "':\n\n"))
+         (setq success (call-process elpy-rpc-python-command nil t t
+                                     "-m" "venv" rpc-venv-path))))
       ((executable-find "virtualenv")
-       (with-current-buffer (generate-new-buffer "*virtualenv*")
-         (call-process "virtualenv" nil t t
-                       "-p" elpy-rpc-python-command rpc-venv-path)))
+       (with-current-buffer (get-buffer-create elpy-venv-buffname)
+         (insert (concat "Running 'virtualenv -p "
+                         elpy-rpc-python-command " " rpc-venv-path
+                         "':\n\n"))
+         (setq success (call-process "virtualenv" nil t t "-p"
+                                     elpy-rpc-python-command rpc-venv-path))))
       (t
-       (error "Elpy necessitates the 'virtualenv' python package, please install it with `pip install virtualenv`"))))))
+       (error "Elpy necessitates the 'virtualenv' python package, please install it with `pip install virtualenv`"))))
+    ;; warn us if something wrong happened
+    (unless (= 0 success)
+      (with-current-buffer elpy-venv-buffname
+        (rename-buffer elpy-venv-buffname-visible)
+        (goto-char (point-max))
+        (insert
+         (concat
+          "\n\n"
+          "Elpy failed to install its dedicated virtualenv due to the above\n"
+          "error. If the error details does not help you fixing it, You can\n"
+          "report this problem on Elpy repository on github.\n"
+          "In the meantime, setting the `elpy-rpc-virtualenv-path' option to\n"
+          "either `global' or `current' should temporarily fix the issue.")))
+      (error (concat "Elpy failed to create its dedicated virtualenv. "
+                     "Please check the `" elpy-venv-buffname-visible
+                     "' buffer.")))))
 
 (defun elpy-rpc--install-dependencies ()
   "Install the RPC dependencies in the current virtualenv."
@@ -388,6 +421,18 @@ binaries used to create the virtualenv."
           (y-or-n-p (format "Are you sure you want to reinstall the virtualenv in '%s' (every manual modifications will be lost) ? " rpc-venv-path))))
       (delete-directory rpc-venv-path t)
       (elpy-rpc-get-or-create-virtualenv))))
+
+(defun elpy-rpc--pip-missing ()
+  "Return t if pip is not installed in the RPC virtualenv."
+  (let* ((rpc-venv-path (file-name-as-directory
+                         (elpy-rpc-get-virtualenv-path))))
+    (not (or
+          (file-exists-p (concat rpc-venv-path
+                                 (file-name-as-directory "Scripts")
+                                 "pip"))
+          (file-exists-p (concat rpc-venv-path
+                                 (file-name-as-directory "bin")
+                                 "pip"))))))
 
 ;;;;;;;;;;;;;;;;;;;
 ;;; Promise objects
