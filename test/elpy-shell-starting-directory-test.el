@@ -9,7 +9,7 @@
 
 (ert-deftest elpy-shell-starting-directory-in-current-buffer-mode ()
   (elpy-testcase ()
-    (let ((elpy-shell-starting-directory 'current-buffer)
+    (let ((elpy-shell-starting-directory 'current-directory)
           (curdir default-directory))
       (python-mode)
       (elpy-mode)
