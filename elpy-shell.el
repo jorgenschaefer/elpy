@@ -254,7 +254,7 @@ Python process. This allows the process to start up."
               (cond ((eq elpy-shell-starting-directory 'project-root)
                      (or (elpy-project-root)
                          default-directory))
-                    ((eq elpy-shell-starting-directory 'current-buffer)
+                    ((eq elpy-shell-starting-directory 'current-directory)
                      default-directory)
                     ((stringp elpy-shell-starting-directory)
                      (file-name-as-directory
