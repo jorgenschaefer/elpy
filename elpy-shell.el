@@ -568,7 +568,7 @@ Prepends a continuation promt if PREPEND-CONT-PROMPT is set."
                       (add-text-properties
                        from-point (point)
                        '(field output inhibit-line-move-field-capture t
-                               read-only t rear-nonsticky t)))
+                               rear-nonsticky t)))
                     (elpy-shell--insert-and-font-lock
                      line 'comint-highlight-input no-font-lock)))
                 ;; but put one for single line
