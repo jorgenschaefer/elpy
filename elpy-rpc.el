@@ -274,7 +274,9 @@ During the execution of BODY the following variables are available:
            (error (setq venv-err
                         (if (stringp err)
                             err
-                          (car (cdr err))))))
+                          (car (cdr err)))))
+           ;; Make sure the rpc venv is deactivated on quit
+           (quit nil))
          (unless same-venv
            (if venv-was-activated
                (pyvenv-activate (directory-file-name
@@ -331,14 +333,18 @@ binaries used to create the virtualenv."
                    (if venv-need-update "updating" "creating")
                    rpc-venv-path)
           (elpy-rpc--create-virtualenv rpc-venv-path)
-          (pyvenv-activate rpc-venv-path)
-          ;; Add a file to keep track of the `elpy-rpc-python-command` used
-          (with-temp-file venv-python-path-command-file
-            (insert elpy-rpc-python-command))
-          ;; safeguard to be sure we don't install stuff in the wrong venv
-          (when (file-equal-p pyvenv-virtual-env rpc-venv-path)
-            (elpy-rpc--install-dependencies))
-          (elpy-rpc-restart)
+          ;; Make sure the rpc venv is deacivated on quit
+          (condition-case nil
+              (progn
+                (pyvenv-activate rpc-venv-path)
+                ;; Add file to keep track of the `elpy-rpc-python-command` used
+                (with-temp-file venv-python-path-command-file
+                  (insert elpy-rpc-python-command))
+                ;; safeguard to be sure we don't install stuff in the wrong venv
+                (when (file-equal-p pyvenv-virtual-env rpc-venv-path)
+                  (elpy-rpc--install-dependencies))
+                (elpy-rpc-restart))
+            (quit nil))
           ;; Deactivate the rpc venv
           (if deact-venv
               (pyvenv-activate (directory-file-name deact-venv))
@@ -353,11 +359,10 @@ binaries used to create the virtualenv."
          success
          (elpy-venv-buffname-visible "*elpy-virtualenv*")
          (elpy-venv-buffname (concat " " elpy-venv-buffname-visible)))
-    (condition-case nil
-        (progn
-          (kill-buffer elpy-venv-buffname-visible)
-          (kill-buffer elpy-venv-buffname))
-      (error nil))
+    (when (get-buffer elpy-venv-buffname)
+      (kill-buffer elpy-venv-buffname))
+    (when (get-buffer elpy-venv-buffname-visible)
+      (kill-buffer elpy-venv-buffname-visible))
     (with-elpy-rpc-virtualenv-activated
      (cond
       ((= 0 (call-process elpy-rpc-python-command nil nil nil
