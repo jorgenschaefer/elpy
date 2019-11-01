@@ -26,6 +26,22 @@
       (should (string-match "Only region sent" output))
       (should (not (string-match "Whole buffer sent" output))))))
 
+(ert-deftest elpy-shell-send-region-or-buffer-should-send-portion-of-line ()
+  (elpy-testcase ()
+    (python-mode)
+    (elpy-mode)
+    (insert "def foo(a, b):\n"
+            "  return a[0] + b[0]\n"
+            "foo(a=[1, 2, 3], b=[1, 2])")
+    (elpy/mark-region 41 52)
+    (elpy-shell-send-region-or-buffer)
+    (python-shell-send-string "print(a)")
+    (python-shell-send-string "print('OK')")
+    (let ((output (with-current-buffer "*Python*"
+                    (elpy/wait-for-output "OK")
+                    (buffer-substring-no-properties (point-min) (point-max)))))
+      (should (string-match ">>> \\[1, 2, 3\\]" output)))))
+
 (ert-deftest elpy-shell-send-region-or-buffer-should-display-but-not-select-buffer ()
   (elpy-testcase ()
     (python-mode)
