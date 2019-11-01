@@ -154,6 +154,18 @@ the code cell beginnings defined here."
   :type 'string
   :group 'elpy)
 
+(defcustom elpy-shell-add-to-shell-history nil
+  "If Elpy should add the code send to the shell to the shell history.
+This allows to use `comint-previous-input' in the python shell to
+get back the pieces of code sent by Elpy. This affects the
+functions:
+- `elpy-shell-send-statement'
+- `elpy-shell-send-top-statement'
+- `elpy-shell-send-group'
+- `elpy-shell-send-codecell'
+- `elpy-shell-send-region-or-buffer'."
+  :type 'boolean
+  :group 'elpy)
 
 ;;;;;;;;;;;;;;;;;;
 ;;; Shell commands
@@ -871,7 +883,7 @@ corresponding statement."
         (elpy-shell--flash-and-message-region beg end)
         (let ((substring (python-shell-buffer-substring beg end))
               (substring-original (buffer-substring beg end)))
-          (elpy-shell--add-to-comint-ring substring-original)
+          (elpy-shell--add-to-shell-history substring-original)
           (elpy-shell--with-maybe-echo
            (python-shell-send-string substring)))))
     (python-nav-forward-statement)))
@@ -893,7 +905,7 @@ line and sends the corresponding top-level statement."
       ;; multiple lines
       (let ((substring (python-shell-buffer-substring beg end))
             (substring-original (buffer-substring beg end)))
-        (elpy-shell--add-to-comint-ring substring-original)
+        (elpy-shell--add-to-shell-history substring-original)
         (elpy-shell--with-maybe-echo
          (python-shell-send-string substring)))
       (setq mark-active nil)
@@ -957,7 +969,7 @@ below point and send the group around this statement."
               (elpy-shell--append-to-shell-output "\n"))
             (let ((substring (python-shell-buffer-substring beg end))
                   (substring-original (buffer-substring beg end)))
-              (elpy-shell--add-to-comint-ring substring-original)
+              (elpy-shell--add-to-shell-history substring-original)
               (elpy-shell--with-maybe-echo
                (python-shell-send-string substring)))
             (python-nav-forward-statement)))
@@ -994,7 +1006,7 @@ variables `elpy-shell-cell-boundary-regexp' and
             (elpy-shell--append-to-shell-output "\n"))
           (let ((substring (python-shell-buffer-substring beg end))
                 (substring-original (buffer-substring beg end)))
-            (elpy-shell--add-to-comint-ring substring-original)
+            (elpy-shell--add-to-shell-history substring-original)
             (elpy-shell--with-maybe-echo
              (python-shell-send-string substring)))
           (goto-char end)
@@ -1066,7 +1078,7 @@ of code. With prefix argument, this code is executed."
                    (concat "\\(" (regexp-quote used-part) "\\)\\(?:.*\n?\\)*\\'")
                    relevant-part
                    region t t 1))
-            (elpy-shell--add-to-comint-ring region-original)
+            (elpy-shell--add-to-shell-history region-original)
             (python-shell-send-string region)))
       (unless arg
         (save-excursion
@@ -1092,10 +1104,11 @@ code is executed."
       (setq p (point)))
     (goto-char p)))
 
-(defun elpy-shell--add-to-comint-ring (string)
+(defun elpy-shell--add-to-shell-history (string)
   "Add STRING to the shell command history."
-  (with-current-buffer (process-buffer (elpy-shell-get-or-create-process))
-    (comint-add-to-input-history (string-trim string))))
+  (when elpy-shell-add-to-shell-history
+    (with-current-buffer (process-buffer (elpy-shell-get-or-create-process))
+      (comint-add-to-input-history (string-trim string)))))
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
