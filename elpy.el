@@ -687,6 +687,11 @@ a customize buffer, but has some more options."
     (with-current-buffer buf
       (elpy-insert--header "Elpy Configuration")
 
+      (elpy-config--insert-configuration-table config)
+      (insert "\n")
+
+      (elpy-insert--header "Warnings")
+
       (elpy-config--insert-configuration-problems config)
 
       (elpy-insert--header "Options")
@@ -753,9 +758,6 @@ item in another window.\n\n")
                                       (string-match "^3\\." rpc-python-version))
                                  "rope_py3k"
                                "rope")))
-
-    (elpy-config--insert-configuration-table config)
-    (insert "\n")
 
     ;; Python not found
     (unless (gethash "rpc_python_executable" config)
@@ -835,6 +837,17 @@ item in another window.\n\n")
       (widget-create 'elpy-insert--pip-button
                      :package python-shell-interpreter)
       (insert "\n\n"))
+
+    ;; Pip not available in the rpc virtualenv
+    (when (elpy-rpc--pip-missing)
+      (elpy-insert--para
+       "Pip doesn't seem to be installed in the dedicated virtualenv "
+       "created by Elpy (" (elpy-rpc-get-virtualenv-path) "). "
+       "This will prevent some features from working properly"
+       " (completion, documentation, reformatting, ...). "
+       "You can try reinstalling the virtualenv with `elpy-rpc-reinstall-virtualenv'. "
+       "If the problem persists, please report on Elpy's github page."
+       "\n\n"))
 
     ;; Requested backend unavailable
     (when (and (gethash "rpc_python_executable" config)
