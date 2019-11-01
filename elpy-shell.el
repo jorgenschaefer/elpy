@@ -365,18 +365,28 @@ commands can be sent to the shell."
 (defun elpy-shell--flash-and-message-region (begin end)
   "Displays information about code fragments sent to the shell.
 
-BEGIN and END refer to the region of the current buffer containing the code being sent. Displays a message with the first line of that region. If `eval-sexp-fu-flash-mode' is active, additionally flashes that region briefly."
+BEGIN and END refer to the region of the current buffer
+containing the code being sent. Displays a message with the code
+on the first line of that region. If `eval-sexp-fu-flash-mode' is
+active, additionally flashes that region briefly."
   (when (> end begin)
     (save-excursion
-      (goto-char begin)
-      (end-of-line)
-      (if (<= end (point))
-          (message "Sent: %s" (string-trim (thing-at-point 'line)))
-        (message "Sent: %s..." (string-trim (thing-at-point 'line)))))
-    (when (bound-and-true-p eval-sexp-fu-flash-mode)
-      (multiple-value-bind (_bounds hi unhi _eflash)
-          (eval-sexp-fu-flash (cons begin end))
-        (eval-sexp-fu-flash-doit (lambda () t) hi unhi)))))
+      (let* ((bounds
+              (save-excursion
+                (goto-char begin)
+                (bounds-of-thing-at-point 'line)))
+             (begin (max begin (car bounds)))
+             (end (min end (cdr bounds)))
+             (code-on-first-line (string-trim (buffer-substring begin end))))
+        (goto-char begin)
+        (end-of-line)
+        (if (<= end (point))
+            (message "Sent: %s" code-on-first-line)
+          (message "Sent: %s..." code-on-first-line))
+        (when (bound-and-true-p eval-sexp-fu-flash-mode)
+          (multiple-value-bind (_bounds hi unhi _eflash)
+              (eval-sexp-fu-flash (cons begin end))
+            (eval-sexp-fu-flash-doit (lambda () t) hi unhi)))))))
 
 ;;;;;;;;;;;;;;;;;;;
 ;; Helper functions
@@ -552,8 +562,13 @@ Prepends a continuation promt if PREPEND-CONT-PROMPT is set."
                   ;; no additional newline at end for multiline
                   (dolist (line (cdr lines))
                     (insert "\n")
-                    (elpy-shell--insert-and-font-lock
-                     prompt 'comint-highlight-prompt no-font-lock)
+                    (let ((from-point (point)))
+                      (elpy-shell--insert-and-font-lock
+                       prompt 'comint-highlight-prompt no-font-lock)
+                      (add-text-properties
+                       from-point (point)
+                       '(field output inhibit-line-move-field-capture t
+                               rear-nonsticky t)))
                     (elpy-shell--insert-and-font-lock
                      line 'comint-highlight-input no-font-lock)))
                 ;; but put one for single line
@@ -1014,7 +1029,30 @@ of code. With prefix argument, this code is executed."
                        (region-beginning) (region-end))))
           (when (string-match "\t" region)
             (message "Region contained tabs, this might cause weird errors"))
-          (python-shell-send-string region))
+          ;; python-shell-buffer-substring (intentionally?) does not accurately
+          ;; respect (region-beginning); it always start on the first character
+          ;; of the respective line even if that's before the region beginning
+          ;; Here we post-process the output to remove the characters before
+          ;; (region-beginning) and the start of the line. The end of the region
+          ;; is handled correctly and needs no special treatment.
+          (let* ((bounds (save-excursion
+                           (goto-char (region-beginning))
+                           (bounds-of-thing-at-point 'line)))
+                 (used-part (string-trim
+                             (buffer-substring-no-properties
+                              (car bounds)
+                              (min (cdr bounds) (region-end)))))
+                 (relevant-part (string-trim
+                                 (buffer-substring-no-properties
+                                  (max (car bounds) (region-beginning))
+                                  (min (cdr bounds) (region-end))))))
+            (setq region
+                  ;; replace just first match
+                  (replace-regexp-in-string
+                   (concat "\\(" (regexp-quote used-part) "\\)\\(?:.*\n?\\)*\\'")
+                   relevant-part
+                   region t t 1))
+            (python-shell-send-string region)))
       (unless arg
         (save-excursion
           (goto-char (point-min))
