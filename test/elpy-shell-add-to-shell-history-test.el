@@ -14,6 +14,19 @@
                           "." 1))))
           (should (string= "a = 2 + 4" last-hist)))))))
 
+(ert-deftest elpy-shell-send-statement-should-NOT-add-to-shell-history ()
+  (elpy-testcase ()
+    (python-mode)
+    (elpy-mode)
+    (let ((elpy-shell-add-to-shell-history nil))
+      (insert "a = 2 + 4")
+      (elpy-shell-send-statement)
+      (python-shell-send-string "print('OK')\n")
+      (with-current-buffer "*Python*"
+        (elpy/wait-for-output "OK")
+        (should-error (comint-previous-matching-input-string-position "."
+                                                                      1))))))
+
 (ert-deftest elpy-shell-send-statement-should-add-multilines-statements-to-shell-history ()
   (elpy-testcase ()
     (python-mode)
@@ -50,6 +63,19 @@
                          (comint-previous-matching-input-string-position
                           "." 1))))
           (should (string= "a = 2 + 4" last-hist)))))))
+
+(ert-deftest elpy-shell-send-region-should-NOT-add-to-shell-history ()
+  (elpy-testcase ()
+    (python-mode)
+    (elpy-mode)
+    (let ((elpy-shell-add-to-shell-history nil))
+      (insert "a = 2 + 4")
+      (elpy/mark-region 0 10)
+      (elpy-shell-send-region-or-buffer)
+      (python-shell-send-string "print('OK')\n")
+      (with-current-buffer "*Python*"
+        (elpy/wait-for-output "OK")
+        (should-error (comint-previous-matching-input-string-position "." 1))))))
 
 (ert-deftest elpy-shell-send-region-should-add-multilines-statements-to-shell-history ()
   (elpy-testcase ()
