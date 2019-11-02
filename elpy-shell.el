@@ -881,11 +881,10 @@ corresponding statement."
           (end (progn (elpy-shell--nav-end-of-statement) (point))))
       (unless (eq beg end)
         (elpy-shell--flash-and-message-region beg end)
-        (let ((substring (python-shell-buffer-substring beg end))
-              (substring-original (buffer-substring beg end)))
-          (elpy-shell--add-to-shell-history substring-original)
-          (elpy-shell--with-maybe-echo
-           (python-shell-send-string substring)))))
+        (elpy-shell--add-to-shell-history (buffer-substring beg end))
+        (elpy-shell--with-maybe-echo
+         (python-shell-send-string
+          (python-shell-buffer-substring beg end)))))
     (python-nav-forward-statement)))
 
 (defun elpy-shell-send-top-statement-and-step ()
@@ -903,11 +902,9 @@ line and sends the corresponding top-level statement."
         ;; single line
         (elpy-shell-send-statement-and-step)
       ;; multiple lines
-      (let ((substring (python-shell-buffer-substring beg end))
-            (substring-original (buffer-substring beg end)))
-        (elpy-shell--add-to-shell-history substring-original)
-        (elpy-shell--with-maybe-echo
-         (python-shell-send-string substring)))
+      (elpy-shell--add-to-shell-history (buffer-substring beg end))
+      (elpy-shell--with-maybe-echo
+       (python-shell-send-string (python-shell-buffer-substring beg end)))
       (setq mark-active nil)
       (python-nav-forward-statement))))
 
@@ -967,11 +964,10 @@ below point and send the group around this statement."
             ;; multiple lines
             (unless elpy-shell-echo-input
               (elpy-shell--append-to-shell-output "\n"))
-            (let ((substring (python-shell-buffer-substring beg end))
-                  (substring-original (buffer-substring beg end)))
-              (elpy-shell--add-to-shell-history substring-original)
-              (elpy-shell--with-maybe-echo
-               (python-shell-send-string substring)))
+            (elpy-shell--add-to-shell-history (buffer-substring beg end))
+            (elpy-shell--with-maybe-echo
+             (python-shell-send-string
+              (python-shell-buffer-substring beg end)))
             (python-nav-forward-statement)))
       (goto-char (point-max)))
     (setq mark-active nil)))
@@ -1004,11 +1000,9 @@ variables `elpy-shell-cell-boundary-regexp' and
           (elpy-shell--flash-and-message-region beg end)
           (unless elpy-shell-echo-input
             (elpy-shell--append-to-shell-output "\n"))
-          (let ((substring (python-shell-buffer-substring beg end))
-                (substring-original (buffer-substring beg end)))
-            (elpy-shell--add-to-shell-history substring-original)
-            (elpy-shell--with-maybe-echo
-             (python-shell-send-string substring)))
+          (elpy-shell--add-to-shell-history (buffer-substring beg end))
+          (elpy-shell--with-maybe-echo
+           (python-shell-send-string (python-shell-buffer-substring beg end)))
           (goto-char end)
           (python-nav-forward-statement))
       (message "Not in a codecell."))))
