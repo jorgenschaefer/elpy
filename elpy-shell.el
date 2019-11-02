@@ -155,10 +155,10 @@ the code cell beginnings defined here."
   :group 'elpy)
 
 (defcustom elpy-shell-add-to-shell-history nil
-  "If Elpy should add the code send to the shell to the shell history.
-This allows to use `comint-previous-input' in the python shell to
-get back the pieces of code sent by Elpy. This affects the
-functions:
+  "If Elpy should make the code sent to the shell available in the
+shell history. This allows to use `comint-previous-input' in the
+python shell to get back the pieces of code sent by Elpy. This affects
+the following functions:
 - `elpy-shell-send-statement'
 - `elpy-shell-send-top-statement'
 - `elpy-shell-send-group'

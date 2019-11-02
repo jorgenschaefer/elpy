@@ -403,6 +403,12 @@ accidental code execution, e.g.:
 
    Also bound to :kbd:`C-c C-c`.
 
+.. option:: elpy-shell-add-to-shell-history
+
+   If `t`, Elpy will make the code sent available in the shell
+   history. This allows to use `comint-previous-input` (:kbd:`C-up`)
+   in the python shell to get back the pieces of code sent by Elpy.
+
 The list of remaining commands to send code fragments is:
 
 .. command:: elpy-shell-send-top-statement
