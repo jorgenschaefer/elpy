@@ -120,5 +120,4 @@
     (python-shell-send-string "print('OK')\n")
     (should (string-match "^7" (with-current-buffer "*Python*"
                                  (elpy/wait-for-output "OK" 30)
-                                 (buffer-string))))
-    )))
+                                 (buffer-string)))))))
