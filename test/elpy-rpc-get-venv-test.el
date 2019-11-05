@@ -1,9 +1,11 @@
 ;;; -*-coding: utf-8-*-
 
-(ert-deftest elpy-rpc-get-virtualenv-should-return-virtualenv ()
-  (elpy-testcase ()
-    (let ((elpy-rpc-virtualenv-path 'default))
-      (should (string-match "elpy/rpc-venv" (elpy-rpc-get-or-create-virtualenv))))))
+(unless elpy-test-dont-use-virtualenv
+  (ert-deftest elpy-rpc-get-virtualenv-should-return-virtualenv ()
+    (elpy-testcase ()
+      (let ((elpy-rpc-virtualenv-path 'default))
+        (should (string-match "elpy/rpc-venv"
+                              (elpy-rpc-get-or-create-virtualenv))))))
 
 (unless elpy-test-dont-use-virtualenv
   (ert-deftest elpy-rpc-get-virtualenv-should-create-the-virtualenv-if-necessary ()
