@@ -1,9 +1,7 @@
 (ert-deftest elpy-module-company ()
   (elpy-testcase ()
-    (elpy-module-company 'global-init)
+    (elpy-enable)
     (python-mode)
-    (elpy-mode)
-    (elpy-module-company 'buffer-init)
 
     (should company-mode)
     (should (< (abs (- company-idle-delay 0.1))

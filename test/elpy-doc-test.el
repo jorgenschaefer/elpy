@@ -3,8 +3,8 @@
 
 (ert-deftest elpy-doc ()
   (elpy-testcase ()
+    (elpy-enable)
     (python-mode)
-    (elpy-mode)
     (insert "sys")
     (elpy-doc)
     (with-current-buffer "*Python Doc*"
@@ -12,8 +12,8 @@
 
 (ert-deftest elpy-doc-should-find-documentation-from-inside-arguments ()
   (elpy-testcase ()
+    (elpy-enable)
     (python-mode)
-    (elpy-mode)
     (insert "import socket\n"
             "socket.getaddrinfo(socket.gethostname(")
     (save-excursion

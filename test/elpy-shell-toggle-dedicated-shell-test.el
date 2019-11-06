@@ -1,7 +1,7 @@
 (ert-deftest elpy-shell-toggle-dedicated-shell-should-give-dedicated-shells ()
   (elpy-testcase ()
+    (elpy-enable)
     (python-mode)
-    (elpy-mode 1)
     (elpy-shell-toggle-dedicated-shell)
     (let ((bufname (buffer-name)))
       (save-excursion

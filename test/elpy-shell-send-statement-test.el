@@ -1,7 +1,7 @@
 (ert-deftest elpy-shell-send-statement-should-send-statement-at-point ()
   (elpy-testcase ()
+    (elpy-enable)
     (python-mode)
-    (elpy-mode)
     (setq elpy-shell-echo-input nil)
     (setq elpy-shell-echo-output nil)
     (insert "def foo():
@@ -48,8 +48,8 @@
 
 (ert-deftest elpy-shell-send-statement-should-send-statement-and-decorator ()
   (elpy-testcase ()
+    (elpy-enable)
     (python-mode)
-    (elpy-mode)
     (setq elpy-shell-echo-input nil)
     (setq elpy-shell-echo-output nil)
     (insert "def deco(f):

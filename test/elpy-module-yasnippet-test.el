@@ -17,17 +17,15 @@
 
 (ert-deftest elpy-module-yasnippet-buffer-init ()
   (elpy-testcase ()
+    (elpy-enable)
     (python-mode)
-    (elpy-mode)
-
-    (elpy-module-yasnippet 'buffer-init)
 
     (should yas-minor-mode)))
 
 (ert-deftest elpy-module-yasnippet-buffer-stop ()
   (elpy-testcase ()
+    (elpy-enable)
     (python-mode)
-    (elpy-mode)
     (yas-minor-mode 1)
 
     (elpy-module-yasnippet 'buffer-stop)

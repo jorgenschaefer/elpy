@@ -1,7 +1,7 @@
 (ert-deftest elpy-shell-send-statement-should-add-to-shell-history ()
   (elpy-testcase ()
+    (elpy-enable)
     (python-mode)
-    (elpy-mode)
     (let ((elpy-shell-add-to-shell-history t))
       (insert "a = 2 + 4")
       (elpy-shell-send-statement)
@@ -16,8 +16,8 @@
 
 (ert-deftest elpy-shell-send-statement-should-NOT-add-to-shell-history ()
   (elpy-testcase ()
+    (elpy-enable)
     (python-mode)
-    (elpy-mode)
     (let ((elpy-shell-add-to-shell-history nil))
       (insert "a = 2 + 4")
       (elpy-shell-send-statement)
@@ -29,8 +29,8 @@
 
 (ert-deftest elpy-shell-send-statement-should-add-multilines-statements-to-shell-history ()
   (elpy-testcase ()
+    (elpy-enable)
     (python-mode)
-    (elpy-mode)
     (let ((elpy-shell-add-to-shell-history t))
       (insert "def foo(a):\n"
               "  d = a + 2\n"
@@ -49,8 +49,8 @@
 
 (ert-deftest elpy-shell-send-region-should-add-to-shell-history ()
   (elpy-testcase ()
+    (elpy-enable)
     (python-mode)
-    (elpy-mode)
     (let ((elpy-shell-add-to-shell-history t))
       (insert "a = 2 + 4")
       (elpy/mark-region 0 10)
@@ -66,8 +66,8 @@
 
 (ert-deftest elpy-shell-send-region-should-NOT-add-to-shell-history ()
   (elpy-testcase ()
+    (elpy-enable)
     (python-mode)
-    (elpy-mode)
     (let ((elpy-shell-add-to-shell-history nil))
       (insert "a = 2 + 4")
       (elpy/mark-region 0 10)
@@ -79,8 +79,8 @@
 
 (ert-deftest elpy-shell-send-region-should-add-multilines-statements-to-shell-history ()
   (elpy-testcase ()
+    (elpy-enable)
     (python-mode)
-    (elpy-mode)
     (let ((elpy-shell-add-to-shell-history t))
       (insert "def foo(a):\n"
               "  d = a + 2\n"

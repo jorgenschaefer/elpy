@@ -2,8 +2,8 @@
   (elpy-testcase ((:project project-root "test.py")
                    (:emacs-required "25.0"))
     (find-file (f-join project-root "test.py"))
+    (elpy-enable)
     (python-mode)
-    (elpy-mode 1)
     (insert "def foo(a):\n"
             "  b = 1 + 2\n"
             "  c = a/B\n"
@@ -24,8 +24,8 @@
   (elpy-testcase ((:project project-root "test.py")
                    (:emacs-required "25.0"))
     (find-file (f-join project-root "test.py"))
+    (elpy-enable)
     (python-mode)
-    (elpy-mode 1)
     (insert "def foo(a):\n"
             "  b = 1 + 2\n"
             "  c = a/B\n"

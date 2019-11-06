@@ -1,7 +1,7 @@
 (ert-deftest elpy-shell-send-region-or-buffer-should-send-buffer-without-region ()
   (elpy-testcase ()
+    (elpy-enable)
     (python-mode)
-    (elpy-mode)
     (insert "print('Whole buffer sent')\n")
     (elpy-shell-send-region-or-buffer)
     (should (string-match "Whole buffer sent"
@@ -11,8 +11,8 @@
 
 (ert-deftest elpy-shell-send-region-or-buffer-should-send-region-if-active ()
   (elpy-testcase ()
+    (elpy-enable)
     (python-mode)
-    (elpy-mode)
     (insert "print('Whole buffer sent')\n"
             "print('Only region sent')\n")
     (goto-char (point-min))
@@ -28,8 +28,8 @@
 
 (ert-deftest elpy-shell-send-region-or-buffer-should-send-portion-of-line ()
   (elpy-testcase ()
+    (elpy-enable)
     (python-mode)
-    (elpy-mode)
     (insert "def foo(a, b):\n"
             "  return a[0] + b[0]\n"
             "foo(a=[1, 2, 3], b=[1, 2])")
@@ -44,8 +44,8 @@
 
 (ert-deftest elpy-shell-send-region-or-buffer-should-display-but-not-select-buffer ()
   (elpy-testcase ()
+    (elpy-enable)
     (python-mode)
-    (elpy-mode)
     (insert "print('Yay')\n")
     (elpy-shell-send-region-or-buffer)
     (should (get-buffer-window "*Python*"))
@@ -54,8 +54,8 @@
 
 (ert-deftest elpy-shell-send-region-or-buffer-should-notify-of-removing-main ()
   (elpy-testcase ()
+    (elpy-enable)
     (python-mode)
-    (elpy-mode)
     (insert "def foo():\n"
             "  pass\n"
             "\n"

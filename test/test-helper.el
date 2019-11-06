@@ -124,11 +124,14 @@ itself a list where the car indicates the type of environment.
   names, possibly including directory names."
   (declare (indent 1))
   `(save-buffer-excursion
+    (when elpy-enabled-p
+      (message "Elpy was not deactivated by the previous test, deactivating...")
+      (elpy-disable))
      (with-temp-buffer
        (setq elpy-rpc-timeout 100)
        ,(elpy-testcase-transform-spec spec body))
-     (when (and (boundp 'elpy-enable)
-                elpy-enable)
+     (when (and (boundp 'elpy-enabled-p)
+                elpy-enabled-p)
        (elpy-disable))))
 
 (defun elpy-testcase-create-files (basedir filespec)

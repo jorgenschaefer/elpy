@@ -1,8 +1,8 @@
 (ert-deftest elpy-xref--goto-identifier-should-go-to-identifier ()
   (when (featurep 'xref)
     (elpy-testcase ()
+        (elpy-enable)
         (python-mode)
-        (elpy-mode)
         (insert "def foo(x, y):\n"
                 "    return x + y\n"
                 "var1 = foo(5, 2)")
