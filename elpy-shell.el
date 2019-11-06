@@ -275,10 +275,16 @@ Python process. This allows the process to start up."
                      (error "Wrong value for `elpy-shell-starting-directory', please check this variable documentation and set it to a proper value")))))
         (run-python (python-shell-parse-command) nil t))
       (when sit (sit-for sit))
-      (when (elpy-project-root)
-        (python-shell-send-string
-         (format "import sys;sys.path.append('%s')" (elpy-project-root))))
       (get-buffer-process bufname))))
+
+(defun elpy-shell--send-setup-code ()
+  "Send setup code for the shell."
+  (let ((process (python-shell-get-process)))
+    (when (elpy-project-root)
+      (python-shell-send-string-no-output
+       (format "import sys;sys.path.append('%s');del sys"
+               (elpy-project-root))
+       process))))
 
 (defun elpy-shell-toggle-dedicated-shell (&optional arg)
   "Toggle the use of a dedicated python shell for the current buffer.
