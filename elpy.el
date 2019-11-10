@@ -3508,16 +3508,18 @@ which we're looking."
 
 ;; first-prompt-hook has been added in emacs 25.
 ;; for earlier versions, make sure Elpy's setup code is
-;; send to the python shell
-;; (it is sent just after the shell creation, which
-;; is not ideal as we don't know if the shell is ready,
-;; but that should work for non-exotic interpreters).
+;; still send to the python shell.
 (unless (boundp 'python-shell-first-prompt-hook)
-  (setq python-shell--first-prompt-received t)
-  (defvar python-shell-first-prompt-hook '())
   (add-hook 'inferior-python-mode-hook
             (lambda ()
-              (run-hooks 'python-shell-first-prompt-hook))))
+              (when (elpy-project-root)
+                (let ((process (get-buffer-process (current-buffer))))
+                  (python-shell-send-string
+                   (format "import sys;sys.path.append('%s');del sys"
+                           (elpy-project-root))
+                   process))))))
+
+
 
 ;; Added in Emacs 25
 (unless (fboundp 'python-shell-comint-end-of-output-p)
