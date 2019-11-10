@@ -518,6 +518,7 @@ This option need to bet set through `customize' or `customize-set-variable' to b
     (add-hook 'pyvenv-post-activate-hooks 'elpy-rpc--disconnect)
     (add-hook 'pyvenv-post-deactivate-hooks 'elpy-rpc--disconnect)
     (add-hook 'inferior-python-mode-hook 'elpy-shell--enable-output-filter)
+    (add-hook 'python-shell-first-prompt-hook 'elpy-shell--send-setup-code t)
     ;; Enable Elpy-mode in the opened python buffer
     (dolist (buffer (buffer-list))
       (and (not (string-match "^ ?\\*" (buffer-name buffer)))
@@ -529,9 +530,13 @@ This option need to bet set through `customize' or `customize-set-variable' to b
 (defun elpy-disable ()
   "Disable Elpy in all future Python buffers."
   (interactive)
-  (remove-hook 'python-mode-hook 'elpy-mode)
-  (remove-hook 'inferior-python-mode-hook 'elpy-shell--enable-output-filter)
   (elpy-modules-global-stop)
+  (define-key inferior-python-mode-map (kbd "C-c C-z") nil)
+  (remove-hook 'python-mode-hook 'elpy-mode)
+  (remove-hook 'pyvenv-post-activate-hooks 'elpy-rpc--disconnect)
+  (remove-hook 'pyvenv-post-deactivate-hooks 'elpy-rpc--disconnect)
+  (remove-hook 'inferior-python-mode-hook 'elpy-shell--enable-output-filter)
+  (remove-hook 'python-shell-first-prompt-hook 'elpy-shell--send-setup-code)
   (setq elpy-enabled-p nil))
 
 ;;;###autoload
@@ -3500,6 +3505,21 @@ which we're looking."
 (unless (fboundp 'python-info-encoding)
   (defun python-info-encoding ()
     'utf-8))
+
+;; first-prompt-hook has been added in emacs 25.
+;; for earlier versions, make sure Elpy's setup code is
+;; still send to the python shell.
+(unless (boundp 'python-shell-first-prompt-hook)
+  (add-hook 'inferior-python-mode-hook
+            (lambda ()
+              (when (elpy-project-root)
+                (let ((process (get-buffer-process (current-buffer))))
+                  (python-shell-send-string
+                   (format "import sys;sys.path.append('%s');del sys"
+                           (elpy-project-root))
+                   process))))))
+
+
 
 ;; Added in Emacs 25
 (unless (fboundp 'python-shell-comint-end-of-output-p)

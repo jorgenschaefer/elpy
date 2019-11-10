@@ -14,8 +14,8 @@
     (elpy-testcase ((:project project-root "test.py")
                     (:emacs-required "25.1"))
         (find-file (f-join project-root "test.py"))
+        (elpy-enable)
         (python-mode)
-        (elpy-mode)
         (insert "def addition(x, y):\n"
                 "    return x + y\n"
                 "def addition2(x, y):\n"
@@ -37,8 +37,8 @@
     (elpy-testcase ((:project project-root "test.py")
                     (:emacs-required "25.1"))
         (find-file (f-join project-root "test.py"))
+        (elpy-enable)
         (python-mode)
-        (elpy-mode)
         (insert "def foo(x, y):\n"
                 "    return x + y\n"
                 "a = 893")
@@ -49,8 +49,8 @@
     (elpy-testcase ((:project project-root "test.py")
                     (:emacs-required "25.1"))
         (find-file (f-join project-root "test.py"))
+        (elpy-enable)
         (python-mode)
-        (elpy-mode)
         (insert "def foo12345(x, y):\n"
                 "    return x + y\n"
                 "a = foo12")

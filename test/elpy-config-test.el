@@ -14,8 +14,8 @@
 (ert-deftest elpy-config-should-show-flake8-pip-button-when-no-syntax-checker-available ()
   (elpy-testcase ()
                  (mletf* ((elpy-syntax-check-command "/foo/bar/flake8"))
+                         (elpy-enable)
                          (python-mode)
-                         (elpy-mode)
                          (elpy-config)
                          (let ((output (with-current-buffer  "*Elpy Config*"
                                          (elpy/wait-for-output "Options")

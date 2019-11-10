@@ -1,8 +1,8 @@
 (ert-deftest elpy-shell-should-not-echo-inputs-when-deactivated ()
   (when (<= 25 emacs-major-version)
   (elpy-testcase ()
+    (elpy-enable)
     (python-mode)
-    (elpy-mode)
     (setq elpy-shell-echo-input nil)
     (setq elpy-shell-echo-output nil)
     (insert "def foo(d):\n"
@@ -26,8 +26,8 @@
 (ert-deftest elpy-shell-should-echo-inputs ()
   (when (<= 25 emacs-major-version)
   (elpy-testcase ()
+    (elpy-enable)
     (python-mode)
-    (elpy-mode)
     (setq elpy-shell-echo-input t)
     (setq elpy-shell-echo-output nil)
     (insert "def foo(d):\n"
@@ -86,8 +86,8 @@
 (ert-deftest elpy-shell-should-echo-outputs ()
   (when (<= 25 emacs-major-version)
   (elpy-testcase ()
+    (elpy-enable)
     (python-mode)
-    (elpy-mode)
     (setq elpy-shell-echo-input nil)
     (setq elpy-shell-echo-output t)
     (insert "def foo(d):\n"

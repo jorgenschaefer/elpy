@@ -1,7 +1,7 @@
 (ert-deftest elpy-shell-prefix-key-should-be-changed-when-customized ()
   (elpy-testcase ()
+    (elpy-enable)
     (python-mode)
-    (elpy-mode)
     (customize-set-variable 'elpy-shell-command-prefix-key "C-c C-a")
     (should (equal elpy-shell-command-prefix-key "C-c C-a"))
     (should (equal (key-binding (kbd "C-c C-a")) 'elpy-shell-map))

@@ -1,7 +1,7 @@
 (ert-deftest elpy-test-should-run-current-test-if-in-test ()
   (elpy-testcase ()
+    (elpy-enable)
     (python-mode)
-    (elpy-mode)
     (mletf* ((current-test (list "/dir/project"
                                  "/dir/project/test.py"
                                  "test"
@@ -17,8 +17,8 @@
 
 (ert-deftest elpy-test-should-run-current-module-if-in-test ()
   (elpy-testcase ()
+    (elpy-enable)
     (python-mode)
-    (elpy-mode)
     (mletf* ((current-test (list "/dir/project"
                                  "/dir/project/test.py"
                                  "test"
@@ -34,8 +34,8 @@
 
 (ert-deftest elpy-test-should-run-all-tests-otherwise ()
   (elpy-testcase ()
+    (elpy-enable)
     (python-mode)
-    (elpy-mode)
     (mletf* ((current-test (list "/dir/project"
                                  nil
                                  nil
@@ -51,8 +51,8 @@
 
 (ert-deftest elpy-test-should-run-all-tests-with-prefix-argument ()
   (elpy-testcase ()
+    (elpy-enable)
     (python-mode)
-    (elpy-mode)
     (mletf* ((current-test (list "/dir/project"
                                  "/dir/project/test.py"
                                  "test"

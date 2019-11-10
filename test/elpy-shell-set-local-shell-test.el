@@ -1,7 +1,7 @@
 (ert-deftest elpy-shell-set-local-shell-should-set-a-local-shell ()
   (elpy-testcase ()
+    (elpy-enable)
     (python-mode)
-    (elpy-mode 1)
     (elpy-shell-set-local-shell "localshell")
     (save-excursion
       (elpy-shell-switch-to-shell)
