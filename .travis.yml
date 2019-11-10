@@ -73,7 +73,7 @@ install:
   - virtualenv ~/.virtualenvs/elpy-test-venv
 script:
   - nosetests
-  - PYTHONPATH="`pwd`" cask exec ert-runner
+  - PYTHONPATH="`pwd`" cask exec ert-runner --reporter ert+duration
 after_success:
   - coverage run -m nose.__main__
   - coveralls
