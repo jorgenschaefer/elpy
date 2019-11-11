@@ -9,6 +9,7 @@ https://github.com/davidhalter/jedi
 import sys
 import traceback
 import re
+import gc
 
 import jedi
 
@@ -326,6 +327,10 @@ def run_with_debug(jedi, name, *args, **kwargs):
     re_raise = kwargs.pop('re_raise', ())
     try:
         script = jedi.Script(*args, **kwargs)
+        # Explicitly call the garbage collector to avoid
+        # accumulating jedi processes
+        # (see https://github.com/jorgenschaefer/elpy/issues/1481)
+        gc.collect()
         return getattr(script, name)()
     except Exception as e:
         if isinstance(e, re_raise):
