@@ -74,8 +74,12 @@ this to prevent this from happening."
                                      "python")
   "The Python interpreter for the RPC backend.
 
-This should be the same interpreter the project will be run with,
-and not an interactive shell like ipython."
+This should NOT be an interactive shell like ipython or jupyter.
+
+As the RPC should be independent of any virtual environment, Elpy
+will try to use the system interpreter if it exists. If you wish
+to use a specific python interpreter (from a virtual environment
+for example), set this to the full interpreter path."
   :type '(choice (const :tag "python" "python")
                  (const :tag "python2" "python2")
                  (const :tag "python3" "python3")
