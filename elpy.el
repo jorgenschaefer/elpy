@@ -321,6 +321,10 @@ option is `pdb'."
     (define-key map (kbd "C-c C-n") 'elpy-flymake-next-error)
     (define-key map (kbd "C-c C-o") 'elpy-occur-definitions)
     (define-key map (kbd "C-c C-p") 'elpy-flymake-previous-error)
+    (define-key map (kbd "C-c @ C-c") 'elpy-folding-toggle-at-point)
+    (define-key map (kbd "C-c @ C-b") 'elpy-folding-toggle-docstrings)
+    (define-key map (kbd "C-c @ C-m") 'elpy-folding-toggle-comments)
+    (define-key map (kbd "C-c @ C-f") 'elpy-folding-hide-leafs)
     (define-key map (kbd "C-c C-s") 'elpy-rgrep-symbol)
     (define-key map (kbd "C-c C-t") 'elpy-test)
     (define-key map (kbd "C-c C-v") 'elpy-check)
@@ -478,6 +482,15 @@ This option need to bet set through `customize' or `customize-set-variable' to b
       :help "Go to the next inline error, if any"]
      ["Previous Error" elpy-flymake-previous-error
       :help "Go to the previous inline error, if any"])
+    ("Code folding"
+     ["Hide/show at point" elpy-folding-toggle-at-point
+      :help "Hide or show the block or docstring at point"]
+     ["Hide/show all docstrings" elpy-folding-toggle-docstrings
+      :help "Hide or show all the docstrings"]
+     ["Hide/show all comments" elpy-folding-toggle-comments
+      :help "Hide or show all the comments"]
+     ["Hide leafs" elpy-folding-hide-leafs
+      :help "Hide all leaf blocks (blocks not containing other blocks)"])
     ("Indentation Blocks"
      ["Dedent" python-indent-shift-left
       :help "Dedent current block or region"
@@ -572,6 +585,7 @@ virtualenv.
     ("Completion (Company)" company "company-")
     ("Call Signatures (ElDoc)" eldoc "eldoc-")
     ("Inline Errors (Flymake)" flymake "flymake-")
+    ("Code folding (hideshow)" hideshow "hs-")
     ("Snippets (YASnippet)" yasnippet "yas-")
     ("Directory Grep (rgrep)" grep "grep-")
     ("Search as You Type (ido)" ido "ido-")
