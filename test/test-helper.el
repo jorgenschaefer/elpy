@@ -1,5 +1,9 @@
 ;; -*- lexical-binding: t -*-
 
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Load Elpy
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (require 'f)
 (let ((elpy-dir (f-parent (f-dirname (f-this-file)))))
   (add-to-list 'load-path elpy-dir)
@@ -7,6 +11,15 @@
 					    elpy-dir
 					    (getenv "PYTHONPATH")))
   (add-to-list 'process-environment "ELPY_TEST=1"))
+(require 'elpy)
+;; Avoid asking stuff during tests
+(defun yes-or-no-p (&rest args) t)
+(defun y-or-n-p (&rest args) t)
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Travis
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Travis is using virtualenvs to test specific version of python
 ;; we need to use it as the system environment
 (advice-add 'elpy-rpc-get-virtualenv-path
@@ -21,9 +34,18 @@
                             (getenv "TRAVIS_PYTHON_VERSION")))
                         (apply fun args))))
 
-(require 'elpy)
 ;; Travis regularly has some lag for some reason.
 (setq elpy-rpc-timeout 10)
+;; Print elpy configuration
+(when (getenv "TRAVIS")
+  (elpy-config)
+  (with-current-buffer "*Elpy Config*"
+    (message (buffer-substring-no-properties (point-min) (point-max)))))
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Virtual environments
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; If the environment variable `ELPY_TEST_DONT_USE_VIRTUALENV' is
 ;; defined, don't check for features involving virtualenvs.
 ;; This permits testing on platforms that do not allow virtualenvs
@@ -33,6 +55,10 @@
   (message "ELPY_TEST_DONT_USE_VIRTUALENV is set, skipping tests using virtualenvs.")
   (setq elpy-rpc-virtualenv-path 'system))
 
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Test helper
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defmacro mletf* (bindings &rest body)
   "Liket `cl-letf*', just with a slightly more concise function syntax.
 
@@ -49,12 +75,6 @@
                           binding))
                       bindings)
      ,@body))
-
-;; Print elpy configuration
-(mletf* ((y-or-n-p (&rest rest) t))
-  (elpy-config)
-  (with-current-buffer "*Elpy Config*"
-    (message (buffer-substring-no-properties (point-min) (point-max)))))
 
 (defmacro with-temp-dir (name &rest body)
   "Create a temporary directory and bind the symbol NAME to the path.
@@ -203,8 +223,3 @@ for that file."
 
 (setq yas-verbosity 0)
 (setq yas-snippet-dirs ())
-
-
-;; Avoid asking stuff during tests
-(defun yes-or-no-p (&rest args) t)
-(defun y-or-n-p (&rest args) t)
