@@ -39,11 +39,15 @@ There are a few options and commands related to the RPC process.
 .. option:: elpy-rpc-python-command
 
    The Python interpreter Elpy should use to run the RPC process. This
-   defaults to ``"python"``, which should be correct for most cases,
-   as a virtual env should make that the right interpreter.
+   defaults to ``"python"``, which should be correct for most cases.
 
    Please do note that this is *not* an interactive interpreter, so do
-   not set this to ``"ipython"`` or similar.
+   not set this to ``"ipython"``, ``"jupyter"`` or similar.
+
+   As the RPC should be independent of any virtual environment, Elpy
+   will try to use the system interpreter if it exists. If you wish
+   to use a specific python interpreter (from a virtual environment
+   for example), set this to the full interpreter path.
 
 .. option:: elpy-rpc-virtualenv-path
 
