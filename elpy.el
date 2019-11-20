@@ -1675,9 +1675,15 @@ with a prefix argument)."
   "Initial position before expanding to indentation.")
 (make-variable-buffer-local 'elpy-nav-expand--initial-position)
 
+(defun elpy-rpc-warn-if-jedi-not-available ()
+  "Display a warning if jedi is not available in the current RPC."
+  (unless elpy-rpc--jedi-available
+    (error "This feature requires the `jedi` package to be installed. Please check `elpy-config` for more information.")))
+
 (defun elpy-goto-definition ()
   "Go to the definition of the symbol at point, if found."
   (interactive)
+  (elpy-rpc-warn-if-jedi-not-available)
   (let ((location (elpy-rpc-get-definition)))
     (if location
         (elpy-goto-location (car location) (cadr location))
@@ -1686,6 +1692,7 @@ with a prefix argument)."
 (defun elpy-goto-assignment ()
   "Go to the assignment of the symbol at point, if found."
   (interactive)
+  (elpy-rpc-warn-if-jedi-not-available)
   (let ((location (elpy-rpc-get-assignment)))
     (if location
         (elpy-goto-location (car location) (cadr location))
@@ -1694,6 +1701,7 @@ with a prefix argument)."
 (defun elpy-goto-definition-other-window ()
   "Go to the definition of the symbol at point in other window, if found."
   (interactive)
+  (elpy-rpc-warn-if-jedi-not-available)
   (let ((location (elpy-rpc-get-definition)))
     (if location
         (elpy-goto-location (car location) (cadr location) 'other-window)
@@ -1702,6 +1710,7 @@ with a prefix argument)."
 (defun elpy-goto-assignment-other-window ()
   "Go to the assignment of the symbol at point in other window, if found."
   (interactive)
+  (elpy-rpc-warn-if-jedi-not-available)
   (let ((location (elpy-rpc-get-assignment)))
     (if location
         (elpy-goto-location (car location) (cadr location) 'other-window)
