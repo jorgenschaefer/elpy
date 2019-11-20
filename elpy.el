@@ -1349,11 +1349,17 @@ This is marked with 'setup.py', 'setup.cfg' or 'pyproject.toml'."
 
 That is, if you have /foo/package/module.py, it will return /foo,
 so that import package.module will pick up module.py."
-  (locate-dominating-file default-directory
-                          (lambda (dir)
-                            (not (file-exists-p
-                                  (format "%s/__init__.py"
-                                          dir))))))
+  (let ((directory default-directory)
+        (root
+         (locate-dominating-file default-directory
+                                 (lambda (dir)
+                                   (not (file-exists-p
+                                         (concat
+                                          (file-name-as-directory dir)
+                                          "__init__.py")))))))
+    (when (string-match "\\<tests$" (directory-file-name root))
+      (setq root (car (split-string root "tests"))))
+    root))
 
 (defun elpy-project--read-project-variable (prompt)
   "Prompt the user for a variable name to set project-wide using PROMPT."
