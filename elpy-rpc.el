@@ -91,7 +91,8 @@ for example), set this to the full interpreter path."
   ;; Make sure there is no obsolete rpc running
   :set (lambda (var val)                ;
          (set-default var val)
-         (when (fboundp 'elpy-rpc-restart)
+         (when (and (fboundp 'elpy-rpc-restart)
+                    (not (autoloadp #'elpy-rpc-restart)))
            (elpy-rpc-restart)))
   :group 'elpy)
 
