@@ -860,7 +860,8 @@ item in another window.\n\n")
       (insert "\n\n"))
 
     ;; Pip not available in the rpc virtualenv
-    (when (elpy-rpc--pip-missing)
+    (when (and (elpy-rpc--pip-missing)
+               (not (gethash "jedi_version" config)))
       (elpy-insert--para
        "Pip doesn't seem to be installed in the dedicated virtualenv "
        "created by Elpy (" (elpy-rpc-get-virtualenv-path) "). "
