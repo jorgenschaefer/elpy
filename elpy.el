@@ -977,8 +977,9 @@ item in another window.\n\n")
 
 (defun elpy-config--package-available-p (package)
   "Check if PACKAGE is installed in the rpc."
-  (equal 0 (call-process elpy-rpc-python-command nil nil nil "-c"
-                         (format "import %s" package))))
+  (with-elpy-rpc-virtualenv-activated
+   (equal 0 (call-process elpy-rpc-python-command nil nil nil "-c"
+                          (format "import %s" package)))))
 
 (defun elpy-config--get-config ()
   "Return the configuration from `elpy-rpc-python-command'.
