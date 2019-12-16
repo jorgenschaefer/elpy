@@ -157,7 +157,7 @@ class JediBackend(object):
             call = None
         if not call:
             return None
-        # Strip 'param' added by jedi at the beggining of
+        # Strip 'param' added by jedi at the beginning of
         # parameter names. Should be unecessary for jedi > 0.13.0
         params = [re.sub("^param ", '', param.description)
                   for param in call.params]
