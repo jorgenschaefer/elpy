@@ -99,6 +99,14 @@ in the Python shell."
   :type 'integer
   :group 'elpy)
 
+(defcustom elpy-shell-echo-input-fontify t
+  "Toggle Python fontification of input echoed in the shell.
+
+When set, fontify input echoed to the shell using Python's font
+lock. If not set, fontify using the `comint-highlight-input'
+face."
+  :type 'boolean
+  :group 'elpy)
 
 (defcustom elpy-shell-starting-directory 'project-root
   "Directory in which Python shells will be started.
@@ -553,30 +561,51 @@ complete). Otherwise, does nothing."
   "Inject STRING into the Python shell buffer."
   (let ((from-point (point)))
     (insert string)
-    (if (not no-font-lock)
+    (unless no-font-lock
+      (if (and (eq face 'comint-highlight-input) elpy-shell-echo-input-fontify)
+          ;; copy face attribute of string to font-lock-face property of text
+          ;; just inserted
+          (let ((pos 0))
+            (while (< pos (length string))
+              (set-text-properties (+ from-point pos) (+ from-point pos 1)
+                                   `(font-lock-face
+                                     ,(get-text-property pos 'face string)))
+              (setq pos (1+ pos))))
         (add-text-properties from-point (point)
-                             (list 'front-sticky t 'font-lock-face face)))))
+                             (list 'front-sticky t 'font-lock-face face))))))
 
 (defun elpy-shell--append-to-shell-output (string &optional no-font-lock prepend-cont-prompt)
   "Append the given STRING to the output of the Python shell buffer.
 
-Unless NO-FONT-LOCK is set, formats STRING as shell input.
-Prepends a continuation promt if PREPEND-CONT-PROMPT is set."
+Unless NO-FONT-LOCK is set, formats STRING as shell input
+according to `elpy-shell-echo-input-fontify'. Prepends a
+continuation promt if PREPEND-CONT-PROMPT is set."
   (unless (string-empty-p string)
-  (let* ((process (elpy-shell-get-or-create-process))
-         (process-buf (process-buffer process))
-         (mark-point (process-mark process)))
-    (with-current-buffer process-buf
-      (save-excursion
-        (goto-char mark-point)
-        (if prepend-cont-prompt
-            (let* ((column (+ (- (point) (progn (forward-line -1) (end-of-line) (point))) 1))
-                   (prompt (concat (make-string (max 0 (- column 7)) ? ) "...: "))
-                   (lines (split-string string "\n")))
-              (goto-char mark-point)
-              (elpy-shell--insert-and-font-lock
-               (car lines) 'comint-highlight-input no-font-lock)
-              (when (cdr lines)
+    (when (and elpy-shell-echo-input-fontify (not no-font-lock))
+      ;; fontify the string using python-mode font lock before inserting
+      (setq string
+            (with-temp-buffer
+              (font-lock-mode 1)
+              (set (make-local-variable 'delay-mode-hooks) t)
+              (let ((python-indent-guess-indent-offset nil))
+                (python-mode))
+              (insert string)
+              (font-lock-default-fontify-buffer)
+              (buffer-string))))
+    (let* ((process (elpy-shell-get-or-create-process))
+           (process-buf (process-buffer process))
+           (mark-point (process-mark process)))
+      (with-current-buffer process-buf
+        (save-excursion
+          (goto-char mark-point)
+          (if prepend-cont-prompt
+              (let* ((column (+ (- (point) (progn (forward-line -1) (end-of-line) (point))) 1))
+                     (prompt (concat (make-string (max 0 (- column 7)) ? ) "...: "))
+                     (lines (split-string string "\n")))
+                (goto-char mark-point)
+                (elpy-shell--insert-and-font-lock
+                 (car lines) 'comint-highlight-input no-font-lock)
+                (when (cdr lines)
                   ;; no additional newline at end for multiline
                   (dolist (line (cdr lines))
                     (insert "\n")
@@ -586,14 +615,14 @@ Prepends a continuation promt if PREPEND-CONT-PROMPT is set."
                       (add-text-properties
                        from-point (point)
                        '(field output inhibit-line-move-field-capture t
-                               rear-nonsticky t)))
+                               read-only t rear-nonsticky t)))
                     (elpy-shell--insert-and-font-lock
                      line 'comint-highlight-input no-font-lock)))
                 ;; but put one for single line
                 (insert "\n"))
-          (elpy-shell--insert-and-font-lock
-           string 'comint-highlight-input no-font-lock))
-        (set-marker (process-mark process) (point)))))))
+            (elpy-shell--insert-and-font-lock
+             string 'comint-highlight-input no-font-lock))
+          (set-marker (process-mark process) (point)))))))
 
 (defun elpy-shell--string-head-lines (string n)
   "Extract the first N lines from STRING."
