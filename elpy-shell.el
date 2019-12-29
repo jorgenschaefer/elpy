@@ -570,8 +570,13 @@ Prepends a continuation promt if PREPEND-CONT-PROMPT is set."
       (save-excursion
         (goto-char mark-point)
         (if prepend-cont-prompt
-            (let* ((column (+ (- (point) (progn (forward-line -1) (end-of-line) (point))) 1))
-                   (prompt (concat (make-string (max 0 (- column 7)) ? ) "...: "))
+            (let* ((column (+ (- (point)
+                                 (let ((inhibit-field-text-motion t))
+                                   (forward-line -1)
+                                   (end-of-line)
+                                   (point)))
+                              1))
+                   (prompt (concat (make-string (max 0 (- column 6)) ? ) "... "))
                    (lines (split-string string "\n")))
               (goto-char mark-point)
               (elpy-shell--insert-and-font-lock

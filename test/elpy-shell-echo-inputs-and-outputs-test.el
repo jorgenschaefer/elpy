@@ -47,7 +47,7 @@
                           (with-current-buffer "*Python*"
                             (elpy/wait-for-output "OK" 30)
                             (buffer-string))))
-    (should (string-match "...:     a = 2\\+2"
+    (should (string-match "...     a = 2\\+2"
                           (with-current-buffer "*Python*"
                             (buffer-string))))
     ;; on "a = 2+2"
@@ -68,7 +68,7 @@
                           (with-current-buffer "*Python*"
                             (elpy/wait-for-output "OK" 30)
                             (buffer-string))))
-    (should (string-match "...: 4\\+3"
+    (should (string-match "... 4\\+3"
                           (with-current-buffer "*Python*"
                             (buffer-string))))
     ;; on a portion of line "d=14"
