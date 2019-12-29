@@ -2512,7 +2512,7 @@ Also, switch to that buffer."
 
 (defvar elpy-xref--format-references
   (let ((str "%s:\t%s"))
-    (put-text-property 0 4 'face 'font-lock-comment-face str)
+    (put-text-property 0 4 'face 'compilation-line-number str)
     str)
   "String used to format references in xref buffers.")
 
