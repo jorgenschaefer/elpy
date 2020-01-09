@@ -3269,26 +3269,31 @@ Meant to be used as a hook to `after-change-functions'."
   (when elpy-folding-fringe-indicators
     (save-excursion
       (save-restriction
-        (when (and beg end)
-          (narrow-to-region (progn (goto-char beg) (line-beginning-position))
-                            (progn (goto-char end) (line-end-position))))
-        (remove-overlays (point-min) (point-max) 'elpy-hs-foldable t)
-        (goto-char (point-min))
-        (while (re-search-forward python-nav-beginning-of-defun-regexp nil t)
-          (let* ((beg (line-beginning-position))
-                 (end (line-end-position))
-                 (ov (make-overlay beg end))
-                 (marker-string "*fringe-dummy*")
-                 (marker-length (length marker-string)))
-            (when (version<= "25.2" emacs-version)
-              (put-text-property 0 marker-length
-                                 'display
-                                 (list 'left-fringe
-                                       'elpy-folding-fringe-foldable-marker
-                                       'elpy-folding-fringe-face)
-                                 marker-string)
-              (overlay-put ov 'before-string marker-string))
-            (overlay-put ov 'elpy-hs-foldable t)))))))
+        (save-match-data
+          (when (and beg end)
+            (narrow-to-region (progn (goto-char beg)
+                                     (line-beginning-position))
+                              (progn (goto-char end)
+                                     (line-end-position))))
+          (remove-overlays (point-min) (point-max) 'elpy-hs-foldable t)
+          (goto-char (point-min))
+          (while (re-search-forward
+                  python-nav-beginning-of-defun-regexp nil t)
+            (let* ((beg (line-beginning-position))
+                   (end (line-end-position))
+                   (ov (make-overlay beg end))
+                   (marker-string "*fringe-dummy*")
+                   (marker-length (length marker-string)))
+              (when (version<= "25.2" emacs-version)
+                (put-text-property 0 marker-length
+                                   'display
+                                   (list
+                                    'left-fringe
+                                    'elpy-folding-fringe-foldable-marker
+                                    'elpy-folding-fringe-face)
+                                   marker-string)
+                (overlay-put ov 'before-string marker-string))
+              (overlay-put ov 'elpy-hs-foldable t))))))))
 
 ;; Mouse interaction
 (defun elpy-folding--click-fringe (event)
