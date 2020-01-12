@@ -3208,7 +3208,9 @@ display the current class and method instead."
   :set (lambda (var val)                ;
          (set-default var val)
          (dolist (buffer (buffer-list))
-           (when (with-current-buffer buffer elpy-mode)
+           (when (and (with-current-buffer buffer elpy-mode)
+                      (member 'elpy-folding--mark-foldable-lines
+                              after-change-functions))
              (elpy-folding--mark-foldable-lines)))))
 
 (defvar elpy-folding-docstring-regex "[uU]?[rR]?\"\"\""
