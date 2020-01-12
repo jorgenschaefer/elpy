@@ -856,7 +856,7 @@ item in another window.\n\n")
        "\n")
       (insert "\n")
       (widget-create 'elpy-insert--pip-button
-                     :package python-shell-interpreter)
+                     :package python-shell-interpreter :norpc t)
       (insert "\n\n"))
 
     ;; Pip not available in the rpc virtualenv
@@ -970,7 +970,7 @@ item in another window.\n\n")
        "program to provide syntax checks of your programs, so you might "
        "want to install one. Elpy by default uses flake8.\n")
       (insert "\n")
-      (widget-create 'elpy-insert--pip-button :package "flake8")
+      (widget-create 'elpy-insert--pip-button :package "flake8" :norpc t)
       (insert "\n\n"))
 
     ))
@@ -1285,8 +1285,12 @@ PyPI, or nil if that's VERSION."
 
 (defun elpy-insert--pip-button-action (widget &optional _event)
   "The :action option for the pip button widget."
-  (with-elpy-rpc-virtualenv-activated
-   (async-shell-command (widget-get widget :command))))
+  (let ((command (widget-get widget :command))
+        (norpc (widget-get widget :norpc)))
+    (if norpc
+        (async-shell-command command)
+      (with-elpy-rpc-virtualenv-activated
+       (async-shell-command command)))))
 
 ;;;;;;;;;;;;
 ;;; Projects
