@@ -284,8 +284,7 @@ During the execution of BODY the following variables are available:
            (quit nil))
          (unless same-venv
            (if venv-was-activated
-               (pyvenv-activate (directory-file-name
-                                 current-environment))
+               (pyvenv-activate venv-was-activated)
              (pyvenv-deactivate)))
          (when venv-err
            (error venv-err))
