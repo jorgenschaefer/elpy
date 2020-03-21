@@ -1034,7 +1034,9 @@ virtual_env_short"
       (let ((venv (getenv "VIRTUAL_ENV")))
         (puthash "virtual_env" venv config)
         (if venv
-            (puthash "virtual_env_short" (file-name-nondirectory venv) config)
+            (puthash "virtual_env_short" (file-name-nondirectory
+                                          (directory-file-name venv))
+                     config)
           (puthash "virtual_env_short" nil config)))
       (with-elpy-rpc-virtualenv-activated
        (let ((return-value (ignore-errors
