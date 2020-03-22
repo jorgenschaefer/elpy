@@ -598,8 +598,8 @@ virtualenv.
 
 (defvar elpy-config--get-config "import json
 import sys
+from distutils.version import LooseVersion
 import warnings
-
 warnings.filterwarnings('ignore', category=FutureWarning)
 
 try:
@@ -607,12 +607,22 @@ try:
 except ImportError:
     import urllib.request as urllib
 
-from distutils.version import LooseVersion
+
+# Check if we can connect to pypi quickly enough
+try:
+    response = urllib.urlopen('https://pypi.org/pypi/numpy/json',
+                              timeout=1)
+    CAN_CONNECT = True
+except:
+    CAN_CONNECT = False
 
 
 def latest(package, version=None):
+    if not CAN_CONNECT:
+        return None
     try:
-        response = urllib.urlopen('https://pypi.org/pypi/{package}/json'.format(package=package)).read()
+        response = urllib.urlopen('https://pypi.org/pypi/{package}/json'.format(package=package),
+               timeout=2).read()
         latest = json.loads(response)['info']['version']
         if version is None or LooseVersion(version) < LooseVersion(latest):
             return latest
