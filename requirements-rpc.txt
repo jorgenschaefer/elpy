@@ -1,5 +1,5 @@
-jedi==0.15.1
-rope==0.14.0
-autopep8==1.4.4
-yapf==0.28
-setuptools==41.2
+jedi==0.16.0
+rope==0.16.0
+autopep8==1.5
+yapf==0.29
+setuptools==46.1.1
