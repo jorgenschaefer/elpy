@@ -2,4 +2,4 @@ jedi==0.16.0
 rope==0.16.0
 autopep8==1.5
 yapf==0.29
-setuptools==46.1.1
+setuptools==44.1.0

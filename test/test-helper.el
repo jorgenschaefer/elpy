@@ -15,6 +15,8 @@
 ;; Avoid asking stuff during tests
 (defun yes-or-no-p (&rest args) t)
 (defun y-or-n-p (&rest args) t)
+;; Avoid verbose during test
+(setq python-indent-guess-indent-offset-verbose nil)
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
