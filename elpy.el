@@ -610,15 +610,14 @@ except ImportError:
 
 # Check if we can connect to pypi quickly enough
 try:
-    response = urllib.urlopen('https://pypi.org/pypi/numpy/json',
-                              timeout=1)
-    CAN_CONNECT = True
+    response = urllib.urlopen('https://pypi.org/pypi', timeout=1)
+    CAN_CONNECT_TO_PYPI = True
 except:
-    CAN_CONNECT = False
+    CAN_CONNECT_TO_PYPI = False
 
 
 def latest(package, version=None):
-    if not CAN_CONNECT:
+    if not CAN_CONNECT_TO_PYPI:
         return None
     try:
         response = urllib.urlopen('https://pypi.org/pypi/{package}/json'.format(package=package),
@@ -633,6 +632,7 @@ def latest(package, version=None):
 
 
 config = {}
+config['can_connect_to_pypi'] = CAN_CONNECT_TO_PYPI
 config['rpc_python_version'] = ('{major}.{minor}.{micro}'
                             .format(major=sys.version_info[0],
                                     minor=sys.version_info[1],
@@ -867,6 +867,20 @@ item in another window.\n\n")
       (insert "\n")
       (widget-create 'elpy-insert--pip-button
                      :package python-shell-interpreter :norpc t)
+      (insert "\n\n"))
+
+    ;; Couldn't connect to pypi to check package versions
+    (when (not (gethash "can_connect_to_pypi" config))
+      (elpy-insert--para
+       "Elpy could not connect to Pypi (or at least not quickly enough) "
+       "and check if the python packages were up-to-date. "
+       "You can still try to update all of them:"
+       "\n")
+      (insert "\n")
+      (widget-create 'elpy-insert--generic-button
+                     :button-name "[Update python packages]"
+                     :function (lambda () (with-elpy-rpc-virtualenv-activated
+                                        (elpy-rpc--install-dependencies))))
       (insert "\n\n"))
 
     ;; Pip not available in the rpc virtualenv
