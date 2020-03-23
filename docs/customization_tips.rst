@@ -31,6 +31,30 @@ See also the `associated issue`_
 .. _associated issue: https://github.com/jorgenschaefer/elpy/issues/1422
 
 
+Auto-format code on save
+========================
+
+Elpy allows you to auto-format your code with ``C-c C-r f`` (``elpy-format-code``).
+Many people find it useful to auto-format their code automatically on save.
+This can be achieved with the following snippet:
+
+.. code-block:: elisp
+
+    (add-hook 'elpy-mode-hook (lambda ()
+                                (add-hook 'before-save-hook
+                                          'elpy-format-code nil t)))
+
+The formatting function (``elpy-format-code`` here) can be replaced with your prefered one.
+For example to use black:
+
+.. code-block:: elisp
+
+    (add-hook 'elpy-mode-hook (lambda ()
+                                (add-hook 'before-save-hook
+                                          'elpy-black-fix-code nil t)))
+
+
+
 An alternative to ``elpy-goto-definition``
 ==========================================
 
