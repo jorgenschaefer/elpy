@@ -369,8 +369,11 @@ binaries used to create the virtualenv."
       (kill-buffer elpy-venv-buffname-visible))
     (with-elpy-rpc-virtualenv-activated
      (cond
-      ((= 0 (call-process elpy-rpc-python-command nil nil nil
-                          "-m" "venv" "-h"))
+      ((and (= 0 (call-process elpy-rpc-python-command nil nil nil
+                              "-m" "venv" "-h"))
+           ;; see https://github.com/jorgenschaefer/elpy/issues/1756
+           (= 0 (call-process elpy-rpc-python-command nil nil nil
+                              "-m" "ensurepip" "-h")))
        (with-current-buffer (get-buffer-create elpy-venv-buffname)
          (insert (concat "Running '" elpy-rpc-python-command " -m venv "
                          rpc-venv-path "':\n\n"))
@@ -384,7 +387,7 @@ binaries used to create the virtualenv."
          (setq success (call-process "virtualenv" nil t t "-p"
                                      elpy-rpc-python-command rpc-venv-path))))
       (t
-       (error "Elpy necessitates the 'virtualenv' python package, please install it with `pip install virtualenv`"))))
+       (error "Elpy needs the 'virtualenv' or 'venv' python packages to create its virtualenv. Please install one of them or disable the dedicated virtualenv with `(setq elpy-rpc-virtualenv-path 'current)`"))))
     ;; warn us if something wrong happened
     (unless (= 0 success)
       (with-current-buffer elpy-venv-buffname
