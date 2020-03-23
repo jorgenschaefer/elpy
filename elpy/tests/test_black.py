@@ -49,7 +49,8 @@ class BLACKTestCase(BackendTestCase):
         testdata = [('x=       123\n', 'x = 123\n'),
                     ('x=1; \ny=2 \n', 'x = 1\ny = 2\n'),
                     ('x, y, z, a, b, c = 123, 124, 125, 126, 127, 128',
-                     'x, y, z, a, b, c = (\n    123,\n    124,\n    125,'
+                     '(\n    x,\n    y,\n    z,\n    a,\n    b,\n    c,\n)'
+                     ' = (\n    123,\n    124,\n    125,'
                      '\n    126,\n    127,\n    128,\n)\n')]
         for src, expected in testdata:
             self._assert_format(src, expected)

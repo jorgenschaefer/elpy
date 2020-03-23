@@ -17,6 +17,7 @@ import shutil
 import sys
 import tempfile
 import unittest
+import re
 
 from elpy.tests import compat
 
@@ -808,9 +809,9 @@ class RPCGetDocstringTests(GenericRPCTests):
 
         def first_line(s):
             return s[:s.index("\n")]
-
-        self.assertEqual(first_line(docstring),
-                         self.JSON_LOADS_DOCSTRING)
+        match = re.match(self.JSON_LOADS_REGEX,
+                         first_line(docstring))
+        self.assertIsNotNone(match)
 
     def test_should_get_docstring(self):
         source, offset = source_and_offset(

@@ -5,6 +5,7 @@ import unittest
 
 import jedi
 import mock
+import re
 
 from elpy import jedibackend
 from elpy import rpc
@@ -54,43 +55,16 @@ class TestRPCGetDocstring(RPCGetDocstringTests,
 
     def __init__(self, *args, **kwargs):
         super(TestRPCGetDocstring, self).__init__(*args, **kwargs)
-        if sys.version_info >= (3, 6):
-            self.JSON_LOADS_DOCSTRING = (
-                'loads(s, *, encoding=None, cls=None, object_hook=None, '
-                'parse_float=None, parse_int=None, parse_constant=None, '
-                'object_pairs_hook=None, object_hook: '
-                'Optional[Callable[[Dict[str, Any]], Any]]=..., '
-                'parse_float: Optional[Callable[[str], Any]]=..., '
-                'parse_int: Optional[Callable[[str], Any]]=..., '
-                'parse_constant: Optional[Callable[[str], Any]]=..., '
-                'strict: bool=..., '
-                'object_pairs_hook: Optional[Callable[[List[Tuple[str, Any]]], '
-                'Any]]=...)'
-            )
-        elif sys.version_info >= (3, 5):
-            self.JSON_LOADS_DOCSTRING = (
-                'loads(s, encoding=None, cls=None, object_hook=None, '
-                'parse_float=None, parse_int=None, parse_constant=None, '
-                'object_pairs_hook=None, *, object_hook: '
-                'Optional[Callable[[Dict[str, Any]], Any]]=..., '
-                'parse_float: Optional[Callable[[str], Any]]=..., '
-                'parse_int: Optional[Callable[[str], Any]]=..., '
-                'parse_constant: Optional[Callable[[str], Any]]=..., '
-                'strict: bool=..., '
-                'object_pairs_hook: Optional[Callable[[List[Tuple[str, Any]]], '
-                'Any]]=...)'
-            )
-        else:
-            self.JSON_LOADS_DOCSTRING = (
-                'loads(s, encoding=None, cls=None, object_hook=None, '
-                'parse_float=None, parse_int=None, parse_constant=None, '
-                'object_pairs_hook=None, **kw)'
+        self.JSON_LOADS_REGEX = (
+            r'loads\(s.*, encoding.*, cls.*, object_hook.*, parse_float.*, '
+            r'parse_int.*, .*\)'
             )
 
     def check_docstring(self, docstring):
         lines = docstring.splitlines()
         self.assertEqual(lines[0], 'Documentation for json.loads:')
-        self.assertEqual(lines[2], self.JSON_LOADS_DOCSTRING)
+        match = re.match(self.JSON_LOADS_REGEX, lines[2])
+        self.assertIsNotNone(match)
 
     @mock.patch("elpy.jedibackend.run_with_debug")
     def test_should_not_return_empty_docstring(self, run_with_debug):
@@ -206,7 +180,7 @@ class TestRPCGetCalltip(RPCGetCalltipTests,
                           'params': ['group: None=...',
                                      'target: Optional[Callable[..., Any]]=...',
                                      'name: Optional[str]=...',
-                                     'args: Iterable=...',
+                                     'args: Iterable[Any]=...',
                                      'kwargs: Mapping[str, Any]=...',
                                      'daemon: Optional[bool]=...']}
 
@@ -216,7 +190,7 @@ class TestRPCGetCalltip(RPCGetCalltipTests,
                           'params': [u'group: None=...',
                                      u'target: Optional[Callable[..., Any]]=...',
                                      u'name: Optional[str]=...',
-                                     u'args: Iterable=...',
+                                     u'args: Iterable[Any]=...',
                                      u'kwargs: Mapping[str, Any]=...']}
 
     def test_should_not_fail_with_get_subscope_by_name(self):
