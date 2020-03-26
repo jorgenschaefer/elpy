@@ -211,6 +211,18 @@ class TestRPCGetOnelineDocstring(BackendCallTestCase):
                                                              "offset"))
 
 
+class TestRPCGetCalltipOrOnelineDocstring(BackendCallTestCase):
+    def test_should_call_backend(self):
+        self.assert_calls_backend("rpc_get_calltip_or_oneline_docstring")
+
+    def test_should_handle_no_backend(self):
+        self.srv.backend = None
+        self.assertIsNone(
+            self.srv.rpc_get_calltip_or_oneline_docstring("filname",
+                                                          "source",
+                                                          "offset"))
+
+
 class TestRPCGetPydocCompletions(ServerTestCase):
     @mock.patch.object(server, 'get_pydoc_completions')
     def test_should_call_pydoc_completions(self, get_pydoc_completions):
