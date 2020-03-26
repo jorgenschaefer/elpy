@@ -1051,6 +1051,19 @@ Returns a calltip string for the function call at point."
               success error)))
 
 
+(defun elpy-rpc-get-calltip-or-oneline-docstring (&optional success error)
+  "Call the get_calltip_or_oneline_doc API function.
+
+Returns a calltip string or a oneline docstring for the function call at point."
+  (when (< (buffer-size) elpy-rpc-ignored-buffer-size)
+    (elpy-rpc "get_calltip_or_oneline_docstring"
+              (list buffer-file-name
+                    (elpy-rpc--buffer-contents)
+                    (- (point)
+                       (point-min)))
+              success error)))
+
+
 (defun elpy-rpc-get-oneline-docstring (&optional success error)
   "Call the get_oneline_docstring API function.
 

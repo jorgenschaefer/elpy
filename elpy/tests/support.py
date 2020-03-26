@@ -698,38 +698,46 @@ class RPCGetCalltipTests(GenericRPCTests):
     METHOD = "rpc_get_calltip"
 
     def test_should_get_calltip(self):
+        expected = self.THREAD_CALLTIP
         source, offset = source_and_offset(
             "import threading\nthreading.Thread(_|_")
         filename = self.project_file("test.py", source)
         calltip = self.backend.rpc_get_calltip(filename,
                                                source,
                                                offset)
-
-        expected = self.THREAD_CALLTIP
-
+        self.assertEqual(calltip, expected)
+        calltip = self.backend.rpc_get_calltip_or_oneline_docstring(filename,
+                                                                    source,
+                                                                    offset)
+        calltip.pop('kind')
         self.assertEqual(calltip, expected)
 
     def test_should_get_calltip_even_after_parens(self):
         source, offset = source_and_offset(
             "import threading\nthreading.Thread(foo()_|_")
         filename = self.project_file("test.py", source)
-
         actual = self.backend.rpc_get_calltip(filename,
                                               source,
                                               offset)
-
+        self.assertEqual(self.THREAD_CALLTIP, actual)
+        actual = self.backend.rpc_get_calltip_or_oneline_docstring(filename,
+                                                                   source,
+                                                                   offset)
+        actual.pop('kind')
         self.assertEqual(self.THREAD_CALLTIP, actual)
 
     def test_should_get_calltip_at_closing_paren(self):
         source, offset = source_and_offset(
             "import threading\nthreading.Thread(_|_)")
         filename = self.project_file("test.py", source)
-
         actual = self.backend.rpc_get_calltip(filename,
                                               source,
                                               offset)
-
         self.assertEqual(self.THREAD_CALLTIP, actual)
+        actual = self.backend.rpc_get_calltip_or_oneline_docstring(filename,
+                                                                   source,
+                                                                   offset)
+        self.assertEqual(actual['kind'], "oneline_doc")
 
     def test_should_not_missing_attribute_get_definition(self):
         # Bug #627 / jedi#573
@@ -747,6 +755,10 @@ class RPCGetCalltipTests(GenericRPCTests):
                                                source,
                                                offset)
         self.assertIsNone(calltip)
+        calltip = self.backend.rpc_get_calltip_or_oneline_docstring(filename,
+                                                                    source,
+                                                                    offset)
+        self.assertIsNone(calltip)
 
     def test_should_remove_self_argument(self):
         source, offset = source_and_offset(
@@ -757,7 +769,11 @@ class RPCGetCalltipTests(GenericRPCTests):
         actual = self.backend.rpc_get_calltip(filename,
                                               source,
                                               offset)
-
+        self.assertEqual(self.KEYS_CALLTIP, actual)
+        actual = self.backend.rpc_get_calltip_or_oneline_docstring(filename,
+                                                                   source,
+                                                                   offset)
+        actual.pop('kind')
         self.assertEqual(self.KEYS_CALLTIP, actual)
 
     def test_should_remove_package_prefix(self):
@@ -770,7 +786,11 @@ class RPCGetCalltipTests(GenericRPCTests):
         actual = self.backend.rpc_get_calltip(filename,
                                               source,
                                               offset)
-
+        self.assertEqual(self.RADIX_CALLTIP, actual)
+        actual = self.backend.rpc_get_calltip_or_oneline_docstring(filename,
+                                                                   source,
+                                                                   offset)
+        actual.pop('kind')
         self.assertEqual(self.RADIX_CALLTIP, actual)
 
     def test_should_return_none_outside_of_all(self):
@@ -779,6 +799,10 @@ class RPCGetCalltipTests(GenericRPCTests):
         calltip = self.backend.rpc_get_calltip(filename,
                                                source, offset)
         self.assertIsNone(calltip)
+        calltip = self.backend.rpc_get_calltip_or_oneline_docstring(filename,
+                                                                    source,
+                                                                    offset)
+        self.assertIsNotNone(calltip)
 
     def test_should_find_calltip_different_package(self):
         # See issue #74
@@ -798,7 +822,11 @@ class RPCGetCalltipTests(GenericRPCTests):
         actual = self.backend.rpc_get_calltip(file2,
                                               source2,
                                               offset)
-
+        self.assertEqual(self.ADD_CALLTIP, actual)
+        actual = self.backend.rpc_get_calltip_or_oneline_docstring(file2,
+                                                                   source2,
+                                                                   offset)
+        actual.pop('kind')
         self.assertEqual(self.ADD_CALLTIP, actual)
 
 
@@ -853,6 +881,11 @@ class RPCGetOnelineDocstringTests(GenericRPCTests):
                                                            source,
                                                            offset)
         self.check_docstring(docstring)
+        docstring = self.backend.rpc_get_calltip_or_oneline_docstring(filename,
+                                                                      source,
+                                                                      offset)
+        docstring.pop('kind')
+        self.check_docstring(docstring)
 
     def test_should_get_oneline_docstring_for_modules(self):
         source, offset = source_and_offset(
@@ -862,6 +895,11 @@ class RPCGetOnelineDocstringTests(GenericRPCTests):
                                                            source,
                                                            offset)
         self.check_module_docstring(docstring)
+        docstring = self.backend.rpc_get_calltip_or_oneline_docstring(filename,
+                                                                      source,
+                                                                      offset)
+        docstring.pop('kind')
+        self.check_module_docstring(docstring)
 
     def test_should_return_none_for_bad_identifier(self):
         source, offset = source_and_offset(
@@ -870,6 +908,10 @@ class RPCGetOnelineDocstringTests(GenericRPCTests):
         docstring = self.backend.rpc_get_oneline_docstring(filename,
                                                            source,
                                                            offset)
+        self.assertIsNone(docstring)
+        docstring = self.backend.rpc_get_calltip_or_oneline_docstring(filename,
+                                                                      source,
+                                                                      offset)
         self.assertIsNone(docstring)
 
 
