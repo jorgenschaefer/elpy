@@ -2279,10 +2279,10 @@ prefix argument is given, prompt for a symbol from the user."
     (when (interactive-p) (message "Autoformatting code with yapf."))
     (elpy-yapf-fix-code))
    ((elpy-config--package-available-p "autopep8")
-    ((when (interactive-p) message "Autoformatting code with autopep8."))
+    (when (interactive-p) (message "Autoformatting code with autopep8."))
     (elpy-autopep8-fix-code))
    ((elpy-config--package-available-p "black")
-    ((when (interactive-p) message "Autoformatting code with black."))
+    (when (interactive-p) (message "Autoformatting code with black."))
     (elpy-black-fix-code))
    (t
     (message "Install yapf/autopep8 to format code."))))
