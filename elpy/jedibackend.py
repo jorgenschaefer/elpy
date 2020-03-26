@@ -70,7 +70,13 @@ class JediBackend(object):
                                    source=source, line=line, column=column,
                                    path=filename, encoding='utf-8',
                                    environment=self.environment)
-        if locations and locations[-1].docstring():
+        if not locations:
+            return None
+        # Filter uninteresting things
+        if locations[-1].name in ["str", "int", "float", "bool", "tuple",
+                                  "list", "dict"]:
+            return None
+        if locations[-1].docstring():
             return ('Documentation for {0}:\n\n'.format(
                 locations[-1].full_name) + locations[-1].docstring())
         else:
