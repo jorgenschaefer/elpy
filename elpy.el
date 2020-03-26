@@ -3115,16 +3115,17 @@ display the current class and method instead."
   (let ((flymake-error (elpy-flymake-error-at-point)))
     (if flymake-error
         flymake-error
-      ;; Try getting calltip
-      (elpy-rpc-get-calltip
-       (lambda (calltip)
+      (elpy-rpc-get-calltip-or-oneline-docstring
+       (lambda (info)
          (cond
-          ((stringp calltip)
-           (eldoc-message calltip))
-          (calltip
-           (let ((name (cdr (assq 'name calltip)))
-                 (index (cdr (assq 'index calltip)))
-                 (params (cdr (assq 'params calltip))))
+          ;; INFO is a string, just display it
+          ((stringp info)
+           (eldoc-message info))
+          ;; INFO is a calltip
+          ((string= (cdr (assq 'kind info)) "calltip")
+           (let ((name (cdr (assq 'name info)))
+                 (index (cdr (assq 'index info)))
+                 (params (cdr (assq 'params info))))
              (when index
                (setf (nth index params)
                      (propertize (nth index params)
@@ -3137,28 +3138,29 @@ display the current class and method instead."
                 (if (version<= emacs-version "25")
                     (format "%s%s" prefix args)
                   (eldoc-docstring-format-sym-doc prefix args nil))))))
+          ;; INFO is a oneline docstring
+          ((string= (cdr (assq 'kind info)) "oneline_doc")
+           (let ((name (cdr (assq 'name info)))
+                 (docs (cdr (assq 'doc info))))
+             (let ((prefix (propertize (format "%s: " name)
+                                       'face
+                                       'font-lock-function-name-face)))
+               (eldoc-message
+                (if (version<= emacs-version "25")
+                    (format "%s%s" prefix docs)
+                  (let ((eldoc-echo-area-use-multiline-p nil))
+                    (eldoc-docstring-format-sym-doc prefix docs nil)))))))
+          ;; INFO is nil, maybe display the current function
           (t
-           ;; Try getting oneline docstring
-           (elpy-rpc-get-oneline-docstring
-            (lambda (doc)
-              (cond
-               (doc
-                (let ((name (cdr (assq 'name doc)))
-                      (doc (cdr (assq 'doc doc))))
-                  (let ((prefix (propertize (format "%s: " name)
-                                            'face
-                                            'font-lock-function-name-face)))
-                    (eldoc-message
-                     (if (version<= emacs-version "25")
-                         (format "%s%s" prefix doc)
-                       (let ((eldoc-echo-area-use-multiline-p nil))
-                         (eldoc-docstring-format-sym-doc prefix doc nil)))))))
-               ;; Give the current definition
-               (elpy-eldoc-show-current-function
-                (let ((current-defun (python-info-current-defun)))
-                  (when current-defun
-                    (eldoc-message
-                     (format "In: %s()" current-defun))))))))))))
+           (if elpy-eldoc-show-current-function
+               (let ((current-defun (python-info-current-defun)))
+                 (when current-defun
+                   (eldoc-message
+                    (concat "In: "
+                            (propertize
+                             (format "%s()" current-defun)
+                             'face 'font-lock-function-name-face)))))
+             (eldoc-message ""))))))
       ;; Return the last message until we're done
       eldoc-last-message)))
 
