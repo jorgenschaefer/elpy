@@ -884,16 +884,21 @@ item in another window.\n\n")
       (insert "\n\n"))
 
     ;; Pip not available in the rpc virtualenv
-    (when (and (elpy-rpc--pip-missing)
-               (not (gethash "jedi_version" config)))
-      (elpy-insert--para
-       "Pip doesn't seem to be installed in the dedicated virtualenv "
-       "created by Elpy (" (elpy-rpc-get-virtualenv-path) "). "
-       "This will prevent some features from working properly"
-       " (completion, documentation, reformatting, ...). "
-       "You can try reinstalling the virtualenv with `elpy-rpc-reinstall-virtualenv'. "
-       "If the problem persists, please report on Elpy's github page."
-       "\n\n"))
+    (when (and
+           (equal elpy-rpc-virtualenv-path 'default)
+           (elpy-rpc--pip-missing))
+         (elpy-insert--para
+          "Pip doesn't seem to be installed in the dedicated virtualenv "
+          "created by Elpy (" (elpy-rpc-get-virtualenv-path) "). "
+          "This may prevent some features from working properly"
+          " (completion, documentation, reformatting, ...). "
+          "You can try reinstalling the virtualenv. "
+          "If the problem persists, please report on Elpy's github page."
+          "\n\n")
+      (widget-create 'elpy-insert--generic-button
+                     :button-name "[Reinstall RPC virtualenv]"
+                     :function (lambda () (elpy-rpc-reinstall-virtualenv)))
+      (insert "\n\n"))
 
     ;; Requested backend unavailable
     (when (and (gethash "rpc_python_executable" config)
