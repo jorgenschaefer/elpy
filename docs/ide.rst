@@ -147,6 +147,13 @@ Elpy supports advanced navigation features.
 
    Search the buffer for a list of definitions of classes and functions.
 
+.. command:: elpy-goto-assignment
+
+   Go to the location where the identifier at point is assigned.
+   It is not bound by default, so you will have to bind it manually.
+   You can also use it as a replacement to ``elpy-goto-definition`` (see `Jumping to assignment`_).
+
+.. _Jumping to assignment: http://elpy.readthedocs.org/en/latest/customization_tips.html#jumping-to-assignment
 
 If you use an Emacs version superior to 25, Elpy will define the
 necessary backends for the `xref`_ package.

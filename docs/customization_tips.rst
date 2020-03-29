@@ -55,8 +55,11 @@ For example to use black:
 
 
 
-An alternative to ``elpy-goto-definition``
-==========================================
+Alternatives to ``elpy-goto-definition``
+========================================
+
+Fallback to rgrep
+-----------------
 
 You may sometimes find when you try to navigate to a function/class definition with elpy-goto-definition_ (``M-.``), that instead of jumping to the definition, you get the message "No definition found". If you see this error often (because of the nature of the code you work on), you can use the following function instead of/in addition to ``elpy-goto-definition``:
 
@@ -79,6 +82,21 @@ This function will try to find the definition of the symbol at point using ``elp
     (define-key elpy-mode-map (kbd "M-.") 'elpy-goto-definition-or-rgrep)
 
 .. _elpy-rgrep-symbol: http://elpy.readthedocs.org/en/latest/ide.html#command-elpy-rgrep-symbol
+
+Jumping to assignment
+---------------------
+
+As an alternative to `elpy-goto-definition`, Elpy also provides the function elpy-goto-assignment_ that jumps to the line where the symbol at point has been assigned.
+For functions and classes, it behaves roughly like `elpy-goto-definition` but has some advantages in certain situations (like if you want to jump to a decorated function).
+You can try this alternative with the following code:
+
+
+.. code-block:: elisp
+
+   (define-key map (kbd "M-.") 'elpy-goto-assignment
+   (define-key map (kbd "C-x 4 M-.") 'elpy-goto-assignment-other-window)
+
+.. _elpy-goto-assignment: http://elpy.readthedocs.org/en/latest/ide.html#command-elpy-goto-assignment
 
 
 Enable full font locking of inputs in the python shell
