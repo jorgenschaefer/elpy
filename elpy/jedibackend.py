@@ -46,7 +46,7 @@ class JediBackend(object):
                                 for proposal in proposals)
         return [{'name': proposal.name.rstrip("="),
                  'suffix': proposal.complete.rstrip("="),
-                 'annotation': proposal.type,
+                 'annotation': get_annotation(proposal),
                  'meta': proposal.description}
                 for proposal in proposals]
 
@@ -263,7 +263,13 @@ class JediBackend(object):
             else:
                 onelinedoc = onelinedoc[0]
             if onelinedoc == '':
-                onelinedoc = "No documentation"
+                if definition.type == "instance":
+                    try:
+                        onelinedoc = definition.get_type_hint()
+                    except AttributeError:
+                        onelinedoc = "No documentation"
+                else:
+                    onelinedoc = "No documentation"
             return {"name": name,
                     "doc": onelinedoc}
         return None
@@ -360,6 +366,17 @@ def linecol_to_pos(text, line, col):
         raise ValueError("Line {0} column {1} is not within the text"
                          .format(line, col))
     return offset
+
+
+def get_annotation(proposal):
+    if proposal.type in ("instance", "statement", "param"):
+        try:
+            hint = proposal.get_type_hint()
+        except AttributeError:
+            hint = ""
+        return "{} ({})".format(proposal.type, hint)
+    else:
+        return proposal.type
 
 
 def run_with_debug(jedi, name, *args, **kwargs):
