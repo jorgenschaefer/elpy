@@ -87,12 +87,12 @@ Please have a look at the documentation at `Readthedocs`_ if you want to know mo
 External ressources
 ===================
  
-- `Emacs: The Best Python Editor?`_ by Sean Wade
+- `Emacs: The Best Python Editor?`_ by Jon Fincher
 - `Managing a Python development environment in Emacs`_ by Diego Fernández Giraldo
 - `Configuring GNU emacs with elpy on MacOS`_ by Kenneth H. East
 
-.. _Managing a Python development environment in Emacs: https://realpython.com/emacs-the-best-python-editor
-.. _Emacs\: The Best Python Editor?: https://morioh.com/p/1edf2082062a
+.. _Managing a Python development environment in Emacs: https://medium.com/analytics-vidhya/managing-a-python-development-environment-in-emacs-43897fd48c6a
+.. _Emacs\: The Best Python Editor?: https://realpython.com/emacs-the-best-python-editor
 .. _Configuring GNU emacs with elpy on MacOS: https://east.fm/posts/configuring-gnu-emacs-with-elpy-on-macos/index.html#
 
 Contact
