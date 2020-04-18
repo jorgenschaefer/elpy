@@ -3260,15 +3260,6 @@ display the current class and method instead."
   "^\\s-*[uU]?[rR]?\"\"\"\n?\\s-*"
   "Version of `hs-block-start-regexp' for docstrings.")
 
-;; Herlpers
-(defun elpy-info-docstring-p (&optional syntax-ppss)
-  "Return non-nil if point is in a docstring."
-  (save-excursion
-    (and (progn (python-nav-beginning-of-statement)
-                (looking-at "\\(\"\\|'\\)"))
-         (progn (forward-line -1)
-                (beginning-of-line)
-                (python-info-looking-at-beginning-of-defun)))))
 ;; Indicators
 (defun elpy-folding--display-code-line-counts (ov)
   "Display a folded region indicator with the number of folded lines.
@@ -3415,11 +3406,11 @@ docstring body."
   "Hide the docstring at point."
   (hs-life-goes-on
    (let ((hs-block-start-regexp elpy-docstring-block-start-regexp))
-     (when (and (elpy-info-docstring-p) (not (hs-already-hidden-p)))
+     (when (and (python-info-docstring-p) (not (hs-already-hidden-p)))
        (let (beg end line-beg line-end)
          ;; Get first doc line
          (if (not (save-excursion (forward-line -1)
-                                  (elpy-info-docstring-p)))
+                                  (python-info-docstring-p)))
              (setq beg (line-beginning-position))
            (forward-line -1)
            (end-of-line)
@@ -3432,7 +3423,7 @@ docstring body."
          (setq line-beg (line-number-at-pos))
          ;; Get last line
          (if (not (save-excursion (forward-line 1)
-                                  (elpy-info-docstring-p)))
+                                  (python-info-docstring-p)))
              (progn
                (setq end (line-end-position))
                (setq line-end (line-number-at-pos)))
@@ -3447,7 +3438,7 @@ docstring body."
   "Show docstring at point."
   (hs-life-goes-on
    (let ((hs-block-start-regexp elpy-docstring-block-start-regexp))
-     (when (elpy-info-docstring-p)
+     (when (python-info-docstring-p)
        (hs-show-block)))))
 
 (defvar-local elpy-folding-docstrings-hidden nil
@@ -3464,7 +3455,7 @@ docstring body."
        (while (python-nav-forward-defun)
          (search-forward-regexp ")\\s-*:" nil t)
          (forward-line)
-         (when (and (elpy-info-docstring-p)
+         (when (and (python-info-docstring-p)
                     (progn
                       (beginning-of-line)
                       (search-forward-regexp elpy-folding-docstring-regex
@@ -3577,14 +3568,14 @@ If a region is selected, fold that region."
          (elpy-folding--hide-region (region-beginning) (region-end))
        ;; Adapt starting regexp if on a docstring
        (let ((hs-block-start-regexp
-              (if (elpy-info-docstring-p)
+              (if (python-info-docstring-p)
                   elpy-docstring-block-start-regexp
                 hs-block-start-regexp)))
          ;; Hide or fold
          (cond
           ((hs-already-hidden-p)
            (hs-show-block))
-          ((elpy-info-docstring-p)
+          ((python-info-docstring-p)
            (elpy-folding--hide-docstring-at-point))
           (t
            (hs-hide-block))))))))
@@ -4028,6 +4019,16 @@ which we're looking."
        python-shell--prompt-calculated-input-regexp)
       (rx eos))
      output)))
+
+(unless (fboundp 'python-info-docstring-p)
+  (defun python-info-docstring-p (&optional syntax-ppss)
+    "Return non-nil if point is in a docstring."
+    (save-excursion
+      (and (progn (python-nav-beginning-of-statement)
+                  (looking-at "\\(\"\\|'\\)"))
+           (progn (forward-line -1)
+                  (beginning-of-line)
+                  (python-info-looking-at-beginning-of-defun))))))
 
 (provide 'elpy)
 ;;; elpy.el ends here

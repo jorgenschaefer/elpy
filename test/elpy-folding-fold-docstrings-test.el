@@ -30,7 +30,8 @@
       ;;            (buffer-substring (overlay-start overlay)
       ;;                              (overlay-end overlay))))
       (should (= 4 (length overlays)))
-      (setq overlay (nth 0 overlays))
+      (setq overlay (elpy-get-overlay-at 138 'docstring))
+      (should overlay)
       (should (eq (overlay-get overlay 'hs) 'docstring))
       (should (= (overlay-start overlay) 138))
       (should (= (overlay-end overlay) 212)))
@@ -70,7 +71,8 @@
     (let* ((overlays (overlays-in (point-min) (point-max)))
            overlay)
       (should (= 4 (length overlays)))
-      (setq overlay (nth 0 overlays))
+      (setq overlay (elpy-get-overlay-at 142 'docstring))
+      (should overlay)
       (should (eq (overlay-get overlay 'hs) 'docstring))
       (should (= (overlay-start overlay) 142))
       (should (= (overlay-end overlay) 216)))
@@ -114,8 +116,8 @@
      "    self.a = a"
      "    self.b = b"
      "  def bar(mess):"
-     "    \" This is just _|_a string\""
      "    mess *= 2"
+     "    \" This is just _|_a string\""
      "    print(mess)"
      "    return mess"
      "var2 = foo(var1, 4)")
@@ -143,12 +145,13 @@
      "var2 = foo(var1, 4)")
     (python-mode)
     (elpy-mode)
-    (elpy-folding-toggle-at-point)
-    (let* ((overlays (overlays-in (point-min) (point-max)))
-           overlay)
-      (should (= 4 (length overlays)))
-      (dolist (overlay overlays)
-        (should-not (eq (overlay-get overlay 'hs) 'docstring))))))
+    (let ((nmb-overlays (length (overlays-in (point-min) (point-max)))))
+      (elpy-folding-toggle-at-point)
+      (let* ((overlays (overlays-in (point-min) (point-max)))
+             overlay)
+        (should (= nmb-overlays (length overlays)))
+        (dolist (overlay overlays)
+          (should-not (eq (overlay-get overlay 'hs) 'docstring)))))))
 
 (ert-deftest elpy-fold-at-point-should-NOT-fold-strings-3 ()
   (elpy-testcase ()
@@ -171,7 +174,8 @@
     (let* ((overlays (overlays-in (point-min) (point-max)))
            overlay)
       (should (= 4 (length overlays)))
-      (setq overlay (nth 0 overlays))
+      (setq overlay (elpy-get-overlay-at 104 'code))
+      (should overlay)
       (should (eq (overlay-get overlay 'hs) 'code))
       (should (= (overlay-start overlay) 104))
       (should (or (= (overlay-end overlay) 190)
@@ -203,7 +207,8 @@
     (let* ((overlays (overlays-in (point-min) (point-max)))
            overlay)
       (should (= 4 (length overlays)))
-      (setq overlay (nth 0 overlays))
+      (setq overlay (elpy-get-overlay-at 104 'code))
+      (should overlay)
       (should (eq (overlay-get overlay 'hs) 'code))
       (should (= (overlay-start overlay) 104))
       (should (or (= (overlay-end overlay) 229)
