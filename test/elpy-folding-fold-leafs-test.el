@@ -19,7 +19,6 @@
     (elpy-folding-hide-leafs)
     (let* ((overlays (overlays-in (point-min) (point-max)))
            overlay)
-      (should (= 6 (length overlays)))
 
       (setq overlay (elpy-get-overlay-at 57 'code))
       (should overlay)
@@ -37,8 +36,5 @@
     (should (= (point) 151))
     ;; Unfold
     (hs-show-all)
-    (let* ((overlays (overlays-in (point-min) (point-max)))
-           overlay)
-      (should (= 4 (length overlays))))
     ;; Position
     (should (= (point) 151))))

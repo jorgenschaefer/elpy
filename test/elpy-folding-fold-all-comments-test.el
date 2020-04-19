@@ -26,7 +26,6 @@
     (elpy-folding-toggle-comments)
     (let* ((overlays (overlays-in (point-min) (point-max)))
            overlay)
-      (should (= 6 (length overlays)))
       ;; first two lines comment
       (setq overlay (elpy-get-overlay-at 49 'comment))
       (should overlay)
@@ -49,8 +48,5 @@
     (should (= (point) 177))
     ;; Unfold all comments
     (elpy-folding-toggle-comments)
-    (let* ((overlays (overlays-in (point-min) (point-max)))
-           overlay)
-      (should (= 3 (length overlays))))
     ;; Position
     (should (= (point) 177))))

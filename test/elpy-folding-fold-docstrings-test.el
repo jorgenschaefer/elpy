@@ -23,13 +23,6 @@
     (elpy-folding-toggle-at-point)
     (let* ((overlays (overlays-in (point-min) (point-max)))
            overlay)
-      ;; (dolist (overlay overlays)
-      ;;   (message "overlay from %s to %s on: %s"
-      ;;            (overlay-start overlay)
-      ;;            (overlay-end overlay)
-      ;;            (buffer-substring (overlay-start overlay)
-      ;;                              (overlay-end overlay))))
-      (should (= 4 (length overlays)))
       (setq overlay (elpy-get-overlay-at 138 'docstring))
       (should overlay)
       (should (eq (overlay-get overlay 'hs) 'docstring))
@@ -38,9 +31,6 @@
     (should (= (point) 109))
     ;; Unfold
     (elpy-folding-toggle-at-point)
-    (let* ((overlays (overlays-in (point-min) (point-max)))
-           overlay)
-      (should (= 3 (length overlays))))
     ;; Position
     (should (= (point) 109))))
 
@@ -70,7 +60,6 @@
     (elpy-folding-toggle-at-point)
     (let* ((overlays (overlays-in (point-min) (point-max)))
            overlay)
-      (should (= 4 (length overlays)))
       (setq overlay (elpy-get-overlay-at 142 'docstring))
       (should overlay)
       (should (eq (overlay-get overlay 'hs) 'docstring))
@@ -79,9 +68,6 @@
     (should (= (point) 117))
     ;; Unfold
     (elpy-folding-toggle-at-point)
-    (let* ((overlays (overlays-in (point-min) (point-max)))
-           overlay)
-      (should (= 3 (length overlays))))
     ;; Position
     (should (= (point) 117))))
 
@@ -103,9 +89,9 @@
     (python-mode)
     (elpy-mode)
     (elpy-folding-toggle-at-point)
-    (let* ((overlays (overlays-in (point-min) (point-max)))
-           overlay)
-      (should (= 3 (length overlays))))))
+    (let* ((overlays (overlays-in (point-min) (point-max))))
+      (dolist (overlay overlays)
+        (should-not (overlay-get overlay 'hs))))))
 
 (ert-deftest elpy-fold-at-point-should-NOT-fold-strings ()
   (elpy-testcase ()
@@ -124,9 +110,9 @@
     (python-mode)
     (elpy-mode)
     (elpy-folding-toggle-at-point)
-    (let* ((overlays (overlays-in (point-min) (point-max)))
-           overlay)
-      (should (= 3 (length overlays))))))
+    (let* ((overlays (overlays-in (point-min) (point-max))))
+      (dolist (overlay overlays)
+        (should-not (overlay-get overlay 'hs))))))
 
 (ert-deftest elpy-fold-at-point-should-NOT-fold-strings-2 ()
   (elpy-testcase ()
@@ -149,7 +135,6 @@
       (elpy-folding-toggle-at-point)
       (let* ((overlays (overlays-in (point-min) (point-max)))
              overlay)
-        (should (= nmb-overlays (length overlays)))
         (dolist (overlay overlays)
           (should-not (eq (overlay-get overlay 'hs) 'docstring)))))))
 
@@ -173,7 +158,6 @@
     (elpy-folding-toggle-at-point)
     (let* ((overlays (overlays-in (point-min) (point-max)))
            overlay)
-      (should (= 4 (length overlays)))
       (setq overlay (elpy-get-overlay-at 104 'code))
       (should overlay)
       (should (eq (overlay-get overlay 'hs) 'code))
@@ -206,7 +190,6 @@
     (elpy-folding-toggle-at-point)
     (let* ((overlays (overlays-in (point-min) (point-max)))
            overlay)
-      (should (= 4 (length overlays)))
       (setq overlay (elpy-get-overlay-at 104 'code))
       (should overlay)
       (should (eq (overlay-get overlay 'hs) 'code))
