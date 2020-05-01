@@ -223,5 +223,11 @@ for that file."
                            ,(buffer-string-with-point)))
 (put 'buffer-be 'ert-explainer 'buffer-be-explainer)
 
+(defun elpy-get-overlay-at (start kind)
+  (dolist (tmp-overlay overlays overlay)
+    (when (and (= (overlay-start tmp-overlay) start)
+               (eq (overlay-get tmp-overlay 'hs) kind))
+      (setq overlay tmp-overlay))))
+
 (setq yas-verbosity 0)
 (setq yas-snippet-dirs ())

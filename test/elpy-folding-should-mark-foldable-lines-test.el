@@ -24,17 +24,20 @@
            overlay)
       (should (= 3 (length overlays)))
       ;; Second mark
-      (setq overlay (nth 2 overlays))
+      (setq overlay (elpy-get-overlay-at 11 nil))
+      (should overlay)
       (should (eq (overlay-get overlay 'hs) nil))
       (should (= (overlay-start overlay) 11))
       (should (= (overlay-end overlay) 29))
       ;; Second mark
-      (setq overlay (nth 1 overlays))
+      (setq overlay (elpy-get-overlay-at 30 nil))
+      (should overlay)
       (should (eq (overlay-get overlay 'hs) nil))
       (should (= (overlay-start overlay) 30))
       (should (= (overlay-end overlay) 57))
       ;; Third mark
-      (setq overlay (nth 0 overlays))
+      (setq overlay (elpy-get-overlay-at 88 nil))
+      (should overlay)
       (should (eq (overlay-get overlay 'hs) nil))
       (should (= (overlay-start overlay) 88))
       (should (= (overlay-end overlay) 104)))))

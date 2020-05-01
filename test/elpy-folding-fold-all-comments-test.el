@@ -26,19 +26,21 @@
     (elpy-folding-toggle-comments)
     (let* ((overlays (overlays-in (point-min) (point-max)))
            overlay)
-      (should (= 6 (length overlays)))
       ;; first two lines comment
-      (setq overlay (nth 5 overlays))
+      (setq overlay (elpy-get-overlay-at 49 'comment))
+      (should overlay)
       (should (eq (overlay-get overlay 'hs) 'comment))
       (should (= (overlay-start overlay) 49))
       (should (= (overlay-end overlay) 83))
       ;; second three lines comment
-      (setq overlay (nth 2 overlays))
+      (setq overlay (elpy-get-overlay-at 184 'comment))
+      (should overlay)
       (should (eq (overlay-get overlay 'hs) 'comment))
       (should (= (overlay-start overlay) 184))
       (should (= (overlay-end overlay) 229))
       ;; third two lines comment
-      (setq overlay (nth 0 overlays))
+      (setq overlay (elpy-get-overlay-at 340 'comment))
+      (should overlay)
       (should (eq (overlay-get overlay 'hs) 'comment))
       (should (= (overlay-start overlay) 340))
       (should (= (overlay-end overlay) 354)))
@@ -46,8 +48,5 @@
     (should (= (point) 177))
     ;; Unfold all comments
     (elpy-folding-toggle-comments)
-    (let* ((overlays (overlays-in (point-min) (point-max)))
-           overlay)
-      (should (= 3 (length overlays))))
     ;; Position
     (should (= (point) 177))))

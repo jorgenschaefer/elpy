@@ -12,8 +12,8 @@
       (elpy-folding--click-fringe nil))
     (let* ((overlays (apply 'nconc (overlay-lists)))
            overlay)
-      (should (= 2 (length overlays)))
-      (setq overlay (nth 0 overlays))
+      (setq overlay (elpy-get-overlay-at 25 'code))
+      (should overlay)
       (should (eq (overlay-get overlay 'hs) 'code))
       (should (= (overlay-start overlay) 25))
       (should (or (= (overlay-end overlay) 37)
@@ -22,9 +22,6 @@
     ;; Unfold
     (mletf* ((mouse-set-point (event) (goto-char (point))))
       (elpy-folding--click-fringe nil))
-    (let* ((overlays (apply 'nconc (overlay-lists)))
-           overlay)
-      (should (= 1 (length overlays))))
     ;; Position
     (should (= (point) 14))))
 
@@ -42,8 +39,8 @@
       (elpy-folding--click-fringe nil))
     (let* ((overlays (apply 'nconc (overlay-lists)))
            overlay)
-      (should (= 2 (length overlays)))
-      (setq overlay (nth 0 overlays))
+      (setq overlay (elpy-get-overlay-at 25 'code))
+      (should overlay)
       (should (eq (overlay-get overlay 'hs) 'code))
       (should (= (overlay-start overlay) 25))
       (should (or (= (overlay-end overlay) 37)
@@ -55,8 +52,5 @@
              (posn-point (position) (point))
              (window-buffer (window) (current-buffer)))
       (elpy-folding--click-text nil))
-    (let* ((overlays (apply 'nconc (overlay-lists)))
-           overlay)
-      (should (= 1 (length overlays))))
     ;; Position
     (should (= (point) 25))))
