@@ -95,6 +95,7 @@
 
 (ert-deftest elpy-fold-at-point-should-NOT-fold-strings ()
   (elpy-testcase ()
+    (add-to-list 'elpy-modules 'elpy-module-folding)
     (set-buffer-string-with-point
      "var1 = 45"
      "class foo(object):"
@@ -109,10 +110,12 @@
      "var2 = foo(var1, 4)")
     (python-mode)
     (elpy-mode)
-    (elpy-folding-toggle-at-point)
-    (let* ((overlays (overlays-in (point-min) (point-max))))
-      (dolist (overlay overlays)
-        (should-not (overlay-get overlay 'hs))))))
+    (let ((nmb-overlays (length (overlays-in (point-min) (point-max)))))
+      (elpy-folding-toggle-at-point)
+      (let* ((overlays (overlays-in (point-min) (point-max)))
+             overlay)
+        (dolist (overlay overlays)
+          (should-not (eq (overlay-get overlay 'hs) 'docstring)))))))
 
 (ert-deftest elpy-fold-at-point-should-NOT-fold-strings-2 ()
   (elpy-testcase ()
@@ -125,7 +128,7 @@
      "    self.b = b"
      "  def bar(mess):"
      "    mess *= 2"
-     "    \" This is just _|_a string\""
+     "    \"\"\" This is just _|_a string\"\"\""
      "    print(mess)"
      "    return mess"
      "var2 = foo(var1, 4)")
