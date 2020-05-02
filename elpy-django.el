@@ -194,9 +194,6 @@ The result is memoized on project root and django setting path."
   (let ((django-settings-env (or (getenv "DJANGO_SETTINGS_MODULE")
                                  (elpy-django--get-default-settings-path)))
         (default-directory (elpy-project-root)))
-    ;; If no Django settings has been set, then nothing will work. Warn user
-    (unless django-settings-env
-      (Error "Please set environment variable `DJANGO_SETTINGS_MODULE' if you'd like to run the test runner"))
 
     (let* ((runner-key (list default-directory django-settings-env))
            (runner (or (elpy-django--get-test-runner-from-cache runner-key)
