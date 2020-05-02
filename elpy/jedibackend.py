@@ -369,7 +369,7 @@ def linecol_to_pos(text, line, col):
 
 
 def get_annotation(proposal):
-    if proposal.type in ("instance", "statement", "param"):
+    if proposal.type in ("instance", "statement", "param", "function"):
         try:
             hint = " ({})".format(proposal.get_type_hint())
         except AttributeError:
