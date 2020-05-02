@@ -33,6 +33,22 @@
           (should (string= (alist-get 'meta compl2) "def addition2"))
           (should (string= (alist-get 'annotation compl2) "function")))))
 
+(ert-deftest elpy-rpc-get-completions-should-include-type-hints ()
+    (elpy-testcase ((:project project-root "test.py")
+                    (:emacs-required "25.1"))
+        (find-file (f-join project-root "test.py"))
+        (elpy-enable)
+        (python-mode)
+        (insert "test_var: int = 3\n"
+                "test_")
+        (let* ((compls (elpy-rpc-get-completions))
+               (compl1 (car compls))
+               (compl2 (car (cdr compls))))
+          (should (string= (alist-get 'name compl1) "test_var"))
+          (should (string= (alist-get 'suffix compl1) "var"))
+          (should (string= (alist-get 'meta compl1) "test_var: int = 3"))
+          (should (string= (alist-get 'annotation compl1) "statement (int)")))))
+
 (ert-deftest elpy-rpc-get-completions-should-not-return-completion-for-numbers ()
     (elpy-testcase ((:project project-root "test.py")
                     (:emacs-required "25.1"))
