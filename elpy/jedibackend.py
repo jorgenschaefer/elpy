@@ -366,6 +366,8 @@ def run_with_debug(jedi, name, *args, **kwargs):
     re_raise = kwargs.pop('re_raise', ())
     try:
         script = jedi.Script(*args, **kwargs)
+        if name == 'goto_definitions':
+            return script.goto(line=kwargs['line'], column=kwargs['column'])
         return getattr(script, name)()
     except Exception as e:
         if isinstance(e, re_raise):
