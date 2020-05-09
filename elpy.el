@@ -3095,7 +3095,7 @@ and return the list."
   (pcase command
     (`global-init
      (require 'eldoc)
-     (setq eldoc-minor-mode-string nil))
+     (elpy-modules-remove-modeline-lighter 'eldoc-minor-mode))
     (`buffer-init
      ;; avoid eldoc message flickering when using eldoc and company modules jointly
      (eldoc-add-command-completions "company-")
