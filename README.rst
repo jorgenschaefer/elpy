@@ -84,7 +84,7 @@ Please have a look at the documentation at `Readthedocs`_ if you want to know mo
 
 .. _Readthedocs: https://elpy.readthedocs.io/en/latest/index.html
 
-External ressources
+External resources
 ===================
  
 - `Emacs: The Best Python Editor?`_ by Jon Fincher
