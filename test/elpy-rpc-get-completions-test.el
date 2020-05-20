@@ -1,3 +1,16 @@
+(defsubst elpy-rpc-get-completions--type-hints-supported ()
+  (if (boundp '*elpy-rpc-get-completions--type-hints-supported*)
+      *elpy-rpc-get-completions--type-hints-supported*
+    (setq *elpy-rpc-get-completions--type-hints-supported*
+          (not (string< (or (getenv "TRAVIS_PYTHON_VERSION")
+                            (with-temp-buffer
+                              (call-process elpy-rpc-python-command
+                                            nil '(t t) nil "--version")
+                              (goto-char (point-min))
+                              (re-search-forward "\\([0-9.]+\\)" nil t)
+                              (or (match-string 1) "")))
+                        "3.6")))))
+
 (ert-deftest elpy-rpc-get-completions ()
   (elpy-testcase ()
     (mletf* ((called-args nil)
@@ -33,7 +46,9 @@
           (should (string= (alist-get 'meta compl2) "def addition2"))
           (should (string= (alist-get 'annotation compl2) "function (addition2(x, y))")))))
 
-(ert-deftest elpy-rpc-get-completions-should-include-type-hints ()
+
+(when (elpy-rpc-get-completions--type-hints-supported)
+ (ert-deftest elpy-rpc-get-completions-should-include-type-hints ()
     (elpy-testcase ((:project project-root "test.py")
                     (:emacs-required "25.1"))
         (find-file (f-join project-root "test.py"))
@@ -45,7 +60,7 @@
           (should (string= (alist-get 'name compl) "test_var"))
           (should (string= (alist-get 'suffix compl) "var"))
           (should (string= (alist-get 'meta compl) "test_var: int = 3"))
-          (should (string= (alist-get 'annotation compl) "statement (int)")))))
+          (should (string= (alist-get 'annotation compl) "statement (int)"))))))
 
 
 (ert-deftest elpy-rpc-get-completions-should-not-return-completion-for-numbers ()
