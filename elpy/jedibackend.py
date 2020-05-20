@@ -372,7 +372,7 @@ def get_annotation(proposal):
     if proposal.type in ("instance", "statement", "param", "function"):
         try:
             hint = " ({})".format(proposal.get_type_hint())
-        except (AttributeError, TypeError, NotImplementedError):
+        except (AttributeError, TypeError, NotImplementedError, NameError):
             hint = ""
         return proposal.type + hint
     else:

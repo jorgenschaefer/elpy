@@ -23,6 +23,14 @@
                        (nil "" 0)
                        nil nil))))))
 
+;; temporary workaround for bug in jedi==0.17.0
+;; see https://github.com/davidhalter/jedi/pull/1589
+(setq annot1 "function"
+      annot2 "function")
+(when (elpy-rpc-get-completions--type-hints-supported)
+  (setq annot1 "function (addition(x, y))"
+        annot2 "function (addition2(x, y))"))
+
 (ert-deftest elpy-rpc-get-completions-should-return-completion ()
     (elpy-testcase ((:project project-root "test.py")
                     (:emacs-required "25.1"))
@@ -40,11 +48,11 @@
           (should (string= (alist-get 'name compl1) "addition"))
           (should (string= (alist-get 'suffix compl1) "ition"))
           (should (string= (alist-get 'meta compl1) "def addition"))
-          (should (string= (alist-get 'annotation compl1) "function (addition(x, y))"))
+          (should (string= (alist-get 'annotation compl1) annot1))
           (should (string= (alist-get 'name compl2) "addition2"))
           (should (string= (alist-get 'suffix compl2) "ition2"))
           (should (string= (alist-get 'meta compl2) "def addition2"))
-          (should (string= (alist-get 'annotation compl2) "function (addition2(x, y))")))))
+          (should (string= (alist-get 'annotation compl2) annot2)))))
 
 
 (when (elpy-rpc-get-completions--type-hints-supported)
@@ -75,6 +83,12 @@
         (let ((compl (elpy-rpc-get-completions)))
           (should (equal compl nil)))))
 
+;; temporary workaround for bug in jedi==0.17.0
+;; see https://github.com/davidhalter/jedi/pull/1589
+(setq annot3 "function")
+(when (elpy-rpc-get-completions--type-hints-supported)
+  (setq annot3 "function (foo12345(x, y))"))
+
 (ert-deftest elpy-rpc-get-completions-should-return-completion-for-variable-with-numbers ()
     (elpy-testcase ((:project project-root "test.py")
                     (:emacs-required "25.1"))
@@ -88,4 +102,4 @@
           (should (string= (alist-get 'name compl) "foo12345"))
           (should (string= (alist-get 'suffix compl) "345"))
           (should (string= (alist-get 'meta compl) "def foo12345"))
-          (should (string= (alist-get 'annotation compl) "function (foo12345(x, y))")))))
+          (should (string= (alist-get 'annotation compl) annot3)))))
