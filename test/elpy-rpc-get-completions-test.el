@@ -41,13 +41,12 @@
         (python-mode)
         (insert "test_var: int = 3\n"
                 "test_")
-        (let* ((compls (elpy-rpc-get-completions))
-               (compl1 (car compls))
-               (compl2 (car (cdr compls))))
-          (should (string= (alist-get 'name compl1) "test_var"))
-          (should (string= (alist-get 'suffix compl1) "var"))
-          (should (string= (alist-get 'meta compl1) "test_var: int = 3"))
-          (should (string= (alist-get 'annotation compl1) "statement (int)")))))
+        (let ((compl (car (elpy-rpc-get-completions))))
+          (should (string= (alist-get 'name compl) "test_var"))
+          (should (string= (alist-get 'suffix compl) "var"))
+          (should (string= (alist-get 'meta compl) "test_var: int = 3"))
+          (should (string= (alist-get 'annotation compl) "statement (int)")))))
+
 
 (ert-deftest elpy-rpc-get-completions-should-not-return-completion-for-numbers ()
     (elpy-testcase ((:project project-root "test.py")
