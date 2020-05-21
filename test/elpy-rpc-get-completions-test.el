@@ -11,6 +11,19 @@
                               (or (match-string 1) "")))
                         "3.6")))))
 
+(defsubst elpy-rpc-get-completions--python-2 ()
+  (if (boundp '*elpy-rpc-get-completions--python-2*)
+      *elpy-rpc-get-completions--python-2*
+    (setq *elpy-rpc-get-completions--python-2*
+          (string< (or (getenv "TRAVIS_PYTHON_VERSION")
+                           (with-temp-buffer
+                             (call-process elpy-rpc-python-command
+                                           nil '(t t) nil "--version")
+                             (goto-char (point-min))
+                             (re-search-forward "\\([0-9.]+\\)" nil t)
+                             (or (match-string 1) "")))
+                       "3.5"))))
+
 (ert-deftest elpy-rpc-get-completions ()
   (elpy-testcase ()
     (mletf* ((called-args nil)
@@ -25,11 +38,11 @@
 
 ;; temporary workaround for bug in jedi==0.17.0
 ;; see https://github.com/davidhalter/jedi/pull/1589
-(setq annot1 "function"
-      annot2 "function")
-(when (elpy-rpc-get-completions--type-hints-supported)
-  (setq annot1 "function (addition(x, y))"
-        annot2 "function (addition2(x, y))"))
+(setq annot1 "function (addition(x, y))"
+      annot2 "function (addition2(x, y))")
+(when (elpy-rpc-get-completions--python-2)
+  (setq annot1 "function"
+        annot2 "function"))
 
 (ert-deftest elpy-rpc-get-completions-should-return-completion ()
     (elpy-testcase ((:project project-root "test.py")
@@ -85,9 +98,9 @@
 
 ;; temporary workaround for bug in jedi==0.17.0
 ;; see https://github.com/davidhalter/jedi/pull/1589
-(setq annot3 "function")
-(when (elpy-rpc-get-completions--type-hints-supported)
-  (setq annot3 "function (foo12345(x, y))"))
+(setq annot3 "function (foo12345(x, y))")
+(when (elpy-rpc-get-completions--python-2)
+  (setq annot3 "function"))
 
 (ert-deftest elpy-rpc-get-completions-should-return-completion-for-variable-with-numbers ()
     (elpy-testcase ((:project project-root "test.py")
