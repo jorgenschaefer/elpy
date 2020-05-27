@@ -251,41 +251,44 @@ During the execution of BODY the following variables are available:
   the current environment are the same)."
   `(if (not (executable-find elpy-rpc-python-command))
        (error "Cannot find executable '%s', please set 'elpy-rpc-python-command' to an existing executable." elpy-rpc-python-command)
-     (let* ((venv-was-activated pyvenv-virtual-env)
-            (pyvenv-post-activate-hooks (remq 'elpy-rpc--disconnect
+     (let* ((pyvenv-post-activate-hooks (remq 'elpy-rpc--disconnect
                                               pyvenv-post-activate-hooks))
             (pyvenv-post-deactivate-hooks (remq 'elpy-rpc--disconnect
                                                 pyvenv-post-deactivate-hooks))
+            (venv-was-activated pyvenv-virtual-env)
             (current-environment-binaries (executable-find
                                            elpy-rpc-python-command))
-            (current-environment
-             (directory-file-name
-              (file-name-directory
-               (directory-file-name
-                (file-name-directory
-                 current-environment-binaries)))))
+            (current-environment (directory-file-name (file-name-directory (directory-file-name (file-name-directory current-environment-binaries)))))
             ;; No need to change of venv if they are the same
             (same-venv (or (string= current-environment
                                     (elpy-rpc-get-virtualenv-path))
                            (file-equal-p current-environment
                                          (elpy-rpc-get-virtualenv-path))))
             current-environment-is-deactivated)
+       ;; If different than the current one, try to activate the RPC virtualenv
        (unless same-venv
-         (pyvenv-activate (elpy-rpc-get-or-create-virtualenv))
+         (condition-case err
+             (pyvenv-activate (elpy-rpc-get-or-create-virtualenv))
+           ((error quit) (if venv-was-activated
+                             (pyvenv-activate venv-was-activated)
+                           (pyvenv-deactivate))))
          (setq current-environment-is-deactivated t))
        (let (venv-err result)
-         (condition-case err
-             (setq result (progn ,@body))
-           (error (setq venv-err
-                        (if (stringp err)
-                            err
-                          (car (cdr err)))))
-           ;; Make sure the rpc venv is deactivated on quit
-           (quit nil))
+         ;; Run BODY and catch errors and quit to avoid keeping the RPC
+         ;; virtualenv activated
+           (condition-case err
+               (setq result (progn ,@body))
+             (error (setq venv-err
+                          (if (stringp err)
+                              err
+                            (car (cdr err)))))
+             (quit nil))
+         ;; Reactivate the previous environment if necessary
          (unless same-venv
            (if venv-was-activated
                (pyvenv-activate venv-was-activated)
              (pyvenv-deactivate)))
+         ;; Raise errors that could have happened in BODY
          (when venv-err
            (error venv-err))
          result))))
