@@ -3100,8 +3100,6 @@ and return the list."
      (require 'eldoc)
      (elpy-modules-remove-modeline-lighter 'eldoc-minor-mode))
     (`buffer-init
-     ;; avoid eldoc message flickering when using eldoc and company modules jointly
-     (eldoc-add-command-completions "company-")
      (eldoc-add-command-completions "python-indent-dedent-line-backspace")
      (set (make-local-variable 'company-frontends)
           (remq 'company-echo-metadata-frontend company-frontends))
