@@ -535,12 +535,13 @@ This option need to bet set through `customize' or `customize-set-variable' to b
     (add-hook 'inferior-python-mode-hook 'elpy-shell--enable-output-filter)
     (add-hook 'python-shell-first-prompt-hook 'elpy-shell--send-setup-code t)
     ;; Enable Elpy-mode in the opened python buffer
+    (setq elpy-enabled-p t)
     (dolist (buffer (buffer-list))
       (and (not (string-match "^ ?\\*" (buffer-name buffer)))
            (with-current-buffer buffer
              (when (string= major-mode 'python-mode)
                (elpy-mode t)))))
-    (setq elpy-enabled-p t)))
+    ))
 
 (defun elpy-disable ()
   "Disable Elpy in all future Python buffers."
@@ -567,6 +568,8 @@ virtualenv.
   :lighter " Elpy"
   (unless (derived-mode-p 'python-mode)
     (error "Elpy only works with `python-mode'"))
+  (unless elpy-enabled-p
+    (error "Please enable Elpy with `(elpy-enable)` before using it"))
   (when (boundp 'xref-backend-functions)
     (add-hook 'xref-backend-functions #'elpy--xref-backend nil t))
   (cond
