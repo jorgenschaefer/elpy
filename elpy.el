@@ -4,7 +4,7 @@
 
 ;; Author: Jorgen Schaefer <contact@jorgenschaefer.de>, Gaby Launay <gaby.launay@protonmail.com>
 ;; URL: https://github.com/jorgenschaefer/elpy
-;; Version: 1.33.0
+;; Version: 1.34.0
 ;; Keywords: Python, IDE, Languages, Tools
 ;; Package-Requires: ((company "0.9.10") (emacs "24.4") (highlight-indentation "0.7.0") (pyvenv "1.20") (yasnippet "0.13.0") (s "1.12.0"))
 
@@ -53,7 +53,7 @@
 (require 'elpy-rpc)
 (require 'pyvenv)
 
-(defconst elpy-version "1.33.0"
+(defconst elpy-version "1.34.0"
   "The version of the Elpy Lisp code.")
 
 ;;;;;;;;;;;;;;;;;;;;;;

@@ -1,7 +1,7 @@
 (source gnu)
 (source melpa)
 
-(package "elpy" "1.33.0" "Emacs Python Development Environment")
+(package "elpy" "1.34.0" "Emacs Python Development Environment")
 
 (depends-on "company" "0.9.10")
 (depends-on "highlight-indentation" "0.7.0")
