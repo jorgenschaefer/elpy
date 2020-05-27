@@ -6,8 +6,8 @@
      "def foo(_|_a, b):"
      "  c = a + b"
      "var2 = foo(var1, 4)")
+    (elpy-enable)
     (python-mode)
-    (elpy-mode)
     (mletf* ((mouse-set-point (event) (goto-char (point))))
       (elpy-folding--click-fringe nil))
     (let* ((overlays (apply 'nconc (overlay-lists)))
@@ -33,8 +33,8 @@
      "def foo(_|_a, b):"
      "  c = a + b"
      "var2 = foo(var1, 4)")
+    (elpy-enable)
     (python-mode)
-    (elpy-mode)
     (mletf* ((mouse-set-point (event) (goto-char (point))))
       (elpy-folding--click-fringe nil))
     (let* ((overlays (apply 'nconc (overlay-lists)))

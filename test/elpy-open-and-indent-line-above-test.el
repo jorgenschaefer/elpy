@@ -3,8 +3,8 @@
 
 ;; (ert-deftest elpy-open-and-indent-line-below ()
 ;;   (elpy-testcase ()
+;;     (elpy-enable)
 ;;     (python-mode)
-;;     (elpy-mode 1)
 ;;     (insert-source
 ;;      "def foo():"
 ;;      "    x = 5")

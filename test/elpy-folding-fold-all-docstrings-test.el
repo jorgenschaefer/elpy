@@ -29,8 +29,8 @@
      "    print(mess)"
      ""
      "var2 = foo(var1, 4)")
+    (elpy-enable)
     (python-mode)
-    (elpy-mode)
     (elpy-folding-toggle-docstrings)
     (let* ((overlays (overlays-in (point-min) (point-max)))
            overlay)

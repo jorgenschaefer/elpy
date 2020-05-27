@@ -6,8 +6,8 @@
      "def foo(_|_a, b):"
      "  c = a + b"
      "var2 = foo(var1, 4)")
+    (elpy-enable)
     (python-mode)
-    (elpy-mode)
     (elpy-folding-toggle-at-point)
     (let* ((overlays (apply 'nconc (overlay-lists)))
            overlay)
@@ -31,8 +31,8 @@
      "def foo(a, b):"
      "  c = _|_a + b"
      "var2 = foo(var1, 4)")
+    (elpy-enable)
     (python-mode)
-    (elpy-mode)
     (elpy-folding-toggle-at-point)
     (let* ((overlays (apply 'nconc (overlay-lists)))
            overlay)
@@ -58,8 +58,8 @@
      "  return c"
      "_|_"
      "var2 = foo(var1, 4)")
+    (elpy-enable)
     (python-mode)
-    (elpy-mode)
     (elpy-folding-toggle-at-point)
     ;; Position
     (should (= (point) 49))))
@@ -76,8 +76,8 @@
      "    print(mess)"
      "    return _|_mess"
      "var2 = foo(var1, 4)")
+    (elpy-enable)
     (python-mode)
-    (elpy-mode)
     (elpy-folding-toggle-at-point)
     (let* ((overlays (apply 'nconc (overlay-lists)))
            overlay)
@@ -107,8 +107,8 @@
      "    print(mess)"
      "    return _|_mess"
      "var2 = foo(var1, 4)")
+    (elpy-enable)
     (python-mode)
-    (elpy-mode)
     (elpy-folding-toggle-at-point)
     (let* ((overlays (apply 'nconc (overlay-lists)))
            overlay)
@@ -138,8 +138,8 @@
      "    print(mess)"
      "    return mess"
      "var2 = foo(var1, 4)")
+    (elpy-enable)
     (python-mode)
-    (elpy-mode)
     (elpy-folding-toggle-at-point)
     (let* ((overlays (apply 'nconc (overlay-lists)))
            overlay)

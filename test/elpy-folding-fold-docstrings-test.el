@@ -18,8 +18,8 @@
      "    print(mess)"
      "    return mess"
      "var2 = foo(var1, 4)")
+    (elpy-enable)
     (python-mode)
-    (elpy-mode)
     (elpy-folding-toggle-at-point)
     (let* ((overlays (overlays-in (point-min) (point-max)))
            overlay)
@@ -55,8 +55,8 @@
      "    print(mess)"
      "    return mess"
      "var2 = foo(var1, 4)")
+    (elpy-enable)
     (python-mode)
-    (elpy-mode)
     (elpy-folding-toggle-at-point)
     (let* ((overlays (overlays-in (point-min) (point-max)))
            overlay)
@@ -86,8 +86,8 @@
      "    print(mess)"
      "    return mess"
      "var2 = foo(var1, 4)")
+    (elpy-enable)
     (python-mode)
-    (elpy-mode)
     (elpy-folding-toggle-at-point)
     (let* ((overlays (overlays-in (point-min) (point-max))))
       (dolist (overlay overlays)
@@ -108,8 +108,8 @@
      "    print(mess)"
      "    return mess"
      "var2 = foo(var1, 4)")
+    (elpy-enable)
     (python-mode)
-    (elpy-mode)
     (let ((nmb-overlays (length (overlays-in (point-min) (point-max)))))
       (elpy-folding-toggle-at-point)
       (let* ((overlays (overlays-in (point-min) (point-max)))
@@ -132,8 +132,8 @@
      "    print(mess)"
      "    return mess"
      "var2 = foo(var1, 4)")
+    (elpy-enable)
     (python-mode)
-    (elpy-mode)
     (let ((nmb-overlays (length (overlays-in (point-min) (point-max)))))
       (elpy-folding-toggle-at-point)
       (let* ((overlays (overlays-in (point-min) (point-max)))
@@ -156,8 +156,8 @@
      "    print(mess)"
      "    return mess"
      "var2 = foo(var1, 4)")
+    (elpy-enable)
     (python-mode)
-    (elpy-mode)
     (elpy-folding-toggle-at-point)
     (let* ((overlays (overlays-in (point-min) (point-max)))
            overlay)
@@ -188,8 +188,8 @@
      "    print(mess)"
      "    return mess"
      "var2 = foo(var1, 4)")
+    (elpy-enable)
     (python-mode)
-    (elpy-mode)
     (elpy-folding-toggle-at-point)
     (let* ((overlays (overlays-in (point-min) (point-max)))
            overlay)
