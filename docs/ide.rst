@@ -781,13 +781,17 @@ Refactoring
 
    Format code using the available formatter.
 
-   This command formats code using the first formatter found amongst
-   `yapf`_ , `autopep8`_ and `black`_.
    If a region is selected, only that region is formatted.
    Otherwise current buffer is formatted.
 
+.. option:: elpy-formatter
+
+   Allow to select the formatter you want to use amongst
+   `yapf`_ , `autopep8`_ and `black`_.
+
    `yapf`_ and `autopep8`_ can be configured with style files placed in
    the project root directory (determined by ``elpy-project-root``).
+   `black`_ can be configured in the ``pyproject.toml`` file of your project.
 
 .. _autopep8: https://github.com/hhatto/autopep8
 .. _yapf: https://github.com/google/yapf
