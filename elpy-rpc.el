@@ -96,7 +96,7 @@ for example), set this to the full interpreter path."
            (elpy-rpc-restart)))
   :group 'elpy)
 
-(defcustom elpy-rpc-pythonpath (file-name-directory (locate-library "elpy"))
+(defcustom elpy-rpc-pythonpath (file-name-directory (locate-library "elpy.el"))
   "A directory to add to the PYTHONPATH for the RPC process.
 
 This should be a directory where the elpy module can be found. If
