@@ -1766,7 +1766,7 @@ If OTHER-WINDOW-P is non-nil, show the same in other window."
         (pop-to-buffer buffer t)
       (switch-to-buffer buffer))
     (goto-char (1+ offset))
-    (recenter 0)))
+    ))
 
 (defun elpy-nav-forward-block ()
   "Move to the next line indented like point.
