@@ -9,7 +9,11 @@
     (elpy-module-eldoc 'buffer-init)
 
     (should eldoc-mode)
-    (should (eq eldoc-documentation-function 'elpy-eldoc-documentation))))
+
+    (should
+     (if (boundp 'eldoc-documentation-functions)
+         (member 'elpy-eldoc-documentation eldoc-documentation-functions)
+       (eq eldoc-documentation-function 'elpy-eldoc-documentation)))))
 
 (ert-deftest elpy-module-eldoc-buffer-stop ()
   (elpy-testcase ()
