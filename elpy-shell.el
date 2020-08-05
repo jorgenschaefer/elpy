@@ -132,7 +132,11 @@ variable is set to nil, the current directory is used instead."
 of a cell (beginning or ending). By default, lines starting with
 ``##`` are treated as a cell boundaries, as are the boundaries in
 Python files exported from IPython or Jupyter notebooks (e.g.,
-``# <markdowncell>``, ``# In[1]:'', or ``# Out[1]:``)."
+``# <markdowncell>``, ``# In[1]:'', or ``# Out[1]:``).
+
+Note that `elpy-shell-cell-beginning-regexp' must also match
+the first boundary of the code cell."
+
   :type 'string
   :group 'elpy)
 
