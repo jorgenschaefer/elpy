@@ -33,3 +33,13 @@
       (elpy-mode -1)
 
       (should buffer-stop-called))))
+
+
+(ert-deftest elpy-mode-should-set-python-check-command ()
+  (elpy-testcase ()
+    (mletf* ((executable-find (name) (equal name "flake8")))
+      (elpy-enable)
+      (python-mode)
+      (should (equal python-check-command "flake8"))
+      (if (version<= "26.1" emacs-version)
+          (should (equal python-flymake-command '("flake8" "-")))))))

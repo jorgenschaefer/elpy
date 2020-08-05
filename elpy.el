@@ -572,6 +572,8 @@ virtualenv.
     (error "Please enable Elpy with `(elpy-enable)` before using it"))
   (when (boundp 'xref-backend-functions)
     (add-hook 'xref-backend-functions #'elpy--xref-backend nil t))
+  ;; Set this for `elpy-check' command
+  (setq-local python-check-command elpy-syntax-check-command)
   (cond
    (elpy-mode
     (elpy-modules-buffer-init))
@@ -3603,8 +3605,6 @@ If a region is selected, fold that region."
               elpy-folding-fringe-indicators)
          (setq-local flymake-fringe-indicator-position 'right-fringe)
        (setq-local flymake-fringe-indicator-position 'left-fringe))
-     ;; Set this for `elpy-check' command
-     (setq-local python-check-command elpy-syntax-check-command)
      ;; For emacs > 26.1, python.el natively supports flymake,
      ;; so we just tell python.el to use the wanted syntax checker
      (when (version<= "26.1" emacs-version)
