@@ -28,6 +28,7 @@
                                   (kind . "calltip")
                                   (params "foo" "bar"))))
              (calltip nil)
+             (window-width (buff) 100000000)
              (eldoc-message (tip) (setq calltip tip)))
 
       (elpy-eldoc-documentation)

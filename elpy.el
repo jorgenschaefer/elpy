@@ -3105,22 +3105,47 @@ and return the list."
      (eldoc-add-command-completions "python-indent-dedent-line-backspace")
      (set (make-local-variable 'company-frontends)
           (remq 'company-echo-metadata-frontend company-frontends))
-     (set (make-local-variable 'eldoc-documentation-function)
-          'elpy-eldoc-documentation)
+     ;; New (Emacs >= 28) vs old eldoc API
+     (if (boundp 'eldoc-documentation-functions)
+         (add-hook 'eldoc-documentation-functions
+                   'elpy-eldoc-documentation nil t)
+       (set (make-local-variable 'eldoc-documentation-function)
+            'elpy-eldoc-documentation))
      (eldoc-mode 1))
     (`buffer-stop
      (eldoc-mode -1)
      (kill-local-variable 'eldoc-documentation-function))))
 
-(defun elpy-eldoc-documentation ()
+(defun elpy-eldoc-documentation (&optional callback &rest _more)
   "Return some interesting information for the code at point.
 
-This will return flymake errors for the line at point if there
-are any. If not, this will do an asynchronous call to the RPC
-backend to get a call tip, and display that using
-`eldoc-message'. If the backend has no call tip, this will
-display the current class and method instead."
-  (let ((flymake-error (elpy-flymake-error-at-point)))
+This function is meant to be added to `eldoc-documentation-functions'
+\(for Emacs >= 28) or set in `eldoc-documentation-function' (for older
+Emacs versions).
+
+This will return flymake errors for the line at point if there are
+any. If not, this will do an asynchronous call to the RPC backend to
+get a call tip, and display that using `eldoc-message'. If the backend
+has no call tip, this will display the current class and method
+instead.
+
+If specified, CALLBACK is the function called to display the
+documentation (only used for Emacs >= 28)."
+  (let ((cb (or callback
+                (lambda (doc &rest plist)
+                  (let ((thing (plist-get plist :thing))
+                        (face (plist-get plist :face)))
+                    (when thing
+                      (setq thing (propertize thing
+                                            'face
+                                            'font-lock-function-name-face))
+                      (setq doc
+                            (if (version<= emacs-version "25")
+                                (format "%s%s" thing doc)
+                              (let ((eldoc-echo-area-use-multiline-p nil))
+                                (eldoc-docstring-format-sym-doc thing doc)))))
+                    (eldoc-message doc)))))
+        (flymake-error (elpy-flymake-error-at-point)))
     (if flymake-error
         flymake-error
       (elpy-rpc-get-calltip-or-oneline-docstring
@@ -3128,7 +3153,7 @@ display the current class and method instead."
          (cond
           ;; INFO is a string, just display it
           ((stringp info)
-           (eldoc-message info))
+           (funcall cb info))
           ;; INFO is a calltip
           ((string= (cdr (assq 'kind info)) "calltip")
            (let ((name (cdr (assq 'name info)))
@@ -3142,22 +3167,14 @@ display the current class and method instead."
              (let ((prefix (propertize name 'face
                                        'font-lock-function-name-face))
                    (args (format "(%s)" (mapconcat #'identity params ", "))))
-               (eldoc-message
-                (if (version<= emacs-version "25")
-                    (format "%s%s" prefix args)
-                  (eldoc-docstring-format-sym-doc prefix args nil))))))
+               (funcall cb args
+                        :thing prefix))))
           ;; INFO is a oneline docstring
           ((string= (cdr (assq 'kind info)) "oneline_doc")
            (let ((name (cdr (assq 'name info)))
                  (docs (cdr (assq 'doc info))))
-             (let ((prefix (propertize (format "%s: " name)
-                                       'face
-                                       'font-lock-function-name-face)))
-               (eldoc-message
-                (if (version<= emacs-version "25")
-                    (format "%s%s" prefix docs)
-                  (let ((eldoc-echo-area-use-multiline-p nil))
-                    (eldoc-docstring-format-sym-doc prefix docs nil)))))))
+             (funcall cb docs
+                      :thing (format "%s: " name))))
           ;; INFO is nil, maybe display the current function
           (t
            (if elpy-eldoc-show-current-function
@@ -3169,8 +3186,11 @@ display the current class and method instead."
                              (format "%s()" current-defun)
                              'face 'font-lock-function-name-face)))))
              (eldoc-message ""))))))
-      ;; Return the last message until we're done
-      eldoc-last-message)))
+      (if callback
+          ;; New protocol: return non-nil, non-string
+          t
+        ;; Old protocol: return the last message until we're done
+        eldoc-last-message))))
 
 
 ;;;;;;;;;;;;;;;;;;;
