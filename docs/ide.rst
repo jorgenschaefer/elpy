@@ -249,6 +249,14 @@ you, you may also try:
    As an IPython_ user, you might be interested in the `Emacs IPython
    Notebook`_ or an `Elpy layer`_ for Spacemacs_, too.
 
+Note for MacOS users:
+In some configurations, display artifacts (lines of ``^G`` s) can
+appear in the shell. This can be fixed by prepending ``-c
+exec('__import__(\\'readline\\')')`` to
+``python-shell-interpeter-args`` (e.g. ``(setq
+python-shell-interpreter-args "-c exec('__import__(\\'readline\\')')
+-i")`` for python)
+
 .. _IPython: http://ipython.org/
 .. _Emacs IPython Notebook: https://tkf.github.io/emacs-ipython-notebook/
 .. _Elpy layer: https://github.com/rgemulla/spacemacs-layers/tree/master/%2Blang/elpy
