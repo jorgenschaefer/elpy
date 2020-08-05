@@ -3136,9 +3136,10 @@ documentation (only used for Emacs >= 28)."
                   (let ((thing (plist-get plist :thing))
                         (face (plist-get plist :face)))
                     (when thing
-                      (setq thing (propertize thing
+                      (setq thing (format "%s: "
+                                          (propertize thing
                                             'face
-                                            'font-lock-function-name-face))
+                                            'font-lock-function-name-face)))
                       (setq doc
                             (if (version<= emacs-version "25")
                                 (format "%s%s" thing doc)
@@ -3164,17 +3165,18 @@ documentation (only used for Emacs >= 28)."
                      (propertize (nth index params)
                                  'face
                                  'eldoc-highlight-function-argument)))
-             (let ((prefix (propertize name 'face
+             (let* ((prefix (propertize name 'face
                                        'font-lock-function-name-face))
-                   (args (format "(%s)" (mapconcat #'identity params ", "))))
-               (funcall cb args
-                        :thing prefix))))
+                   (args (format "%s(%s)" prefix
+                                 (mapconcat #'identity params ", "))))
+               (funcall cb args))))
           ;; INFO is a oneline docstring
           ((string= (cdr (assq 'kind info)) "oneline_doc")
            (let ((name (cdr (assq 'name info)))
                  (docs (cdr (assq 'doc info))))
              (funcall cb docs
-                      :thing (format "%s: " name))))
+                      :thing name
+                      :face 'font-lock-function-name-face)))
           ;; INFO is nil, maybe display the current function
           (t
            (if elpy-eldoc-show-current-function
