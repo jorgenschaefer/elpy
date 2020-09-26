@@ -129,6 +129,14 @@ Then check out the branch associated to the PR you want to try:
 
    (add-to-list 'load-path "/path/to/elpy")
 
+- Install Elpy's dependencies:
+
+  - Company
+  - highlight-indentation
+  - pyvenv
+  - yasnippet
+  - s
+
 - Finally, load Elpy files:
 
 .. code-block:: elisp
