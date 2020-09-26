@@ -440,14 +440,18 @@ binaries used to create the virtualenv."
 (defun elpy-rpc--pip-missing ()
   "Return t if pip is not installed in the RPC virtualenv."
   (let* ((rpc-venv-path (file-name-as-directory
-                         (elpy-rpc-get-virtualenv-path))))
+                         (elpy-rpc-get-virtualenv-path)))
+         (base-pip-scripts (concat rpc-venv-path
+                                   (file-name-as-directory "Scripts")
+                                   "pip"))
+         (base-pip-bin (concat rpc-venv-path
+                               (file-name-as-directory "bin")
+                               "pip")))
     (not (or
-          (file-exists-p (concat rpc-venv-path
-                                 (file-name-as-directory "Scripts")
-                                 "pip"))
-          (file-exists-p (concat rpc-venv-path
-                                 (file-name-as-directory "bin")
-                                 "pip"))))))
+          (file-exists-p base-pip-scripts)
+          (file-exists-p base-pip-bin)
+          (file-exists-p (concat base-pip-scripts ".exe"))
+          (file-exists-p (concat base-pip-bin ".exe"))))))
 
 ;;;;;;;;;;;;;;;;;;;
 ;;; Promise objects
