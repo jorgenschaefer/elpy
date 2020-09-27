@@ -75,8 +75,8 @@
     (elpy/mark-region 93 97)
     (elpy-shell-kill t)
     (elpy-shell-send-region-or-buffer)
-    (python-shell-send-string "print('OK')\n")
     (python-shell-send-string "print(d)\n")
+    (python-shell-send-string "print('OK')\n")
     (should (string-match ">>> 14"
                           (with-current-buffer "*Python*"
                             (elpy/wait-for-output "OK" 30)

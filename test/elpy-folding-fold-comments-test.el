@@ -25,11 +25,13 @@
       (should (eq (overlay-get overlay 'hs) 'comment))
       (should (= (overlay-start overlay) 111))
       (should (= (overlay-end overlay) 156)))
-    (should (= (point) 92))
+    (should (or (= (point) 92)
+                (= (point) 104)))
     ;; Unfold
     (elpy-folding-toggle-at-point)
     ;; Position
-    (should (= (point) 92))))
+    (should (or (= (point) 92)
+                (= (point) 104)))))
 
 (ert-deftest elpy-fold-at-point-should-NOT-fold-and-unfold-oneline-comments ()
   (elpy-testcase ()
