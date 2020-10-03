@@ -3106,7 +3106,8 @@ and return the list."
      (set (make-local-variable 'company-frontends)
           (remq 'company-echo-metadata-frontend company-frontends))
      ;; New (Emacs >= 28) vs old eldoc API
-     (if (boundp 'eldoc-documentation-functions)
+     (if (and (version< "28.0.0" emacs-version)
+              (boundp 'eldoc-documentation-functions))
          (add-hook 'eldoc-documentation-functions
                    'elpy-eldoc-documentation nil t)
        (set (make-local-variable 'eldoc-documentation-function)
