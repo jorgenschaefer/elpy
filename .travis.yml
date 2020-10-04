@@ -2,37 +2,38 @@ language: python
 
 sudo: false
 
-# needed for emacs26 to work
 dist: trusty
 
 python:
-  - 2.7
-  - 3.5
+  # - 2.7
+  # - 3.5
   - 3.6
+  # - 3.7
+  # - 3.8
 
-# While python3.7 is not supported by default dist...
-matrix:
-    include:
-      # - sudo: required
-      #   dist: xenial
-      #   python: 3.7
-      #   env: EVM_EMACS=emacs-24.4-travis
-      - sudo: required
-        dist: xenial
-        python: 3.7
-        env: EVM_EMACS=emacs-24.5-travis
-      - sudo: required
-        dist: xenial
-        python: 3.7
-        env: EVM_EMACS=emacs-25.1-travis
-      - sudo: required
-        dist: xenial
-        python: 3.7
-        env: EVM_EMACS=emacs-25.2-travis
-      - sudo: required
-        dist: xenial
-        python: 3.7
-        env: EVM_EMACS=emacs-25.3-travis
+# # While python3.7 is not supported by default dist...
+# matrix:
+#     include:
+#       # - sudo: required
+#       #   dist: xenial
+#       #   python: 3.7
+#       #   env: EVM_EMACS=emacs-24.4-travis
+#       - sudo: required
+#         dist: xenial
+#         python: 3.7
+#         env: EVM_EMACS=emacs-24.5-travis
+#       - sudo: required
+#         dist: xenial
+#         python: 3.7
+#         env: EVM_EMACS=emacs-25.1-travis
+#       - sudo: required
+#         dist: xenial
+#         python: 3.7
+#         env: EVM_EMACS=emacs-25.2-travis
+#       - sudo: required
+#         dist: xenial
+#         python: 3.7
+#         env: EVM_EMACS=emacs-25.3-travis
       # - sudo: required
       #   dist: xenial
       #   python: 3.7
@@ -49,16 +50,19 @@ matrix:
 env:
   # - EVM_EMACS=emacs-24.4-travis
   - EVM_EMACS=emacs-24.5-travis
-  - EVM_EMACS=emacs-25.1-travis
-  - EVM_EMACS=emacs-25.2-travis
+  # - EVM_EMACS=emacs-25.1-travis
+  # - EVM_EMACS=emacs-25.2-travis
   - EVM_EMACS=emacs-25.3-travis
-  - EVM_EMACS=emacs-26.1-travis
-  - EVM_EMACS=emacs-26.2-travis
+  # - EVM_EMACS=emacs-26.1-travis
+  # - EVM_EMACS=emacs-26.2-travis
   - EVM_EMACS=emacs-26.3-travis
+  # - EVM_EMACS=emacs-27.1-travis
+
 before_install:
   - source ./travis-evm-cask.sh
   - evm install $EVM_EMACS --use --skip
   - cask --verbose        # verbose only needed because of cask bug
+
 install:
   - pip install -r requirements.txt --upgrade
   - pip install -r requirements-rpc.txt --upgrade
@@ -71,9 +75,11 @@ install:
     fi
   - pip install coveralls
   - virtualenv ~/.virtualenvs/elpy-test-venv
+
 script:
   - nosetests
   - PYTHONPATH="`pwd`" cask exec ert-runner --reporter ert+duration
+
 after_success:
   - coverage run -m nose.__main__
   - coveralls

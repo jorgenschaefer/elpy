@@ -9,7 +9,7 @@
 #
 #  - curl -fsSkL https://gist.github.com/rejeep/ebcd57c3af83b049833b/raw > x.sh && source ./x.sh
 #
-# Emacs 25.3 is installed in the above script because Cask requires
+# Emacs 26.3 is installed in the above script because Cask requires
 # Emacs to be installed. Because of this, when installing other
 # environments in the .travis.yml configuration, use the --skip
 # option, for example:
