@@ -3008,8 +3008,8 @@ and return the list."
              for pytel-cand = (replace-regexp-in-string "($" "" pytel-cand)
              for pytel-cand = (replace-regexp-in-string "^.*\\." ""
                                                         pytel-cand)
-             if (not (member pytel-cand candidate-names))
-             do (push (list (cons 'name pytel-cand)) candidates)))
+             unless (member pytel-cand candidate-names)
+             collect (list (cons 'name pytel-cand)) into candidates))
           candidates)))))
 
 (defun elpy-company-backend (command &optional arg &rest ignored)
