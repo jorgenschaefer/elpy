@@ -3004,10 +3004,11 @@ and return the list."
             (cl-loop
              for pytel-cand in new-candidate-names
              for pytel-cand = (replace-regexp-in-string "($" "" pytel-cand)
-             for pytel-cand = (replace-regexp-in-string "^.*\\." ""
-                                                        pytel-cand)
-             if (not (member pytel-cand candidate-names))
-             do (push (list (cons 'name pytel-cand)) candidates)))
+             for pytel-cand = (replace-regexp-in-string "^.*\\." "" pytel-cand)
+             for pytel-cand = (string-trim pytel-cand)
+             unless (member pytel-cand candidate-names)
+               do (push (list (cons 'name pytel-cand)) candidates)
+             ))
           candidates)))))
 
 (defun elpy-company-backend (command &optional arg &rest ignored)
