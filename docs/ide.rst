@@ -556,57 +556,6 @@ fly, so see there for more configuration options.
    not need to install the program in every virtual env separately.
 
 
-Folding
-=======
-
-Elpy offers code folding by enhancing the builtin folding minor mode ``Hideshow``.
-
-When opening a python buffer, Elpy will indicate foldable things with an arrow in the left fringe.
-Clicking on an arrow will fold the corresponding code blocks.
-Folded code blocks can be unfolded by clicking on the `...` button at the end of the line.
-
-If you don't want to use your mouse, you can achieve the same thing with the function
-
-.. command:: elpy-folding-toggle-at-point
-   :kbd: C-c @ C-c
-
-   Toggle folding for the thing at point, it can be a docstring, a comment or a code block.
-
-The display of arrows in the fringe can be disable with the option
-
-.. option:: elpy-folding-fringe-indicators
-
-   If elpy should display folding fringe indicators or not.
-
-Elpy also provides some other useful features:
-
-.. command:: elpy-folding-toggle-docstrings
-   :kbd: C-c @ C-b
-
-   Toggle folding of all python docstrings.
-
-.. command:: elpy-folding-toggle-comments
-   :kbd: C-c @ C-m
-
-   Toggle folding of all comments.
-
-.. command:: elpy-folding-hide-leafs
-   :kbd: C-c @ C-f
-
-   Hide all code leafs, i.e. code blocks that do not contains any other blocks.
-
-The classical keybindings for hideshow are also available, e.g.:
-
-.. command:: hs-show-all
-   :kbd: C-c @ C-a
-
-   Unfold everything.
-
-(see `Hideshow`_ documentation for more information)
-
-.. _Hideshow: https://www.emacswiki.org/emacs/HideShow
-
-
 Documentation
 =============
 
@@ -663,6 +612,57 @@ Other useful snippets
 - ``def``: Function definition
 - ``class``: Class definition
 - ``defs``: Class method definition
+
+
+Folding
+=======
+
+Elpy offers code folding by enhancing the builtin folding minor mode ``Hideshow``.
+
+When opening a python buffer, Elpy will indicate foldable things with an arrow in the left fringe.
+Clicking on an arrow will fold the corresponding code blocks.
+Folded code blocks can be unfolded by clicking on the `...` button at the end of the line.
+
+If you don't want to use your mouse, you can achieve the same thing with the function
+
+.. command:: elpy-folding-toggle-at-point
+   :kbd: C-c @ C-c
+
+   Toggle folding for the thing at point, it can be a docstring, a comment or a code block.
+
+The display of arrows in the fringe can be disable with the option
+
+.. option:: elpy-folding-fringe-indicators
+
+   If elpy should display folding fringe indicators or not.
+
+Elpy also provides some other useful features:
+
+.. command:: elpy-folding-toggle-docstrings
+   :kbd: C-c @ C-b
+
+   Toggle folding of all python docstrings.
+
+.. command:: elpy-folding-toggle-comments
+   :kbd: C-c @ C-m
+
+   Toggle folding of all comments.
+
+.. command:: elpy-folding-hide-leafs
+   :kbd: C-c @ C-f
+
+   Hide all code leafs, i.e. code blocks that do not contains any other blocks.
+
+The classical keybindings for hideshow are also available, e.g.:
+
+.. command:: hs-show-all
+   :kbd: C-c @ C-a
+
+   Unfold everything.
+
+(see `Hideshow`_ documentation for more information)
+
+.. _Hideshow: https://www.emacswiki.org/emacs/HideShow
 
 
 Debugging

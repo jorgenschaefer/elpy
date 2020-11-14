@@ -99,13 +99,17 @@ in the Python shell."
   :type 'integer
   :group 'elpy)
 
-
 (defcustom elpy-shell-starting-directory 'project-root
   "Directory in which Python shells will be started.
 
 Can be `project-root' (default) to use the current project root,
 `current-directory' to use the buffer current directory, or a
-string indicating a specific path."
+string indicating a specific path.
+
+\\<elpy-mode-map>
+Running python interpeters need to be restarted (with
+\\[elpy-shell-kill] followed by \\[elpy-shell-switch-to-shell]) for
+this option to be taken into account."
   :type '(choice (const :tag "Project root" project-root)
                  (const :tag "Current directory" current-directory)
                  (string :tag "Specific directory"))

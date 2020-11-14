@@ -66,6 +66,10 @@ dependencies with the following command:::
 
   sudo apt install elpa-elpy
 
+You may want to install some suggested dependencies as well:::
+
+  sudo apt install black autopep8 yapf
+
 Elpy can then be activated by running ``M-x elpy-enable``.
 This can be made automatic by adding the following to your ``.emacs``:
 

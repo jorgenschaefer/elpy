@@ -819,10 +819,9 @@ item in another window.\n\n")
     (when (and (gethash "rpc_python_executable" config)
                (not (gethash "virtual_env" config)))
       (elpy-insert--para
-       "You have not activated a virtual env. While Elpy supports this, "
-       "it is often a good idea to work inside a virtual env. You can use "
-       "M-x pyvenv-activate or M-x pyvenv-workon to activate a virtual "
-       "env.\n\n"))
+       "You have not activated a virtual env. It is not mandatory but"
+       " often a good idea to work inside a virtual env. You can use "
+       "`M-x pyvenv-activate` or `M-x pyvenv-workon` to activate one.\n\n"))
 
     ;; No virtual env, but ~/.local/bin not in PATH
     (when (and (not (memq system-type '(ms-dos windows-nt)))
@@ -922,8 +921,9 @@ item in another window.\n\n")
     (when (and (gethash "rpc_python_executable" config)
                (not (gethash "jedi_version" config)))
       (elpy-insert--para
-       "The jedi package is not available. Completion and code navigation will"
-       " not work.\n")
+       "The Jedi package is not currently installed. "
+       "This package is needed for code completion, code navigation "
+       "and access to documentation.\n")
       (insert "\n")
       (widget-create 'elpy-insert--pip-button
                      :package "jedi")
@@ -950,14 +950,24 @@ item in another window.\n\n")
       (insert "\n\n"))
 
 
-    ;; No autopep8 available
-    (unless (gethash "autopep8_version" config)
+    ;; No auto formatting tool available
+    (unless (or
+             (gethash "autopep8_version" config)
+             (gethash "yapf_version" config)
+             (gethash "black_version" config))
       (elpy-insert--para
-       "The autopep8 package is not available. Commands using this will "
-       "not work.\n")
+       "No autoformatting package is currently installed. "
+       "At least one is needed (Autopep8, Yapf or Black) "
+       "to perform autoformatting (`C-c C-r f` in a python buffer).\n")
       (insert "\n")
       (widget-create 'elpy-insert--pip-button
                      :package "autopep8")
+      (insert "\n")
+      (widget-create 'elpy-insert--pip-button
+                     :package "yapf")
+      (insert "\n")
+      (widget-create 'elpy-insert--pip-button
+                     :package "black")
       (insert "\n\n"))
 
     ;; Newer version of autopep8 available
@@ -970,16 +980,6 @@ item in another window.\n\n")
                      :package "autopep8" :upgrade t)
       (insert "\n\n"))
 
-    ;; No yapf available
-    (unless (gethash "yapf_version" config)
-      (elpy-insert--para
-       "The yapf package is not available. Commands using this will "
-       "not work.\n")
-      (insert "\n")
-      (widget-create 'elpy-insert--pip-button
-                     :package "yapf")
-      (insert "\n\n"))
-
     ;; Newer version of yapf available
     (when (and (gethash "yapf_version" config)
                (gethash "yapf_latest" config))
@@ -988,16 +988,6 @@ item in another window.\n\n")
       (insert "\n")
       (widget-create 'elpy-insert--pip-button
                      :package "yapf" :upgrade t)
-      (insert "\n\n"))
-
-    ;; No black available
-    (unless (gethash "black_version" config)
-      (elpy-insert--para
-       "The black package is not available. Commands using this will "
-       "not work.\n")
-      (insert "\n")
-      (widget-create 'elpy-insert--pip-button
-                     :package "black")
       (insert "\n\n"))
 
     ;; Newer version of black available
@@ -1013,13 +1003,14 @@ item in another window.\n\n")
     ;; Syntax checker not available
     (unless (executable-find (car (split-string elpy-syntax-check-command)))
       (elpy-insert--para
-       "The configured syntax checker could not be found. Elpy uses this "
-       "program to provide syntax checks of your programs, so you might "
-       "want to install one. Elpy by default uses flake8.\n")
+       (format
+        "The configured syntax checker (%s) could not be found. Elpy uses this "
+        (car (split-string elpy-syntax-check-command)))
+       "program to provide syntax checks of your code. You can either "
+       "install it, or select another one using `elpy-syntax-check-command`.\n")
       (insert "\n")
       (widget-create 'elpy-insert--pip-button :package "flake8" :norpc t)
       (insert "\n\n"))
-
     ))
 
 (defun elpy-config--package-available-p (package)
