@@ -27,7 +27,7 @@
 (advice-add 'elpy-rpc-get-virtualenv-path
             :around (lambda (fun &rest args)
                       (if (and (getenv "TRAVIS")
-                               (or (eq elpy-rpc-virtualenv-path 'global)
+                               (or (eq elpy-rpc-virtualenv-path 'global)  ;; for backward compatibility
                                    (eq elpy-rpc-virtualenv-path 'system)))
                           (expand-file-name
                            (concat

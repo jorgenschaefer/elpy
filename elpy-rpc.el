@@ -362,7 +362,7 @@ binaries used to create the virtualenv."
 (defun elpy-rpc--create-virtualenv (rpc-venv-path)
   "Create a virtualenv for the RPC in RPC-VENV-PATH."
   ;; venv cannot create a proper virtualenv from inside another virtualenv
-  (let* ((elpy-rpc-virtualenv-path 'global)
+  (let* ((elpy-rpc-virtualenv-path 'system)
          success
          (elpy-venv-buffname-visible "*elpy-virtualenv*")
          (elpy-venv-buffname (concat " " elpy-venv-buffname-visible)))
@@ -403,7 +403,7 @@ binaries used to create the virtualenv."
           "error. If the error details does not help you fixing it, You can\n"
           "report this problem on Elpy repository on github.\n"
           "In the meantime, setting the `elpy-rpc-virtualenv-path' option to\n"
-          "either `global' or `current' should temporarily fix the issue.")))
+          "either `system' or `current' should temporarily fix the issue.")))
       (error (concat "Elpy failed to create its dedicated virtualenv. "
                      "Please check the `" elpy-venv-buffname-visible
                      "' buffer.")))))
