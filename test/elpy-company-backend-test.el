@@ -122,8 +122,8 @@
     (let ((elpy-get-info-from-shell t)
           (elpy-get-info-from-shell-timeout 10))
       (insert "variable_script = 3\n")
-      (insert "def function_script(a): print(a)\n")
-      (elpy-shell-get-or-create-process)
+      (insert "def function_script(a):\n   print(a)\n")
+      (save-excursion (elpy-shell-get-or-create-process))
       (python-shell-send-string "variable_shell = 4")
       (python-shell-send-string "def function_shell(a):\n   print(a)")
       ;; Test variable completions
@@ -154,7 +154,7 @@
     (python-mode)
     (insert "variable_script = 3\n")
     (insert "def function_script(a): print(a)\n")
-    (elpy-shell-get-or-create-process)
+      (save-excursion (elpy-shell-get-or-create-process))
     (python-shell-send-string "variable_shell = 4")
     (python-shell-send-string "def function_shell(a):\n   print(a)")
     ;; Test variable completions
