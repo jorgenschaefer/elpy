@@ -534,12 +534,19 @@ This option need to bet set through `customize' or `customize-set-variable' to b
     (add-hook 'pyvenv-post-deactivate-hooks 'elpy-rpc--disconnect)
     (add-hook 'inferior-python-mode-hook 'elpy-shell--enable-output-filter)
     (add-hook 'python-shell-first-prompt-hook 'elpy-shell--send-setup-code t)
+    ;; Add codecell boundaries highligting
+    (font-lock-add-keywords
+     'python-mode
+     `((,(replace-regexp-in-string "\\\\" "\\\\"
+                                   elpy-shell-cell-boundary-regexp)
+        0 'elpy-codecell-boundary prepend)))
     ;; Enable Elpy-mode in the opened python buffer
     (setq elpy-enabled-p t)
     (dolist (buffer (buffer-list))
       (and (not (string-match "^ ?\\*" (buffer-name buffer)))
            (with-current-buffer buffer
              (when (string= major-mode 'python-mode)
+               (python-mode)  ;; update codecell fontification
                (elpy-mode t)))))
     ))
 
@@ -553,6 +560,12 @@ This option need to bet set through `customize' or `customize-set-variable' to b
   (remove-hook 'pyvenv-post-deactivate-hooks 'elpy-rpc--disconnect)
   (remove-hook 'inferior-python-mode-hook 'elpy-shell--enable-output-filter)
   (remove-hook 'python-shell-first-prompt-hook 'elpy-shell--send-setup-code)
+  ;; Remove codecell boundaries highligting
+  (font-lock-remove-keywords
+   'python-mode
+   `((,(replace-regexp-in-string "\\\\" "\\\\"
+                                 elpy-shell-cell-boundary-regexp)
+      0 'elpy-codecell-boundary prepend)))
   (setq elpy-enabled-p nil))
 
 ;;;###autoload
@@ -3285,6 +3298,11 @@ documentation (only used for Emacs >= 28)."
 (defvar elpy-docstring-block-start-regexp
   "^\\s-*[uU]?[rR]?\"\"\"\n?\\s-*"
   "Version of `hs-block-start-regexp' for docstrings.")
+
+(defface elpy-codecell-boundary '((t :inherit 'highlight))
+  "Face for elpy codecell boundary."
+  :group 'elpy-mode)
+
 
 ;; Indicators
 (defun elpy-folding--display-code-line-counts (ov)
