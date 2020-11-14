@@ -281,7 +281,12 @@ Python process. This allows the process to start up."
                       (expand-file-name elpy-shell-starting-directory)))
                     (t
                      (error "Wrong value for `elpy-shell-starting-directory', please check this variable documentation and set it to a proper value")))))
-        (run-python (python-shell-parse-command) nil t))
+        ;; We cannot use `run-python` directly, as it selects the new shell
+        ;; buffer. See https://github.com/jorgenschaefer/elpy/issues/1848
+        (python-shell-make-comint
+         (python-shell-parse-command)
+         (python-shell-get-process-name nil)
+         t))
       (when sit (sit-for sit))
       (get-buffer-process bufname))))
 
