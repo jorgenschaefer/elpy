@@ -798,6 +798,35 @@ Refactoring
 .. _black: https://github.com/ambv/black
 
 
+Jedi refactoring
+----------------
+
+   The following commands take advantage of Jedi refactoring possibilities.
+   They all present a diff of the modifications before applying them,
+   this allows to check the ongoing modifications and cancel some of them if needed.
+
+.. command:: elpy-refactor-rename
+   :kbd: C-c C-r r
+
+   Rename all occurences of the symbol at point (variable, function, class, ...).
+   If needed, rename occurences in other files as well.
+
+.. command:: elpy-refactor-extract-variable
+   :kbd: C-c C-r v
+
+   Move the selection to a new variable.
+
+.. command:: elpy-refactor-extract-function
+   :kbd: C-c C-r f
+
+   Move the selection to a new function.
+
+.. command:: elpy-refactor-inline
+   :kbd: C-c C-r i
+
+   Inline the variable at point.
+   i.e. replace it with its defining expression.
+
 
 Profiling
 =========
