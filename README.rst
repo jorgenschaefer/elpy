@@ -1,6 +1,6 @@
 
-.. image:: https://secure.travis-ci.org/jorgenschaefer/elpy.svg?branch=master
-   :target: http://travis-ci.org/jorgenschaefer/elpy?branch=master
+.. image:: https://github.com/jorgenschaefer/elpy/workflows/Tests/badge.svg?branch=master
+   :target: https://github.com/jorgenschaefer/elpy/actions?query=workflow%3ATests
 
 .. image:: https://readthedocs.org/projects/elpy/badge/?version=latest
    :target: https://elpy.readthedocs.io/en/latest/?badge=latest
@@ -86,7 +86,7 @@ Please have a look at the documentation at `Readthedocs`_ if you want to know mo
 
 External resources
 ===================
- 
+
 - `Emacs: The Best Python Editor?`_ by Jon Fincher
 - `Managing a Python development environment in Emacs`_ by Diego Fernández Giraldo
 - `Configuring GNU emacs with elpy on MacOS`_ by Kenneth H. East

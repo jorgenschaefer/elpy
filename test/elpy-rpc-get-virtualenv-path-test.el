@@ -18,8 +18,8 @@
     (elpy-testcase ()
       (let ((elpy-rpc-virtualenv-path 'current)
             (old-venv pyvenv-virtual-env))
-        (should (string-match "\\(travis/virtualenv/python\\|.virtualenvs/elpy\\)"
-                              (elpy-rpc-get-virtualenv-path)))
+        (should-not (string-match "elpy-test-venv"
+                                  (elpy-rpc-get-virtualenv-path)))
         (pyvenv-workon "elpy-test-venv")
         (should (string-match "elpy-test-venv" (elpy-rpc-get-virtualenv-path)))
         (if old-venv
