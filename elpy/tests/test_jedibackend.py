@@ -17,10 +17,14 @@ from elpy.tests.support import RPCGetCompletionLocationTests
 from elpy.tests.support import RPCGetDocstringTests
 from elpy.tests.support import RPCGetOnelineDocstringTests
 from elpy.tests.support import RPCGetDefinitionTests
-from elpy.tests.support import RPCGetAssignmentTests
 from elpy.tests.support import RPCGetCalltipTests
 from elpy.tests.support import RPCGetUsagesTests
 from elpy.tests.support import RPCGetNamesTests
+from elpy.tests.support import RPCGetRenameDiffTests
+from elpy.tests.support import RPCGetExtractFunctionDiffTests
+from elpy.tests.support import RPCGetExtractVariableDiffTests
+from elpy.tests.support import RPCGetInlineDiffTests
+from elpy.tests.support import RPCGetAssignmentTests
 
 
 class JediBackendTestCase(BackendTestCase):
@@ -38,6 +42,11 @@ class TestInit(JediBackendTestCase):
 class TestRPCGetCompletions(RPCGetCompletionsTests,
                             JediBackendTestCase):
     BUILTINS = ['object', 'oct', 'open', 'ord', 'OSError', 'OverflowError']
+
+
+class TestRPCGetAssignment(RPCGetAssignmentTests,
+                           JediBackendTestCase):
+    pass
 
 
 class TestRPCGetCompletionDocstring(RPCGetCompletionDocstringTests,
@@ -144,23 +153,24 @@ class TestRPCGetDefinition(RPCGetDefinitionTests,
         self.assertIsNone(location)
 
 
-class TestRPCGetAssignment(RPCGetAssignmentTests,
+class TestRPCGetRenameDiff(RPCGetRenameDiffTests,
                            JediBackendTestCase):
-    @mock.patch("jedi.Script")
-    def test_should_not_fail_if_module_path_is_none(self, Script):
-        """Do not fail if loc.module_path is None.
+    pass
 
-        """
-        locations = [
-            mock.Mock(module_path=None)
-        ]
-        script = Script.return_value
-        script.goto_assignments.return_value = locations
-        script.goto_assignments.return_value = locations
 
-        location = self.rpc("", "", 0)
+class TestRPCGetExtractFunctionDiff(RPCGetExtractFunctionDiffTests,
+                                    JediBackendTestCase):
+    pass
 
-        self.assertIsNone(location)
+
+class TestRPCGetExtractVariableDiff(RPCGetExtractVariableDiffTests,
+                                    JediBackendTestCase):
+    pass
+
+
+class TestRPCGetInlineDiff(RPCGetInlineDiffTests,
+                           JediBackendTestCase):
+    pass
 
 
 class TestRPCGetCalltip(RPCGetCalltipTests,
@@ -265,7 +275,8 @@ class TestRunWithDebug(unittest.TestCase):
     def test_should_call_method(self, Script):
         Script.return_value.test_method.return_value = "test-result"
 
-        result = jedibackend.run_with_debug(jedi, 'test_method', 1, 2, arg=3)
+        result = jedibackend.run_with_debug(jedi, 'test_method', {}, 1, 2,
+                                            arg=3)
 
         Script.assert_called_with(1, 2, arg=3)
         self.assertEqual(result, 'test-result')
@@ -284,7 +295,7 @@ class TestRunWithDebug(unittest.TestCase):
         Script.side_effect = RuntimeError
 
         try:
-            jedibackend.run_with_debug(jedi, 'test_method', 1, 2, arg=3)
+            jedibackend.run_with_debug(jedi, 'test_method', {}, 1, 2, arg=3)
         except rpc.Fault as e:
             self.assertGreaterEqual(e.code, 400)
             self.assertIsNotNone(e.data)
@@ -305,7 +316,7 @@ class TestRunWithDebug(unittest.TestCase):
         Script.side_effect = RuntimeError
 
         try:
-            jedibackend.run_with_debug(jedi, 'test_method', 1, 2, arg=3)
+            jedibackend.run_with_debug(jedi, 'test_method', {}, 1, 2, arg=3)
         except rpc.Fault as e:
             self.assertEqual(str(e), str(RuntimeError()))
             self.assertEqual(e.message, str(RuntimeError()))
@@ -366,4 +377,4 @@ class TestRunWithDebug(unittest.TestCase):
         Script.return_value.test_method.side_effect = Exception
 
         with self.assertRaises(rpc.Fault):
-            jedibackend.run_with_debug(jedi, 'test_method', 1, 2, arg=3)
+            jedibackend.run_with_debug(jedi, 'test_method', {}, 1, 2, arg=3)

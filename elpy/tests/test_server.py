@@ -12,7 +12,6 @@ from elpy import rpc
 from elpy import server
 from elpy.tests import compat
 from elpy.tests.support import BackendTestCase
-import elpy.refactor
 
 
 class ServerTestCase(unittest.TestCase):
@@ -21,16 +20,20 @@ class ServerTestCase(unittest.TestCase):
 
 
 class BackendCallTestCase(ServerTestCase):
-    def assert_calls_backend(self, method):
+    def assert_calls_backend(self, method, add_args=[], add_kwargs={}):
         with mock.patch("elpy.server.get_source") as get_source:
             with mock.patch.object(self.srv, "backend") as backend:
                 get_source.return_value = "transformed source"
 
-                getattr(self.srv, method)("filename", "source", "offset")
+                getattr(self.srv, method)("filename", "source", "offset",
+                                          *add_args,
+                                          **add_kwargs)
 
                 get_source.assert_called_with("source")
                 getattr(backend, method).assert_called_with(
-                    "filename", "transformed source", "offset"
+                    "filename", "transformed source", "offset",
+                    *add_args,
+                    **add_kwargs
                 )
 
 
@@ -180,16 +183,6 @@ class TestRPCGetDefinition(BackendCallTestCase):
                                                       "offset"))
 
 
-class TestRPCGetAssignment(BackendCallTestCase):
-    def test_should_call_backend(self):
-        self.assert_calls_backend("rpc_get_assignment")
-
-    def test_should_handle_no_backend(self):
-        self.srv.backend = None
-        self.assertIsNone(self.srv.rpc_get_assignment("filname", "source",
-                                                      "offset"))
-
-
 class TestRPCGetDocstring(BackendCallTestCase):
     def test_should_call_backend(self):
         self.assert_calls_backend("rpc_get_docstring")
@@ -221,6 +214,50 @@ class TestRPCGetCalltipOrOnelineDocstring(BackendCallTestCase):
             self.srv.rpc_get_calltip_or_oneline_docstring("filname",
                                                           "source",
                                                           "offset"))
+
+
+class TestRPCGetRenameDiff(BackendCallTestCase):
+    def test_should_call_backend(self):
+        self.assert_calls_backend("rpc_get_rename_diff",
+                                  add_args=['new_name'])
+
+    def test_should_handle_no_backend(self):
+        self.srv.backend = None
+        self.assertIsNone(self.srv.rpc_get_rename_diff("filname", "source",
+                                                       "offset", "new_name"))
+
+
+class TestRPCGetExtract_VariableDiff(BackendCallTestCase):
+    def test_should_call_backend(self):
+        self.assert_calls_backend("rpc_get_extract_variable_diff",
+                                  add_args=['name', 12, 13, 3, 5])
+
+    def test_should_handle_no_backend(self):
+        self.srv.backend = None
+        self.assertIsNone(self.srv.rpc_get_extract_variable_diff(
+            "filname", "source", "offset", "new_name", 1, 1, 0, 3))
+
+
+class TestRPCGetExtract_FunctionDiff(BackendCallTestCase):
+    def test_should_call_backend(self):
+        self.assert_calls_backend("rpc_get_extract_function_diff",
+                                  add_args=['name', 12, 13, 3, 5])
+
+
+    def test_should_handle_no_backend(self):
+        self.srv.backend = None
+        self.assertIsNone(self.srv.rpc_get_extract_function_diff(
+            "filname", "source", "offset", "new_name", 1, 1, 0, 4))
+
+
+class TestRPCGetInlineDiff(BackendCallTestCase):
+    def test_should_call_backend(self):
+        self.assert_calls_backend("rpc_get_inline_diff")
+
+    def test_should_handle_no_backend(self):
+        self.srv.backend = None
+        self.assertIsNone(self.srv.rpc_get_inline_diff("filname", "source",
+                                                       "offset"))
 
 
 class TestRPCGetPydocCompletions(ServerTestCase):
@@ -258,70 +295,14 @@ class TestGetPydocDocumentation(ServerTestCase):
         json.dumps(docstring)
 
 
-class TestRPCGetRefactorOptions(BackendTestCase):
-    @mock.patch.object(compat.builtins, '__import__')
-    def test_should_fail_if_rope_is_not_available(self, import_):
-        import_.side_effect = ImportError
-        filename = self.project_file("foo.py", "")
-        srv = server.ElpyRPCServer()
-        self.assertRaises(ImportError, srv.rpc_get_refactor_options,
-                          filename, 0)
-
-    @mock.patch.object(elpy.refactor, 'Refactor')
-    def test_should_initialize_and_call_refactor_object(self, Refactor):
-        filename = self.project_file("foo.py", "import foo")
-        srv = server.ElpyRPCServer()
-        srv.project_root = self.project_root
-
-        srv.rpc_get_refactor_options(filename, 5)
-
-        Refactor.assert_called_with(self.project_root, filename)
-        Refactor.return_value.get_refactor_options.assert_called_with(5, None)
-
-
-class TestRPCRefactor(BackendTestCase):
-    @mock.patch.object(compat.builtins, '__import__')
-    def test_should_fail_if_rope_is_not_available(self, import_):
-        import_.side_effect = ImportError
-        filename = self.project_file("foo.py", "")
-        srv = server.ElpyRPCServer()
-        self.assertRaises(ImportError, srv.rpc_refactor,
-                          filename, 'foo', ())
-
-    @mock.patch.object(elpy.refactor, 'Refactor')
-    def test_should_initialize_and_call_refactor_object_with_args(
-            self, Refactor):
-        filename = self.project_file("foo.py", "import foo")
-        srv = server.ElpyRPCServer()
-        srv.project_root = self.project_root
-
-        srv.rpc_refactor(filename, 'foo', (1, 2, 3))
-
-        Refactor.assert_called_with(self.project_root, filename)
-        Refactor.return_value.get_changes.assert_called_with('foo', 1, 2, 3)
-
-    @mock.patch.object(elpy.refactor, 'Refactor')
-    def test_should_initialize_and_call_refactor_object_without_args(
-            self, Refactor):
-        filename = self.project_file("foo.py", "import foo")
-        srv = server.ElpyRPCServer()
-        srv.project_root = self.project_root
-
-        srv.rpc_refactor(filename, 'foo', None)
-
-        Refactor.assert_called_with(self.project_root, filename)
-        Refactor.return_value.get_changes.assert_called_with('foo')
-
-
 class TestRPCGetUsages(BackendCallTestCase):
     def test_should_call_backend(self):
         self.assert_calls_backend("rpc_get_usages")
 
     def test_should_handle_no_backend(self):
         self.srv.backend = None
-        with self.assertRaises(rpc.Fault):
-            self.assertIsNone(self.srv.rpc_get_usages("filname", "source",
-                                                      "offset"))
+        self.assertIsNone(self.srv.rpc_get_usages("filname", "source",
+                                                  "offset"))
 
 
 class TestRPCGetNames(BackendCallTestCase):
@@ -330,8 +311,7 @@ class TestRPCGetNames(BackendCallTestCase):
 
     def test_should_handle_no_backend(self):
         self.srv.backend = None
-        with self.assertRaises(rpc.Fault):
-            self.assertIsNone(self.srv.rpc_get_names("filname", "source", 0))
+        self.assertIsNone(self.srv.rpc_get_names("filname", "source", 0))
 
 
 class TestGetSource(unittest.TestCase):

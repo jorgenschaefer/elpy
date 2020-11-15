@@ -20,6 +20,8 @@ import unittest
 import re
 
 from elpy.tests import compat
+from elpy.rpc import Fault
+from elpy import jedibackend
 
 
 class BackendTestCase(unittest.TestCase):
@@ -444,6 +446,17 @@ class RPCGetCompletionsTests(GenericRPCTests):
         self.assertEqual(["add"],
                          [proposal["name"] for proposal in proposals])
 
+    def test_should_return_nothing_when_no_completion(self):
+        source, offset = source_and_offset("nothingcancompletethis_|_")
+        self.assertEqual([], self.backend.rpc_get_completions("test.py",
+                                                              source, offset))
+
+    def test_should_handle_jedi16(self):
+        backup = self.backend.rpc_get_completions
+        self.backend.rpc_get_completions = self.backend.rpc_get_completions_jedi16
+        self.test_should_complete_builtin()
+        self.backend.rpc_get_completions = backup
+
 
 class RPCGetCompletionDocstringTests(object):
     def test_should_return_docstring(self):
@@ -465,6 +478,21 @@ class RPCGetCompletionDocstringTests(object):
         docs = self.backend.rpc_get_completion_docstring("Foo")
 
         self.assertIsNone(docs)
+
+    def test_should_return_none_if_on_a_builtin(self):
+        source, offset = source_and_offset("a = 12\n"
+                                           "print(12_|_)")
+        filename = self.project_file("test.py", source)
+        completions = self.backend.rpc_get_docstring(filename,
+                                                     source,
+                                                     offset)
+        self.assertIsNone(completions)
+
+    def test_should_handle_jedi16(self):
+        backup = self.backend.rpc_get_docstring
+        self.backend.rpc_get_docstring = self.backend.rpc_get_docstring_jedi16
+        self.test_should_return_docstring()
+        self.backend.rpc_get_docstring = backup
 
 
 class RPCGetCompletionLocationTests(object):
@@ -596,20 +624,29 @@ class RPCGetDefinitionTests(GenericRPCTests):
                                                          offset),
                          (filename, 0))
 
+    def test_should_handle_jedi16(self):
+        backup = self.backend.rpc_get_definition
+        self.backend.rpc_get_definition = self.backend.rpc_get_definition_jedi16
+        self.test_should_return_definition_location_same_file()
+        self.backend.rpc_get_definition = backup
 
-class RPCGetAssignmentTests(GenericRPCTests):
+
+class RPCGetAssignmentTests():
     METHOD = "rpc_get_assignment"
 
-    def test_should_return_assignment_location_same_file(self):
+    def test_should_raise_fault(self):
+        if jedibackend.JEDISUP17:
+            with self.assertRaises(Fault):
+                self.backend.rpc_get_assignment("test.py", "dummy code", 1)
+
+    def test_should_handle_jedi16(self):
+        backup = self.backend.rpc_get_assignment
+        self.backend.rpc_get_assignment = self.backend.rpc_get_assignment_jedi16
         source, offset = source_and_offset("import threading\n"
-                                           "class TestClass(object):\n"
-                                           "    def __init__(self, a, b):\n"
-                                           "        self.a = a\n"
-                                           "        self.b = b\n"
+                                           "def test_function(a, b):\n"
+                                           "    return a + b\n"
                                            "\n"
-                                           "testclass = TestClass(2, 4)"
-                                           "\n"
-                                           "testcl_|_ass(\n")
+                                           "test_func_|_tion(\n")
         filename = self.project_file("test.py", source)
 
         location = self.backend.rpc_get_assignment(filename,
@@ -618,80 +655,8 @@ class RPCGetAssignmentTests(GenericRPCTests):
 
         self.assertEqual(location[0], filename)
         # On def or on the function name
-        self.assertEqual(location[1], 111)
-
-    def test_should_return_location_in_same_file_if_not_saved(self):
-        source, offset = source_and_offset("import threading\n"
-                                           "class TestClass(object):\n"
-                                           "    def __init__(self, a, b):\n"
-                                           "        self.a = a\n"
-                                           "        self.b = b\n"
-                                           "\n"
-                                           "testclass = TestClass(2, 4)"
-                                           "\n"
-                                           "testcl_|_ass(\n")
-        filename = self.project_file("test.py", "")
-
-        location = self.backend.rpc_get_assignment(filename,
-                                                   source,
-                                                   offset)
-
-        self.assertEqual(location[0], filename)
-        # def or function name
-        self.assertEqual(location[1], 111)
-
-    def test_should_return_location_in_different_file(self):
-        source1 = ("class TestClass(object):\n"
-                   "    def __init__(self, a, b):\n"
-                   "        self.a = a\n"
-                   "        self.b = b\n"
-                   "testclass = TestClass(3, 5)\n")
-        file1 = self.project_file("test1.py", source1)
-        source2, offset = source_and_offset("from test1 import testclass\n"
-                                            "testcl_|_ass.a\n")
-        file2 = self.project_file("test2.py", source2)
-        # First jump goes to import statement
-        assignment = self.backend.rpc_get_assignment(file2,
-                                                     source2,
-                                                     offset)
-        # Second jump goes to test1 file
-        self.assertEqual(assignment[0], file2)
-        assignment = self.backend.rpc_get_assignment(file2,
-                                                     source2,
-                                                     assignment[1])
-
-        self.assertEqual(assignment[0], file1)
-        self.assertEqual(assignment[1], 93)
-
-    def test_should_return_none_if_location_not_found(self):
-        source, offset = source_and_offset("test_f_|_unction()\n")
-        filename = self.project_file("test.py", source)
-
-        assignment = self.backend.rpc_get_assignment(filename,
-                                                     source,
-                                                     offset)
-
-        self.assertIsNone(assignment)
-
-    def test_should_return_none_if_outside_of_symbol(self):
-        source, offset = source_and_offset("testcl(_|_)ass\n")
-        filename = self.project_file("test.py", source)
-
-        assignment = self.backend.rpc_get_assignment(filename,
-                                                     source,
-                                                     offset)
-
-        self.assertIsNone(assignment)
-
-    def test_should_find_variable_assignment(self):
-        source, offset = source_and_offset("SOME_VALUE = 1\n"
-                                           "\n"
-                                           "variable = _|_SOME_VALUE\n")
-        filename = self.project_file("test.py", source)
-        self.assertEqual(self.backend.rpc_get_assignment(filename,
-                                                         source,
-                                                         offset),
-                         (filename, 0))
+        self.assertIn(location[1], (17, 21))
+        self.backend.rpc_get_assignment = backup
 
 
 class RPCGetCalltipTests(GenericRPCTests):
@@ -829,6 +794,22 @@ class RPCGetCalltipTests(GenericRPCTests):
         actual.pop('kind')
         self.assertEqual(self.ADD_CALLTIP, actual)
 
+    def test_should_return_oneline_docstring_if_no_calltip(self):
+        source, offset = source_and_offset(
+            "def foo(a, b):\n    fo_|_o(1 + 2)")
+        filename = self.project_file("test.py", source)
+        calltip = self.backend.rpc_get_calltip_or_oneline_docstring(filename,
+                                                                    source,
+                                                                    offset)
+        self.assertEqual(calltip['kind'], 'oneline_doc')
+        self.assertEqual(calltip['doc'], 'No documentation')
+
+    def test_should_handle_jedi16(self):
+        backup = self.backend.rpc_get_calltip
+        self.backend.rpc_get_calltip = self.backend.rpc_get_calltip_jedi16
+        self.test_should_get_calltip()
+        self.backend.rpc_get_calltip = backup
+
 
 class RPCGetDocstringTests(GenericRPCTests):
     METHOD = "rpc_get_docstring"
@@ -858,6 +839,12 @@ class RPCGetDocstringTests(GenericRPCTests):
                                                    source,
                                                    offset)
         self.assertIsNone(docstring)
+
+    def test_should_handle_jedi16(self):
+        backup = self.backend.rpc_get_docstring
+        self.backend.rpc_get_docstring = self.backend.rpc_get_docstring_jedi16
+        self.test_should_get_docstring()
+        self.backend.rpc_get_docstring = backup
 
 
 class RPCGetOnelineDocstringTests(GenericRPCTests):
@@ -914,6 +901,118 @@ class RPCGetOnelineDocstringTests(GenericRPCTests):
                                                                       offset)
         self.assertIsNone(docstring)
 
+    def test_should_handle_jedi16(self):
+        backup = self.backend.rpc_get_oneline_docstring
+        self.backend.rpc_get_oneline_docstring = self.backend.rpc_get_oneline_docstring_jedi16
+        self.test_should_get_oneline_docstring()
+        self.test_should_get_oneline_docstring_for_modules()
+        self.test_should_return_none_for_bad_identifier()
+        self.backend.rpc_get_oneline_docstring = backup
+
+
+@unittest.skipIf(not jedibackend.JEDISUP17,
+                 "Refactoring not available with jedi<17")
+@unittest.skipIf(sys.version_info < (3, 6),
+                 "Jedi refactoring not available for python < 3.6")
+class RPCGetRenameDiffTests(object):
+    METHOD = "rpc_get_rename_diff"
+
+    def test_should_return_rename_diff(self):
+        source, offset = source_and_offset("def foo(a, b):\n"
+                                           "  print(a_|_)\n"
+                                           "  return b")
+        new_name = "c"
+        diff = self.backend.rpc_get_rename_diff("test.py", source, offset,
+                                                new_name)
+        assert diff['success']
+        self.assertIn("-def foo(a, b):\n"
+                      "-  print(a)\n"
+                      "+def foo(c, b):\n"
+                      "+  print(c)",
+                      diff['diff'])
+
+    def test_should_fail_for_invalid_symbol_at_point(self):
+        source, offset = source_and_offset("def foo(a, b):\n"
+                                           "  print(12_|_)\n"
+                                           "  return b")
+        new_name = "c"
+        diff = self.backend.rpc_get_rename_diff("test.py", source, offset,
+                                                new_name)
+        self.assertFalse(diff['success'])
+
+
+@unittest.skipIf(not jedibackend.JEDISUP17,
+                 "Refactoring not available with jedi<17")
+@unittest.skipIf(sys.version_info < (3, 6),
+                 "Jedi refactoring not available for python < 3.6")
+class RPCGetExtractFunctionDiffTests(object):
+    METHOD = "rpc_get_extract_function_diff"
+
+    def test_should_return_function_extraction_diff(self):
+        source, offset = source_and_offset("print(a)\n"
+                                           "return b_|_\n")
+        new_name = "foo"
+        diff = self.backend.rpc_get_extract_function_diff(
+            "test.py", source, offset,
+            new_name,
+            line_beg=1, line_end=2,
+            col_beg=0, col_end=8)
+        assert diff['success']
+        self.assertIn('-print(a)\n'
+                      '-return b\n'
+                      '+def foo(a, b):\n'
+                      '+    print(a)\n'
+                      '+    return b\n',
+                      diff['diff'])
+
+
+@unittest.skipIf(not jedibackend.JEDISUP17,
+                 "Refactoring not available with jedi<17")
+@unittest.skipIf(sys.version_info < (3, 6),
+                 "Jedi refactoring not available for python < 3.6")
+class RPCGetExtractVariableDiffTests(object):
+    METHOD = "rpc_get_extract_variable_diff"
+
+    def test_should_return_variable_extraction_diff(self):
+        source, offset = source_and_offset("b = 12\n"
+                                           "a = 2\n"
+                                           "print_|_(a + 1 + b/2)\n")
+        new_name = "c"
+        diff = self.backend.rpc_get_extract_variable_diff(
+            "test.py", source, offset,
+            new_name,
+            line_beg=3, line_end=3,
+            col_beg=7, col_end=16)
+        assert diff['success']
+        self.assertIn("-print(a + 1 + b/2)\n+c = a + 1 + b/2\n+print(c)\n",
+                      diff['diff'])
+
+
+@unittest.skipIf(not jedibackend.JEDISUP17,
+                 "Refactoring not available with jedi<17")
+@unittest.skipIf(sys.version_info < (3, 6),
+                 "Jedi refactoring not available for python < 3.6")
+class RPCGetInlineDiffTests(object):
+    METHOD = "rpc_get_inline_diff"
+
+    def test_should_return_inline_diff(self):
+        source, offset = source_and_offset("foo = 3.1\n"
+                                           "bar = foo + 1\n"
+                                           "x = int(ba_|_r)\n")
+        diff = self.backend.rpc_get_inline_diff("test.py", source,
+                                                offset)
+        assert diff['success']
+        self.assertIn("-bar = foo + 1\n-x = int(bar)\n+x = int(foo + 1)",
+                      diff['diff'])
+
+    def test_should_error_on_refactoring_failure(self):
+        source, offset = source_and_offset("foo = 3.1\n"
+                                           "bar = foo + 1\n"
+                                           "x = in_|_t(bar)\n")
+        diff = self.backend.rpc_get_inline_diff("test.py", source,
+                                                offset)
+        self.assertFalse(diff['success'])
+
 
 class RPCGetNamesTests(GenericRPCTests):
     METHOD = "rpc_get_names"
@@ -960,6 +1059,13 @@ class RPCGetNamesTests(GenericRPCTests):
                                            0)
 
         self.assertEqual(names, [])
+
+    def test_should_handle_jedi16(self):
+        backup = self.backend.rpc_get_names
+        self.backend.rpc_get_names = self.backend.rpc_get_names_jedi16
+        self.test_shouldreturn_names_in_same_file()
+        self.test_should_not_fail_without_symbol()
+        self.backend.rpc_get_names = backup
 
 
 class RPCGetUsagesTests(GenericRPCTests):
@@ -1013,6 +1119,14 @@ class RPCGetUsagesTests(GenericRPCTests):
                                              0)
 
         self.assertEqual(usages, [])
+
+    def test_should_handle_jedi16(self):
+        backup = self.backend.rpc_get_usages
+        self.backend.rpc_get_usages = self.backend.rpc_get_usages_jedi16
+        self.test_should_return_uses_in_same_file()
+        self.test_should_return_uses_in_other_file()
+        self.test_should_not_fail_without_symbol()
+        self.backend.rpc_get_usages = backup
 
 
 def source_and_offset(source):
