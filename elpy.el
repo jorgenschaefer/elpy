@@ -280,6 +280,18 @@ option is `pdb'."
   :type 'boolean
   :group 'elpy)
 
+
+(defcustom elpy-formatter nil
+  "Auto formatter used by `elpy-format-code'.
+
+if nil, use the first formatter found amongst
+`yapf' , `autopep8' and `black'."
+  :type '(choice (const :tag "First one found" nil)
+                 (const :tag "Yapf" yapf)
+                 (const :tag "autopep8" autopep8)
+                 (const :tag "Black" black))
+  :group 'elpy)
+
 (defcustom elpy-syntax-check-command "flake8"
   "The command to use for `elpy-check'."
   :type 'string
@@ -2285,21 +2297,25 @@ prefix argument is given, prompt for a symbol from the user."
 ;;;;;;;;;;;;;;;;;;;;;
 ;;; Code reformatting
 
+
 (defun elpy-format-code ()
   "Format code using the available formatter."
   (interactive)
-  (cond
-   ((elpy-config--package-available-p "yapf")
-    (when (interactive-p) (message "Autoformatting code with yapf."))
-    (elpy-yapf-fix-code))
-   ((elpy-config--package-available-p "autopep8")
-    (when (interactive-p) (message "Autoformatting code with autopep8."))
-    (elpy-autopep8-fix-code))
-   ((elpy-config--package-available-p "black")
-    (when (interactive-p) (message "Autoformatting code with black."))
-    (elpy-black-fix-code))
-   (t
-    (message "Install yapf/autopep8 to format code."))))
+  (let ((elpy-formatter (or elpy-formatter
+                            (catch 'available
+                              (dolist (formatter '(yapf autopep8 black))
+                                (when (elpy-config--package-available-p
+                                       formatter)
+                                  (throw 'available formatter)))))))
+    (unless elpy-formatter
+      (error "No formatter installed, please install one using `elpy-config'"))
+    (unless (elpy-config--package-available-p elpy-formatter)
+      (error "The '%s' formatter is not installed, please install it using `elpy-config' or choose another one using `elpy-formatter'"
+             elpy-formatter))
+    (when (interactive-p) (message "Autoformatting code with %s."
+                                   elpy-formatter))
+    (funcall (intern (format "elpy-%s-fix-code" elpy-formatter)))))
+
 
 (defun elpy-yapf-fix-code ()
   "Automatically formats Python code with yapf.
