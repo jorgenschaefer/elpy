@@ -1,7 +1,0 @@
-# -*- mode: snippet -*-
-# name: __ior__
-# key: __ior__
-# group: Special methods
-# --
-def __ior__(self, other):
-    return $0

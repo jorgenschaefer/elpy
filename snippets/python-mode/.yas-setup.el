@@ -1,8 +1,18 @@
+(defvar elpy-snippet-split-arg-arg-regex
+"\\([[:alnum:]*]+\\)\\(:[[:blank:]]*[[:alpha:]]*\\)?\\([[:blank:]]*=[[:blank:]]*[[:alnum:]]*\\)?"
+"Regular expression matching an argument of a python function.
+First group should give the argument name.")
+
+(defvar elpy-snippet-split-arg-separator
+"[[:blank:]]*,[[:blank:]]*"
+"Regular expression matching the separator in a list of argument.")
+
 (defun elpy-snippet-split-args (arg-string)
-  "Split a python argument string into ((name, default)..) tuples"
+  "Split the python argument string ARG-STRING into a tuple of argument names."
   (mapcar (lambda (x)
-            (split-string x "[[:blank:]]*=[[:blank:]]*" t))
-          (split-string arg-string "[[:blank:]]*,[[:blank:]]*" t)))
+            (when (string-match elpy-snippet-split-arg-arg-regex x)
+              (match-string-no-properties 1 x)))
+          (split-string arg-string elpy-snippet-split-arg-separator t)))
 
 (defun elpy-snippet-current-method-and-args ()
   "Return information on the current definition."
@@ -20,29 +30,25 @@
                 (buffer-substring-no-properties start end))))))
         class method args)
     (unless current-arglist
-      (setq current-arglist '(("self"))))
+      (setq current-arglist '("self")))
     (if (and current-defun
              (string-match "^\\(.*\\)\\.\\(.*\\)$" current-defun))
         (setq class (match-string 1 current-defun)
               method (match-string 2 current-defun))
       (setq class "Class"
             method "method"))
-    (setq args (mapcar #'car current-arglist))
-    (list class method args)))
+    (list class method current-arglist)))
 
 (defun elpy-snippet-init-assignments (arg-string)
-  "Return the typical __init__ assignments for arguments."
+  "Return the typical __init__ assignments for arguments in ARG-STRING."
   (let ((indentation (make-string (save-excursion
                                     (goto-char start-point)
                                     (current-indentation))
                                   ?\s)))
     (mapconcat (lambda (arg)
-                 (if (string-match "^\\*" (car arg))
+                 (if (string-match "^\\*" arg)
                      ""
-                   (format "self.%s = %s\n%s"
-                           (car arg)
-                           (car arg)
-                           indentation)))
+                   (format "self.%s = %s\n%s" arg arg indentation)))
                (elpy-snippet-split-args arg-string)
                "")))
 

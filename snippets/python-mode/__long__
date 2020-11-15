@@ -1,7 +1,0 @@
-# -*- mode: snippet -*-
-# name: __long__
-# key: __long__
-# group: Special methods
-# --
-def __long__(self):
-    return $0
