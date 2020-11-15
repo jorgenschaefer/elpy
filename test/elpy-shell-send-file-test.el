@@ -2,7 +2,7 @@
   (elpy-testcase ()
    (elpy-enable)
    (python-mode)
-   (let ((test-string (make-string 6000 ?a))
+   (let ((test-string (make-string 3000 ?a))
          (process (elpy-shell-get-or-create-process)))
      (python-shell-send-string
       (format "print('start');foo='%s';print('end');" test-string) process)

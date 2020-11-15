@@ -46,7 +46,7 @@
        (should (string= backend-called "autopep8"))
        )))
 
-(ert-deftest elpy-should-format-code-with-autopep8-formatter ()
+(ert-deftest elpy-should-format-code-with-black-formatter ()
   (let ((elpy-formatter 'black)
         backend-called)
     (elpy-testcase ()
@@ -56,7 +56,9 @@
         "x  = 3")
 
        (mletf* ((elpy-black-fix-code ()
-                   (setq backend-called "black")))
+                   (setq backend-called "black"))
+                (elpy-config--package-available-p (formatter)
+                   t))
          (call-interactively 'elpy-format-code))
 
        (should (string= backend-called "black"))
