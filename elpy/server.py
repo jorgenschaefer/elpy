@@ -163,58 +163,60 @@ class ElpyRPCServer(JSONRPCServer):
                 docstring = docstring.decode("utf-8", "replace")
             return docstring
 
-    def rpc_get_refactor_options(self, filename, start, end=None):
-        """Return a list of possible refactoring options.
-
-        This list will be filtered depending on whether it's
-        applicable at the point START and possibly the region between
-        START and END.
-
-        """
-        try:
-            from elpy import refactor
-        except:
-            raise ImportError("Rope not installed, refactorings unavailable")
-        ref = refactor.Refactor(self.project_root, filename)
-        return ref.get_refactor_options(start, end)
-
-    def rpc_refactor(self, filename, method, args):
-        """Return a list of changes from the refactoring action.
-
-        A change is a dictionary describing the change. See
-        elpy.refactor.translate_changes for a description.
-
-        """
-        try:
-            from elpy import refactor
-        except:
-            raise ImportError("Rope not installed, refactorings unavailable")
-        if args is None:
-            args = ()
-        ref = refactor.Refactor(self.project_root, filename)
-        return ref.get_changes(method, *args)
-
     def rpc_get_usages(self, filename, source, offset):
         """Get usages for the symbol at point.
 
         """
         source = get_source(source)
-        if hasattr(self.backend, "rpc_get_usages"):
-            return self.backend.rpc_get_usages(filename, source, offset)
-        else:
-            raise Fault("get_usages not implemented by current backend",
-                        code=400)
+
+        return self._call_backend("rpc_get_usages",
+                                  None, filename, source, offset)
 
     def rpc_get_names(self, filename, source, offset):
         """Get all possible names
 
         """
         source = get_source(source)
-        if hasattr(self.backend, "rpc_get_names"):
-            return self.backend.rpc_get_names(filename, source, offset)
-        else:
-            raise Fault("get_names not implemented by current backend",
-                        code=400)
+        return self._call_backend("rpc_get_names",
+                                  None, filename, source, offset)
+
+    def rpc_get_rename_diff(self, filename, source, offset, new_name):
+        """Get the diff resulting from renaming the thing at point
+
+        """
+        source = get_source(source)
+
+        return self._call_backend("rpc_get_rename_diff",
+                                  None, filename, source, offset, new_name)
+
+    def rpc_get_extract_variable_diff(self, filename, source, offset, new_name,
+                                      line_beg, line_end, col_beg, col_end):
+        """Get the diff resulting from extracting the selected code
+
+        """
+        source = get_source(source)
+        return self._call_backend("rpc_get_extract_variable_diff",
+                                  None, filename, source, offset,
+                                  new_name, line_beg, line_end, col_beg,
+                                  col_end)
+
+    def rpc_get_extract_function_diff(self, filename, source, offset, new_name,
+                                      line_beg, line_end, col_beg, col_end):
+        """Get the diff resulting from extracting the selected code
+
+        """
+        source = get_source(source)
+        return self._call_backend("rpc_get_extract_function_diff",
+                                  None, filename, source, offset, new_name,
+                                  line_beg, line_end, col_beg, col_end)
+
+    def rpc_get_inline_diff(self, filename, source, offset):
+        """Get the diff resulting from inlining the thing at point.
+
+        """
+        source = get_source(source)
+        return self._call_backend("rpc_get_inline_diff",
+                                  None, filename, source, offset)
 
     def rpc_fix_code(self, source, directory):
         """Formats Python code to conform to the PEP 8 style guide.

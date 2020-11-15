@@ -4,12 +4,16 @@
 
 import sys
 
+from elpy.rpc import Fault
 # in case pkg_resources is not properly installed
 # (see https://github.com/jorgenschaefer/elpy/issues/1674).
 try:
     from pkg_resources import parse_version
-except ImportError:
-    parse_version = None
+except ImportError:  # pragma: no cover
+    def parse_version(*arg, **kwargs):
+        raise Fault("`pkg_resources` could not be imported, "
+                    "please reinstall Elpy RPC virtualenv with"
+                    " `M-x elpy-rpc-reinstall-virtualenv`", code=400)
 
 import os
 
@@ -18,12 +22,11 @@ try:
 except ImportError:
     toml = None
 
-from elpy.rpc import Fault
 
 BLACK_NOT_SUPPORTED = sys.version_info < (3, 6)
 
 try:
-    if BLACK_NOT_SUPPORTED:
+    if BLACK_NOT_SUPPORTED:  # pragma: no cover
         black = None
     else:
         import black
@@ -37,10 +40,6 @@ def fix_code(code, directory):
     """
     if not black:
         raise Fault("black not installed", code=400)
-    if not parse_version:
-        raise Fault("`pkg_resources` could not be imported, "
-                    "please reinstall Elpy RPC virtualenv with"
-                    " `M-x elpy-rpc-reinstall-virtualenv`", code=400)
     # Get black config from pyproject.toml
     line_length = black.DEFAULT_LINE_LENGTH
     string_normalization = True

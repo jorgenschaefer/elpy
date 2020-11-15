@@ -20,6 +20,14 @@ class YAPFTestCase(BackendTestCase):
         src = 'x = '
         self.assertRaises(Fault, yapfutil.fix_code, src, os.getcwd())
 
+    def test_fix_code_should_throw_error_without_yapf_installed(self):
+        yapf = yapfutil.yapf_api
+        yapfutil.yapf_api = None
+        src = 'x=       123\n', 'x = 123\n'
+        with self.assertRaises(Fault):
+            yapfutil.fix_code(src, os.getcwd())
+        yapfutil.yapf_api = yapf
+
     def test_fix_code(self):
         testdata = [
             ('x=       123\n', 'x = 123\n'),
