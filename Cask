@@ -3,10 +3,10 @@
 
 (package "elpy" "1.35.0" "Emacs Python Development Environment")
 
-(depends-on "company" "0.9.10")
+(depends-on "company" "0.9.13")
 (depends-on "highlight-indentation" "0.7.0")
-(depends-on "pyvenv" "1.20")
-(depends-on "yasnippet" "0.13.0")
+(depends-on "pyvenv" "1.21")
+(depends-on "yasnippet" "0.14.0")
 (depends-on "s" "1.12.0")
 
 (development
