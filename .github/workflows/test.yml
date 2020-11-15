@@ -66,14 +66,14 @@ jobs:
         pip install coveralls
         python -m virtualenv $HOME/.virtualenvs/elpy-test-venv
     # Run tests
-    - name: Run Python tests
-      run: nosetests
     - name: Run Emacs tests
       uses: nick-invision/retry@v2
       with:
         timeout_minutes: 5
         max_attempts: 3
         command: cask install ; PYTHONPATH="`pwd`" cask exec ert-runner --reporter ert+duration
+    - name: Run Python tests
+      run: nosetests
     # Coveralls
     - name: Coveralls
       env:
