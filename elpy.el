@@ -301,15 +301,18 @@ if nil, use the first formatter found amongst
 ;;; Elpy Mode
 (defvar elpy-refactor-map
   (let ((map (make-sparse-keymap "Refactor")))
-    (define-key map (kbd "i") (cons (format "%smport fixup"
+    (define-key map (kbd "i") (cons (format "%snline"
                                             (propertize "i" 'face 'bold))
-                                    'elpy-importmagic-fixup))
-    (define-key map (kbd "f") (cons (format "%sormat code"
+                                    'elpy-refactor-inline))
+    (define-key map (kbd "f") (cons (format "%sunction extraction"
                                             (propertize "f" 'face 'bold))
-                                    'elpy-format-code))
-    (define-key map (kbd "r") (cons (format "%sefactor"
+                                    'elpy-refactor-extract-function))
+    (define-key map (kbd "v") (cons (format "%sariable extraction"
+                                            (propertize "v" 'face 'bold))
+                                    'elpy-refactor-extract-variable))
+    (define-key map (kbd "r") (cons (format "%sename"
                                             (propertize "r" 'face 'bold))
-                                    'elpy-refactor))
+                                    'elpy-refactor-rename))
     map)
   "Key map for the refactor command.")
 
@@ -4079,6 +4082,10 @@ which we're looking."
            (progn (forward-line -1)
                   (beginning-of-line)
                   (python-info-looking-at-beginning-of-defun))))))
+
+(unless (fboundp 'alist-get)
+  (defun alist-get (key alist &rest rest)
+    (cdr (assoc key alist))))
 
 (provide 'elpy)
 ;;; elpy.el ends here

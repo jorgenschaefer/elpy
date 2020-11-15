@@ -1172,6 +1172,47 @@ Returns a possible multi-line docstring."
                      (point-min)))
             success error))
 
+(defun elpy-rpc-get-rename-diff (new-name &optional success error)
+  "Return the diffs resulting from renaming the thing at point to NEW-NAME."
+  (elpy-rpc "get_rename_diff"
+            (list buffer-file-name
+                  (elpy-rpc--buffer-contents)
+                  (- (point)
+                     (point-min))
+                  new-name)
+            success error))
+
+(defun elpy-rpc-get-extract-variable-diff (new-name beg-line end-line beg-col end-col &optional success error)
+  "Return the diffs resulting from renaming the thing at point to NEW-NAME."
+  (elpy-rpc "get_extract_variable_diff"
+            (list buffer-file-name
+                  (elpy-rpc--buffer-contents)
+                  (- (point)
+                     (point-min))
+                  new-name
+                  beg-line end-line beg-col end-col)
+            success error))
+
+(defun elpy-rpc-get-extract-function-diff (new-name beg-line end-line beg-col end-col &optional success error)
+  "Return the diffs resulting from renaming the thing at point to NEW-NAME."
+  (elpy-rpc "get_extract_function_diff"
+            (list buffer-file-name
+                  (elpy-rpc--buffer-contents)
+                  (- (point)
+                     (point-min))
+                  new-name
+                  beg-line end-line beg-col end-col)
+            success error))
+
+(defun elpy-rpc-get-inline-diff (&optional success error)
+  "Return the diffs resulting from inlineing the variable at point."
+  (elpy-rpc "get_inline_diff"
+            (list buffer-file-name
+                  (elpy-rpc--buffer-contents)
+                  (- (point)
+                     (point-min)))
+            success error))
+
 
 (provide 'elpy-rpc)
 ;;; elpy-rpc.el ends here

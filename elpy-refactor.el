@@ -1,8 +1,8 @@
 ;;; elpy-refactor.el --- Refactoring mode for Elpy
 
-;; Copyright (C) 2013-2019  Jorgen Schaefer
+;; Copyright (C) 2020  Gaby Launay
 
-;; Author: Jorgen Schaefer <contact@jorgenschaefer.de>
+;; Author: Gaby Launay <gaby.launay@protonmail.com>
 ;; URL: https://github.com/jorgenschaefer/elpy
 
 ;; This program is free software; you can redistribute it and/or
@@ -21,191 +21,95 @@
 ;;; Commentary:
 
 ;; This file provides an interface, including a major mode, to use
-;; refactoring options provided by the Rope library.
+;; refactoring options provided by the Jedi library.
 
 ;;; Code:
 
 ;; We require elpy, but elpy loads us, so we shouldn't load it back.
 ;; (require 'elpy)
+(require 'diff-mode)
 
-(defvar elpy-refactor-changes nil
-  "Changes that will be commited on \\[elpy-refactor-commit].")
-(make-variable-buffer-local 'elpy-refactor-current-changes)
 
-(defvar elpy-refactor-window-configuration nil
-  "The old window configuration. Will be restored after commit.")
-(make-variable-buffer-local 'elpy-refactor-window-configuration)
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; Refactor mode (for applying diffs)
 
-(make-obsolete
- 'elpy-refactor
- "Refactoring has been unstable and flakey, support will be dropped in the future."
- "elpy 1.5.0")
-(defun elpy-refactor ()
-  "Run the Elpy refactoring interface for Python code."
-  (interactive)
-  (save-some-buffers)
-  (let* ((selection (elpy-refactor-select
-                     (elpy-refactor-rpc-get-options)))
-         (method (car selection))
-         (args (cdr selection)))
-    (when method
-      (elpy-refactor-create-change-buffer
-       (elpy-refactor-rpc-get-changes method args)))))
+(defvar elpy-refactor--saved-window-configuration nil
+  "Saved windows configuration, so that we can restore it after `elpy-refactor' has done its thing.")
 
-(defun elpy-refactor-select (options)
-  "Show the user the refactoring options and let her choose one.
+(defvar elpy-refactor--saved-pos nil
+  "Line and column number of the position we were at before starting refactoring.")
 
-Depending on the chosen option, ask the user for further
-arguments and build the argument.
+(defvar elpy-refactor--modified-buffers '()
+  "Keep track of the buffers modified by the current refactoring sessions.")
 
-Return a cons cell of the name of the option and the arg list
-created."
-  (let ((buf (get-buffer-create "*Elpy Refactor*"))
-        (pos (vector (1- (point))
-                     (ignore-errors
-                       (1- (region-beginning)))
-                     (ignore-errors
-                       (1- (region-end)))))
-        (inhibit-read-only t)
-        (options (sort options
-                       (lambda (a b)
-                         (let ((cata (cdr (assq 'category a)))
-                               (catb (cdr (assq 'category b))))
-                           (if (equal cata catb)
-                               (string< (cdr (assq 'description a))
-                                        (cdr (assq 'description b)))
-                             (string< cata catb))))))
-        (key ?a)
-        last-category
-        option-alist)
-    (with-current-buffer buf
-      (erase-buffer)
-      (dolist (option options)
-        (let ((category (cdr (assq 'category option)))
-              (description (cdr (assq 'description option)))
-              (name (cdr (assq 'name option)))
-              (args (cdr (assq 'args option))))
-          (unless (equal category last-category)
-            (when last-category
-              (insert "\n"))
-            (insert (propertize category 'face 'bold) "\n")
-            (setq last-category category))
-          (insert " (" key ") " description "\n")
-          (setq option-alist (cons (list key name args)
-                                   option-alist))
-          (setq key (1+ key))))
-      (let ((window-conf (current-window-configuration)))
-        (unwind-protect
-            (progn
-              (with-selected-window (display-buffer buf)
-                (goto-char (point-min)))
-              (fit-window-to-buffer (get-buffer-window buf))
-              (let* ((key (read-key "Refactoring action? "))
-                     (entry (cdr (assoc key option-alist))))
-                (kill-buffer buf)
-                (cons (car entry)       ; name
-                      (elpy-refactor-build-arguments (cadr entry)
-                                                     pos))))
-          (set-window-configuration window-conf))))))
+(defun elpy-refactor--apply-diff (proj-path diff)
+  "Apply DIFF, looking for the files in PROJ-PATH."
+  (let ((current-line (line-number-at-pos (point)))
+        (current-col (- (point) (line-beginning-position))))
+    (with-current-buffer (get-buffer-create " *Elpy Refactor*")
+      (elpy-refactor-mode)
+      (let ((inhibit-read-only t))
+        (erase-buffer)
+        (insert diff))
+      (setq default-directory proj-path)
+      (goto-char (point-min))
+      (elpy-refactor--apply-whole-diff))
+    (condition-case nil
+        (progn
+          (goto-char (point-min))
+          (forward-line (- current-line 1))
+          (beginning-of-line)
+          (forward-char current-col))
+      (error))
+    ))
 
-(defun elpy-refactor-build-arguments (args pos)
-  "Translate an argument list specification to an argument list.
+(defun elpy-refactor--display-diff (proj-path diff)
+  "Display DIFF in a `diff-mode' window.
 
-POS is a vector of three elements, the current offset, the offset
-of the beginning of the region, and the offset of the end of the
-region.
-
-ARGS is a list of triples, each triple containing the name of an
-argument (ignored), the type of the argument, and a possible
-prompt string.
-
-Available types:
-
-  offset       - The offset in the buffer, (1- (point))
-  start_offset - Offset of the beginning of the region
-  end_offset   - Offset of the end of the region
-  string       - A free-form string
-  filename     - A non-existing file name
-  directory    - An existing directory name
-  boolean      - A boolean question"
-  (mapcar (lambda (arg)
-            (let ((type (cadr arg))
-                  (prompt (cl-caddr arg)))
-              (cond
-               ((equal type "offset")
-                (aref pos 0))
-               ((equal type "start_offset")
-                (aref pos 1))
-               ((equal type "end_offset")
-                (aref pos 2))
-               ((equal type "string")
-                (read-from-minibuffer prompt))
-               ((equal type "filename")
-                (expand-file-name
-                 (read-file-name prompt)))
-               ((equal type "directory")
-                (expand-file-name
-                 (read-directory-name prompt)))
-               ((equal type "boolean")
-                (y-or-n-p prompt)))))
-          args))
-
-(defun elpy-refactor-create-change-buffer (changes)
-  "Show the user a buffer of changes.
-
-The user can review the changes and confirm them with
-\\[elpy-refactor-commit]."
-  (unless changes
-    (error "No changes for this refactoring action."))
+DIFF files should be relative to PROJ-PATH."
+  (setq elpy-refactor--saved-window-configuration (current-window-configuration)
+        elpy-refactor--saved-pos (list (line-number-at-pos (point) t)
+                                       (- (point) (line-beginning-position)))
+        elpy-refactor--modified-buffers '())
   (with-current-buffer (get-buffer-create "*Elpy Refactor*")
     (elpy-refactor-mode)
-    (setq elpy-refactor-changes changes
-          elpy-refactor-window-configuration (current-window-configuration))
     (let ((inhibit-read-only t))
       (erase-buffer)
-      (elpy-refactor-insert-changes changes))
-    (select-window (display-buffer (current-buffer)))
-    (goto-char (point-min))))
-
-(defun elpy-refactor-insert-changes (changes)
-  "Format and display the changes described in CHANGES."
-  (insert (propertize "Use C-c C-c to apply the following changes."
-                      'face 'bold)
-          "\n\n")
-  (dolist (change changes)
-    (let ((action (cdr (assq 'action change))))
-      (cond
-       ((equal action "change")
-        (insert (cdr (assq 'diff change))
-                "\n"))
-       ((equal action "create")
-        (let ((type (cdr (assq 'type change))))
-          (if (equal type "file")
-              (insert "+++ " (cdr (assq 'file change)) "\n"
-                      "Create file " (cdr (assq 'file change)) "\n"
-                      "\n")
-            (insert "+++ " (cdr (assq 'path change)) "\n"
-                    "Create directory " (cdr (assq 'path change)) "\n"
-                    "\n"))))
-       ((equal action "move")
-        (insert "--- " (cdr (assq 'source change)) "\n"
-                "+++ " (cdr (assq 'destination change)) "\n"
-                "Rename " (cdr (assq 'type change)) "\n"
-                "\n"))
-       ((equal action "delete")
-        (let ((type (cdr (assq 'type change))))
-          (if (equal type "file")
-              (insert "--- " (cdr (assq 'file change)) "\n"
-                      "Delete file " (cdr (assq 'file change)) "\n"
-                      "\n")
-            (insert "--- " (cdr (assq 'path change)) "\n"
-                    "Delete directory " (cdr (assq 'path change)) "\n"
-                    "\n"))))))))
+      (insert (propertize
+               (substitute-command-keys
+                (concat
+                 "\\[diff-file-next] and \\[diff-file-prev] -- Move between files\n"
+                 "\\[diff-hunk-next] and \\[diff-hunk-prev] -- Move between hunks\n"
+                 "\\[diff-split-hunk] -- Split the current hunk at point\n"
+                 "\\[elpy-refactor--apply-hunk] -- Apply the current hunk\n"
+                 "\\[diff-kill-hunk] -- Kill the current hunk\n"
+                 "\\[elpy-refactor--apply-whole-diff] -- Apply the whole diff\n"
+                 "\\[elpy-refactor--quit] -- Quit\n"))
+               'face 'bold)
+              "\n\n")
+      (align-regexp (point-min) (point-max) "\\(\\s-*\\) -- ")
+      (goto-char (point-min))
+      (while (search-forward " -- " nil t)
+        (replace-match "  " nil t))
+      (goto-char (point-max))
+      (insert diff))
+    (setq default-directory proj-path)
+    (goto-char (point-min))
+    (if (diff--some-hunks-p)
+        (progn
+          (select-window (display-buffer (current-buffer)))
+          (diff-hunk-next))
+      ;; quit if not diff at all...
+      (message "No differences to validate")
+      (kill-buffer (current-buffer)))))
 
 (defvar elpy-refactor-mode-map
   (let ((map (make-sparse-keymap)))
-    (define-key map (kbd "C-c C-c") 'elpy-refactor-commit)
-    (define-key map (kbd "q") 'bury-buffer)
+    (define-key map (kbd "C-c C-c") 'elpy-refactor--apply-hunk)
+    (define-key map (kbd "C-c C-a") 'elpy-refactor--apply-whole-diff)
+    (define-key map (kbd "C-c C-x") 'diff-kill-hunk)
+    (define-key map (kbd "q") 'elpy-refactor--quit)
+    (define-key map (kbd "C-c C-k") 'elpy-refactor--quit)
     (define-key map (kbd "h") 'describe-mode)
     (define-key map (kbd "?") 'describe-mode)
     map)
@@ -218,80 +122,199 @@ The user can review the changes and confirm them with
   :group 'elpy
   (view-mode 1))
 
-(defun elpy-refactor-commit ()
-  "Commit the changes in the current buffer."
+(defun elpy-refactor--apply-hunk ()
+  "Apply the current hunk."
   (interactive)
-  (unless elpy-refactor-changes
-    (error "No changes to commit."))
-  ;; Restore the window configuration as the first thing so that
-  ;; changes below are visible to the user. Especially the point
-  ;; change in possible buffer changes.
-  (set-window-configuration elpy-refactor-window-configuration)
-  (dolist (change elpy-refactor-changes)
-    (let ((action (cdr (assq 'action change))))
-      (cond
-       ((equal action "change")
-        (with-current-buffer (find-file-noselect (cdr (assq 'file change)))
-          ;; This would break for save-excursion as the buffer is
-          ;; truncated, so all markets now point to position 1.
-          (let ((old-point (point)))
-            (undo-boundary)
-            (erase-buffer)
-            (insert (cdr (assq 'contents change)))
-            (undo-boundary)
-            (goto-char old-point))))
-       ((equal action "create")
-        (if (equal (cdr (assq 'type change))
-                   "file")
-            (find-file-noselect (cdr (assq 'file change)))
-          (make-directory (cdr (assq 'path change)))))
-       ((equal action "move")
-        (let* ((source (cdr (assq 'source change)))
-               (dest (cdr (assq 'destination change)))
-               (buf (get-file-buffer source)))
-          (when buf
-            (with-current-buffer buf
-              (setq buffer-file-name dest)
-              (rename-buffer (file-name-nondirectory dest) t)))
-          (rename-file source dest)))
-       ((equal action "delete")
-        (if (equal (cdr (assq 'type change)) "file")
-            (let ((name (cdr (assq 'file change))))
-              (when (y-or-n-p (format "Really delete %s? " name))
-                (delete-file name t)))
-          (let ((name (cdr (assq 'directory change))))
-            (when (y-or-n-p (format "Really delete %s? " name))
-              (delete-directory name nil t))))))))
-  (kill-buffer (current-buffer)))
+  (save-excursion
+    (diff-apply-hunk))
+  ;; keep track of modified buffers
+  (let ((buf (find-buffer-visiting (diff-find-file-name))))
+    (when buf
+      (add-to-list 'elpy-refactor--modified-buffers buf)))
+  ;;
+  (diff-hunk-kill)
+  (unless (diff--some-hunks-p)
+    (elpy-refactor--quit)))
 
-(defun elpy-refactor-rpc-get-options ()
-  "Get a list of refactoring options from the Elpy RPC."
-  (if (use-region-p)
-      (elpy-rpc "get_refactor_options"
-                (list (buffer-file-name)
-                      (1- (region-beginning))
-                      (1- (region-end))))
-    (elpy-rpc "get_refactor_options"
-              (list (buffer-file-name)
-                    (1- (point))))))
+(defun elpy-refactor--apply-whole-diff ()
+  "Apply the whole diff and quit."
+  (interactive)
+  (goto-char (point-min))
+  (diff-hunk-next)
+  (while (diff--some-hunks-p)
+    (let ((buf (find-buffer-visiting (diff-find-file-name))))
+      (when buf
+        (add-to-list 'elpy-refactor--modified-buffers buf)))
+    (condition-case nil
+        (progn
+          (save-excursion
+            (diff-apply-hunk))
+          (diff-hunk-kill))
+      (error (diff-hunk-next)))) ;; if a hunk fail, switch to the next one
+  ;; quit
+  (elpy-refactor--quit))
 
-(defun elpy-refactor-rpc-get-changes (method args)
-  "Get a list of changes from the Elpy RPC after applying METHOD with ARGS."
-  (elpy-rpc "refactor"
-            (list (buffer-file-name)
-                  method args)))
+(defun elpy-refactor--quit ()
+  "Quit the refactoring session."
+  (interactive)
+  ;; save modified buffers
+  (dolist (buf elpy-refactor--modified-buffers)
+    (with-current-buffer buf
+      (basic-save-buffer)))
+  (setq elpy-refactor--modified-buffers '())
+  ;; kill refactoring buffer
+  (kill-buffer (current-buffer))
+  ;; Restore window configuration
+  (when elpy-refactor--saved-window-configuration
+    (set-window-configuration elpy-refactor--saved-window-configuration)
+    (setq elpy-refactor--saved-window-configuration nil))
+  ;; Restore cursor position
+  (when elpy-refactor--saved-pos
+    (goto-char (point-min))
+    (forward-line (- (car elpy-refactor--saved-pos) 1))
+    (forward-char (car (cdr elpy-refactor--saved-pos)))
+    (setq elpy-refactor--saved-pos nil)))
 
-(defun elpy-refactor-options (option)
-  "Show available refactor options and let user choose one."
-  (interactive "c[i]: importmagic-fixup [p]: autopep8-fix-code [r]: refactor")
-  (let ((choice (char-to-string option)))
-    (cond
-     ((string-equal choice "i")
-      (elpy-importmagic-fixup))
-     ((string-equal choice "p")
-      (elpy-autopep8-fix-code))
-     ((string-equal choice "r")
-      (elpy-refactor)))))
+
+
+;;;;;;;;;;;;;;;;;
+;; User functions
+
+(defun elpy-refactor-rename (new-name &optional dontask)
+  "Rename the symbol at point to NEW-NAME.
+
+With a prefix argument (or if DONTASK is non-nil),
+do not display the diff before applying."
+  (interactive (list
+                (let ((old-name (thing-at-point 'symbol)))
+                  (if (or (not old-name)
+                          (not (elpy-refactor--is-valid-symbol-p old-name)))
+                      (error "No symbol at point")
+                    (read-string
+                     (format "New name for '%s': "
+                             (thing-at-point 'symbol)))))))
+  (unless (and new-name
+               (elpy-refactor--is-valid-symbol-p new-name))
+    (error "'%s' is not a valid python symbol"))
+  (message "Gathering occurences of '%s'..."
+           (thing-at-point 'symbol))
+  (let* ((elpy-rpc-timeout 10)  ;; refactoring can be long...
+         (diff (elpy-rpc-get-rename-diff new-name))
+         (proj-path (alist-get 'project_path diff))
+         (success (alist-get 'success diff))
+         (diff (alist-get 'diff diff)))
+    (cond ((not success)
+           (error "Refactoring failed for some reason"))
+          ((string= success "Not available")
+           (error "This functionnality needs jedi > 0.17.0, please update"))
+          ((or dontask current-prefix-arg)
+           (message "Replacing '%s' with '%s'..."
+                    (thing-at-point 'symbol)
+                    new-name)
+           (elpy-refactor--apply-diff proj-path diff)
+           (message "Done"))
+          (t
+           (elpy-refactor--display-diff proj-path diff)))))
+
+(defun elpy-refactor-extract-variable (new-name)
+  "Extract the current region to a new variable NEW-NAME."
+  (interactive "sNew name: ")
+  (let ((beg (if (region-active-p)
+                 (region-beginning)
+               (car (or (bounds-of-thing-at-point 'symbol)
+                        (error "No symbol at point")))))
+        (end (if (region-active-p)
+                 (region-end)
+               (cdr (bounds-of-thing-at-point 'symbol)))))
+    (when (or (elpy-refactor--is-valid-symbol-p new-name)
+              (y-or-n-p "'%s' does not appear to be a valid python symbol. Are you sure you want to use it? "))
+      (let* ((line-beg (save-excursion
+                         (goto-char beg)
+                         (line-number-at-pos)))
+             (line-end (save-excursion
+                         (goto-char end)
+                         (line-number-at-pos)))
+             (col-beg (save-excursion
+                        (goto-char beg)
+                        (- (point) (line-beginning-position))))
+             (col-end (save-excursion
+                        (goto-char end)
+                        (- (point) (line-beginning-position))))
+             (diff (elpy-rpc-get-extract-variable-diff
+                    new-name line-beg line-end col-beg col-end))
+             (proj-path (alist-get 'project_path diff))
+             (success (alist-get 'success diff))
+             (diff (alist-get 'diff diff)))
+        (cond ((not success)
+               (error "We could not extract the selection as a variable"))
+              ((string= success "Not available")
+               (error "This functionnality needs jedi > 0.17.0, please update"))
+              (t
+               (deactivate-mark)
+               (elpy-refactor--apply-diff proj-path diff)))))))
+
+(defun elpy-refactor-extract-function (new-name)
+  "Extract the current region to a new function NEW-NAME."
+  (interactive "sNew function name: ")
+  (unless (region-active-p)
+    (error "No selection"))
+  (when (or (elpy-refactor--is-valid-symbol-p new-name)
+            (y-or-n-p "'%s' does not appear to be a valid python symbol. Are you sure you want to use it? "))
+    (let* ((line-beg (save-excursion
+                       (goto-char (region-beginning))
+                       (line-number-at-pos)))
+           (line-end (save-excursion
+                       (goto-char (region-end))
+                       (line-number-at-pos)))
+           (col-beg (save-excursion
+                      (goto-char (region-beginning))
+                      (- (point) (line-beginning-position))))
+           (col-end (save-excursion
+                      (goto-char (region-end))
+                      (- (point) (line-beginning-position))))
+           (diff (elpy-rpc-get-extract-function-diff
+                  new-name line-beg line-end col-beg col-end))
+           (proj-path (alist-get 'project_path diff))
+           (success (alist-get 'success diff))
+           (diff (alist-get 'diff diff)))
+      (cond ((not success)
+             (error "We could not extract the selection as a function"))
+            ((string= success "Not available")
+             (error "This functionnality needs jedi > 0.17.0, please update"))
+            (t
+             (deactivate-mark)
+             (elpy-refactor--apply-diff proj-path diff))))))
+
+(defun elpy-refactor-inline ()
+  "Inline the variable at point."
+  (interactive)
+  (let* ((diff (elpy-rpc-get-inline-diff))
+         (proj-path (alist-get 'project_path diff))
+         (success (alist-get 'success diff))
+         (diff (alist-get 'diff diff)))
+    (cond ((not success)
+           (error "We could not inline the variable '%s'"
+                  (thing-at-point 'symbol)))
+          ((string= success "Not available")
+           (error "This functionnality needs jedi > 0.17.0, please update"))
+          (t
+           (elpy-refactor--apply-diff proj-path diff)))))
+
+
+;;;;;;;;;;;;
+;; Utilities
+
+(defun elpy-refactor--is-valid-symbol-p (symbol)
+  "Return t if SYMBOL is a valid python symbol."
+  (eq 0 (string-match "^[a-zA-Z_][a-zA-Z0-9_]*$" symbol)))
+
+;;;;;;;;;;;;
+;; Compatibility
+(unless (fboundp 'diff--some-hunks-p)
+  (defun diff--some-hunks-p ()
+    (save-excursion
+      (goto-char (point-min))
+      (re-search-forward diff-hunk-header-re nil t))))
 
 (provide 'elpy-refactor)
 ;;; elpy-refactor.el ends here
