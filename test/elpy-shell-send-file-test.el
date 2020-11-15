@@ -1,0 +1,11 @@
+(ert-deftest elpy-shell-send-file-should-accept-large-strings ()
+  (elpy-testcase ()
+   (elpy-enable)
+   (python-mode)
+   (let ((test-string (make-string 6000 ?a))
+         (process (elpy-shell-get-or-create-process)))
+     (python-shell-send-string
+      (format "print('start');foo='%s';print('end');" test-string) process)
+     (with-current-buffer (process-buffer process)
+       (elpy/wait-for-output "start")
+       (should (string-match "end" (buffer-string)))))))

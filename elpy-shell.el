@@ -263,7 +263,9 @@ If ASK-FOR-EACH-ONE is non-nil, ask before killing each python process."
 
 If SIT is non-nil, sit for that many seconds after creating a
 Python process. This allows the process to start up."
-  (let* ((bufname (format "*%s*" (python-shell-get-process-name nil)))
+  (let* ((process-connection-type
+          (if (string-equal system-type "darwin") nil t))  ;; see https://github.com/jorgenschaefer/elpy/pull/1671
+         (bufname (format "*%s*" (python-shell-get-process-name nil)))
          (proc (get-buffer-process bufname)))
     (if proc
         proc
