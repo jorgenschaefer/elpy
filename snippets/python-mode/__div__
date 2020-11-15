@@ -1,7 +1,0 @@
-# -*- mode: snippet -*-
-# name: __div__
-# key: __div__
-# group: Special methods
-# --
-def __div__(self, other):
-    return $0

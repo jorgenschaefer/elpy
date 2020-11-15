@@ -1,7 +1,0 @@
-# -*- mode: snippet -*-
-# name: __ilshift__
-# key: __ilshift__
-# group: Special methods
-# --
-def __ilshift__(self, other):
-    return $0
