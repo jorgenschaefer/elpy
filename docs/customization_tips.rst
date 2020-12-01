@@ -44,7 +44,7 @@ This can be achieved with the following snippet:
                                 (add-hook 'before-save-hook
                                           'elpy-format-code nil t)))
 
-The formatting function (``elpy-format-code`` here) can be replaced with your prefered one.
+The formatting function (``elpy-format-code`` here) can be replaced with your preferred one.
 For example to use black:
 
 .. code-block:: elisp

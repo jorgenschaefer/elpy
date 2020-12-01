@@ -421,7 +421,7 @@ accidental code execution, e.g.:
 .. option:: elpy-shell-add-to-shell-history
 
    If `t`, Elpy will make the code sent available in the shell
-   history. This allows to use `comint-previous-input` (:kbd:`C-up`)
+   history. This allows one to use `comint-previous-input` (:kbd:`C-up`)
    in the python shell to get back the pieces of code sent by Elpy.
 
 The list of remaining commands to send code fragments is:
@@ -786,7 +786,7 @@ Refactoring
 
 .. option:: elpy-formatter
 
-   Allow to select the formatter you want to use amongst
+   Allows the selection of one's preferred formatter. Available options are:
    `yapf`_ , `autopep8`_ and `black`_.
 
    `yapf`_ and `autopep8`_ can be configured with style files placed in
