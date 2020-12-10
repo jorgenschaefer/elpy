@@ -246,8 +246,8 @@ you, you may also try:
    (setq python-shell-interpreter "ipython"
          python-shell-interpreter-args "-i")
 
-   As an IPython_ user, you might be interested in the `Emacs IPython
-   Notebook`_ or an `Elpy layer`_ for Spacemacs_, too.
+As an IPython_ user, you might be interested in the `Emacs IPython
+Notebook`_ or an `Elpy layer`_ for Spacemacs_, too.
 
 Note for MacOS users:
 In some configurations, display artifacts (lines of ``^G`` s) can
