@@ -8,6 +8,6 @@ class ${1:SubClassName}(${2:ParentClass}):
 
     """
     def __init__(self${4:, args}):
-        super().__init__($5)
+        super().__init__(${5:args_parent})
         ${4:$(elpy-snippet-init-assignments yas-text)}
         $0
