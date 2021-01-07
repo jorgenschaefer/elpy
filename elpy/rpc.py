@@ -11,7 +11,7 @@ import json
 import sys
 import traceback
 from pydantic import BaseModel
-from typing import Union, List, Type
+from typing import Union, Optional, List, Type
 
 
 class Msg(BaseModel):
@@ -72,7 +72,7 @@ class JSONRPCServer(object):
         else:
             self.stdout = stdout
 
-    def read_json(self):
+    def read_json(self) -> str:
         """Read a single line and decode it as JSON.
 
         Can raise an EOFError() when the input source was closed.
@@ -83,17 +83,13 @@ class JSONRPCServer(object):
             raise EOFError()
         return json.loads(line)
 
-    def write_json(self, x) -> None:
+    def send_msg(self, msg: Msg) -> None:
         """Write an JSON object on a single line.
-
-        The keyword arguments are interpreted as a single JSON object.
-        It's not possible with this method to write non-objects.
-
         """
-        self.stdout.write(x.json() + '\n')
+        self.stdout.write(msg.json() + '\n')
         self.stdout.flush()
-
-    def handle_request(self):
+        
+    def handle_request(self) -> Type[Msg]:
         """Handle a single JSON-RPC request.
 
         Read a request, call the appropriate handler method, and
@@ -110,6 +106,12 @@ class JSONRPCServer(object):
         method_name = request['method']
         request_id = request.get('id', None)
         params = request.get('params') or []
+        msg = self._make_msg(request_id, method_name, params)
+        if msg is not None:
+            self.send_msg(msg)
+
+    def _make_msg(self, request_id: str, method_name: str, params: List
+                  ) -> Optional[Type[Msg]]:
         try:
             method = getattr(self, "rpc_" + method_name, None)
             if method is not None:
@@ -117,37 +119,28 @@ class JSONRPCServer(object):
             else:
                 result = self.handle(method_name, params)
             if request_id is not None:
-                self.write_json(
-                    ResultMsg(
-                        result=result,
-                        id=request_id))
+                return ResultMsg(result=result, id=request_id)
         except Fault as fault:
             error = {"message": fault.message,
                      "code": fault.code}
             if fault.data is not None:
                 error["data"] = fault.data
-            self.write_json(
-                ErrorMsg(
-                    error=error,
-                    id=request_id))
+            return ErrorMsg(error=error, id=request_id)
         except Exception as e:
             error = {"message": str(e),
                      "code": 500,
                      "data": {"traceback": traceback.format_exc()}
                      }
-            self.write_json(
-                ErrorMsg(
-                    error=error,
-                    id=request_id))
-
-    def handle(self, method_name, args):
+            return ErrorMsg(error=error, id=request_id)
+            
+    def handle(self, method_name: str, args: List) -> None:
         """Handle the call to method_name.
 
         You should overwrite this method in a subclass.
         """
         raise Fault("Unknown method {0}".format(method_name))
 
-    def serve_forever(self):
+    def serve_forever(self) -> None:
         """Serve requests forever.
 
         Errors are not caught, so this is a slight misnomer.
