@@ -10,12 +10,29 @@ import sys
 import traceback
 import re
 
-from typing import Type
+from typing import Type, List
+from pathlib import Path
 import jedi
 
 
 from elpy import rpc
-from elpy.rpc import Fault
+from elpy.rpc import Fault, Msg
+
+class NameMsg(Msg):
+    name: str
+    offset: int
+    filename: Path
+
+class RefactoringMsg(Msg):
+    success: bool
+    project_path: Path
+    diff: str
+    changed_files: List[Path]
+
+class ErrorMsg(Msg):
+    success: bool
+    error_type: str
+    error_msg: str
 
 # in case pkg_resources is not properly installed
 # (see https://github.com/jorgenschaefer/elpy/issues/1674).
@@ -49,24 +66,23 @@ class JediBackend(object):
         sys.path.append(project_root)
 
     def __make_error_msg(self, e: Type[Exception]) -> dict:
-        return {'success': False,
-                'error_type': type(e).__name__,
-                'error_msg': str(e)}
+        return ErrorMsg(success=False,
+                        error_type=type(e).__name__,
+                        error_msg=str(e))
     
     def __make_refactoring_msg(self, x: jedi.api.refactoring.Refactoring):
         if type(x) is not jedi.api.refactoring.Refactoring:
             raise TypeError("Must be jedi.api.refactoring.Refactoring type")
-        return {'success': True,
-                'project_path': str(x._inference_state.project._path),
-                'diff': x.get_diff(),
-                'changed_files': list(map(str, x.get_changed_files().keys()))}
+        return RefactoringMsg(
+            success=True,
+            project_path=x._inference_state.project._path,
+            diff=x.get_diff(),
+            changed_files=list(x.get_changed_files().keys()))
 
     def __make_name_msg(self, x: jedi.api.classes.Name, offset: int):
         if type(x) is not jedi.api.classes.Name:
             raise TypeError("Must be jedi.api.classes.Name")
-        return {"name": x.name,
-                "filename": str(x.module_path),
-                "offset": offset}
+        return NameMsg(name=x.name, filename=x.module_path, offset=offset)
     
     def rpc_get_completions(self, filename, source, offset):
         line, column = pos_to_linecol(source, offset)
@@ -154,6 +170,7 @@ class JediBackend(object):
         except IOError:  # pragma: no cover
             return None
         return (str(loc.module_path), offset)
+
 
     def rpc_get_assignment(self, filename, source, offset):
         raise Fault("Obsolete since jedi 17.0. Please use 'get_definition'.")

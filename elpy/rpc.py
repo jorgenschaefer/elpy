@@ -11,9 +11,22 @@ import json
 import sys
 import traceback
 from pydantic import BaseModel
+from typing import Union, List, Type
+
 
 class Msg(BaseModel):
     pass
+
+
+class ErrorMsg(BaseModel):
+    id: int
+    error: Union[dict, Msg]
+
+
+class ResultMsg(BaseModel):
+    id: int
+    result: Union[dict, List, str, Type[Msg]]
+
 
 class JSONRPCServer(object):
     """Simple JSON-RPC-like server.
@@ -70,14 +83,14 @@ class JSONRPCServer(object):
             raise EOFError()
         return json.loads(line)
 
-    def write_json(self, **kwargs):
+    def write_json(self, x) -> None:
         """Write an JSON object on a single line.
 
         The keyword arguments are interpreted as a single JSON object.
         It's not possible with this method to write non-objects.
 
         """
-        self.stdout.write(json.dumps(kwargs) + "\n")
+        self.stdout.write(x.json() + '\n')
         self.stdout.flush()
 
     def handle_request(self):
@@ -104,19 +117,28 @@ class JSONRPCServer(object):
             else:
                 result = self.handle(method_name, params)
             if request_id is not None:
-                self.write_json(result=result,
-                                id=request_id)
+                self.write_json(
+                    ResultMsg(
+                        result=result,
+                        id=request_id))
         except Fault as fault:
             error = {"message": fault.message,
                      "code": fault.code}
             if fault.data is not None:
                 error["data"] = fault.data
-            self.write_json(error=error, id=request_id)
+            self.write_json(
+                ErrorMsg(
+                    error=error,
+                    id=request_id))
         except Exception as e:
             error = {"message": str(e),
                      "code": 500,
-                     "data": {"traceback": traceback.format_exc()}}
-            self.write_json(error=error, id=request_id)
+                     "data": {"traceback": traceback.format_exc()}
+                     }
+            self.write_json(
+                ErrorMsg(
+                    error=error,
+                    id=request_id))
 
     def handle(self, method_name, args):
         """Handle the call to method_name.

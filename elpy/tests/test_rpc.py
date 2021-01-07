@@ -5,6 +5,7 @@ import unittest
 import sys
 
 from elpy import rpc
+from elpy.rpc import Msg, ErrorMsg, ResultMsg
 from elpy.tests.compat import StringIO
 
 
@@ -83,9 +84,47 @@ class TestWriteJson(TestJSONRPCServer):
                    ]
         for obj in objlist:
             self.rpc.write_json(**obj)
-            self.assertEqual(json.loads(self.read()),
-                             obj)
+            self.assertEqual(json.loads(self.read()), obj)
 
+    def test_result_msg_shuld_work_with_msg(self):
+        class DataMsg(Msg):
+            data: str
+        self.rpc.write_json(
+            ResultMsg(id=100, result=DataMsg(data="some data")))
+        self.assertEqual(
+            self.read(), '{"id": 100, "result": {"data": "some data"}}\n')
+
+    def test_result_msg__shuld_work_with_dict(self):
+        self.rpc.write_json(
+            ResultMsg(id=100, result={'data': 'some data'}))
+        self.assertEqual(self.read(),
+                         '{"id": 100, "result": {"data": "some data"}}\n')
+
+    def test_result_msg__shuld_work_with_list(self):
+        self.rpc.write_json(
+            ResultMsg(id=100, result=['some data1', 'some data2', 3]))
+        self.assertEqual(
+            self.read(),
+            '{"id": 100, "result": ["some data1", "some data2", 3]}\n')
+
+    def test_result_msg__shuld_work_with_str(self):
+        self.rpc.write_json(ResultMsg(id=100, result="some string"))
+        self.assertEqual(self.read(), '{"id": 100, "result": "some string"}\n')
+
+    def test_error_msg__shuld_work_with_dict(self):
+        self.rpc.write_json(
+            ErrorMsg(id=100, error={'error': 'error msg'}))
+        self.assertEqual(
+            self.read(), '{"id": 100, "error": {"error": "error msg"}}\n')
+
+    def test_error_msg__shuld_work_with_msg(self):
+        class MyErrorMsg(Msg):
+            error: str
+        self.rpc.write_json(
+            ErrorMsg(id=100, error=MyErrorMsg(error="error msg")))
+        self.assertEqual(
+            self.read(),
+            '{"id": 100, "error": {"error": "error msg"}}\n')
 
 class TestHandleRequest(TestJSONRPCServer):
     def test_should_fail_if_json_does_not_contain_a_method(self):
