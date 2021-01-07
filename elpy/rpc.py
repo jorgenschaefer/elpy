@@ -14,18 +14,18 @@ from pydantic import BaseModel
 from typing import Union, Optional, List, Type
 
 
-class Msg(BaseModel):
+class ResultMsg(BaseModel):
     pass
 
 
 class ErrorMsg(BaseModel):
     id: int
-    error: Union[dict, Type[Msg]]
+    error: Union[dict, Type[ResultMsg]]
 
 
-class ResultMsg(BaseModel):
+class ResponceMsg(BaseModel):
     id: int
-    result: Union[dict, List, str, Type[Msg]]
+    result: Union[dict, List, str, Type[ResultMsg]]
 
 
 class JSONRPCServer(object):
@@ -52,7 +52,7 @@ class JSONRPCServer(object):
 
     {"id": 23, "error": "Simple error message"}
 
-    See http://www.jsonrpc.org/ for the inspiration of the protocol.
+    See https://www.jsonrpc.org/ for the inspiration of the protocol.
 
     """
 
@@ -83,13 +83,13 @@ class JSONRPCServer(object):
             raise EOFError()
         return json.loads(line)
 
-    def send_msg(self, msg: Msg) -> None:
+    def send_msg(self, msg: ResultMsg) -> None:
         """Write an JSON object on a single line.
         """
         self.stdout.write(msg.json() + '\n')
         self.stdout.flush()
         
-    def handle_request(self) -> Type[Msg]:
+    def handle_request(self) -> Type[ResultMsg]:
         """Handle a single JSON-RPC request.
 
         Read a request, call the appropriate handler method, and
@@ -111,7 +111,7 @@ class JSONRPCServer(object):
             self.send_msg(msg)
 
     def _make_msg(self, request_id: str, method_name: str, params: List
-                  ) -> Optional[Type[Msg]]:
+                  ) -> Optional[Type[ResultMsg]]:
         try:
             method = getattr(self, "rpc_" + method_name, None)
             if method is not None:
@@ -119,7 +119,7 @@ class JSONRPCServer(object):
             else:
                 result = self.handle(method_name, params)
             if request_id is not None:
-                return ResultMsg(result=result, id=request_id)
+                return ResponceMsg(result=result, id=request_id)
         except Fault as fault:
             error = {"message": fault.message,
                      "code": fault.code}
@@ -133,7 +133,7 @@ class JSONRPCServer(object):
                      }
             return ErrorMsg(error=error, id=request_id)
             
-    def handle(self, method_name: str, args: List) -> None:
+    def handle(self, method_name: str, args: List) -> Type[ResultMsg]:
         """Handle the call to method_name.
 
         You should overwrite this method in a subclass.

@@ -5,6 +5,7 @@ This backend uses the Jedi library:
 https://github.com/davidhalter/jedi
 
 """
+from __future__ import annotations
 
 import sys
 import traceback
@@ -16,23 +17,48 @@ import jedi
 
 
 from elpy import rpc
-from elpy.rpc import Fault, Msg
+from elpy.rpc import Fault, ResultMsg
 
-class NameMsg(Msg):
+class NameMsg(ResultMsg):
     name: str
     offset: int
     filename: Path
+    @classmethod
+    def from_name(
+            cls, x: jedi.api.classes.Name, offset: int) -> NameMsg:
+        if type(x) is not jedi.api.classes.Name:
+            raise TypeError("Must be jedi.api.classes.Name")
+        return cls(name=x.name, filename=x.module_path, offset=offset)
 
-class RefactoringMsg(Msg):
+
+class RefactoringMsg(ResultMsg):
     success: bool
     project_path: Path
     diff: str
     changed_files: List[Path]
 
-class ErrorMsg(Msg):
+    @classmethod
+    def from_refactoring(
+            cls, x: jedi.api.refactoring.Refactoring) -> RefactoringMsg:
+        if type(x) is not jedi.api.refactoring.Refactoring:
+            raise TypeError("Must be jedi.api.refactoring.Refactoring type")
+        return cls(
+            success=True,
+            project_path=x._inference_state.project._path,
+            diff=x.get_diff(),
+            changed_files=list(x.get_changed_files().keys()))
+
+
+class ErrorMsg(ResultMsg):
     success: bool
     error_type: str
     error_msg: str
+
+    @classmethod
+    def from_error(cls, e):
+        return ErrorMsg(success=False,
+                        error_type=type(e).__name__,
+                        error_msg=str(e))
 
 # in case pkg_resources is not properly installed
 # (see https://github.com/jorgenschaefer/elpy/issues/1674).
@@ -64,25 +90,6 @@ class JediBackend(object):
                                                        safe=False)
         self.completions = {}
         sys.path.append(project_root)
-
-    def __make_error_msg(self, e: Type[Exception]) -> dict:
-        return ErrorMsg(success=False,
-                        error_type=type(e).__name__,
-                        error_msg=str(e))
-    
-    def __make_refactoring_msg(self, x: jedi.api.refactoring.Refactoring):
-        if type(x) is not jedi.api.refactoring.Refactoring:
-            raise TypeError("Must be jedi.api.refactoring.Refactoring type")
-        return RefactoringMsg(
-            success=True,
-            project_path=x._inference_state.project._path,
-            diff=x.get_diff(),
-            changed_files=list(x.get_changed_files().keys()))
-
-    def __make_name_msg(self, x: jedi.api.classes.Name, offset: int):
-        if type(x) is not jedi.api.classes.Name:
-            raise TypeError("Must be jedi.api.classes.Name")
-        return NameMsg(name=x.name, filename=x.module_path, offset=offset)
     
     def rpc_get_completions(self, filename, source, offset):
         line, column = pos_to_linecol(source, offset)
@@ -279,7 +286,7 @@ class JediBackend(object):
         return {"name": name,
                 "doc": onelinedoc}
 
-    def rpc_get_usages(self, filename, source, offset):
+    def rpc_get_usages(self, filename, source, offset) -> List[NameMsg]:
         """Return the uses of the symbol at offset.
 
         Returns a list of occurrences of the symbol, as dicts with the
@@ -303,10 +310,10 @@ class JediBackend(object):
                 with open(name.module_path) as f:
                     text = f.read()
                 offset = linecol_to_pos(text, name.line, name.column)
-            result.append(self.__make_name_msg(name, offset))
+            result.append(NameMsg.from_name(name, offset))
         return result
 
-    def rpc_get_names(self, filename, source, offset):
+    def rpc_get_names(self, filename, source, offset) -> Type[ResultMsg]:
         """Return the list of possible names"""
         names = run_with_debug(jedi, 'get_names',
                                code=source,
@@ -323,7 +330,7 @@ class JediBackend(object):
                 with open(name.module_path) as f:
                     text = f.read()
                 offset = linecol_to_pos(text, name.line, name.column)
-            result.append(self.__make_name_msg(name, offset))
+            result.append(NameMsg.from_name(name, offset))
         return result
         
     def rpc_get_rename_diff(self, filename, source, offset, new_name):
@@ -336,11 +343,12 @@ class JediBackend(object):
                                 column=column,
                                 new_name=new_name)
         except Exception as e:
-            return self.__make_error_msg(e)
-        return self.__make_refactoring_msg(ref)
+            return ErrorMsg.from_error(e)
+        return RefactoringMsg.from_refactoring(ref)
 
-    def rpc_get_extract_variable_diff(self, filename, source, offset, new_name,
-                                      line_beg, line_end, col_beg, col_end):
+    def rpc_get_extract_variable_diff(
+            self, filename, source, offset, new_name,
+            line_beg, line_end, col_beg, col_end) -> Type[ResultMsg]:
         """Get the diff resulting from extracting the selected code"""
         if not hasattr(jedi.Script, "extract_variable"):  # pragma: no cover
             return {'success': "Not available"}
@@ -355,10 +363,11 @@ class JediBackend(object):
         if ref is None:
             return {'success': False}
         else:
-            return self.__make_error_msg(ref)
+            return ErrorMsg.from_error(ref)
 
-    def rpc_get_extract_function_diff(self, filename, source, offset, new_name,
-                                      line_beg, line_end, col_beg, col_end):
+    def rpc_get_extract_function_diff(
+            self, filename, source, offset, new_name,
+            line_beg, line_end, col_beg, col_end) -> Type[ResultMsg]:
         """Get the diff resulting from extracting the selected code"""
         script = jedi.Script(code=source, path=filename,
                              environment=self.environment)
@@ -369,10 +378,10 @@ class JediBackend(object):
                                           until_column=col_end,
                                           new_name=new_name)
         except Exception as e:
-            return self.__make_error_msg(e)
-        return self.__make_refactoring_msg(ref)
+            return ErrorMsg.from_error(e)
+        return RefactoringMsg.from_refactoring(ref)
 
-    def rpc_get_inline_diff(self, filename, source, offset):
+    def rpc_get_inline_diff(self, filename, source, offset) -> Type[ResultMsg]:
         """Get the diff resulting from inlining the selected variable"""
         if not hasattr(jedi.Script, "inline"):  # pragma: no cover
             return {'success': "Not available"}
@@ -385,7 +394,7 @@ class JediBackend(object):
         if ref is None:
             return {'success': False}
         else:
-            return self.__make_refactoring_msg(ref)
+            return RefactoringMsg.from_refactoring(ref)
 
 
 # From the Jedi documentation:
