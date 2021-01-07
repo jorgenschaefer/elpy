@@ -10,6 +10,7 @@ import sys
 import traceback
 import re
 
+from typing import Type
 import jedi
 
 from elpy import rpc
@@ -24,8 +25,6 @@ except ImportError:  # pragma: no cover
         raise Fault("`pkg_resources` could not be imported, "
                     "please reinstall Elpy RPC virtualenv with"
                     " `M-x elpy-rpc-reinstall-virtualenv`", code=400)
-JEDISUP17 = parse_version(jedi.__version__) >= parse_version("0.17.0")
-
 
 class JediBackend(object):
     """The Jedi backend class.
@@ -45,16 +44,12 @@ class JediBackend(object):
                                                        safe=False)
         self.completions = {}
         sys.path.append(project_root)
-        # Backward compatibility to jedi<17
-        if not JEDISUP17:  # pragma: no cover
-            self.rpc_get_completions = self.rpc_get_completions_jedi16
-            self.rpc_get_docstring = self.rpc_get_docstring_jedi16
-            self.rpc_get_definition = self.rpc_get_definition_jedi16
-            self.rpc_get_assignment = self.rpc_get_assignment_jedi16
-            self.rpc_get_calltip = self.rpc_get_calltip_jedi16
-            self.rpc_get_oneline_docstring = self.rpc_get_oneline_docstring_jedi16
-            self.rpc_get_usages = self.rpc_get_usages_jedi16
-            self.rpc_get_names = self.rpc_get_names_jedi16
+
+    def __make_error_msg(self, e: Type[Exception]) -> dict:
+        return {'success': False,
+                'error_type': type(e).__name__,
+                'error_msg': str(e)}
+    
 
     def rpc_get_completions(self, filename, source, offset):
         line, column = pos_to_linecol(source, offset)
@@ -62,23 +57,6 @@ class JediBackend(object):
                                    path=filename,
                                    environment=self.environment,
                                    fun_kwargs={'line': line, 'column': column})
-        self.completions = dict((proposal.name, proposal)
-                                for proposal in proposals)
-        return [{'name': proposal.name.rstrip("="),
-                 'suffix': proposal.complete.rstrip("="),
-                 'annotation': proposal.type,
-                 'meta': proposal.description}
-                for proposal in proposals]
-
-    def rpc_get_completions_jedi16(self, filename, source, offset):
-        # Backward compatibility to jedi<17
-        line, column = pos_to_linecol(source, offset)
-        proposals = run_with_debug(jedi, 'completions',
-                                   source=source, line=line, column=column,
-                                   path=filename, encoding='utf-8',
-                                   environment=self.environment)
-        if proposals is None:
-            return []
         self.completions = dict((proposal.name, proposal)
                                 for proposal in proposals)
         return [{'name': proposal.name.rstrip("="),
@@ -111,25 +89,6 @@ class JediBackend(object):
                                                'column': column,
                                                'follow_imports': True,
                                                'follow_builtin_imports': True})
-        if not locations:
-            return None
-        # Filter uninteresting things
-        if locations[-1].name in ["str", "int", "float", "bool", "tuple",
-                                  "list", "dict"]:
-            return None
-        if locations[-1].docstring():
-            return ('Documentation for {0}:\n\n'.format(
-                locations[-1].full_name) + locations[-1].docstring())
-        else:
-            return None
-
-    def rpc_get_docstring_jedi16(self, filename, source, offset):
-        # Backward compatibility to jedi<17
-        line, column = pos_to_linecol(source, offset)
-        locations = run_with_debug(jedi, 'goto_definitions',
-                                   source=source, line=line, column=column,
-                                   path=filename, encoding='utf-8',
-                                   environment=self.environment)
         if not locations:
             return None
         # Filter uninteresting things
@@ -178,80 +137,9 @@ class JediBackend(object):
             return None
         return (loc.module_path, offset)
 
-    def rpc_get_definition_jedi16(self, filename, source, offset): # pragma: no cover
-        # Backward compatibility to jedi<17
-        line, column = pos_to_linecol(source, offset)
-        locations = run_with_debug(jedi, 'goto_definitions',
-                                   source=source, line=line, column=column,
-                                   path=filename, encoding='utf-8',
-                                   environment=self.environment)
-        # goto_definitions() can return silly stuff like __builtin__
-        # for int variables, so we fall back on goto() in those
-        # cases. See issue #76.
-        if (
-                locations and
-                (locations[0].module_path is None
-                 or locations[0].module_name == 'builtins'
-                 or locations[0].module_name == '__builtin__')
-        ):
-            locations = run_with_debug(jedi, 'goto_assignments',
-                                       source=source, line=line,
-                                       column=column,
-                                       path=filename,
-                                       encoding='utf-8',
-                                       environment=self.environment)
-        if not locations:
-            return None
-        else:
-            loc = locations[-1]
-            try:
-                if loc.module_path:
-                    if loc.module_path == filename:
-                        offset = linecol_to_pos(source,
-                                                loc.line,
-                                                loc.column)
-                    else:
-                        with open(loc.module_path) as f:
-                            offset = linecol_to_pos(f.read(),
-                                                    loc.line,
-                                                    loc.column)
-                else:
-                    return None
-            except IOError:
-                return None
-            return (loc.module_path, offset)
-
     def rpc_get_assignment(self, filename, source, offset):
         raise Fault("Obsolete since jedi 17.0. Please use 'get_definition'.")
 
-    def rpc_get_assignment_jedi16(self, filename, source, offset): # pragma: no cover
-        # Backward compatibility to jedi<17
-        line, column = pos_to_linecol(source, offset)
-        locations = run_with_debug(jedi, 'goto_assignments',
-                                   source=source, line=line, column=column,
-                                   path=filename, encoding='utf-8',
-                                   environment=self.environment)
-
-        if not locations:
-            return None
-        else:
-            loc = locations[-1]
-            try:
-                if loc.module_path:
-                    if loc.module_path == filename:
-                        offset = linecol_to_pos(source,
-                                                loc.line,
-                                                loc.column)
-                    else:
-                        with open(loc.module_path) as f:
-                            offset = linecol_to_pos(f.read(),
-                                                    loc.line,
-                                                    loc.column)
-                else:
-                    return None
-            except IOError:
-                return None
-            return (loc.module_path, offset)
 
     def rpc_get_calltip(self, filename, source, offset):
         line, column = pos_to_linecol(source, offset)
@@ -267,27 +155,6 @@ class JediBackend(object):
                   for param in calls[0].params]
         return {"name": calls[0].name,
                 "index": calls[0].index,
-                "params": params}
-
-    def rpc_get_calltip_jedi16(self, filename, source, offset): # pragma: no cover
-        # Backward compatibility to jedi<17
-        line, column = pos_to_linecol(source, offset)
-        calls = run_with_debug(jedi, 'call_signatures',
-                               source=source, line=line, column=column,
-                               path=filename, encoding='utf-8',
-                               environment=self.environment)
-        if calls:
-            call = calls[0]
-        else:
-            call = None
-        if not call:
-            return None
-        # Strip 'param' added by jedi at the beginning of
-        # parameter names. Should be unecessary for jedi > 0.13.0
-        params = [re.sub("^param ", '', param.description)
-                  for param in call.params]
-        return {"name": call.name,
-                "index": call.index,
                 "params": params}
 
     def rpc_get_calltip_or_oneline_docstring(self, filename, source, offset):
@@ -377,77 +244,6 @@ class JediBackend(object):
         return {"name": name,
                 "doc": onelinedoc}
 
-    def rpc_get_oneline_docstring_jedi16(self, filename, source, offset): # pragma: no cover
-        """Return a oneline docstring for the symbol at offset"""
-        # Backward compatibility to jedi<17
-        line, column = pos_to_linecol(source, offset)
-        definitions = run_with_debug(jedi, 'goto_definitions',
-                                     source=source, line=line, column=column,
-                                     path=filename, encoding='utf-8',
-                                     environment=self.environment)
-        # avoid unintersting stuff
-        try:
-            if definitions[0].name in ["str", "int", "float", "bool", "tuple",
-                                       "list", "dict"]:
-                return None
-        except:
-            pass
-        assignments = run_with_debug(jedi, 'goto_assignments',
-                                     source=source, line=line, column=column,
-                                     path=filename, encoding='utf-8',
-                                     environment=self.environment)
-
-        if definitions:
-            definition = definitions[0]
-        else:
-            definition = None
-        if assignments:
-            assignment = assignments[0]
-        else:
-            assignment = None
-        if definition:
-            # Get name
-            if definition.type in ['function', 'class']:
-                raw_name = definition.name
-                name = '{}()'.format(raw_name)
-                doc = definition.docstring().split('\n')
-            elif definition.type in ['module']:
-                raw_name = definition.name
-                name = '{} {}'.format(raw_name, definition.type)
-                doc = definition.docstring().split('\n')
-            elif (definition.type in ['instance']
-                  and hasattr(assignment, "name")):
-                raw_name = assignment.name
-                name = raw_name
-                doc = assignment.docstring().split('\n')
-            else:
-                return None
-            # Keep only the first paragraph that is not a function declaration
-            lines = []
-            call = "{}(".format(raw_name)
-            # last line
-            doc.append('')
-            for i in range(len(doc)):
-                if doc[i] == '' and len(lines) != 0:
-                    paragraph = " ".join(lines)
-                    lines = []
-                    if call != paragraph[0:len(call)]:
-                        break
-                    paragraph = ""
-                    continue
-                lines.append(doc[i])
-            # Keep only the first sentence
-            onelinedoc = paragraph.split('. ', 1)
-            if len(onelinedoc) == 2:
-                onelinedoc = onelinedoc[0] + '.'
-            else:
-                onelinedoc = onelinedoc[0]
-            if onelinedoc == '':
-                onelinedoc = "No documentation"
-            return {"name": name,
-                    "doc": onelinedoc}
-        return None
-
     def rpc_get_usages(self, filename, source, offset):
         """Return the uses of the symbol at offset.
 
@@ -477,36 +273,6 @@ class JediBackend(object):
                            "offset": offset})
         return result
 
-    def rpc_get_usages_jedi16(self, filename, source, offset): # pragma: no cover
-        """Return the uses of the symbol at offset.
-
-        Returns a list of occurrences of the symbol, as dicts with the
-        fields name, filename, and offset.
-
-        """
-        # Backward compatibility to jedi<17
-        line, column = pos_to_linecol(source, offset)
-        uses = run_with_debug(jedi, 'usages',
-                              source=source, line=line, column=column,
-                              path=filename, encoding='utf-8',
-                              environment=self.environment)
-        if uses is None:
-            return None
-        result = []
-        for use in uses:
-            if use.module_path == filename:
-                offset = linecol_to_pos(source, use.line, use.column)
-            elif use.module_path is not None:
-                with open(use.module_path) as f:
-                    text = f.read()
-                offset = linecol_to_pos(text, use.line, use.column)
-
-            result.append({"name": use.name,
-                           "filename": use.module_path,
-                           "offset": offset})
-
-        return result
-
     def rpc_get_names(self, filename, source, offset):
         """Return the list of possible names"""
         names = run_with_debug(jedi, 'get_names',
@@ -528,47 +294,23 @@ class JediBackend(object):
                            "filename": name.module_path,
                            "offset": offset})
         return result
-
-    def rpc_get_names_jedi16(self, filename, source, offset): # pragma: no cover
-        """Return the list of possible names"""
-        # Backward compatibility to jedi<17
-        names = jedi.api.names(source=source,
-                               path=filename, encoding='utf-8',
-                               all_scopes=True,
-                               definitions=True,
-                               references=True)
-
-        result = []
-        for name in names:
-            if name.module_path == filename:
-                offset = linecol_to_pos(source, name.line, name.column)
-            elif name.module_path is not None:
-                with open(name.module_path) as f:
-                    text = f.read()
-                offset = linecol_to_pos(text, name.line, name.column)
-            result.append({"name": name.name,
-                           "filename": name.module_path,
-                           "offset": offset})
-        return result
-
+        
     def rpc_get_rename_diff(self, filename, source, offset, new_name):
         """Get the diff resulting from renaming the thing at point"""
-        if not hasattr(jedi.Script, "rename"):  # pragma: no cover
-            return {'success': "Not available"}
         line, column = pos_to_linecol(source, offset)
-        ren = run_with_debug(jedi, 'rename', code=source,
-                             path=filename,
-                             environment=self.environment,
-                             fun_kwargs={'line': line,
-                                         'column': column,
-                                         'new_name': new_name})
-        if ren is None:
-            return {'success': False}
-        else:
-            return {'success': True,
-                    'project_path': ren._inference_state.project._path,
-                    'diff': ren.get_diff(),
-                    'changed_files': list(ren.get_changed_files().keys())}
+        script = jedi.Script(code=source, path=filename,
+                             environment=self.environment)
+        try:
+            ren = script.extract_function(line=line,
+                                          column=column,
+                                          new_name=new_name)
+        except Exception as e:
+            return self.__make_error_msg(e)
+
+        return {'success': True,
+                'project_path': ren._inference_state.project._path,
+                'diff': ren.get_diff(),
+                'changed_files': list(ren.get_changed_files().keys())}
 
     def rpc_get_extract_variable_diff(self, filename, source, offset, new_name,
                                       line_beg, line_end, col_beg, col_end):
@@ -594,23 +336,20 @@ class JediBackend(object):
     def rpc_get_extract_function_diff(self, filename, source, offset, new_name,
                                       line_beg, line_end, col_beg, col_end):
         """Get the diff resulting from extracting the selected code"""
-        if not hasattr(jedi.Script, "extract_function"):  # pragma: no cover
-            return {'success': "Not available"}
-        ren = run_with_debug(jedi, 'extract_function', code=source,
-                             path=filename,
-                             environment=self.environment,
-                             fun_kwargs={'line': line_beg,
-                                         'until_line': line_end,
-                                         'column': col_beg,
-                                         'until_column': col_end,
-                                         'new_name': new_name})
-        if ren is None:
-            return {'success': False}
-        else:
-            return {'success': True,
-                    'project_path': ren._inference_state.project._path,
-                    'diff': ren.get_diff(),
-                    'changed_files': list(ren.get_changed_files().keys())}
+        script = jedi.Script(code=source, path=filename,
+                             environment=self.environment)
+        try:
+            ren = script.extract_function(line=line_beg,
+                                          until_line=line_end,
+                                          column=col_beg,
+                                          until_column=col_end,
+                                          new_name=new_name)
+        except Exception as e:
+            return self.__make_error_msg(e)
+        return {'success': True,
+                'project_path': ren._inference_state.project._path,
+                'diff': ren.get_diff(),
+                'changed_files': list(ren.get_changed_files().keys())}
 
     def rpc_get_inline_diff(self, filename, source, offset):
         """Get the diff resulting from inlining the selected variable"""
@@ -682,9 +421,8 @@ def run_with_debug(jedi, name, fun_kwargs={}, *args, **kwargs):
     except Exception as e:
         if isinstance(e, re_raise):
             raise
-        if JEDISUP17:
-            if isinstance(e, jedi.RefactoringError):
-                return None
+        if isinstance(e, jedi.RefactoringError):
+            return None
         # Bug jedi#485
         if (
                 isinstance(e, ValueError) and
