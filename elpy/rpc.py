@@ -10,7 +10,10 @@ See the documentation of the JSONRPCServer class for further details.
 import json
 import sys
 import traceback
+from pydantic import BaseModel
 
+class Msg(BaseModel):
+    pass
 
 class JSONRPCServer(object):
     """Simple JSON-RPC-like server.

@@ -29,6 +29,6 @@ setup(
     ],
     packages=find_packages(),
     include_package_data=True,
-    install_requires=["flake8>=2.0"],
+    install_requires=["flake8>=2.0", "pydantic"],
     test_suite="elpy"
 )

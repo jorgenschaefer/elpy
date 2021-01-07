@@ -13,11 +13,13 @@ import re
 from typing import Type
 import jedi
 
+
 from elpy import rpc
 from elpy.rpc import Fault
 
 # in case pkg_resources is not properly installed
 # (see https://github.com/jorgenschaefer/elpy/issues/1674).
+
 try:
     from pkg_resources import parse_version
 except ImportError:  # pragma: no cover
@@ -37,6 +39,7 @@ class JediBackend(object):
     name = "jedi"
 
     def __init__(self, project_root, environment_binaries_path):
+            
         self.project_root = project_root
         self.environment = None
         if environment_binaries_path is not None:
@@ -50,7 +53,21 @@ class JediBackend(object):
                 'error_type': type(e).__name__,
                 'error_msg': str(e)}
     
+    def __make_refactoring_msg(self, x: jedi.api.refactoring.Refactoring):
+        if type(x) is not jedi.api.refactoring.Refactoring:
+            raise TypeError("Must be jedi.api.refactoring.Refactoring type")
+        return {'success': True,
+                'project_path': str(x._inference_state.project._path),
+                'diff': x.get_diff(),
+                'changed_files': list(map(str, x.get_changed_files().keys()))}
 
+    def __make_name_msg(self, x: jedi.api.classes.Name, offset: int):
+        if type(x) is not jedi.api.classes.Name:
+            raise TypeError("Must be jedi.api.classes.Name")
+        return {"name": x.name,
+                "filename": str(x.module_path),
+                "offset": offset}
+    
     def rpc_get_completions(self, filename, source, offset):
         line, column = pos_to_linecol(source, offset)
         proposals = run_with_debug(jedi, 'complete', code=source,
@@ -111,6 +128,7 @@ class JediBackend(object):
                                                'column': column,
                                                'follow_imports': True,
                                                'follow_builtin_imports': True})
+
         if not locations:
             return None
         # goto_definitions() can return silly stuff like __builtin__
@@ -135,7 +153,7 @@ class JediBackend(object):
                                             loc.column)
         except IOError:  # pragma: no cover
             return None
-        return (loc.module_path, offset)
+        return (str(loc.module_path), offset)
 
     def rpc_get_assignment(self, filename, source, offset):
         raise Fault("Obsolete since jedi 17.0. Please use 'get_definition'.")
@@ -252,25 +270,23 @@ class JediBackend(object):
 
         """
         line, column = pos_to_linecol(source, offset)
-        uses = run_with_debug(jedi, 'get_references',
+        names = run_with_debug(jedi, 'get_references',
                               code=source,
                               path=filename,
                               environment=self.environment,
                               fun_kwargs={'line': line,
                                           'column': column})
-        if uses is None:
+        if names is None:
             return None
         result = []
-        for use in uses:
-            if use.module_path == filename:
-                offset = linecol_to_pos(source, use.line, use.column)
-            elif use.module_path is not None:
-                with open(use.module_path) as f:
+        for name in names:
+            if name.module_path == filename:
+                offset = linecol_to_pos(source, name.line, name.column)
+            elif name.module_path is not None:
+                with open(name.module_path) as f:
                     text = f.read()
-                offset = linecol_to_pos(text, use.line, use.column)
-            result.append({"name": use.name,
-                           "filename": use.module_path,
-                           "offset": offset})
+                offset = linecol_to_pos(text, name.line, name.column)
+            result.append(self.__make_name_msg(name, offset))
         return result
 
     def rpc_get_names(self, filename, source, offset):
@@ -290,9 +306,7 @@ class JediBackend(object):
                 with open(name.module_path) as f:
                     text = f.read()
                 offset = linecol_to_pos(text, name.line, name.column)
-            result.append({"name": name.name,
-                           "filename": name.module_path,
-                           "offset": offset})
+            result.append(self.__make_name_msg(name, offset))
         return result
         
     def rpc_get_rename_diff(self, filename, source, offset, new_name):
@@ -301,23 +315,19 @@ class JediBackend(object):
         script = jedi.Script(code=source, path=filename,
                              environment=self.environment)
         try:
-            ren = script.extract_function(line=line,
-                                          column=column,
-                                          new_name=new_name)
+            ref = script.rename(line=line,
+                                column=column,
+                                new_name=new_name)
         except Exception as e:
             return self.__make_error_msg(e)
-
-        return {'success': True,
-                'project_path': ren._inference_state.project._path,
-                'diff': ren.get_diff(),
-                'changed_files': list(ren.get_changed_files().keys())}
+        return self.__make_refactoring_msg(ref)
 
     def rpc_get_extract_variable_diff(self, filename, source, offset, new_name,
                                       line_beg, line_end, col_beg, col_end):
         """Get the diff resulting from extracting the selected code"""
         if not hasattr(jedi.Script, "extract_variable"):  # pragma: no cover
             return {'success': "Not available"}
-        ren = run_with_debug(jedi, 'extract_variable', code=source,
+        ref = run_with_debug(jedi, 'extract_variable', code=source,
                              path=filename,
                              environment=self.environment,
                              fun_kwargs={'line': line_beg,
@@ -325,13 +335,10 @@ class JediBackend(object):
                                          'column': col_beg,
                                          'until_column': col_end,
                                          'new_name': new_name})
-        if ren is None:
+        if ref is None:
             return {'success': False}
         else:
-            return {'success': True,
-                    'project_path': ren._inference_state.project._path,
-                    'diff': ren.get_diff(),
-                    'changed_files': list(ren.get_changed_files().keys())}
+            return self.__make_error_msg(ref)
 
     def rpc_get_extract_function_diff(self, filename, source, offset, new_name,
                                       line_beg, line_end, col_beg, col_end):
@@ -339,35 +346,29 @@ class JediBackend(object):
         script = jedi.Script(code=source, path=filename,
                              environment=self.environment)
         try:
-            ren = script.extract_function(line=line_beg,
+            ref = script.extract_function(line=line_beg,
                                           until_line=line_end,
                                           column=col_beg,
                                           until_column=col_end,
                                           new_name=new_name)
         except Exception as e:
             return self.__make_error_msg(e)
-        return {'success': True,
-                'project_path': ren._inference_state.project._path,
-                'diff': ren.get_diff(),
-                'changed_files': list(ren.get_changed_files().keys())}
+        return self.__make_refactoring_msg(ref)
 
     def rpc_get_inline_diff(self, filename, source, offset):
         """Get the diff resulting from inlining the selected variable"""
         if not hasattr(jedi.Script, "inline"):  # pragma: no cover
             return {'success': "Not available"}
         line, column = pos_to_linecol(source, offset)
-        ren = run_with_debug(jedi, 'inline', code=source,
+        ref = run_with_debug(jedi, 'inline', code=source,
                              path=filename,
                              environment=self.environment,
                              fun_kwargs={'line': line,
                                          'column': column})
-        if ren is None:
+        if ref is None:
             return {'success': False}
         else:
-            return {'success': True,
-                    'project_path': ren._inference_state.project._path,
-                    'diff': ren.get_diff(),
-                    'changed_files': list(ren.get_changed_files().keys())}
+            return self.__make_refactoring_msg(ref)
 
 
 # From the Jedi documentation:

@@ -629,35 +629,7 @@ class RPCGetDefinitionTests(GenericRPCTests):
         self.backend.rpc_get_definition = self.backend.rpc_get_definition_jedi16
         self.test_should_return_definition_location_same_file()
         self.backend.rpc_get_definition = backup
-
-
-class RPCGetAssignmentTests():
-    METHOD = "rpc_get_assignment"
-
-    def test_should_raise_fault(self):
-        if jedibackend.JEDISUP17:
-            with self.assertRaises(Fault):
-                self.backend.rpc_get_assignment("test.py", "dummy code", 1)
-
-    def test_should_handle_jedi16(self):
-        backup = self.backend.rpc_get_assignment
-        self.backend.rpc_get_assignment = self.backend.rpc_get_assignment_jedi16
-        source, offset = source_and_offset("import threading\n"
-                                           "def test_function(a, b):\n"
-                                           "    return a + b\n"
-                                           "\n"
-                                           "test_func_|_tion(\n")
-        filename = self.project_file("test.py", source)
-
-        location = self.backend.rpc_get_assignment(filename,
-                                                   source,
-                                                   offset)
-
-        self.assertEqual(location[0], filename)
-        # On def or on the function name
-        self.assertIn(location[1], (17, 21))
-        self.backend.rpc_get_assignment = backup
-
+        
 
 class RPCGetCalltipTests(GenericRPCTests):
     METHOD = "rpc_get_calltip"
@@ -910,8 +882,6 @@ class RPCGetOnelineDocstringTests(GenericRPCTests):
         self.backend.rpc_get_oneline_docstring = backup
 
 
-@unittest.skipIf(not jedibackend.JEDISUP17,
-                 "Refactoring not available with jedi<17")
 @unittest.skipIf(sys.version_info < (3, 6),
                  "Jedi refactoring not available for python < 3.6")
 class RPCGetRenameDiffTests(object):
@@ -941,8 +911,6 @@ class RPCGetRenameDiffTests(object):
         self.assertFalse(diff['success'])
 
 
-@unittest.skipIf(not jedibackend.JEDISUP17,
-                 "Refactoring not available with jedi<17")
 @unittest.skipIf(sys.version_info < (3, 6),
                  "Jedi refactoring not available for python < 3.6")
 class RPCGetExtractFunctionDiffTests(object):
@@ -966,8 +934,6 @@ class RPCGetExtractFunctionDiffTests(object):
                       diff['diff'])
 
 
-@unittest.skipIf(not jedibackend.JEDISUP17,
-                 "Refactoring not available with jedi<17")
 @unittest.skipIf(sys.version_info < (3, 6),
                  "Jedi refactoring not available for python < 3.6")
 class RPCGetExtractVariableDiffTests(object):
@@ -988,8 +954,6 @@ class RPCGetExtractVariableDiffTests(object):
                       diff['diff'])
 
 
-@unittest.skipIf(not jedibackend.JEDISUP17,
-                 "Refactoring not available with jedi<17")
 @unittest.skipIf(sys.version_info < (3, 6),
                  "Jedi refactoring not available for python < 3.6")
 class RPCGetInlineDiffTests(object):
