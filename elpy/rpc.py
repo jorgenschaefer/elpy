@@ -20,7 +20,7 @@ class Msg(BaseModel):
 
 class ErrorMsg(BaseModel):
     id: int
-    error: Union[dict, Msg]
+    error: Union[dict, Type[Msg]]
 
 
 class ResultMsg(BaseModel):
