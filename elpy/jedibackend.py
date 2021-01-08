@@ -14,7 +14,7 @@ from functools import reduce
 from io import StringIO
 from bisect import bisect_right
 
-from typing import Type, List, Optional, NamedTuple, Any
+from typing import Type, List, Optional, Union, NamedTuple, Any
 from pathlib import Path
 import jedi
 
@@ -95,8 +95,9 @@ class JediBackend(object):
         sys.path.append(project_root)
     
     def rpc_get_completions(self, filename, source, offset):
-        line, column = pos_to_linecol(source, offset)
-        proposals = run_with_debug(jedi, 'complete', code=source,
+        src = SourceCode(filename, source)
+        line, column = src.get_pos(offset)
+        proposals = run_with_debug(jedi, 'complete', code=str(src),
                                    path=filename,
                                    environment=self.environment,
                                    fun_kwargs={'line': line, 'column': column})
@@ -120,7 +121,8 @@ class JediBackend(object):
 
     def rpc_get_docstring(self, filename: str, source: str, offset: int
                           ) -> Optional[Any]:
-        line, column = pos_to_linecol(source, offset)
+        src = SourceCode(filename, source)
+        line, column = src.get_pos(offset)
         locations = run_with_debug(jedi, 'goto',
                                    code=source,
                                    path=filename,
@@ -141,7 +143,7 @@ class JediBackend(object):
 
     def rpc_get_definition(self, filename, source, offset):
         line, column = pos_to_linecol(source, offset)
-        src = SourceFile(filename, source)
+        src = SourceCode(filename, source)
         line, column = src.get_pos(offset)
         locations = run_with_debug(jedi, 'goto',
                                    code=source,
@@ -168,7 +170,7 @@ class JediBackend(object):
             if loc.module_path == Path(filename):
                 offset = src.get_offset(loc.line, loc.column)
             else:
-                offset = SourceFile(
+                offset = SourceCode(
                     path=loc.module_path).get_offset(loc.line, loc.column)
         except IOError:  # pragma: no cover
             return None
@@ -224,9 +226,10 @@ class JediBackend(object):
 
     def rpc_get_oneline_docstring(self, filename, source, offset):
         """Return a oneline docstring for the symbol at offset"""
-        line, column = pos_to_linecol(source, offset)
+        src = SourceCode(filename, source)
+        line, column = src.get_pos(offset)
         definitions = run_with_debug(jedi, 'goto',
-                                     code=source,
+                                     code=str(src),
                                      path=filename,
                                      environment=self.environment,
                                      fun_kwargs={'line': line,
@@ -289,9 +292,10 @@ class JediBackend(object):
         fields name, filename, and offset.
 
         """
-        line, column = pos_to_linecol(source, offset)
+        src = SourceCode(filename, source)
+        line, column = src.get_pos(offset)
         names = run_with_debug(jedi, 'get_references',
-                              code=source,
+                              code=str(src),
                               path=filename,
                               environment=self.environment,
                               fun_kwargs={'line': line,
@@ -301,18 +305,18 @@ class JediBackend(object):
         result = []
         for name in names:
             if name.module_path == Path(filename):
-                offset = linecol_to_pos(source, name.line, name.column)
+                offset = src.get_offset(name.line, name.column)
             elif name.module_path is not None:
-                with open(name.module_path) as f:
-                    text = f.read()
-                offset = linecol_to_pos(text, name.line, name.column)
+                other_src = SourceCode(name.module_path)
+                offset = other_src.get_offset(name.line, name.column)
             result.append(NameMsg.from_name(name, offset))
         return result
 
     def rpc_get_names(self, filename, source, offset) -> Type[ResultMsg]:
         """Return the list of possible names"""
+        src = SourceCode(filename, source)
         names = run_with_debug(jedi, 'get_names',
-                               code=source,
+                               code=str(src),
                                path=filename,
                                environment=self.environment,
                                fun_kwargs={'all_scopes': True,
@@ -320,19 +324,19 @@ class JediBackend(object):
                                            'references': True})
         result = []
         for name in names:
-            if name.module_path == Path(filename):
-                offset = linecol_to_pos(source, name.line, name.column)
+            if name.module_path == src.path:
+                offset = src.get_offset(name.line, name.column)
             elif name.module_path is not None:
-                with open(name.module_path) as f:
-                    text = f.read()
-                offset = linecol_to_pos(text, name.line, name.column)
+                other_src = SourceCode(name.module_path)
+                offset = other_src.get_offset(name.line, name.column)
             result.append(NameMsg.from_name(name, offset))
         return result
         
     def rpc_get_rename_diff(self, filename, source, offset, new_name):
         """Get the diff resulting from renaming the thing at point"""
-        line, column = pos_to_linecol(source, offset)
-        script = jedi.Script(code=source, path=filename,
+        src = SourceCode(filename, source)
+        line, column = src.get_pos(offset)
+        script = jedi.Script(code=str(src), path=filename,
                              environment=self.environment)
         try:
             ref = script.rename(line=line,
@@ -377,8 +381,9 @@ class JediBackend(object):
 
     def rpc_get_inline_diff(self, filename, source, offset) -> Type[ResultMsg]:
         """Get the diff resulting from inlining the selected variable"""
-        line, column = pos_to_linecol(source, offset)
-        ref = run_with_debug(jedi, 'inline', code=source,
+        src = SourceCode(filename, source)
+        line, column = src.get_pos(offset)
+        ref = run_with_debug(jedi, 'inline', code=str(src),
                              path=filename,
                              environment=self.environment,
                              fun_kwargs={'line': line,
@@ -399,17 +404,18 @@ class Pos(NamedTuple):
     line: int
     col: int
 
-class SourceFile:
+class SourceCode:
     _source: Optional[str]
     _path: Path
     _index: List[int]
     
     def __init__(
-            self, path: Path, source: Optional[str] = None,
+            self, path: Union[None, str, Path], source: Optional[str] = None,
             line_start: int = 1, col_start: int = 0):
+        if path is not None:
+            self._path = Path(path)
         self._source = source
-        self._path = path
-        self._index = None
+        self._line_offsets = None
         self._line_start = line_start
         self._col_start = col_start
         
@@ -419,7 +425,11 @@ class SourceFile:
                 self._source = fh.read()
         return self._source
 
-    def get_path(self):
+    def __str__(self):
+        return self.get_source()
+
+    @property
+    def path(self) -> Optional[Path]:
         return self._path
 
     def get_pos(self, offset: 0) -> Pos:
@@ -430,7 +440,7 @@ class SourceFile:
         This is how Jedi wants it. Don't ask me why.
         
         """
-        idx = self._get_index()
+        idx = self._get_line_offsets()
         line_num = bisect_right(idx, offset) - 1
         line_offset = idx[line_num]
         return Pos(line_num + self._line_start,
@@ -444,17 +454,28 @@ class SourceFile:
         This is how Jedi wants it. Don't ask me why.
         
         """
-        idx = self._get_index()
-        return idx[line - self._line_start] + col - self._col_start
+        line_offsets = self._get_line_offsets()
+        line_from_zero = line - self._line_start
+        col_from_zero = col - self._col_start
+        try:
+            cur_line_offset = line_offsets[line_from_zero]
+        except IndexError:
+            raise ValueError(f"Text does not have {line} lines.")
+        offset =  cur_line_offset + col_from_zero
+        next_line_offset = line_offsets[line_from_zero + 1]
+        if not offset < next_line_offset:
+            raise ValueError(
+                f"Line {line} column {col} is not within the text")
+        return offset
     
-    def _get_index(self) -> List[int]:
-        if self._index is None:
-            self._index = [0]
+    def _get_line_offsets(self) -> List[int]:
+        if self._line_offsets is None:
+            self._line_offsets = [0]
             i = 0
             for line in StringIO(self.get_source()):
                 i += len(line)
-                self._index.append(i)
-        return self._index
+                self._line_offsets.append(i)
+        return self._line_offsets
 
 
 def pos_to_linecol(text, pos):
@@ -469,28 +490,6 @@ def pos_to_linecol(text, pos):
     line = text.count("\n", 0, line_start) + 1
     col = pos - line_start
     return line, col
-
-
-def linecol_to_pos(text, line, col):
-    """Return the offset of this line and column in text.
-
-    Lines are one-based, columns zero-based.
-
-    This is how Jedi wants it. Don't ask me why.
-
-    """
-    nth_newline_offset = 0
-    for i in range(line - 1):
-        new_offset = text.find("\n", nth_newline_offset)
-        if new_offset < 0:
-            raise ValueError("Text does not have {0} lines."
-                             .format(line))
-        nth_newline_offset = new_offset + 1
-    offset = nth_newline_offset + col
-    if offset > len(text):
-        raise ValueError("Line {0} column {1} is not within the text"
-                         .format(line, col))
-    return offset
 
 
 def run_with_debug(jedi, name, fun_kwargs={}, *args, **kwargs):
