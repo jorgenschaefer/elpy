@@ -23,7 +23,8 @@ from pathlib import Path
 from elpy.tests import compat
 from elpy.rpc import Fault
 from elpy import jedibackend
-from elpy.jedibackend import NameMsg
+from elpy.jedibackend import NameResult
+
 
 class BackendTestCase(unittest.TestCase):
     """Base class for backend tests.
@@ -1001,9 +1002,12 @@ class RPCGetUsagesTests(GenericRPCTests):
                                              offset)
 
         self.assertEqual(usages,
-                         [NameMsg(name='x', offset=8, filename=filename),
-                          NameMsg(name='x', offset=23, filename=filename),
-                          NameMsg(name='x', offset=27, filename=filename)])
+                         [NameResult
+(name='x', offset=8, filename=filename),
+                          NameResult
+(name='x', offset=23, filename=filename),
+                          NameResult
+(name='x', offset=27, filename=filename)])
 
     def test_should_return_uses_in_other_file(self):
         file1 = self.project_file("file1.py", "")
@@ -1016,8 +1020,10 @@ class RPCGetUsagesTests(GenericRPCTests):
                                              source,
                                              offset)
 
-        self.assertEqual(usages, [NameMsg(name="x", filename=file1, offset=19),
-                                  NameMsg(name="x", filename=file2, offset=5)])
+        self.assertEqual(usages, [NameResult
+(name="x", filename=file1, offset=19),
+                                  NameResult
+(name="x", filename=file2, offset=5)])
 
     def test_should_not_fail_without_symbol(self):
         filename = self.project_file("file.py", "")

@@ -5,7 +5,7 @@ import unittest
 import sys
 
 from elpy import rpc
-from elpy.rpc import ResultMsg, ErrorMsg, ResponceMsg
+from elpy.rpc import Result, ErrorMsg, ResponceMsg
 from elpy.tests.compat import StringIO
 
 
@@ -79,7 +79,7 @@ class TestReadJson(TestJSONRPCServer):
 
 class TestWriteJson(TestJSONRPCServer):
     def test_result_msg_shuld_work_with_msg(self):
-        class DataMsg(ResultMsg):
+        class DataMsg(Result):
             data: str
         self.rpc.send_msg(
             ResponceMsg(id=100, result=DataMsg(data="some data")))
@@ -110,7 +110,7 @@ class TestWriteJson(TestJSONRPCServer):
             self.read(), '{"id": 100, "error": {"error": "error msg"}}\n')
 
     def test_error_msg__shuld_work_with_msg(self):
-        class MyErrorMsg(ResultMsg):
+        class MyErrorMsg(Result):
             error: str
         self.rpc.send_msg(
             ErrorMsg(id=100, error=MyErrorMsg(error="error msg")))

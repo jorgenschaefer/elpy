@@ -20,22 +20,22 @@ import jedi
 
 
 from elpy import rpc
-from elpy.rpc import Fault, ResultMsg
+from elpy.rpc import Fault, Result
 
-class NameMsg(ResultMsg):
+class NameResult(Result):
     name: str
     offset: int
     filename: str
 
     @classmethod
     def from_name(
-            cls, x: jedi.api.classes.Name, offset: int) -> NameMsg:
+            cls, x: jedi.api.classes.Name, offset: int) -> NameResult:
         if type(x) is not jedi.api.classes.Name:
             raise TypeError("Must be jedi.api.classes.Name")
         return cls(name=x.name, filename=str(x.module_path), offset=offset)
 
 
-class RefactoringMsg(ResultMsg):
+class RefactoringResult(Result):
     success: bool
     project_path: Path
     diff: str
@@ -50,7 +50,7 @@ class RefactoringMsg(ResultMsg):
     
     @classmethod
     def from_refactoring(
-            cls, x: jedi.api.refactoring.Refactoring) -> RefactoringMsg:
+            cls, x: jedi.api.refactoring.Refactoring) -> RefactoringResult:
         if type(x) is not jedi.api.refactoring.Refactoring:
             raise TypeError("Must be jedi.api.refactoring.Refactoring type")
         return cls(
@@ -285,7 +285,7 @@ class JediBackend(object):
         return {"name": name,
                 "doc": onelinedoc}
 
-    def rpc_get_usages(self, filename, source, offset) -> List[NameMsg]:
+    def rpc_get_usages(self, filename, source, offset) -> List[NameResult]:
         """Return the uses of the symbol at offset.
 
         Returns a list of occurrences of the symbol, as dicts with the
@@ -309,10 +309,10 @@ class JediBackend(object):
             elif name.module_path is not None:
                 other_src = SourceCode(name.module_path)
                 offset = other_src.get_offset(name.line, name.column)
-            result.append(NameMsg.from_name(name, offset))
+            result.append(NameResult.from_name(name, offset))
         return result
 
-    def rpc_get_names(self, filename, source, offset) -> Type[ResultMsg]:
+    def rpc_get_names(self, filename, source, offset) -> Type[Result]:
         """Return the list of possible names"""
         src = SourceCode(filename, source)
         names = run_with_debug(jedi, 'get_names',
@@ -329,7 +329,7 @@ class JediBackend(object):
             elif name.module_path is not None:
                 other_src = SourceCode(name.module_path)
                 offset = other_src.get_offset(name.line, name.column)
-            result.append(NameMsg.from_name(name, offset))
+            result.append(NameResult.from_name(name, offset))
         return result
         
     def rpc_get_rename_diff(self, filename, source, offset, new_name):
@@ -343,12 +343,12 @@ class JediBackend(object):
                                 column=column,
                                 new_name=new_name)
         except Exception as e:
-            return RefactoringMsg.fail(error_msg=str(e))
-        return RefactoringMsg.from_refactoring(ref)
+            return RefactoringResult.fail(error_msg=str(e))
+        return RefactoringResult.from_refactoring(ref)
 
     def rpc_get_extract_variable_diff(
             self, filename, source, offset, new_name,
-            line_beg, line_end, col_beg, col_end) -> Type[ResultMsg]:
+            line_beg, line_end, col_beg, col_end) -> Type[Result]:
         """Get the diff resulting from extracting the selected code"""
         ref = run_with_debug(jedi, 'extract_variable', code=source,
                              path=filename,
@@ -359,13 +359,13 @@ class JediBackend(object):
                                          'until_column': col_end,
                                          'new_name': new_name})
         if ref is None:
-            return RefactoringMsg.fail()
+            return RefactoringResult.fail()
         else:
-            return RefactoringMsg.from_refactoring(ref)
+            return RefactoringResult.from_refactoring(ref)
 
     def rpc_get_extract_function_diff(
             self, filename, source, offset, new_name,
-            line_beg, line_end, col_beg, col_end) -> Type[ResultMsg]:
+            line_beg, line_end, col_beg, col_end) -> Type[Result]:
         """Get the diff resulting from extracting the selected code"""
         script = jedi.Script(code=source, path=filename,
                              environment=self.environment)
@@ -376,10 +376,10 @@ class JediBackend(object):
                                           until_column=col_end,
                                           new_name=new_name)
         except Exception as e:
-            return RefactoringMsg.fail(error_msg=str(e))
-        return RefactoringMsg.from_refactoring(ref)
+            return RefactoringResult.fail(error_msg=str(e))
+        return RefactoringResult.from_refactoring(ref)
 
-    def rpc_get_inline_diff(self, filename, source, offset) -> Type[ResultMsg]:
+    def rpc_get_inline_diff(self, filename, source, offset) -> Type[Result]:
         """Get the diff resulting from inlining the selected variable"""
         src = SourceCode(filename, source)
         line, column = src.get_pos(offset)
@@ -389,9 +389,9 @@ class JediBackend(object):
                              fun_kwargs={'line': line,
                                          'column': column})
         if ref is None:
-            return RefactoringMsg.fail()
+            return RefactoringResult.fail()
         else:
-            return RefactoringMsg.from_refactoring(ref)
+            return RefactoringResult.from_refactoring(ref)
 
 
 # From the Jedi documentation:

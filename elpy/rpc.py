@@ -14,18 +14,18 @@ from pydantic import BaseModel
 from typing import Union, Optional, List, Type
 
 
-class ResultMsg(BaseModel):
+class Result(BaseModel):
     pass
 
 
 class ErrorMsg(BaseModel):
     id: int
-    error: Union[dict, Type[ResultMsg]]
+    error: Union[dict, Type[Result]]
 
 
 class ResponceMsg(BaseModel):
     id: int
-    result: Union[dict, List, str, Type[ResultMsg]]
+    result: Union[dict, List, str, Type[Result]]
 
 
 class JSONRPCServer(object):
@@ -83,13 +83,13 @@ class JSONRPCServer(object):
             raise EOFError()
         return json.loads(line)
 
-    def send_msg(self, msg: ResultMsg) -> None:
+    def send_msg(self, msg: Result) -> None:
         """Write an JSON object on a single line.
         """
         self.stdout.write(msg.json() + '\n')
         self.stdout.flush()
         
-    def handle_request(self) -> Type[ResultMsg]:
+    def handle_request(self) -> Type[Result]:
         """Handle a single JSON-RPC request.
 
         Read a request, call the appropriate handler method, and
@@ -111,7 +111,7 @@ class JSONRPCServer(object):
             self.send_msg(msg)
 
     def _make_msg(self, request_id: str, method_name: str, params: List
-                  ) -> Optional[Type[ResultMsg]]:
+                  ) -> Optional[Type[Result]]:
         try:
             method = getattr(self, "rpc_" + method_name, None)
             if method is not None:
@@ -134,7 +134,7 @@ class JSONRPCServer(object):
             return ErrorMsg(error=error, id=request_id)
             
     def handle(self, method_name: str, args: List
-               ) -> Optional[Type[ResultMsg]]:
+               ) -> Optional[Type[Result]]:
         """Handle the call to method_name.
 
         You should overwrite this method in a subclass.

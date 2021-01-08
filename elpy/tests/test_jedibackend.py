@@ -78,7 +78,8 @@ class TestSourceCode(BackendTestCase):
             self.src.get_offset(1, 1)
         self.assertEqual( "Line 1 column 1 is not within the text",
                          str(cm.exception))
-        
+
+
 class TestInit(JediBackendTestCase):
     def test_should_have_jedi_as_name(self):
         self.assertEqual(self.backend.name, "jedi")
