@@ -912,7 +912,6 @@ class RPCGetExtractVariableDiffTests(object):
             new_name,
             line_beg=3, line_end=3,
             col_beg=7, col_end=16)
-        print(diff)
         self.assertIn("-print(a + 1 + b/2)\n+c = a + 1 + b/2\n+print(c)\n",
                       diff.diff)
 
