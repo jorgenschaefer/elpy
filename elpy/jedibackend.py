@@ -10,8 +10,11 @@ from __future__ import annotations
 import sys
 import traceback
 import re
+from functools import reduce
+from io import StringIO
+from bisect import bisect_right
 
-from typing import Type, List
+from typing import Type, List, Optional, NamedTuple, Any
 from pathlib import Path
 import jedi
 
@@ -22,13 +25,14 @@ from elpy.rpc import Fault, ResultMsg
 class NameMsg(ResultMsg):
     name: str
     offset: int
-    filename: Path
+    filename: str
+
     @classmethod
     def from_name(
             cls, x: jedi.api.classes.Name, offset: int) -> NameMsg:
         if type(x) is not jedi.api.classes.Name:
             raise TypeError("Must be jedi.api.classes.Name")
-        return cls(name=x.name, filename=x.module_path, offset=offset)
+        return cls(name=x.name, filename=str(x.module_path), offset=offset)
 
 
 class RefactoringMsg(ResultMsg):
@@ -36,7 +40,14 @@ class RefactoringMsg(ResultMsg):
     project_path: Path
     diff: str
     changed_files: List[Path]
-
+    error_msg: Optional[str]
+    
+    @classmethod
+    def fail(cls, error_msg=""):
+        return cls(
+            success=False, project_path=Path(), diff="", changed_files=[],
+            error_msg=error_msg)
+    
     @classmethod
     def from_refactoring(
             cls, x: jedi.api.refactoring.Refactoring) -> RefactoringMsg:
@@ -48,17 +59,6 @@ class RefactoringMsg(ResultMsg):
             diff=x.get_diff(),
             changed_files=list(x.get_changed_files().keys()))
 
-
-class ErrorMsg(ResultMsg):
-    success: bool
-    error_type: str
-    error_msg: str
-
-    @classmethod
-    def from_error(cls, e):
-        return ErrorMsg(success=False,
-                        error_type=type(e).__name__,
-                        error_msg=str(e))
 
 # in case pkg_resources is not properly installed
 # (see https://github.com/jorgenschaefer/elpy/issues/1674).
@@ -86,8 +86,11 @@ class JediBackend(object):
         self.project_root = project_root
         self.environment = None
         if environment_binaries_path is not None:
-            self.environment = jedi.create_environment(environment_binaries_path,
-                                                       safe=False)
+            try:
+                self.environment = jedi.create_environment(
+                    environment_binaries_path, safe=False)
+            except jedi.api.environment.InvalidPythonEnvironment as e:
+                Fault(message=str(e))
         self.completions = {}
         sys.path.append(project_root)
     
@@ -105,21 +108,18 @@ class JediBackend(object):
                  'meta': proposal.description}
                 for proposal in proposals]
 
-    def rpc_get_completion_docstring(self, completion):
+    def rpc_get_completion_docstring(self, completion) -> Optional[Any]:
         proposal = self.completions.get(completion)
-        if proposal is None:
-            return None
-        else:
+        if proposal is not None:
             return proposal.docstring(fast=False)
 
     def rpc_get_completion_location(self, completion):
         proposal = self.completions.get(completion)
-        if proposal is None:
-            return None
-        else:
-            return (proposal.module_path, proposal.line)
+        if proposal is not None:
+            return (str(proposal.module_path), proposal.line)
 
-    def rpc_get_docstring(self, filename, source, offset):
+    def rpc_get_docstring(self, filename: str, source: str, offset: int
+                          ) -> Optional[Any]:
         line, column = pos_to_linecol(source, offset)
         locations = run_with_debug(jedi, 'goto',
                                    code=source,
@@ -138,11 +138,11 @@ class JediBackend(object):
         if locations[-1].docstring():
             return ('Documentation for {0}:\n\n'.format(
                 locations[-1].full_name) + locations[-1].docstring())
-        else:
-            return None
 
     def rpc_get_definition(self, filename, source, offset):
         line, column = pos_to_linecol(source, offset)
+        src = SourceFile(filename, source)
+        line, column = src.get_pos(offset)
         locations = run_with_debug(jedi, 'goto',
                                    code=source,
                                    path=filename,
@@ -165,15 +165,11 @@ class JediBackend(object):
             return None
         loc = locations[-1]
         try:
-            if loc.module_path == filename:
-                offset = linecol_to_pos(source,
-                                        loc.line,
-                                        loc.column)
+            if loc.module_path == Path(filename):
+                offset = src.get_offset(loc.line, loc.column)
             else:
-                with open(loc.module_path) as f:
-                    offset = linecol_to_pos(f.read(),
-                                            loc.line,
-                                            loc.column)
+                offset = SourceFile(
+                    path=loc.module_path).get_offset(loc.line, loc.column)
         except IOError:  # pragma: no cover
             return None
         return (str(loc.module_path), offset)
@@ -304,7 +300,7 @@ class JediBackend(object):
             return None
         result = []
         for name in names:
-            if name.module_path == filename:
+            if name.module_path == Path(filename):
                 offset = linecol_to_pos(source, name.line, name.column)
             elif name.module_path is not None:
                 with open(name.module_path) as f:
@@ -324,7 +320,7 @@ class JediBackend(object):
                                            'references': True})
         result = []
         for name in names:
-            if name.module_path == filename:
+            if name.module_path == Path(filename):
                 offset = linecol_to_pos(source, name.line, name.column)
             elif name.module_path is not None:
                 with open(name.module_path) as f:
@@ -343,15 +339,13 @@ class JediBackend(object):
                                 column=column,
                                 new_name=new_name)
         except Exception as e:
-            return ErrorMsg.from_error(e)
+            return RefactoringMsg.fail(error_msg=str(e))
         return RefactoringMsg.from_refactoring(ref)
 
     def rpc_get_extract_variable_diff(
             self, filename, source, offset, new_name,
             line_beg, line_end, col_beg, col_end) -> Type[ResultMsg]:
         """Get the diff resulting from extracting the selected code"""
-        if not hasattr(jedi.Script, "extract_variable"):  # pragma: no cover
-            return {'success': "Not available"}
         ref = run_with_debug(jedi, 'extract_variable', code=source,
                              path=filename,
                              environment=self.environment,
@@ -361,9 +355,9 @@ class JediBackend(object):
                                          'until_column': col_end,
                                          'new_name': new_name})
         if ref is None:
-            return {'success': False}
+            return RefactoringMsg.fail()
         else:
-            return ErrorMsg.from_error(ref)
+            return RefactoringMsg.from_refactoring(ref)
 
     def rpc_get_extract_function_diff(
             self, filename, source, offset, new_name,
@@ -378,13 +372,11 @@ class JediBackend(object):
                                           until_column=col_end,
                                           new_name=new_name)
         except Exception as e:
-            return ErrorMsg.from_error(e)
+            return RefactoringMsg.fail(error_msg=str(e))
         return RefactoringMsg.from_refactoring(ref)
 
     def rpc_get_inline_diff(self, filename, source, offset) -> Type[ResultMsg]:
         """Get the diff resulting from inlining the selected variable"""
-        if not hasattr(jedi.Script, "inline"):  # pragma: no cover
-            return {'success': "Not available"}
         line, column = pos_to_linecol(source, offset)
         ref = run_with_debug(jedi, 'inline', code=source,
                              path=filename,
@@ -392,7 +384,7 @@ class JediBackend(object):
                              fun_kwargs={'line': line,
                                          'column': column})
         if ref is None:
-            return {'success': False}
+            return RefactoringMsg.fail()
         else:
             return RefactoringMsg.from_refactoring(ref)
 
@@ -403,6 +395,67 @@ class JediBackend(object):
 #   with line #1 as the first line). column represents the current
 #   column/indent of the cursor (starting with zero). source_path
 #   should be the path of your file in the file system.
+class Pos(NamedTuple):
+    line: int
+    col: int
+
+class SourceFile:
+    _source: Optional[str]
+    _path: Path
+    _index: List[int]
+    
+    def __init__(
+            self, path: Path, source: Optional[str] = None,
+            line_start: int = 1, col_start: int = 0):
+        self._source = source
+        self._path = path
+        self._index = None
+        self._line_start = line_start
+        self._col_start = col_start
+        
+    def get_source(self):
+        if self._source is None:
+            with open(self._path, 'r') as fh:
+                self._source = fh.read()
+        return self._source
+
+    def get_path(self):
+        return self._path
+
+    def get_pos(self, offset: 0) -> Pos:
+        """Return a tuple of line and column for offset pos in text.
+
+        Lines are one-based, columns zero-based.
+
+        This is how Jedi wants it. Don't ask me why.
+        
+        """
+        idx = self._get_index()
+        line_num = bisect_right(idx, offset) - 1
+        line_offset = idx[line_num]
+        return Pos(line_num + self._line_start,
+                   offset - line_offset + self._col_start)
+
+    def get_offset(self, line: int, col: int):
+        """Return the offset of this line and column in text.
+        
+        Lines are one-based, columns zero-based.
+        
+        This is how Jedi wants it. Don't ask me why.
+        
+        """
+        idx = self._get_index()
+        return idx[line - self._line_start] + col - self._col_start
+    
+    def _get_index(self) -> List[int]:
+        if self._index is None:
+            self._index = [0]
+            i = 0
+            for line in StringIO(self.get_source()):
+                i += len(line)
+                self._index.append(i)
+        return self._index
+
 
 def pos_to_linecol(text, pos):
     """Return a tuple of line and column for offset pos in text.

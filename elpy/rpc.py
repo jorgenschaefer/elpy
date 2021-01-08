@@ -118,7 +118,7 @@ class JSONRPCServer(object):
                 result = method(*params)
             else:
                 result = self.handle(method_name, params)
-            if request_id is not None:
+            if request_id is not None and result is not None:
                 return ResponceMsg(result=result, id=request_id)
         except Fault as fault:
             error = {"message": fault.message,
@@ -133,7 +133,8 @@ class JSONRPCServer(object):
                      }
             return ErrorMsg(error=error, id=request_id)
             
-    def handle(self, method_name: str, args: List) -> Type[ResultMsg]:
+    def handle(self, method_name: str, args: List
+               ) -> Optional[Type[ResultMsg]]:
         """Handle the call to method_name.
 
         You should overwrite this method in a subclass.

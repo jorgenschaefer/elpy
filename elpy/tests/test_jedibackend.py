@@ -8,6 +8,7 @@ import mock
 import re
 
 from elpy import jedibackend
+from elpy.jedibackend import SourceFile
 from elpy import rpc
 from elpy.tests import compat
 from elpy.tests.support import BackendTestCase
@@ -32,6 +33,23 @@ class JediBackendTestCase(BackendTestCase):
         super(JediBackendTestCase, self).setUp()
         env = jedi.get_default_environment().path
         self.backend = jedibackend.JediBackend(self.project_root, env)
+
+class TestSourceFile(JediBackendTestCase):
+    def setUp(self):
+        self.src = SourceFile(path="", source="\n1234\n6789")
+
+    def test_building_index(self):
+        self.assertEqual(self.src._get_index(), [0, 1, 6, 10])
+
+    def test_get_source_offset(self):
+        self.assertEqual(self.src.get_offset(1, 0), 0)
+        self.assertEqual(self.src.get_offset(2, 0), 1)
+
+    def test_get_source_lines(self):
+        self.assertEqual(self.src.get_pos(0), (1, 0))
+        self.assertEqual(self.src.get_pos(1), (2, 0))
+        self.assertEqual(self.src.get_pos(5), (2, 4))
+        self.assertEqual(self.src.get_pos(9), (3, 3))
 
 
 class TestInit(JediBackendTestCase):
