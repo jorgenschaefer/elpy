@@ -11,21 +11,23 @@ import json
 import sys
 import traceback
 from pydantic import BaseModel
-from typing import Union, Optional, List, Type
+from typing import Union, Optional, List, Dict
 
 
 class Result(BaseModel):
     pass
 
+class ServerMsg(BaseModel):
+    pass
 
-class ErrorMsg(BaseModel):
+class ErrorMsg(ServerMsg):
     id: int
-    error: Union[dict, Type[Result]]
+    error: Union[dict, Result]
 
 
-class ResponceMsg(BaseModel):
+class ResponceMsg(ServerMsg):
     id: int
-    result: Union[dict, List, str, Type[Result]]
+    result: Union[dict, List, str, Result]
 
 
 class JSONRPCServer(object):
@@ -72,7 +74,7 @@ class JSONRPCServer(object):
         else:
             self.stdout = stdout
 
-    def read_json(self) -> str:
+    def read_json(self) -> Dict:
         """Read a single line and decode it as JSON.
 
         Can raise an EOFError() when the input source was closed.
@@ -83,13 +85,13 @@ class JSONRPCServer(object):
             raise EOFError()
         return json.loads(line)
 
-    def send_msg(self, msg: Result) -> None:
+    def send_msg(self, msg: ServerMsg) -> None:
         """Write an JSON object on a single line.
         """
         self.stdout.write(msg.json() + '\n')
         self.stdout.flush()
         
-    def handle_request(self) -> Type[Result]:
+    def handle_request(self) -> None:
         """Handle a single JSON-RPC request.
 
         Read a request, call the appropriate handler method, and
@@ -111,7 +113,7 @@ class JSONRPCServer(object):
             self.send_msg(msg)
 
     def _make_msg(self, request_id: str, method_name: str, params: List
-                  ) -> Optional[Type[Result]]:
+                  ) -> Optional[ServerMsg]:
         try:
             method = getattr(self, "rpc_" + method_name, None)
             if method is not None:
@@ -134,7 +136,7 @@ class JSONRPCServer(object):
             return ErrorMsg(error=error, id=request_id)
             
     def handle(self, method_name: str, args: List
-               ) -> Optional[Type[Result]]:
+               ) -> Optional[Result]:
         """Handle the call to method_name.
 
         You should overwrite this method in a subclass.

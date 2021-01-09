@@ -15,7 +15,7 @@ from array import array
 from io import StringIO
 from bisect import bisect_right
 
-from typing import Type, List, Optional, Union, NamedTuple, Any
+from typing import List, Optional, Union, NamedTuple, Any, NoReturn
 from pathlib import Path
 import jedi
 
@@ -67,7 +67,7 @@ class RefactoringResult(Result):
 try:
     from pkg_resources import parse_version
 except ImportError:  # pragma: no cover
-    def parse_version(*arg, **kwargs):
+    def parse_version(*arg, **kwargs) -> NoReturn:
         raise Fault("`pkg_resources` could not be imported, "
                     "please reinstall Elpy RPC virtualenv with"
                     " `M-x elpy-rpc-reinstall-virtualenv`", code=400)
@@ -132,15 +132,15 @@ class JediBackend(object):
                                                'column': column,
                                                'follow_imports': True,
                                                'follow_builtin_imports': True})
-        if not locations:
-            return None
         # Filter uninteresting things
-        if locations[-1].name in ["str", "int", "float", "bool", "tuple",
-                                  "list", "dict"]:
+        uninternsting_to_be_filtered_names = {
+            "str", "int", "float", "bool", "tuple", "list", "dict"}
+        if not locations \
+           or locations[-1].name in uninternsting_to_be_filtered_names \
+           or not locations[-1].docstring():
             return None
-        if locations[-1].docstring():
-            return ('Documentation for {0}:\n\n'.format(
-                locations[-1].full_name) + locations[-1].docstring())
+        return ('Documentation for {0}:\n\n'.format(
+            locations[-1].full_name) + locations[-1].docstring())
 
     def rpc_get_definition(self, filename, source, offset):
         line, column = pos_to_linecol(source, offset)
@@ -301,8 +301,6 @@ class JediBackend(object):
                               environment=self.environment,
                               fun_kwargs={'line': line,
                                           'column': column})
-        if names is None:
-            return None
         result = []
         for name in names:
             if name.module_path == Path(filename):
@@ -313,7 +311,7 @@ class JediBackend(object):
             result.append(NameResult.from_name(name, offset))
         return result
 
-    def rpc_get_names(self, filename, source, offset) -> Type[Result]:
+    def rpc_get_names(self, filename, source, offset) -> List[Result]:
         """Return the list of possible names"""
         src = SourceCode(filename, source)
         names = run_with_debug(jedi, 'get_names',
@@ -349,7 +347,7 @@ class JediBackend(object):
 
     def rpc_get_extract_variable_diff(
             self, filename, source, offset, new_name,
-            line_beg, line_end, col_beg, col_end) -> Type[Result]:
+            line_beg, line_end, col_beg, col_end) -> Result:
         """Get the diff resulting from extracting the selected code"""
         ref = run_with_debug(jedi, 'extract_variable', code=source,
                              path=filename,
@@ -366,7 +364,7 @@ class JediBackend(object):
 
     def rpc_get_extract_function_diff(
             self, filename, source, offset, new_name,
-            line_beg, line_end, col_beg, col_end) -> Type[Result]:
+            line_beg, line_end, col_beg, col_end) -> Result:
         """Get the diff resulting from extracting the selected code"""
         script = jedi.Script(code=source, path=filename,
                              environment=self.environment)
@@ -380,7 +378,7 @@ class JediBackend(object):
             return RefactoringResult.fail(error_msg=str(e))
         return RefactoringResult.from_refactoring(ref)
 
-    def rpc_get_inline_diff(self, filename, source, offset) -> Type[Result]:
+    def rpc_get_inline_diff(self, filename, source, offset) -> Result:
         """Get the diff resulting from inlining the selected variable"""
         src = SourceCode(filename, source)
         line, column = src.get_pos(offset)
@@ -407,8 +405,8 @@ class Pos(NamedTuple):
 
 class SourceCode:
     _source: Optional[str]
-    _path: Path
-    _line_offsets: array[int]
+    _path: Optional[Path]
+    _line_offsets: Optional[array[int]]
     
     def __init__(
             self, path: Union[None, str, Path], source: Optional[str] = None,
@@ -433,7 +431,7 @@ class SourceCode:
     def path(self) -> Optional[Path]:
         return self._path
 
-    def get_pos(self, offset: 0) -> Pos:
+    def get_pos(self, offset: int) -> Pos:
         """Return a tuple of line and column for offset pos in text.
 
         Lines are one-based, columns zero-based.
@@ -469,7 +467,7 @@ class SourceCode:
                 f"Line {line} column {col} is not within the text")
         return offset
     
-    def _get_line_offsets(self) -> List[int]:
+    def _get_line_offsets(self) -> array[int]:
         if self._line_offsets is None:
             self._line_offsets = array('I')
             self._line_offsets.append(0)
