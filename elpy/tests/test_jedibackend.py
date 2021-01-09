@@ -41,7 +41,7 @@ class TestSourceCode(BackendTestCase):
         self.src = SourceCode(path="/notreal/path", source="\n1234\n6789")
 
     def test_should_build_offset_index(self):
-        self.assertEqual(self.src._get_line_offsets(), [0, 1, 6, 10])
+        self.assertEqual(list(self.src._get_line_offsets()), [0, 1, 6, 10])
 
     def test_should_return_offset(self):
         self.assertEqual(self.src.get_offset(1, 0), 0)

@@ -10,7 +10,8 @@ from __future__ import annotations
 import sys
 import traceback
 import re
-from functools import reduce
+
+from array import array
 from io import StringIO
 from bisect import bisect_right
 
@@ -41,13 +42,13 @@ class RefactoringResult(Result):
     diff: str
     changed_files: List[Path]
     error_msg: Optional[str]
-    
+
     @classmethod
     def fail(cls, error_msg=""):
         return cls(
             success=False, project_path=Path(), diff="", changed_files=[],
             error_msg=error_msg)
-    
+
     @classmethod
     def from_refactoring(
             cls, x: jedi.api.refactoring.Refactoring) -> RefactoringResult:
@@ -407,7 +408,7 @@ class Pos(NamedTuple):
 class SourceCode:
     _source: Optional[str]
     _path: Path
-    _index: List[int]
+    _line_offsets: array[int]
     
     def __init__(
             self, path: Union[None, str, Path], source: Optional[str] = None,
@@ -470,11 +471,12 @@ class SourceCode:
     
     def _get_line_offsets(self) -> List[int]:
         if self._line_offsets is None:
-            self._line_offsets = [0]
-            i = 0
+            self._line_offsets = array('I')
+            self._line_offsets.append(0)
+            curr_line_offset = 0
             for line in StringIO(self.get_source()):
-                i += len(line)
-                self._line_offsets.append(i)
+                curr_line_offset += len(line)
+                self._line_offsets.append(curr_line_offset)
         return self._line_offsets
 
 
