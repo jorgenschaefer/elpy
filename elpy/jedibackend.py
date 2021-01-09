@@ -110,7 +110,7 @@ class JediBackend(object):
                  'meta': proposal.description}
                 for proposal in proposals]
 
-    def rpc_get_completion_docstring(self, completion) -> Optional[Any]:
+    def rpc_get_completion_docstring(self, completion) -> Optional[str]:
         proposal = self.completions.get(completion)
         if proposal is not None:
             return proposal.docstring(fast=False)
@@ -121,7 +121,7 @@ class JediBackend(object):
             return (str(proposal.module_path), proposal.line)
 
     def rpc_get_docstring(self, filename: str, source: str, offset: int
-                          ) -> Optional[Any]:
+                          ) -> Optional[str]:
         src = SourceCode(filename, source)
         line, column = src.get_pos(offset)
         locations = run_with_debug(jedi, 'goto',
