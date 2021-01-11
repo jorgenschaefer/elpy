@@ -99,7 +99,7 @@ class JediBackend(object):
         if proposal is None:
             return None
         else:
-            return (proposal.module_path, proposal.line)
+            return (str(proposal.module_path), proposal.line)
 
     def rpc_get_docstring(self, filename, source, offset):
         line, column = pos_to_linecol(source, offset)
@@ -165,18 +165,18 @@ class JediBackend(object):
             return None
         loc = locations[-1]
         try:
-            if loc.module_path == filename:
+            if str(loc.module_path) == filename:
                 offset = linecol_to_pos(source,
                                         loc.line,
                                         loc.column)
             else:
-                with open(loc.module_path) as f:
+                with open(str(loc.module_path)) as f:
                     offset = linecol_to_pos(f.read(),
                                             loc.line,
                                             loc.column)
         except IOError:  # pragma: no cover
             return None
-        return (loc.module_path, offset)
+        return (str(loc.module_path), offset)
 
     def rpc_get_definition_jedi16(self, filename, source, offset): # pragma: no cover
         # Backward compatibility to jedi<17
@@ -206,12 +206,12 @@ class JediBackend(object):
             loc = locations[-1]
             try:
                 if loc.module_path:
-                    if loc.module_path == filename:
+                    if str(loc.module_path) == filename:
                         offset = linecol_to_pos(source,
                                                 loc.line,
                                                 loc.column)
                     else:
-                        with open(loc.module_path) as f:
+                        with open(str(loc.module_path)) as f:
                             offset = linecol_to_pos(f.read(),
                                                     loc.line,
                                                     loc.column)
@@ -238,12 +238,12 @@ class JediBackend(object):
             loc = locations[-1]
             try:
                 if loc.module_path:
-                    if loc.module_path == filename:
+                    if str(loc.module_path) == filename:
                         offset = linecol_to_pos(source,
                                                 loc.line,
                                                 loc.column)
                     else:
-                        with open(loc.module_path) as f:
+                        with open(str(loc.module_path)) as f:
                             offset = linecol_to_pos(f.read(),
                                                     loc.line,
                                                     loc.column)
@@ -466,11 +466,14 @@ class JediBackend(object):
             return None
         result = []
         for use in uses:
-            if use.module_path == filename:
+            if str(use.module_path) == filename:
                 offset = linecol_to_pos(source, use.line, use.column)
             elif use.module_path is not None:
-                with open(use.module_path) as f:
-                    text = f.read()
+                try:
+                    with open(str(use.module_path)) as f:
+                        text = f.read()
+                except FileNotFoundError:
+                    text = source
                 offset = linecol_to_pos(text, use.line, use.column)
             result.append({"name": use.name,
                            "filename": use.module_path,
@@ -494,17 +497,18 @@ class JediBackend(object):
             return None
         result = []
         for use in uses:
-            if use.module_path == filename:
+            if str(use.module_path) == filename:
                 offset = linecol_to_pos(source, use.line, use.column)
             elif use.module_path is not None:
-                with open(use.module_path) as f:
-                    text = f.read()
+                try:
+                    with open(str(use.module_path)) as f:
+                        text = f.read()
+                except FileNotFoundError:
+                    text = source
                 offset = linecol_to_pos(text, use.line, use.column)
-
             result.append({"name": use.name,
                            "filename": use.module_path,
                            "offset": offset})
-
         return result
 
     def rpc_get_names(self, filename, source, offset):
@@ -518,11 +522,14 @@ class JediBackend(object):
                                            'references': True})
         result = []
         for name in names:
-            if name.module_path == filename:
+            if str(name.module_path) == filename:
                 offset = linecol_to_pos(source, name.line, name.column)
             elif name.module_path is not None:
-                with open(name.module_path) as f:
-                    text = f.read()
+                try:
+                    with open(str(name.module_path)) as f:
+                        text = f.read()
+                except FileNotFoundError:
+                    text = source
                 offset = linecol_to_pos(text, name.line, name.column)
             result.append({"name": name.name,
                            "filename": name.module_path,
@@ -540,11 +547,14 @@ class JediBackend(object):
 
         result = []
         for name in names:
-            if name.module_path == filename:
+            if str(name.module_path) == filename:
                 offset = linecol_to_pos(source, name.line, name.column)
             elif name.module_path is not None:
-                with open(name.module_path) as f:
-                    text = f.read()
+                try:
+                    with open(str(name.module_path)) as f:
+                        text = f.read()
+                except FileNotFoundError:
+                    text = source
                 offset = linecol_to_pos(text, name.line, name.column)
             result.append({"name": name.name,
                            "filename": name.module_path,

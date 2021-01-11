@@ -451,6 +451,7 @@ class RPCGetCompletionsTests(GenericRPCTests):
         self.assertEqual([], self.backend.rpc_get_completions("test.py",
                                                               source, offset))
 
+    @unittest.skipIf(jedibackend.JEDISUP17, "Jedi verison > '0.17.0'")
     def test_should_handle_jedi16(self):
         backup = self.backend.rpc_get_completions
         self.backend.rpc_get_completions = self.backend.rpc_get_completions_jedi16
@@ -488,6 +489,7 @@ class RPCGetCompletionDocstringTests(object):
                                                      offset)
         self.assertIsNone(completions)
 
+    @unittest.skipIf(jedibackend.JEDISUP17, "Jedi verison > '0.17.0'")
     def test_should_handle_jedi16(self):
         backup = self.backend.rpc_get_docstring
         self.backend.rpc_get_docstring = self.backend.rpc_get_docstring_jedi16
@@ -624,6 +626,7 @@ class RPCGetDefinitionTests(GenericRPCTests):
                                                          offset),
                          (filename, 0))
 
+    @unittest.skipIf(jedibackend.JEDISUP17, "Jedi verison > '0.17.0'")
     def test_should_handle_jedi16(self):
         backup = self.backend.rpc_get_definition
         self.backend.rpc_get_definition = self.backend.rpc_get_definition_jedi16
@@ -639,6 +642,7 @@ class RPCGetAssignmentTests():
             with self.assertRaises(Fault):
                 self.backend.rpc_get_assignment("test.py", "dummy code", 1)
 
+    @unittest.skipIf(jedibackend.JEDISUP17, "Jedi verison > '0.17.0'")
     def test_should_handle_jedi16(self):
         backup = self.backend.rpc_get_assignment
         self.backend.rpc_get_assignment = self.backend.rpc_get_assignment_jedi16
@@ -804,6 +808,7 @@ class RPCGetCalltipTests(GenericRPCTests):
         self.assertEqual(calltip['kind'], 'oneline_doc')
         self.assertEqual(calltip['doc'], 'No documentation')
 
+    @unittest.skipIf(jedibackend.JEDISUP17, "Jedi verison > '0.17.0'")
     def test_should_handle_jedi16(self):
         backup = self.backend.rpc_get_calltip
         self.backend.rpc_get_calltip = self.backend.rpc_get_calltip_jedi16
@@ -840,6 +845,7 @@ class RPCGetDocstringTests(GenericRPCTests):
                                                    offset)
         self.assertIsNone(docstring)
 
+    @unittest.skipIf(jedibackend.JEDISUP17, "Jedi verison > '0.17.0'")
     def test_should_handle_jedi16(self):
         backup = self.backend.rpc_get_docstring
         self.backend.rpc_get_docstring = self.backend.rpc_get_docstring_jedi16
@@ -901,6 +907,7 @@ class RPCGetOnelineDocstringTests(GenericRPCTests):
                                                                       offset)
         self.assertIsNone(docstring)
 
+    @unittest.skipIf(jedibackend.JEDISUP17, "Jedi verison > '0.17.0'")
     def test_should_handle_jedi16(self):
         backup = self.backend.rpc_get_oneline_docstring
         self.backend.rpc_get_oneline_docstring = self.backend.rpc_get_oneline_docstring_jedi16
@@ -1028,6 +1035,8 @@ class RPCGetNamesTests(GenericRPCTests):
                                            source,
                                            offset)
 
+        for i, name in enumerate(names):
+            names[i]["filename"] = str(names[i]["filename"])
         self.assertEqual(names,
                          [{'name': 'foo',
                            'filename': filename,
@@ -1060,6 +1069,7 @@ class RPCGetNamesTests(GenericRPCTests):
 
         self.assertEqual(names, [])
 
+    @unittest.skipIf(jedibackend.JEDISUP17, "Jedi verison > '0.17.0'")
     def test_should_handle_jedi16(self):
         backup = self.backend.rpc_get_names
         self.backend.rpc_get_names = self.backend.rpc_get_names_jedi16
@@ -1080,7 +1090,8 @@ class RPCGetUsagesTests(GenericRPCTests):
         usages = self.backend.rpc_get_usages(filename,
                                              source,
                                              offset)
-
+        for i, usage in enumerate(usages):
+            usages[i]["filename"] = str(usages[i]["filename"])
         self.assertEqual(usages,
                          [{'name': 'x',
                            'offset': 8,
@@ -1103,6 +1114,8 @@ class RPCGetUsagesTests(GenericRPCTests):
                                              source,
                                              offset)
 
+        for i, usage in enumerate(usages):
+            usages[i]["filename"] = str(usages[i]["filename"])
         self.assertEqual(usages,
                          [{'name': 'x',
                            'filename': file1,
@@ -1120,6 +1133,7 @@ class RPCGetUsagesTests(GenericRPCTests):
 
         self.assertEqual(usages, [])
 
+    @unittest.skipIf(jedibackend.JEDISUP17, "Jedi verison > '0.17.0'")
     def test_should_handle_jedi16(self):
         backup = self.backend.rpc_get_usages
         self.backend.rpc_get_usages = self.backend.rpc_get_usages_jedi16

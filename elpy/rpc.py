@@ -10,6 +10,7 @@ See the documentation of the JSONRPCServer class for further details.
 import json
 import sys
 import traceback
+from pathlib import Path
 
 
 class JSONRPCServer(object):
@@ -67,6 +68,10 @@ class JSONRPCServer(object):
             raise EOFError()
         return json.loads(line)
 
+    def json_defaults(self, x):
+        if isinstance(x, Path):
+            return str(x)
+
     def write_json(self, **kwargs):
         """Write an JSON object on a single line.
 
@@ -74,7 +79,7 @@ class JSONRPCServer(object):
         It's not possible with this method to write non-objects.
 
         """
-        self.stdout.write(json.dumps(kwargs) + "\n")
+        self.stdout.write(json.dumps(kwargs, default=self.json_defaults) + "\n")
         self.stdout.flush()
 
     def handle_request(self):
