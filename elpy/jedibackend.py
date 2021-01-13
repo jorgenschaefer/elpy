@@ -44,7 +44,7 @@ class RefactoringResult(Result):
     error_msg: Optional[str]
 
     @classmethod
-    def fail(cls, error_msg=""):
+    def fail(cls, error_msg="") -> RefactoringResult:
         return cls(
             success=False, project_path=Path(), diff="", changed_files=[],
             error_msg=error_msg)
@@ -440,9 +440,9 @@ class SourceCode:
         
         """
         idx = self._get_line_offsets()
-        line_num = bisect_right(idx, offset) - 1
-        line_offset = idx[line_num]
-        return Pos(line_num + self._line_start,
+        line_num_from_zero = bisect_right(idx, offset) - self._line_start
+        line_offset = idx[line_num_from_zero]
+        return Pos(line_num_from_zero + self._line_start,
                    offset - line_offset + self._col_start)
 
     def get_offset(self, line: int, col: int):
