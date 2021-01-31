@@ -9,7 +9,7 @@ import mock
 import re
 
 from elpy import jedibackend
-from elpy.jedibackend import SourceCode
+from elpy.utils import SourceCode
 from elpy import rpc
 from elpy.tests import compat
 from elpy.tests.support import BackendTestCase
