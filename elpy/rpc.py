@@ -108,11 +108,11 @@ class JSONRPCServer(object):
         method_name = request['method']
         request_id = request.get('id', None)
         params = request.get('params') or []
-        msg = self._make_msg(request_id, method_name, params)
+        msg = self.__make_msg(request_id, method_name, params)
         if msg is not None:
             self.send_msg(msg)
 
-    def _make_msg(self, request_id: str, method_name: str, params: List
+    def __make_msg(self, request_id: str, method_name: str, params: List
                   ) -> Optional[ServerMsg]:
         try:
             method = getattr(self, "rpc_" + method_name, None)
