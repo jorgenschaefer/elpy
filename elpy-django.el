@@ -205,7 +205,7 @@ The result is memoized on project root and `DJANGO_SETTINGS_MODULE'"
 
 
 (defun elpy-django--get-test-format ()
-  "When running a Django test, some test runners require a different format that others.
+  "When running a Django test, some test runners require a different format than others.
 Return the correct string format here."
   (let ((runner (elpy-django--get-test-runner))
         (found nil)
