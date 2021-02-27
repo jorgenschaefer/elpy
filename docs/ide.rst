@@ -246,8 +246,8 @@ you, you may also try:
    (setq python-shell-interpreter "ipython"
          python-shell-interpreter-args "-i")
 
-   As an IPython_ user, you might be interested in the `Emacs IPython
-   Notebook`_ or an `Elpy layer`_ for Spacemacs_, too.
+As an IPython_ user, you might be interested in the `Emacs IPython
+Notebook`_ or an `Elpy layer`_ for Spacemacs_, too.
 
 Note for MacOS users:
 In some configurations, display artifacts (lines of ``^G`` s) can
@@ -287,7 +287,7 @@ The Shell Buffer
 
    By default, python buffers are all attached to a same python shell
    (that lies in the `*Python*` buffer), meaning that all buffers and
-   code fragments will be send to this shell.
+   code fragments will be sent to this shell.
    `elpy-shell-toggle-dedicated-shell` attaches a dedicated python shell
    (not shared with the other python buffers) to the current python buffer.
    To make this the default behavior (like the deprecated option
