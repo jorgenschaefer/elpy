@@ -1627,7 +1627,8 @@ A test file is named test_<name>.py if the current file is
             (let ((projectile-project-root project-root))
               (projectile-current-project-files)))
            ((fboundp 'find-file-in-project)
-            (cl-map 'list 'cdr (ffip-project-search nil nil project-root)))
+            (let ((ffip-project-root project-root))
+              (cl-map 'list 'cdr (ffip-project-search nil nil))))
            (t '())))
          (file (if impl-file
                     (cl-remove-if (lambda (file)
