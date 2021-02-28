@@ -94,12 +94,12 @@ class JSONRPCServer(object):
         method_name = request['method']
         request_id = request.get('id', None)
         params = request.get('params') or []
-        msg = self.__make_msg(request_id, method_name, params)
+        msg = self._make_msg(request_id, method_name, params)
         if msg is not None:
             self.send_msg(msg)
 
-    def __make_msg(self, request_id: str, method_name: str, params: List
-                   ) -> Optional[ServerMsg]:
+    def _make_msg(self, request_id: str, method_name: str, params: List
+                  ) -> Optional[ServerMsg]:
         try:
             method = getattr(self, "rpc_" + method_name, None)
             if method is not None:
@@ -109,18 +109,21 @@ class JSONRPCServer(object):
             if request_id is not None and result is not None:
                 return ResponceMsg(result=result, id=request_id)
         except Fault as fault:
-            error = {"message": fault.message,
-                     "code": fault.code}
-            if fault.data is not None:
-                error["data"] = fault.data
-            return ErrorMsg(error=error, id=request_id)
+            return self._make_error_msg(id=request_id, msg=fault.message,
+                                    code=fault.code, data=fault.data)
         except Exception as e:
-            error = {"message": str(e),
-                     "code": 500,
-                     "data": {"traceback": traceback.format_exc()}
-                     }
-            return ErrorMsg(error=error, id=request_id)
-            
+            return self._make_error_msg(
+                id=request_id, msg=str(e), code=500,
+                data={"traceback": traceback.format_exc()})
+
+    def _make_error_msg(self, id: int, msg: str, code: int, data=Optional[dict]
+                        ) -> ErrorMsg:
+        error = {"message": msg,
+                 "code": code,
+                 "data": '' if data is None else data,
+                 }
+        return ErrorMsg(error=error, id=id)
+
     def handle(self, method_name: str, args: List
                ) -> Optional[Result]:
         """Handle the call to method_name.
