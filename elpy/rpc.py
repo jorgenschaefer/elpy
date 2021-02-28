@@ -94,12 +94,7 @@ class JSONRPCServer(object):
         method_name = request['method']
         request_id = request.get('id', None)
         params = request.get('params') or []
-        msg = self._make_msg(request_id, method_name, params)
-        if msg is not None:
-            self.send_msg(msg)
-
-    def _make_msg(self, request_id: str, method_name: str, params: List
-                  ) -> Optional[ServerMsg]:
+        msg = None
         try:
             method = getattr(self, "rpc_" + method_name, None)
             if method is not None:
@@ -107,14 +102,16 @@ class JSONRPCServer(object):
             else:
                 result = self.handle(method_name, params)
             if request_id is not None and result is not None:
-                return ResponceMsg(result=result, id=request_id)
+                msg = ResponceMsg(result=result, id=request_id)
         except Fault as fault:
-            return self._make_error_msg(id=request_id, msg=fault.message,
-                                    code=fault.code, data=fault.data)
+            msg = self._make_error_msg(id=request_id, msg=fault.message,
+                                       code=fault.code, data=fault.data)
         except Exception as e:
-            return self._make_error_msg(
+            msg = self._make_error_msg(
                 id=request_id, msg=str(e), code=500,
                 data={"traceback": traceback.format_exc()})
+        if msg is not None:
+            self.send_msg(msg)
 
     def _make_error_msg(self, id: int, msg: str, code: int, data=Optional[dict]
                         ) -> ErrorMsg:
