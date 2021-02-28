@@ -124,7 +124,6 @@ class JediBackend:
             locations[-1].full_name) + locations[-1].docstring())
 
     def rpc_get_definition(self, filename, source, offset):
-        line, column = pos_to_linecol(source, offset)
         src = SourceCode(filename, source)
         line, column = src.get_pos(offset)
         locations = run_with_debug(jedi, 'goto',
@@ -162,7 +161,8 @@ class JediBackend:
         raise Fault("Obsolete since jedi 17.0. Please use 'get_definition'.")
 
     def rpc_get_calltip(self, filename, source, offset):
-        line, column = pos_to_linecol(source, offset)
+        src = SourceCode(filename, source)
+        line, column = src.get_pos(offset)
         calls = run_with_debug(jedi, 'get_signatures',
                                code=source,
                                path=filename,
@@ -371,20 +371,6 @@ class JediBackend:
             return self._refactoring_fail()
         else:
             return self._refactoring_result(ref)
-
-
-def pos_to_linecol(text, pos):
-    """Return a tuple of line and column for offset pos in text.
-
-    Lines are one-based, columns zero-based.
-
-    This is how Jedi wants it. Don't ask me why.
-
-    """
-    line_start = text.rfind("\n", 0, pos) + 1
-    line = text.count("\n", 0, line_start) + 1
-    col = pos - line_start
-    return line, col
 
 
 def run_with_debug(jedi, name, fun_kwargs={}, *args, **kwargs):
