@@ -5,7 +5,7 @@ import unittest
 import sys
 
 from elpy import rpc
-from elpy.rpc import Result, ErrorMsg, ResponceMsg
+from elpy.api import Result, ErrorMsg, ResponceMsg
 from elpy.tests.compat import StringIO
 
 

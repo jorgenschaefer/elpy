@@ -17,22 +17,9 @@ import jedi
 
 
 from elpy import rpc
-from elpy.rpc import Fault, Result
+from elpy.rpc import Fault
+from elpy.api import NameResult, RefactoringResult, Result
 from elpy.utils import SourceCode
-
-
-class NameResult(Result):
-    name: str
-    offset: int
-    filename: str
-
-
-class RefactoringResult(Result):
-    success: bool
-    project_path: Path
-    diff: str
-    changed_files: List[Path]
-    error_msg: Optional[str]
 
 
 # in case pkg_resources is not properly installed

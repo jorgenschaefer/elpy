@@ -12,24 +12,9 @@ import sys
 import traceback
 from typing import Dict, List, Optional, Union
 
-from pydantic import BaseModel
-
-
-class Result(BaseModel):
-    pass
-
-class ServerMsg(BaseModel):
-    pass
-
-class ErrorMsg(ServerMsg):
-    id: int
-    error: Union[dict, Result]
-
-
-class ResponceMsg(ServerMsg):
-    id: int
-    result: Union[dict, List, str, Result]
-
+from elpy.api import ServerMsg
+from elpy.api import ErrorMsg, ResponceMsg
+from elpy.api import Result
 
 class JSONRPCServer(object):
     """Simple JSON-RPC-like server.
