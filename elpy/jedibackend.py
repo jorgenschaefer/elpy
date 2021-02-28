@@ -11,7 +11,7 @@ import sys
 import traceback
 import re
 
-from typing import List, Optional, Union, NamedTuple, Any, NoReturn
+from typing import List, Optional, Union, Tuple, NamedTuple, Any, NoReturn
 from pathlib import Path
 import jedi
 
@@ -26,13 +26,6 @@ class NameResult(Result):
     offset: int
     filename: str
 
-    @classmethod
-    def from_name(
-            cls, x: jedi.api.classes.Name, offset: int) -> NameResult:
-        if type(x) is not jedi.api.classes.Name:
-            raise TypeError("Must be jedi.api.classes.Name")
-        return cls(name=x.name, filename=str(x.module_path), offset=offset)
-
 
 class RefactoringResult(Result):
     success: bool
@@ -40,23 +33,6 @@ class RefactoringResult(Result):
     diff: str
     changed_files: List[Path]
     error_msg: Optional[str]
-
-    @classmethod
-    def fail(cls, error_msg="") -> RefactoringResult:
-        return cls(
-            success=False, project_path=Path(), diff="", changed_files=[],
-            error_msg=error_msg)
-
-    @classmethod
-    def from_refactoring(
-            cls, x: jedi.api.refactoring.Refactoring) -> RefactoringResult:
-        if type(x) is not jedi.api.refactoring.Refactoring:
-            raise TypeError("Must be jedi.api.refactoring.Refactoring type")
-        return cls(
-            success=True,
-            project_path=x._inference_state.project._path,
-            diff=x.get_diff(),
-            changed_files=list(x.get_changed_files().keys()))
 
 
 # in case pkg_resources is not properly installed
@@ -70,7 +46,7 @@ except ImportError:  # pragma: no cover
                     " `M-x elpy-rpc-reinstall-virtualenv`", code=400)
 
 
-class JediBackend(object):
+class JediBackend:
     """The Jedi backend class.
 
     Implements the RPC calls we can pass on to Jedi.
@@ -92,6 +68,27 @@ class JediBackend(object):
         self.completions = {}
         sys.path.append(project_root)
 
+    def _name_result(self, x: jedi.api.classes.Name, offset: int) -> NameResult:
+        if type(x) is not jedi.api.classes.Name:
+            raise TypeError('Must be jedi.api.classes.Name')
+        return NameResult(
+            name=x.name, filename=str(x.module_path), offset=offset)
+
+    def _refactoring_fail(self, error_msg='') -> RefactoringResult:
+        return RefactoringResult(
+            success=False, project_path=Path(), diff="", changed_files=[],
+            error_msg=error_msg)
+
+    def _refactoring_result(self, x: jedi.api.refactoring.Refactoring
+                            ) -> RefactoringResult:
+        if type(x) is not jedi.api.refactoring.Refactoring:
+            raise TypeError("Must be jedi.api.refactoring.Refactoring type")
+        return RefactoringResult(
+            success=True,
+            project_path=x._inference_state.project._path,
+            diff=x.get_diff(),
+            changed_files=list(x.get_changed_files().keys()))
+
     def rpc_get_completions(self, filename, source, offset):
         src = SourceCode(filename, source)
         line, column = src.get_pos(offset)
@@ -112,7 +109,7 @@ class JediBackend(object):
         if proposal is not None:
             return proposal.docstring(fast=False)
 
-    def rpc_get_completion_location(self, completion):
+    def rpc_get_completion_location(self, completion) -> Optional[Tuple]:
         proposal = self.completions.get(completion)
         if proposal is not None:
             return (str(proposal.module_path), proposal.line)
@@ -304,7 +301,7 @@ class JediBackend(object):
             elif name.module_path is not None:
                 other_src = SourceCode(name.module_path)
                 offset = other_src.get_offset(name.line, name.column)
-            result.append(NameResult.from_name(name, offset))
+            result.append(self._name_result(name, offset))
         return result
 
     def rpc_get_names(self, filename, source, offset) -> List[Result]:
@@ -324,7 +321,7 @@ class JediBackend(object):
             elif name.module_path is not None:
                 other_src = SourceCode(name.module_path)
                 offset = other_src.get_offset(name.line, name.column)
-            result.append(NameResult.from_name(name, offset))
+            result.append(self._name_result(name, offset))
         return result
 
     def rpc_get_rename_diff(self, filename, source, offset, new_name):
@@ -338,8 +335,8 @@ class JediBackend(object):
                                 column=column,
                                 new_name=new_name)
         except Exception as e:
-            return RefactoringResult.fail(error_msg=str(e))
-        return RefactoringResult.from_refactoring(ref)
+            return self._refactoring_fail(error_msg=str(e))
+        return self._refactoring_result(ref)
 
     def rpc_get_extract_variable_diff(
             self, filename, source, offset, new_name,
@@ -354,9 +351,9 @@ class JediBackend(object):
                                          'until_column': col_end,
                                          'new_name': new_name})
         if ref is None:
-            return RefactoringResult.fail()
+            return self._refactoring_fail()
         else:
-            return RefactoringResult.from_refactoring(ref)
+            return self._refactoring_result(ref)
 
     def rpc_get_extract_function_diff(
             self, filename, source, offset, new_name,
@@ -371,8 +368,8 @@ class JediBackend(object):
                                           until_column=col_end,
                                           new_name=new_name)
         except Exception as e:
-            return RefactoringResult.fail(error_msg=str(e))
-        return RefactoringResult.from_refactoring(ref)
+            return self._refactoring_fail(error_msg=str(e))
+        return self._refactoring_result(ref)
 
     def rpc_get_inline_diff(self, filename, source, offset) -> Result:
         """Get the diff resulting from inlining the selected variable"""
@@ -384,9 +381,9 @@ class JediBackend(object):
                              fun_kwargs={'line': line,
                                          'column': column})
         if ref is None:
-            return RefactoringResult.fail()
+            return self._refactoring_fail()
         else:
-            return RefactoringResult.from_refactoring(ref)
+            return self._refactoring_result(ref)
 
 
 def pos_to_linecol(text, pos):

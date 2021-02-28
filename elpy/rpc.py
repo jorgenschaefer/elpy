@@ -10,8 +10,9 @@ See the documentation of the JSONRPCServer class for further details.
 import json
 import sys
 import traceback
+from typing import Dict, List, Optional, Union
+
 from pydantic import BaseModel
-from typing import Union, Optional, List, Dict
 
 
 class Result(BaseModel):
@@ -113,7 +114,7 @@ class JSONRPCServer(object):
             self.send_msg(msg)
 
     def __make_msg(self, request_id: str, method_name: str, params: List
-                  ) -> Optional[ServerMsg]:
+                   ) -> Optional[ServerMsg]:
         try:
             method = getattr(self, "rpc_" + method_name, None)
             if method is not None:
