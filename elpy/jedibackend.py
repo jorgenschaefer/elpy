@@ -51,7 +51,7 @@ class JediBackend:
 
     Implements the RPC calls we can pass on to Jedi.
 
-    Documentation: http://jedi.jedidjah.ch/en/latest/docs/plugin-api.html
+    Documentation: https://jedi.readthedocs.io/en/latest/docs/api.html
 
     """
     name = "jedi"
