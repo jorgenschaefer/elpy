@@ -417,7 +417,7 @@ active, additionally flashes that region briefly."
             (message "Sent: %s" code-on-first-line)
           (message "Sent: %s..." code-on-first-line))
         (when (bound-and-true-p eval-sexp-fu-flash-mode)
-          (multiple-value-bind (_bounds hi unhi _eflash)
+          (cl-multiple-value-bind (_bounds hi unhi _eflash)
               (eval-sexp-fu-flash (cons begin end))
             (eval-sexp-fu-flash-doit (lambda () t) hi unhi)))))))
 
