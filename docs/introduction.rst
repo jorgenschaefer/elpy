@@ -77,7 +77,7 @@ This can be made automatic by adding the following to your ``.emacs``:
 In order to use all the features (such as navigation with ``M-.``),
 you'll need to install some python libraries:::
 
-  sudo apt install python3-jedi black autopep8 yapf
+  sudo apt install python3-jedi black python3-autopep8 yapf3 python3-yapf
 
 
 Manually from Melpa
