@@ -178,7 +178,7 @@ This is marked with 'manage.py' or 'django-admin.py'."
 
 (defvar elpy-django--test-runner-cache nil
   "Internal cache for elpy-django--get-test-runner.
-The cache is keyed on project root and DJANGO_SETTINGS_MODULE env var")
+The cache is keyed on project root and django setting path")
 
 (defvar elpy-django--test-runner-cache-max-size 100
   "Maximum number of entries in test runner cache")
@@ -186,14 +186,14 @@ The cache is keyed on project root and DJANGO_SETTINGS_MODULE env var")
 
 (defun elpy-django--get-test-runner ()
   "Return the name of the django test runner.
-Needs `DJANGO_SETTINGS_MODULE' to be set in order to work.
-The result is memoized on project root and `DJANGO_SETTINGS_MODULE'"
-  (let ((django-import-cmd "import django;django.setup();from django.conf import settings;print(settings.TEST_RUNNER)")
-        (django-settings-env (getenv "DJANGO_SETTINGS_MODULE"))
+
+If the `DJANGO_SETTINGS_MODULE' environment variable is not set,
+the default setting path is retrieved running `manage.py`.
+
+The result is memoized on project root and django setting path."
+  (let ((django-settings-env (or (getenv "DJANGO_SETTINGS_MODULE")
+                                 (elpy-django--get-default-settings-path)))
         (default-directory (elpy-project-root)))
-    ;; If no Django settings has been set, then nothing will work. Warn user
-    (unless django-settings-env
-      (error "Please set environment variable `DJANGO_SETTINGS_MODULE' if you'd like to run the test runner"))
 
     (let* ((runner-key (list default-directory django-settings-env))
            (runner (or (elpy-django--get-test-runner-from-cache runner-key)
@@ -221,16 +221,27 @@ Return the correct string format here."
 
 (defun elpy-django--detect-test-runner (django-settings-env)
   "Detects django test runner in current configuration"
-  ;; We have to be able to import the DJANGO_SETTINGS_MODULE to detect test
+  ;; We have to be able to import the django-settings-env to detect test
   ;; runner; if python process importing settings exits with error,
   ;; then warn the user that settings is not valid
   (unless (= 0 (call-process elpy-rpc-python-command nil nil nil
                              "-c" (format "import %s" django-settings-env)))
     (error (format "Unable to import DJANGO_SETTINGS_MODULE: '%s'"
                    django-settings-env)))
-  (s-trim (shell-command-to-string
-                       (format "%s -c '%s'" elpy-rpc-python-command
-                               django-import-cmd))))
+  (let ((django-import-cmd "import django;django.setup();from django.conf import settings;print(settings.TEST_RUNNER)"))
+    (s-trim (shell-command-to-string
+             (format "%s -c '%s'" elpy-rpc-python-command
+                     django-import-cmd)))))
+
+(defun elpy-django--get-default-settings-path ()
+  "Return the default settings path (from running `manage.py')."
+  (let ((default-directory (elpy-project-root)))
+    (with-temp-buffer
+      (unless (= 0 (call-process shell-file-name nil t nil
+                                 "-c"
+                                 "./manage.py shell -c 'from django.conf import settings;print(settings.SETTINGS_MODULE)'"))
+        (error (format "Unable to get the setting path from the django shell")))
+    (s-trim (buffer-string)))))
 
 
 (defun elpy-django--get-test-runner-from-cache (key)
