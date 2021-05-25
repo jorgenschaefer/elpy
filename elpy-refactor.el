@@ -192,7 +192,8 @@ do not display the diff before applying."
                       (error "No symbol at point")
                     (read-string
                      (format "New name for '%s': "
-                             (thing-at-point 'symbol)))))))
+                             (thing-at-point 'symbol))
+                     (thing-at-point 'symbol))))))
   (unless (and new-name
                (elpy-refactor--is-valid-symbol-p new-name))
     (error "'%s' is not a valid python symbol"))
