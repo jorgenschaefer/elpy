@@ -1,4 +1,0 @@
-jedi==0.17.2
-autopep8==1.5.7
-yapf==0.31
-setuptools==44.1.1
