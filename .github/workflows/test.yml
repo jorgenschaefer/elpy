@@ -9,7 +9,7 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-    continue-on-error: true
+    # continue-on-error: true
     strategy:
       fail-fast: false
       matrix:
@@ -70,7 +70,7 @@ jobs:
       uses: nick-invision/retry@v2
       with:
         timeout_minutes: 10
-        max_attempts: 3
+        max_attempts: 5
         command: cask install ; PYTHONPATH="`pwd`" cask exec ert-runner --reporter ert+duration
     - name: Run Python tests
       run: nosetests
@@ -81,5 +81,5 @@ jobs:
       run: |
         if [[ ${{ matrix.python_version }} > 3 ]] ; then
           coverage run -m nose.__main__
-          coveralls ;
+          coveralls --service=github ;
         fi
