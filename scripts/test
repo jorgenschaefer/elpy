@@ -10,7 +10,7 @@ fi
 
 if [ -z "$1" -o "$1" = "python" ]
 then
-    python -tt -m unittest discover elpy
+    python3 -tt -m unittest discover elpy
 fi
 
 if [ "$1" = "coverage" ]

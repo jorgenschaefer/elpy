@@ -10,7 +10,11 @@ See the documentation of the JSONRPCServer class for further details.
 import json
 import sys
 import traceback
+from typing import Dict, List, Optional, Union
 
+from elpy.api import ServerMsg
+from elpy.api import ErrorMsg, ResponceMsg
+from elpy.api import Result
 
 class JSONRPCServer(object):
     """Simple JSON-RPC-like server.
@@ -36,7 +40,7 @@ class JSONRPCServer(object):
 
     {"id": 23, "error": "Simple error message"}
 
-    See http://www.jsonrpc.org/ for the inspiration of the protocol.
+    See https://www.jsonrpc.org/ for the inspiration of the protocol.
 
     """
 
@@ -56,7 +60,7 @@ class JSONRPCServer(object):
         else:
             self.stdout = stdout
 
-    def read_json(self):
+    def read_json(self) -> Dict:
         """Read a single line and decode it as JSON.
 
         Can raise an EOFError() when the input source was closed.
@@ -67,17 +71,13 @@ class JSONRPCServer(object):
             raise EOFError()
         return json.loads(line)
 
-    def write_json(self, **kwargs):
+    def send_msg(self, msg: ServerMsg) -> None:
         """Write an JSON object on a single line.
-
-        The keyword arguments are interpreted as a single JSON object.
-        It's not possible with this method to write non-objects.
-
         """
-        self.stdout.write(json.dumps(kwargs) + "\n")
+        self.stdout.write(msg.json() + '\n')
         self.stdout.flush()
-
-    def handle_request(self):
+        
+    def handle_request(self) -> None:
         """Handle a single JSON-RPC request.
 
         Read a request, call the appropriate handler method, and
@@ -94,35 +94,42 @@ class JSONRPCServer(object):
         method_name = request['method']
         request_id = request.get('id', None)
         params = request.get('params') or []
+        msg = None
         try:
             method = getattr(self, "rpc_" + method_name, None)
             if method is not None:
                 result = method(*params)
             else:
                 result = self.handle(method_name, params)
-            if request_id is not None:
-                self.write_json(result=result,
-                                id=request_id)
+            if request_id is not None and result is not None:
+                msg = ResponceMsg(result=result, id=request_id)
         except Fault as fault:
-            error = {"message": fault.message,
-                     "code": fault.code}
-            if fault.data is not None:
-                error["data"] = fault.data
-            self.write_json(error=error, id=request_id)
+            msg = self._make_error_msg(id=request_id, msg=fault.message,
+                                       code=fault.code, data=fault.data)
         except Exception as e:
-            error = {"message": str(e),
-                     "code": 500,
-                     "data": {"traceback": traceback.format_exc()}}
-            self.write_json(error=error, id=request_id)
+            msg = self._make_error_msg(
+                id=request_id, msg=str(e), code=500,
+                data={"traceback": traceback.format_exc()})
+        if msg is not None:
+            self.send_msg(msg)
 
-    def handle(self, method_name, args):
+    def _make_error_msg(self, id: int, msg: str, code: int, data=Optional[dict]
+                        ) -> ErrorMsg:
+        error = {"message": msg,
+                 "code": code,
+                 "data": '' if data is None else data,
+                 }
+        return ErrorMsg(error=error, id=id)
+
+    def handle(self, method_name: str, args: List
+               ) -> Optional[Result]:
         """Handle the call to method_name.
 
         You should overwrite this method in a subclass.
         """
         raise Fault("Unknown method {0}".format(method_name))
 
-    def serve_forever(self):
+    def serve_forever(self) -> None:
         """Serve requests forever.
 
         Errors are not caught, so this is a slight misnomer.

@@ -2,12 +2,14 @@
 
 import sys
 import unittest
+from pathlib import Path
 
 import jedi
 import mock
 import re
 
 from elpy import jedibackend
+from elpy.utils import SourceCode
 from elpy import rpc
 from elpy.tests import compat
 from elpy.tests.support import BackendTestCase
@@ -25,13 +27,57 @@ from elpy.tests.support import RPCGetExtractFunctionDiffTests
 from elpy.tests.support import RPCGetExtractVariableDiffTests
 from elpy.tests.support import RPCGetInlineDiffTests
 from elpy.tests.support import RPCGetAssignmentTests
-
+from elpy.tests.support import source_and_offset
 
 class JediBackendTestCase(BackendTestCase):
     def setUp(self):
         super(JediBackendTestCase, self).setUp()
         env = jedi.get_default_environment().path
         self.backend = jedibackend.JediBackend(self.project_root, env)
+
+class TestSourceCode(BackendTestCase):
+    def setUp(self):
+        super().setUp()
+        self.src = SourceCode(path="/notreal/path", source="\n1234\n6789")
+
+    def test_should_build_offset_index(self):
+        self.assertEqual(list(self.src._get_line_offsets()), [0, 1, 6, 10])
+
+    def test_should_return_offset(self):
+        self.assertEqual(self.src.get_offset(1, 0), 0)
+        self.assertEqual(self.src.get_offset(2, 0), 1)
+
+    def test_should_return_pos(self):
+        self.assertEqual(self.src.get_pos(0), (1, 0))
+        self.assertEqual(self.src.get_pos(1), (2, 0))
+        self.assertEqual(self.src.get_pos(5), (2, 4))
+        self.assertEqual(self.src.get_pos(9), (3, 3))
+
+    def test_should_return_source_string(self):
+        self.assertEqual(str(self.src),  "\n1234\n6789")
+
+    def test_should_return_source_path(self):
+        self.assertEqual(self.src.path, Path("/notreal/path"))
+
+    def test_should_load_source_if_not_source_arg(self):
+        file_name = self.project_file("test.py", "my\nsource\ncode")
+        src = SourceCode(file_name)
+        self.assertEqual("my\nsource\ncode", str(src))
+
+    def test_should_not_load_source_if_source_in_args(self):
+        file_name = self.project_file("test.py", "my\nsource\nin\file")
+        not_saved_source_string = "edited\nbut\not\nsaved\source"
+        src = SourceCode(file_name, not_saved_source_string)
+        self.assertEqual(not_saved_source_string, str(src))
+        
+    def test_should_fail_on_wrong_pos(self):
+        with self.assertRaises(ValueError) as cm:
+            self.src.get_offset(100, 1)
+        self.assertEqual("Text does not have 100 lines.", str(cm.exception))
+        with self.assertRaises(ValueError) as cm:
+            self.src.get_offset(1, 1)
+        self.assertEqual( "Line 1 column 1 is not within the text",
+                         str(cm.exception))
 
 
 class TestInit(JediBackendTestCase):
@@ -230,44 +276,6 @@ class TestRPCGetUsages(RPCGetUsagesTests,
 class TestRPCGetNames(RPCGetNamesTests,
                       JediBackendTestCase):
     pass
-
-
-class TestPosToLinecol(unittest.TestCase):
-    def test_should_handle_beginning_of_string(self):
-        self.assertEqual(jedibackend.pos_to_linecol("foo", 0),
-                         (1, 0))
-
-    def test_should_handle_end_of_line(self):
-        self.assertEqual(jedibackend.pos_to_linecol("foo\nbar\nbaz\nqux", 9),
-                         (3, 1))
-
-    def test_should_handle_end_of_string(self):
-        self.assertEqual(jedibackend.pos_to_linecol("foo\nbar\nbaz\nqux", 14),
-                         (4, 2))
-
-
-class TestLinecolToPos(unittest.TestCase):
-    def test_should_handle_beginning_of_string(self):
-        self.assertEqual(jedibackend.linecol_to_pos("foo", 1, 0),
-                         0)
-
-    def test_should_handle_end_of_string(self):
-        self.assertEqual(jedibackend.linecol_to_pos("foo\nbar\nbaz\nqux",
-                                                    3, 1),
-                         9)
-
-    def test_should_return_offset(self):
-        self.assertEqual(jedibackend.linecol_to_pos("foo\nbar\nbaz\nqux",
-                                                    4, 2),
-                         14)
-
-    def test_should_fail_for_line_past_text(self):
-        self.assertRaises(ValueError,
-                          jedibackend.linecol_to_pos, "foo\n", 3, 1)
-
-    def test_should_fail_for_column_past_text(self):
-        self.assertRaises(ValueError,
-                          jedibackend.linecol_to_pos, "foo\n", 1, 10)
 
 
 class TestRunWithDebug(unittest.TestCase):
