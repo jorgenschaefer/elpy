@@ -15,8 +15,6 @@
                      "rpc_python_executable"
                      "jedi_version"
                      "jedi_latest"
-                     "rope_version"
-                     "rope_latest"
                      ))
         (should (not (eq :not-set (gethash key config :not-set))))))))
 
