@@ -13,15 +13,16 @@ discovery would find them there and try to run them, which would fail.
 """
 
 import os
+import pathlib
+import re
 import shutil
 import sys
 import tempfile
 import unittest
-import re
 
-from elpy.tests import compat
-from elpy.rpc import Fault
 from elpy import jedibackend
+from elpy.rpc import Fault
+from elpy.tests import compat
 
 
 class BackendTestCase(unittest.TestCase):
@@ -55,7 +56,7 @@ class BackendTestCase(unittest.TestCase):
             fobj = open(full_name, "w")
         with fobj as f:
             f.write(contents)
-        return full_name
+        return pathlib.Path(full_name)
 
 
 class GenericRPCTests(object):
