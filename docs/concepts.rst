@@ -19,7 +19,7 @@ well as in the buffer list (:kbd:`C-x C-b`) as buffers named
 ``*elpy-rpc[...]*``.
 
 RPC processes are used to provide code completion, documentation and
-other features. To do so, they use python packages (jedi, yapf, rope, ...)
+other features. To do so, they use python packages (jedi, yapf, ...)
 that are installed in a dedicated virtualenv
 (``.emacs.d/elpy/rpc-venv`` by default). Those packages can be updated
 through the configuration panel (accessible with :kbd:`M-x
