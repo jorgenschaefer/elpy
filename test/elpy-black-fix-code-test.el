@@ -2,14 +2,7 @@
   (if (boundp '*elpy-black-fix-code--black-supported*)
       *elpy-black-fix-code--black-supported*
     (setq *elpy-black-fix-code--black-supported*
-          (not (string< (or (getenv "TRAVIS_PYTHON_VERSION")
-                            (with-temp-buffer
-                              (call-process elpy-rpc-python-command
-                                            nil '(t t) nil "--version")
-                              (goto-char (point-min))
-                              (re-search-forward "\\([0-9.]+\\)" nil t)
-                              (or (match-string 1) "")))
-                        "3.6")))))
+          (not (string< (elpy-get-python-version) "3.6")))))
 
 (when (elpy-black-fix-code--black-supported)
   (ert-deftest elpy-black-fix-code-should-retain-line-and-column ()

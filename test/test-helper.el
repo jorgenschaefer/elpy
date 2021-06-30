@@ -20,26 +20,19 @@
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; Travis
+;; CI
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; Travis is using virtualenvs to test specific version of python
-;; we need to use it as the system environment
-(advice-add 'elpy-rpc-get-virtualenv-path
-            :around (lambda (fun &rest args)
-                      (if (and (getenv "TRAVIS")
-                               (or (eq elpy-rpc-virtualenv-path 'global)  ;; for backward compatibility
-                                   (eq elpy-rpc-virtualenv-path 'system)))
-                          (expand-file-name
-                           (concat
-                            "~/virtualenv/"
-                            "python"
-                            (getenv "TRAVIS_PYTHON_VERSION")))
-                        (apply fun args))))
-
-;; Travis regularly has some lag for some reason.
-(setq elpy-rpc-timeout 10)
-;; Print elpy configuration
-(when (getenv "TRAVIS")
+(when (getenv "GITHUB_RUN_ID")
+  ;; Make sure we use the proper python version to create the virtualenv
+  ;; This is necessary as multiple python binaries will be present on
+  ;; the virtual machine
+  (advice-add 'elpy-rpc--create-virtualenv
+              :around (lambda (orig-fun &rest args)
+                        (let ((elpy-rpc-python-command (executable-find "python")))
+                          (apply orig-fun args))))
+  ;; CI regularly has some lag for some reason.
+  (setq elpy-rpc-timeout 10)
+  ;; Print elpy configuration
   (elpy-config)
   (with-current-buffer "*Elpy Config*"
     (message (buffer-substring-no-properties (point-min) (point-max)))))
@@ -61,6 +54,14 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Test helper
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defun elpy-get-python-version ()
+  (with-temp-buffer
+    (call-process elpy-rpc-python-command
+                  nil '(t t) nil "--version")
+    (goto-char (point-min))
+    (re-search-forward "\\([0-9.]+\\)" nil t)
+    (or (match-string 1) "")))
+
 (defmacro mletf* (bindings &rest body)
   "Liket `cl-letf*', just with a slightly more concise function syntax.
 

@@ -7,6 +7,7 @@
         (insert "def foo(x, y):\n"
                 "    return x + y\n"
                 "var1 = foo(5, 2)")
+        (save-buffer)
         (let* ((basefile (f-join project-root "test.py"))
                (foo-defs (car (elpy-xref--definitions "1: foo")))
                (summary (xref-item-summary foo-defs))

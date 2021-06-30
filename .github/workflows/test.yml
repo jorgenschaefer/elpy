@@ -69,7 +69,7 @@ jobs:
     - name: Run Emacs tests
       uses: nick-invision/retry@v2
       with:
-        timeout_minutes: 5
+        timeout_minutes: 10
         max_attempts: 3
         command: cask install ; PYTHONPATH="`pwd`" cask exec ert-runner --reporter ert+duration
     - name: Run Python tests

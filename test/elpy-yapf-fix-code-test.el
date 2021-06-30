@@ -1,5 +1,5 @@
 (ert-deftest elpy-yapf-fix-code-should-retain-line-and-column ()
-  (let* ((pyversion (getenv "TRAVIS_PYTHON_VERSION"))
+  (let* ((pyversion (elpy-get-python-version))
          (yapf-not-supported (or (string< pyversion "2.7")
                                  (and (not (string< pyversion "3.0"))
                                       (string< pyversion "3.4")))))
@@ -17,7 +17,7 @@
                        "y = 2_|_"))))))
 
 (ert-deftest elpy-yapf-fix-code-in-region-should-retain-line-and-column ()
-  (let* ((pyversion (getenv "TRAVIS_PYTHON_VERSION"))
+  (let* ((pyversion (elpy-get-python-version))
          (yapf-not-supported (or (string< pyversion "2.7")
                                  (and (not (string< pyversion "3.0"))
                                       (string< pyversion "3.4")))))
@@ -41,7 +41,7 @@
                        ))))))
 
 (ert-deftest elpy-yapf-fix-code-should-throw-error-for-invalid-code ()
-  (let* ((pyversion (getenv "TRAVIS_PYTHON_VERSION"))
+  (let* ((pyversion (elpy-get-python-version))
          (yapf-not-supported (or (string< pyversion "2.7")
                                  (and (not (string< pyversion "3.0"))
                                       (string< pyversion "3.4")))))
