@@ -13,7 +13,6 @@ discovery would find them there and try to run them, which would fail.
 """
 
 import os
-import pathlib
 import re
 import shutil
 import sys
@@ -23,6 +22,9 @@ import unittest
 from elpy import jedibackend
 from elpy.rpc import Fault
 from elpy.tests import compat
+
+if jedibackend.JEDISUP18:
+    import pathlib
 
 
 class BackendTestCase(unittest.TestCase):
@@ -56,7 +58,11 @@ class BackendTestCase(unittest.TestCase):
             fobj = open(full_name, "w")
         with fobj as f:
             f.write(contents)
-        return pathlib.Path(full_name)
+        # return full_name
+        if jedibackend.JEDISUP18:
+            return pathlib.Path(full_name)
+        else:
+            return full_name
 
 
 class GenericRPCTests(object):
@@ -452,12 +458,6 @@ class RPCGetCompletionsTests(GenericRPCTests):
         self.assertEqual([], self.backend.rpc_get_completions("test.py",
                                                               source, offset))
 
-    def test_should_handle_jedi16(self):
-        backup = self.backend.rpc_get_completions
-        self.backend.rpc_get_completions = self.backend.rpc_get_completions_jedi16
-        self.test_should_complete_builtin()
-        self.backend.rpc_get_completions = backup
-
 
 class RPCGetCompletionDocstringTests(object):
     def test_should_return_docstring(self):
@@ -488,12 +488,6 @@ class RPCGetCompletionDocstringTests(object):
                                                      source,
                                                      offset)
         self.assertIsNone(completions)
-
-    def test_should_handle_jedi16(self):
-        backup = self.backend.rpc_get_docstring
-        self.backend.rpc_get_docstring = self.backend.rpc_get_docstring_jedi16
-        self.test_should_return_docstring()
-        self.backend.rpc_get_docstring = backup
 
 
 class RPCGetCompletionLocationTests(object):
@@ -625,12 +619,6 @@ class RPCGetDefinitionTests(GenericRPCTests):
                                                          offset),
                          (filename, 0))
 
-    def test_should_handle_jedi16(self):
-        backup = self.backend.rpc_get_definition
-        self.backend.rpc_get_definition = self.backend.rpc_get_definition_jedi16
-        self.test_should_return_definition_location_same_file()
-        self.backend.rpc_get_definition = backup
-
 
 class RPCGetAssignmentTests():
     METHOD = "rpc_get_assignment"
@@ -639,25 +627,6 @@ class RPCGetAssignmentTests():
         if jedibackend.JEDISUP17:
             with self.assertRaises(Fault):
                 self.backend.rpc_get_assignment("test.py", "dummy code", 1)
-
-    def test_should_handle_jedi16(self):
-        backup = self.backend.rpc_get_assignment
-        self.backend.rpc_get_assignment = self.backend.rpc_get_assignment_jedi16
-        source, offset = source_and_offset("import threading\n"
-                                           "def test_function(a, b):\n"
-                                           "    return a + b\n"
-                                           "\n"
-                                           "test_func_|_tion(\n")
-        filename = self.project_file("test.py", source)
-
-        location = self.backend.rpc_get_assignment(filename,
-                                                   source,
-                                                   offset)
-
-        self.assertEqual(location[0], filename)
-        # On def or on the function name
-        self.assertIn(location[1], (17, 21))
-        self.backend.rpc_get_assignment = backup
 
 
 class RPCGetCalltipTests(GenericRPCTests):
@@ -805,12 +774,6 @@ class RPCGetCalltipTests(GenericRPCTests):
         self.assertEqual(calltip['kind'], 'oneline_doc')
         self.assertEqual(calltip['doc'], 'No documentation')
 
-    def test_should_handle_jedi16(self):
-        backup = self.backend.rpc_get_calltip
-        self.backend.rpc_get_calltip = self.backend.rpc_get_calltip_jedi16
-        self.test_should_get_calltip()
-        self.backend.rpc_get_calltip = backup
-
 
 class RPCGetDocstringTests(GenericRPCTests):
     METHOD = "rpc_get_docstring"
@@ -840,12 +803,6 @@ class RPCGetDocstringTests(GenericRPCTests):
                                                    source,
                                                    offset)
         self.assertIsNone(docstring)
-
-    def test_should_handle_jedi16(self):
-        backup = self.backend.rpc_get_docstring
-        self.backend.rpc_get_docstring = self.backend.rpc_get_docstring_jedi16
-        self.test_should_get_docstring()
-        self.backend.rpc_get_docstring = backup
 
 
 class RPCGetOnelineDocstringTests(GenericRPCTests):
@@ -901,14 +858,6 @@ class RPCGetOnelineDocstringTests(GenericRPCTests):
                                                                       source,
                                                                       offset)
         self.assertIsNone(docstring)
-
-    def test_should_handle_jedi16(self):
-        backup = self.backend.rpc_get_oneline_docstring
-        self.backend.rpc_get_oneline_docstring = self.backend.rpc_get_oneline_docstring_jedi16
-        self.test_should_get_oneline_docstring()
-        self.test_should_get_oneline_docstring_for_modules()
-        self.test_should_return_none_for_bad_identifier()
-        self.backend.rpc_get_oneline_docstring = backup
 
 
 @unittest.skipIf(not jedibackend.JEDISUP17,
@@ -1061,13 +1010,6 @@ class RPCGetNamesTests(GenericRPCTests):
 
         self.assertEqual(names, [])
 
-    def test_should_handle_jedi16(self):
-        backup = self.backend.rpc_get_names
-        self.backend.rpc_get_names = self.backend.rpc_get_names_jedi16
-        self.test_shouldreturn_names_in_same_file()
-        self.test_should_not_fail_without_symbol()
-        self.backend.rpc_get_names = backup
-
 
 class RPCGetUsagesTests(GenericRPCTests):
     METHOD = "rpc_get_usages"
@@ -1120,14 +1062,6 @@ class RPCGetUsagesTests(GenericRPCTests):
                                              0)
 
         self.assertEqual(usages, [])
-
-    def test_should_handle_jedi16(self):
-        backup = self.backend.rpc_get_usages
-        self.backend.rpc_get_usages = self.backend.rpc_get_usages_jedi16
-        self.test_should_return_uses_in_same_file()
-        self.test_should_return_uses_in_other_file()
-        self.test_should_not_fail_without_symbol()
-        self.backend.rpc_get_usages = backup
 
 
 def source_and_offset(source):

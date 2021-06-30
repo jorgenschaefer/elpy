@@ -6,7 +6,10 @@ import os
 import tempfile
 import unittest
 
-import mock
+try:
+    from unittest import mock
+except ImportError:
+    import mock
 
 from elpy import rpc
 from elpy import server

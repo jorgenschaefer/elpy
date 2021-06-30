@@ -10,7 +10,6 @@ See the documentation of the JSONRPCServer class for further details.
 import json
 import sys
 import traceback
-from .json_encoder import JSONEncoder
 
 
 class JSONRPCServer(object):
@@ -75,6 +74,7 @@ class JSONRPCServer(object):
         It's not possible with this method to write non-objects.
 
         """
+        from elpy.json_encoder import JSONEncoder
         serialized_value = JSONEncoder().encode(kwargs)
         self.stdout.write(serialized_value + "\n")
         self.stdout.flush()

@@ -4,7 +4,10 @@ import shutil
 import sys
 import tempfile
 
-import mock
+try:
+    from unittest import mock
+except ImportError:
+    import mock
 
 import elpy.pydocutils
 

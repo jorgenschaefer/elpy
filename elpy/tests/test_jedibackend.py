@@ -4,7 +4,10 @@ import sys
 import unittest
 
 import jedi
-import mock
+try:
+    from unittest import mock
+except ImportError:
+    import mock
 import re
 
 from elpy import jedibackend
