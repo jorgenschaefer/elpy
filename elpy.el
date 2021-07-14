@@ -3097,8 +3097,9 @@ and return the list."
      (elpy-modules-remove-modeline-lighter 'eldoc-minor-mode))
     (`buffer-init
      (eldoc-add-command-completions "python-indent-dedent-line-backspace")
-     (set (make-local-variable 'company-frontends)
-          (remq 'company-echo-metadata-frontend company-frontends))
+     (when (member 'elpy-module-company elpy-modules)
+       (set (make-local-variable 'company-frontends)
+            (remq 'company-echo-metadata-frontend company-frontends)))
      ;; New (Emacs >= 28) vs old eldoc API
      (if (and (version< "28.0.0" emacs-version)
               (boundp 'eldoc-documentation-functions))
