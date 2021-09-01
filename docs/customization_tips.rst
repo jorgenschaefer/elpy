@@ -73,7 +73,7 @@ You may sometimes find when you try to navigate to a function/class definition w
         (ring-insert find-tag-marker-ring (point-marker))
         (condition-case nil (elpy-goto-definition)
             (error (elpy-rgrep-symbol
-                       (concat "\\(def\\|class\\)\s" (thing-at-point 'symbol) "(")))))
+                       (concat "\\(def\\|class\\)\s" (thing-at-point 'symbol) "\\((\\|:\\)")))))
 
 This function will try to find the definition of the symbol at point using ``elpy-goto-definition``, but will do elpy-rgrep-symbol_  instead, if the former function fails to return a result. You can bind this function to the key combination of your choice, or you can bind it to ``M-.`` to use it as a replacement for the the default ``goto-definition`` function:
 
