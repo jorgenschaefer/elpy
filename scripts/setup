@@ -15,7 +15,7 @@ pip install -r requirements.txt --upgrade
 pip install -r requirements-rpc.txt --upgrade
 pip install -r requirements-dev.txt --upgrade
 # For python2
-if python -c 'import sys ; exit(sys.version_info < (3, 0))'
+if python -c 'import sys ; exit(not sys.version_info < (3, 0))'
 then
     pip install -r requirements-dev2.txt --upgrade
 fi
