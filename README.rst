@@ -26,12 +26,13 @@ Emacs Lisp as well as Python. Elpy is fully documented at `Readthedocs`_.
 
 .. _Readthedocs: https://elpy.readthedocs.io/en/latest/index.html
 
-IMPORTANT NOTE: Current support
-===============================
+IMPORTANT NOTE: Looking for a maintainer
+========================================
 
 I find myself (@galaunay, current maintainer), unable to maintain Elpy at the moment, and probably for a while.
-I will keep an eye on the PRs to integrate any fix and/or new feature proposed, but I will definitely not be able to treat the issues in a satisfying manner.
+If you are interested in getting involved in Elpy, please contact me by mail, **the project definitely needs you** !
 
+In the meantime, I will keep an eye on the PRs to integrate any fix and/or new features proposed, but I will definitely not be able to treat the issues in a satisfying manner.
 If you are stuck with an issue, please have a look at the `documentation`_, there is a lot of answers there. 
 @gfederix also made some bug fixing in his `fork`_, so you can try using this version of Elpy.
 
