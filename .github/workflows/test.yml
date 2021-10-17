@@ -64,7 +64,7 @@ jobs:
     - name: nose
       run: nosetests
     - name: coveralls
-      if: ${{ matrix.emacs_version > 3 }}
+      if: ${{ matrix.python_version > 3 }}
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       run: |
