@@ -50,7 +50,6 @@ jobs:
         version: snapshot
     - run: |
         echo "$HOME/.cask/bin" >> $GITHUB_PATH
-        cask install
     - name: pip
       run: |
         python -m pip install --upgrade pip
@@ -59,7 +58,9 @@ jobs:
         pip install coveralls
         python -m virtualenv $HOME/.virtualenvs/elpy-test-venv
     - name: ert
-      run: cask exec ert-runner --reporter ert+duration
+      run: |
+        cask install
+        cask exec ert-runner --reporter ert+duration
     - name: nose
       run: nosetests
     - name: coveralls
