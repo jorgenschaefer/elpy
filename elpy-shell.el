@@ -353,14 +353,14 @@ shell (often \"*Python*\" shell)."
 
 If the shell is not running, waits until the first prompt is visible and
 commands can be sent to the shell."
-  (with-current-buffer (process-buffer (elpy-shell-get-or-create-process))
-    (let ((cumtime 0))
-      (while (and (when (boundp 'python-shell--first-prompt-received)
-                    (not python-shell--first-prompt-received))
-                  (< cumtime 3))
-        (sleep-for 0.1)
-        (setq cumtime (+ cumtime 0.1)))))
-  (elpy-shell-get-or-create-process))
+  (let ((process (elpy-shell-get-or-create-process)))
+    (prog1 process
+      (with-current-buffer (process-buffer process)
+        (let ((cumtime 0))
+          (when (boundp 'python-shell--first-prompt-received)
+            (cl-loop until python-shell--first-prompt-received
+                     repeat 100
+                     do (accept-process-output nil 0.1))))))))
 
 (defun elpy-shell--string-without-indentation (string)
   "Return the current string, but without indentation."

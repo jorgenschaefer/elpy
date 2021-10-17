@@ -4,7 +4,6 @@
 
 from elpy.rpc import Fault
 import os
-import sys
 
 try:
     import autopep8
