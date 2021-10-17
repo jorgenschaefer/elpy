@@ -18,14 +18,14 @@ import shutil
 import sys
 import tempfile
 import unittest
-import pathlib
-from pathlib import Path
 
 from elpy import jedibackend
 from elpy.rpc import Fault
 from elpy.tests import compat
 
-from elpy.jedibackend import NameResult
+if jedibackend.JEDISUP18:
+    import pathlib
+
 
 class BackendTestCase(unittest.TestCase):
     """Base class for backend tests.
@@ -47,18 +47,23 @@ class BackendTestCase(unittest.TestCase):
         Write contents into that file.
 
         """
-        path = Path(self.project_root, relname)
+        full_name = os.path.join(self.project_root, relname)
         try:
-            os.makedirs(os.path.dirname(path))
+            os.makedirs(os.path.dirname(full_name))
         except OSError:
             pass
-        with open(path, "w") as f:
+        if compat.PYTHON3:
+            fobj = open(full_name, "w", encoding="utf-8")
+        else:
+            fobj = open(full_name, "w")
+        with fobj as f:
             f.write(contents)
-
+        # return full_name
         if jedibackend.JEDISUP18:
             return pathlib.Path(full_name)
         else:
-            return str(path)
+            return full_name
+
 
 class GenericRPCTests(object):
     """Generic RPC test methods.
@@ -453,6 +458,7 @@ class RPCGetCompletionsTests(GenericRPCTests):
         self.assertEqual([], self.backend.rpc_get_completions("test.py",
                                                               source, offset))
 
+
 class RPCGetCompletionDocstringTests(object):
     def test_should_return_docstring(self):
         source, offset = source_and_offset("import json\n"
@@ -616,7 +622,9 @@ class RPCGetDefinitionTests(GenericRPCTests):
 
 class RPCGetAssignmentTests():
     METHOD = "rpc_get_assignment"
+
     def test_should_raise_fault(self):
+        if jedibackend.JEDISUP17:
             with self.assertRaises(Fault):
                 self.backend.rpc_get_assignment("test.py", "dummy code", 1)
 
@@ -766,6 +774,7 @@ class RPCGetCalltipTests(GenericRPCTests):
         self.assertEqual(calltip['kind'], 'oneline_doc')
         self.assertEqual(calltip['doc'], 'No documentation')
 
+
 class RPCGetDocstringTests(GenericRPCTests):
     METHOD = "rpc_get_docstring"
 
@@ -850,6 +859,9 @@ class RPCGetOnelineDocstringTests(GenericRPCTests):
                                                                       offset)
         self.assertIsNone(docstring)
 
+
+@unittest.skipIf(not jedibackend.JEDISUP17,
+                 "Refactoring not available with jedi<17")
 @unittest.skipIf(sys.version_info < (3, 6),
                  "Jedi refactoring not available for python < 3.6")
 class RPCGetRenameDiffTests(object):
@@ -862,12 +874,12 @@ class RPCGetRenameDiffTests(object):
         new_name = "c"
         diff = self.backend.rpc_get_rename_diff("test.py", source, offset,
                                                 new_name)
-        assert diff.success
+        assert diff['success']
         self.assertIn("-def foo(a, b):\n"
                       "-  print(a)\n"
                       "+def foo(c, b):\n"
                       "+  print(c)",
-                      diff.diff)
+                      diff['diff'])
 
     def test_should_fail_for_invalid_symbol_at_point(self):
         source, offset = source_and_offset("def foo(a, b):\n"
@@ -876,9 +888,11 @@ class RPCGetRenameDiffTests(object):
         new_name = "c"
         diff = self.backend.rpc_get_rename_diff("test.py", source, offset,
                                                 new_name)
-        self.assertFalse(diff.success)
+        self.assertFalse(diff['success'])
 
 
+@unittest.skipIf(not jedibackend.JEDISUP17,
+                 "Refactoring not available with jedi<17")
 @unittest.skipIf(sys.version_info < (3, 6),
                  "Jedi refactoring not available for python < 3.6")
 class RPCGetExtractFunctionDiffTests(object):
@@ -893,15 +907,17 @@ class RPCGetExtractFunctionDiffTests(object):
             new_name,
             line_beg=1, line_end=2,
             col_beg=0, col_end=8)
-        assert diff.success
+        assert diff['success']
         self.assertIn('-print(a)\n'
                       '-return b\n'
                       '+def foo(a, b):\n'
                       '+    print(a)\n'
                       '+    return b\n',
-                      diff.diff)
+                      diff['diff'])
 
 
+@unittest.skipIf(not jedibackend.JEDISUP17,
+                 "Refactoring not available with jedi<17")
 @unittest.skipIf(sys.version_info < (3, 6),
                  "Jedi refactoring not available for python < 3.6")
 class RPCGetExtractVariableDiffTests(object):
@@ -917,10 +933,13 @@ class RPCGetExtractVariableDiffTests(object):
             new_name,
             line_beg=3, line_end=3,
             col_beg=7, col_end=16)
+        assert diff['success']
         self.assertIn("-print(a + 1 + b/2)\n+c = a + 1 + b/2\n+print(c)\n",
-                      diff.diff)
+                      diff['diff'])
 
 
+@unittest.skipIf(not jedibackend.JEDISUP17,
+                 "Refactoring not available with jedi<17")
 @unittest.skipIf(sys.version_info < (3, 6),
                  "Jedi refactoring not available for python < 3.6")
 class RPCGetInlineDiffTests(object):
@@ -932,9 +951,9 @@ class RPCGetInlineDiffTests(object):
                                            "x = int(ba_|_r)\n")
         diff = self.backend.rpc_get_inline_diff("test.py", source,
                                                 offset)
-        assert diff.success
+        assert diff['success']
         self.assertIn("-bar = foo + 1\n-x = int(bar)\n+x = int(foo + 1)",
-                      diff.diff)
+                      diff['diff'])
 
     def test_should_error_on_refactoring_failure(self):
         source, offset = source_and_offset("foo = 3.1\n"
@@ -942,7 +961,7 @@ class RPCGetInlineDiffTests(object):
                                            "x = in_|_t(bar)\n")
         diff = self.backend.rpc_get_inline_diff("test.py", source,
                                                 offset)
-        self.assertFalse(diff.success)
+        self.assertFalse(diff['success'])
 
 
 class RPCGetNamesTests(GenericRPCTests):
@@ -1006,12 +1025,15 @@ class RPCGetUsagesTests(GenericRPCTests):
                                              offset)
 
         self.assertEqual(usages,
-                         [NameResult
-(name='x', offset=8, filename=filename),
-                          NameResult
-(name='x', offset=23, filename=filename),
-                          NameResult
-(name='x', offset=27, filename=filename)])
+                         [{'name': 'x',
+                           'offset': 8,
+                           'filename': filename},
+                          {'name': 'x',
+                           'filename': filename,
+                           'offset': 23},
+                          {'name': u'x',
+                           'filename': filename,
+                           'offset': 27}])
 
     def test_should_return_uses_in_other_file(self):
         file1 = self.project_file("file1.py", "")
@@ -1024,10 +1046,13 @@ class RPCGetUsagesTests(GenericRPCTests):
                                              source,
                                              offset)
 
-        self.assertEqual(usages, [NameResult
-(name="x", filename=file1, offset=19),
-                                  NameResult
-(name="x", filename=file2, offset=5)])
+        self.assertEqual(usages,
+                         [{'name': 'x',
+                           'filename': file1,
+                           'offset': 19},
+                          {'name': 'x',
+                           'filename': file2,
+                           'offset': 5}])
 
     def test_should_not_fail_without_symbol(self):
         filename = self.project_file("file.py", "")
