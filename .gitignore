@@ -10,3 +10,5 @@ build/
 elpy.egg-info/
 _build
 .cache
+elpy-autoloads.el
+.vscode

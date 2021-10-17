@@ -1,2 +1,7 @@
+jedi
+autopep8
+yapf
+setuptools
 flake8
-pydantic
+pydantic;   python_version >= '3.6'
+black;	    python_version >= '3.6'

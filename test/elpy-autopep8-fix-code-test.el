@@ -4,7 +4,6 @@
                   "x  =  1"
                   "y = 2_|_"
                   )
-
                  (elpy-autopep8-fix-code)
                  (should
                   (buffer-be

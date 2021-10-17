@@ -1,85 +1,69 @@
 name: Tests
 
 on:
-  push:
-    branches:
-      - master
   pull_request:
+    paths-ignore:
+    - 'docs/**'
+    - '**.rst'
+    - '**.org'
+  push:
+    paths-ignore:
+    - 'docs/**'
+    - '**.rst'
+    - '**.org'
+    branches-ignore:
+    - 'master'
+    - 'main'
 
 jobs:
   build:
     runs-on: ubuntu-latest
-    # continue-on-error: true
     strategy:
-      fail-fast: false
       matrix:
         emacs_version:
-          # - 24.1
-          # - 24.2
-          # - 24.3
-          # - 24.4
-          # - 24.5
-          # - 25.1
-          # - 25.2
-          # - 25.3
-          - 26.1
-          - 26.2
           - 26.3
-          - 27.1
-          # - snapshot
         python_version:
           - 2.7
-          - 3.5
-          - 3.6
-          - 3.7
-          - 3.8
     steps:
-    # Checkout
     - uses: actions/checkout@v2
-    # Emacs
-    - name: Set up Emacs ${{ matrix.emacs_version }}
-      uses: purcell/setup-emacs@master
+    - uses: purcell/setup-emacs@master
       with:
         version: ${{ matrix.emacs_version }}
-    # Cask
-    - name: Set up Cask
-      uses: conao3/setup-cask@master
-      with:
-          version: 'snapshot'
-     # Python
-    - name: Set up Python ${{ matrix.python_version }}
-      uses: actions/setup-python@v2
+    - uses: actions/setup-python@v2
       with:
         python-version : ${{ matrix.python_version }}
-    - name: Install Python dependencies
+    - uses: actions/cache@v2
+      id: cache-cask-packages
+      with:
+        path: .cask
+        key: cache-cask-packages-000
+    - uses: actions/cache@v2
+      id: cache-cask-executable
+      with:
+        path: ~/.cask
+        key: cache-cask-executable-000
+    - uses: conao3/setup-cask@master
+      if: steps.cache-cask-executable.outputs.cache-hit != 'true'
+      with:
+        version: snapshot
+    - run: |
+        echo "$HOME/.cask/bin" >> $GITHUB_PATH
+        cask install
+    - name: pip
       run: |
         python -m pip install --upgrade pip
-        pip install -r requirements.txt --upgrade
-        pip install -r requirements-rpc.txt --upgrade
-        pip install -r requirements-dev.txt --upgrade
-        if [[ ${{ matrix.python_version }} > 3.5 ]] ; then
-          pip install -r requirements-rpc3.6.txt --upgrade ;
-        fi
-        if [[ ${{ matrix.python_version }} < 3 ]] ; then
-          pip install -r requirements-dev2.txt --upgrade ;
-        fi
+        pip install -r requirements.txt
+        pip install -r requirements-dev.txt
         pip install coveralls
         python -m virtualenv $HOME/.virtualenvs/elpy-test-venv
-    # Run tests
-    - name: Run Emacs tests
-      uses: nick-invision/retry@v2
-      with:
-        timeout_minutes: 10
-        max_attempts: 5
-        command: cask install ; PYTHONPATH="`pwd`" cask exec ert-runner --reporter ert+duration
-    - name: Run Python tests
+    - name: ert
+      run: cask exec ert-runner --reporter ert+duration
+    - name: nose
       run: nosetests
-    # Coveralls
-    - name: Coveralls
+    - name: coveralls
+      if: startsWith(matrix.emacs_version, '3')
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       run: |
-        if [[ ${{ matrix.python_version }} > 3 ]] ; then
-          coverage run -m nose.__main__
-          coveralls --service=github ;
-        fi
+        coverage run -m nose.__main__
+        coveralls --service=github
