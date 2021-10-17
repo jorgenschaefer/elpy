@@ -22,8 +22,10 @@ jobs:
       matrix:
         emacs_version:
           - 26.3
+          - 27.2
         python_version:
           - 2.7
+          - 3.8
     steps:
     - uses: actions/checkout@v2
     - uses: purcell/setup-emacs@master

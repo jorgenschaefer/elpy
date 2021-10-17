@@ -230,7 +230,7 @@ needed packages from `elpy-rpc--get-package-list'."
   (let ((rpc-python-version (elpy-rpc--get-python-version)))
     (append '("jedi" "flake8" "autopep8" "yapf")
 	    (unless (version< rpc-python-version "3.6.0")
-	      '("black" "pydantic")))))
+	      '("black")))))
 
 (defun elpy-rpc--get-python-version ()
   "Return the RPC python version."
