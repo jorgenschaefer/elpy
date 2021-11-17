@@ -43,6 +43,7 @@ def fix_code(code, directory):
     # Get black config from pyproject.toml
     line_length = black.DEFAULT_LINE_LENGTH
     string_normalization = True
+    target_versions = set()
     pyproject_path = os.path.join(directory, "pyproject.toml")
     if toml is not None and os.path.exists(pyproject_path):
         pyproject_config = toml.load(pyproject_path)
@@ -51,16 +52,25 @@ def fix_code(code, directory):
             line_length = black_config["line-length"]
         if "skip-string-normalization" in black_config:
             string_normalization = not black_config["skip-string-normalization"]
+        if "target-version" in black_config:
+            target_versions = {
+                black.TargetVersion[v.upper()] for v in black_config["target-version"]
+            }
+
     try:
         if parse_version(black.__version__) < parse_version("19.0"):
             reformatted_source = black.format_file_contents(
-                src_contents=code, line_length=line_length, fast=False)
+                src_contents=code, line_length=line_length, fast=False
+            )
         else:
             fm = black.FileMode(
                 line_length=line_length,
-                string_normalization=string_normalization)
+                string_normalization=string_normalization,
+                target_versions=target_versions,
+            )
             reformatted_source = black.format_file_contents(
-                src_contents=code, fast=False, mode=fm)
+                src_contents=code, fast=False, mode=fm
+            )
         return reformatted_source
     except black.NothingChanged:
         return code
