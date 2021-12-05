@@ -30,6 +30,14 @@ try:
         black = None
     else:
         import black
+        current_version = parse_version(black.__version__)
+        if current_version >= parse_version("21.5b1"):
+            from black.files import find_pyproject_toml
+        elif current_version >= parse_version("20.8b0"):
+            from black import find_pyproject_toml
+        else:
+            find_pyproject_toml = None
+
 except ImportError:  # pragma: no cover
     black = None
 
@@ -43,7 +51,10 @@ def fix_code(code, directory):
     # Get black config from pyproject.toml
     line_length = black.DEFAULT_LINE_LENGTH
     string_normalization = True
-    pyproject_path = os.path.join(directory, "pyproject.toml")
+    if find_pyproject_toml:
+        pyproject_path = find_pyproject_toml((directory,))
+    else:
+        pyproject_path = os.path.join(directory, "pyproject.toml")
     if toml is not None and os.path.exists(pyproject_path):
         pyproject_config = toml.load(pyproject_path)
         black_config = pyproject_config.get("tool", {}).get("black", {})
