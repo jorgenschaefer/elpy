@@ -71,7 +71,11 @@ this to prevent this from happening."
                                        (or (executable-find "py")
                                            (executable-find "pythonw")
                                            "python")
-                                     "python")
+                                     (if (executable-find "python")
+					 "python"
+				       ;; Fallback on systems where python is not
+				       ;; symlinked to python3.
+				       "python3"))
   "The Python interpreter for the RPC backend.
 
 This should NOT be an interactive shell like ipython or jupyter.
