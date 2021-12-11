@@ -635,7 +635,8 @@ import sys
 import warnings
 warnings.filterwarnings('ignore', category=FutureWarning)
 warnings.filterwarnings('ignore', category=DeprecationWarning)
-  
+warnings.filterwarnings('ignore', category=PendingDeprecationWarning)
+
 from distutils.version import LooseVersion
 
 try:
