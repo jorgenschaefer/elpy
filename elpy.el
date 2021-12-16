@@ -39,6 +39,7 @@
 (require 'etags)
 (require 'files-x)
 (require 'grep)
+(require 'hideshow)
 (require 'ido)
 (require 'json)
 (require 'python)
