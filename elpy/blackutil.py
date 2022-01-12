@@ -55,7 +55,7 @@ def fix_code(code, directory):
         pyproject_path = find_pyproject_toml((directory,))
     else:
         pyproject_path = os.path.join(directory, "pyproject.toml")
-    if toml is not None and os.path.exists(pyproject_path):
+    if toml and pyproject_path and os.path.exists(pyproject_path):
         pyproject_config = toml.load(pyproject_path)
         black_config = pyproject_config.get("tool", {}).get("black", {})
         if "line-length" in black_config:
