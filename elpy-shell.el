@@ -269,7 +269,7 @@ Python process. This allows the process to start up."
          (proc (get-buffer-process bufname)))
     (if proc
         proc
-      (unless (executable-find python-shell-interpreter)
+      (unless (executable-find python-shell-interpreter t)
         (error "Python shell interpreter `%s' cannot be found. Please set `python-shell-interpreter' to a valid python binary."
                python-shell-interpreter))
       (let ((default-directory
