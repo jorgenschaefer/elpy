@@ -175,6 +175,22 @@ the following functions:
   :type 'boolean
   :group 'elpy)
 
+(defcustom elpy-shell-darwin-use-pty nil
+  "Whether to connect to the Python shell through pty on MacOS.
+
+If nil, Elpy will connect to Python through a pipe. Any non-nil
+value will cause Elpy use a pseudo-terminal (pty) instead. This
+value should be set to nil when using a Python interpreter that
+uses the libedit version of Readline, such as the default MacOS
+Python interpreters. This value can be safely be set to true when
+using a version of Python that uses GNU Readline.
+
+This value is only used when `elpy-shell-get-or-create-process'
+creates a new Python process."
+  :type 'boolean
+  :group 'elpy)
+
+
 ;;;;;;;;;;;;;;;;;;
 ;;; Shell commands
 
@@ -280,7 +296,7 @@ REMOVE THIS when Elpy no longer supports Emacs 26."
 If SIT is non-nil, sit for that many seconds after creating a
 Python process. This allows the process to start up."
   (let* ((process-connection-type
-          (if (string-equal system-type "darwin") nil t))  ;; see https://github.com/jorgenschaefer/elpy/pull/1671
+          (if (string-equal system-type "darwin") elpy-shell-darwin-use-pty t))  ;; see https://github.com/jorgenschaefer/elpy/pull/1671
          (bufname (format "*%s*" (python-shell-get-process-name nil)))
          (proc (get-buffer-process bufname)))
     (if proc
