@@ -15,6 +15,10 @@ class BLACKTestCase(BackendTestCase):
     def setUp(self):
         if blackutil.BLACK_NOT_SUPPORTED:
             raise unittest.SkipTest
+        self._original_black = blackutil.black
+
+    def tearDown(self):
+        blackutil.black = self._original_black
 
     def test_fix_code_should_throw_error_for_invalid_code(self):
         src = 'x = '
