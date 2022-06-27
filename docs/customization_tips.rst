@@ -70,7 +70,9 @@ You may sometimes find when you try to navigate to a function/class definition w
     (defun elpy-goto-definition-or-rgrep ()
       "Go to the definition of the symbol at point, if found. Otherwise, run `elpy-rgrep-symbol'."
         (interactive)
-        (ring-insert find-tag-marker-ring (point-marker))
+        (if (version< emacs-version "25.1")
+            (ring-insert find-tag-marker-ring (point-marker))
+          (xref-push-marker-stack))
         (condition-case nil (elpy-goto-definition)
             (error (elpy-rgrep-symbol
                        (concat "\\(def\\|class\\)\s" (thing-at-point 'symbol) "(")))))
