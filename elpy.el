@@ -3186,15 +3186,14 @@ documentation (only used for Emacs >= 28)."
                       :face 'font-lock-function-name-face)))
           ;; INFO is nil, maybe display the current function
           (t
-           (if elpy-eldoc-show-current-function
+           (when elpy-eldoc-show-current-function
                (let ((current-defun (python-info-current-defun)))
                  (when current-defun
                    (eldoc-message
                     (concat "In: "
                             (propertize
                              (format "%s()" current-defun)
-                             'face 'font-lock-function-name-face)))))
-             (eldoc-message ""))))))
+                             'face 'font-lock-function-name-face))))))))))
       (if callback
           ;; New protocol: return non-nil, non-string
           t
