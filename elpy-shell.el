@@ -1218,14 +1218,15 @@ switches focus to Python shell buffer."
 
 (when (version<= "25" emacs-version)
 
-  (defun elpy-pdb--refresh-breakpoints (lines)
+  (defun elpy-pdb--refresh-breakpoints (buffer-lines)
     "Add new breakpoints at lines LINES of the current buffer."
     ;; Forget old breakpoints
     (python-shell-send-string-no-output "import bdb as __bdb; __bdb.Breakpoint.bplist={}; __bdb.Breakpoint.next=1;__bdb.Breakpoint.bpbynumber=[None]")
     (python-shell-send-string-no-output "import pdb; __pdbi = pdb.Pdb()")
-    (dolist (line lines)
+    (dolist (line buffer-lines)
       (python-shell-send-string-no-output
-       (format "__pdbi.set_break('''%s''', %s)" (buffer-file-name) line))))
+       (format "__pdbi.set_break('''%s''', %s)" (nth 1 line) (nth 0 line))))
+    )
 
   (defun elpy-pdb--start-pdb (&optional output)
     "Start pdb on the current script.
@@ -1259,19 +1260,32 @@ With a prefix argument, ignore the existing breakpoints."
         (error "Debugging only work for buffers visiting a file")
       (elpy-shell--ensure-shell-running)
       (save-buffer)
-      (let ((bp-lines (elpy-pdb--get-breakpoint-positions)))
-        (if (or arg (= 0 (length bp-lines)))
-            (progn
-              (elpy-pdb--refresh-breakpoints '())
-              (elpy-pdb--start-pdb t))
-          (elpy-pdb--refresh-breakpoints bp-lines)
-          (elpy-pdb--start-pdb)
-          (python-shell-send-string "continue")))
+      (let (buffer-breakpoint-lst)
+	(dolist (elt (buffer-list))
+	  (with-current-buffer elt
+	    (if (string= major-mode "python-mode")
+		(progn
+		  (dolist (breakpt (elpy-pdb--get-breakpoint-positions))
+		    (message "Buffer full name: %s" (buffer-file-name))
+		    (setq buffer-breakpoint-lst (cons (list breakpt buffer-file-name) buffer-breakpoint-lst))
+	   	    )
+		  )
+	      )
+	    )
+	  )
+	(if (or arg (= 0 (length buffer-breakpoint-lst)))
+	    (progn
+	      (elpy-pdb--refresh-breakpoints '())
+	      (elpy-pdb--start-pdb t))
+	  (elpy-pdb--refresh-breakpoints buffer-breakpoint-lst)
+	  (elpy-pdb--start-pdb)
+	  (python-shell-send-string "continue")
+	  )
+	)
       (elpy-shell-display-buffer)))
 
   (defun elpy-pdb-break-at-point ()
     "Run pdb on the current buffer and break at the current line.
-
 Ignore the existing breakpoints.
 Pdb can directly exit if the current line is not a statement
 that is actually run (blank line, comment line, ...)."
