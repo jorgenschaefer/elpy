@@ -676,7 +676,8 @@ Note that this interface is only available for Emacs 25 and above.
 .. command:: elpy-pdb-debug-buffer
    :kbd: C-c C-u d
 
-   Run pdb on the current buffer. If no breakpoints has been set using
+   Run pdb on the current buffer. If no breakpoints has been set in any
+   open buffer with elpy mode using 
    :command:`elpy-pdb-toggle-breakpoint-at-point`, the debugger will
    pause at the beginning of the buffer. Else, the debugger will pause
    at the first breakpoint. Once pdb is started, the `pdb commands`_
