@@ -84,7 +84,7 @@ This can be used to enable minor modes for Python development."
   "Which Elpy modules to use.
 
 Elpy can use a number of modules for additional features, which
-can be inidividually enabled or disabled."
+can be individually enabled or disabled."
   :type '(set (const :tag "Inline code completion (company-mode)"
                      elpy-module-company)
               (const :tag "Show function signatures (ElDoc)"
