@@ -1,3 +1,4 @@
+unittest2; python_version < '3'
 bumpversion
 coverage
 mock

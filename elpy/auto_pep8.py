@@ -5,7 +5,6 @@
 from elpy.rpc import Fault
 import os
 
-
 try:
     import autopep8
 except ImportError:  # pragma: no cover
