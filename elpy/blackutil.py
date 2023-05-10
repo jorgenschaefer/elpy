@@ -18,6 +18,11 @@ except ImportError:  # pragma: no cover
 import os
 
 try:
+    import tomli
+except ImportError:
+    tomli = None
+
+try:
     import toml
 except ImportError:
     toml = None
@@ -55,8 +60,15 @@ def fix_code(code, directory):
         pyproject_path = find_pyproject_toml((directory,))
     else:
         pyproject_path = os.path.join(directory, "pyproject.toml")
-    if toml and pyproject_path and os.path.exists(pyproject_path):
-        pyproject_config = toml.load(pyproject_path)
+    if pyproject_path and os.path.exists(pyproject_path):
+        if tomli:
+            with open(pyproject_path, "rb") as pyproject_file:
+                pyproject_config = tomli.load(pyproject_file)
+        elif toml:
+            pyproject_config = toml.load(pyproject_path)
+        else:
+            err("pyproject.toml file found, but tomli was not installed")
+
         black_config = pyproject_config.get("tool", {}).get("black", {})
         if "line-length" in black_config:
             line_length = black_config["line-length"]
