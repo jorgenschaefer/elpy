@@ -13,3 +13,22 @@
         (elpy-shell-switch-to-shell)
         (should (string= (buffer-name)
                          "*Python*"))))))
+
+(ert-deftest elpy-shell-toggle-dedicated-shell-same-filename ()
+  (elpy-testcase ()
+    (elpy-enable)
+    (python-mode)
+    (let ((bufname-a "temp.py<a>")
+	  (bufname-b "temp.py<b>"))
+      (save-excursion
+	(switch-to-buffer bufname-a)
+	(elpy-shell-toggle-dedicated-shell)
+	(elpy-shell-switch-to-shell)
+	(should (string= (buffer-name)
+			 (format "*Python[%s]*" bufname-a))))
+      (save-excursion
+	(switch-to-buffer bufname-b)
+	(elpy-shell-toggle-dedicated-shell)
+	(elpy-shell-switch-to-shell)
+	(should (string= (buffer-name)
+			 (format "*Python[%s]*" bufname-b)))))))
