@@ -335,6 +335,7 @@ Python process. This allows the process to start up."
 
 (defun elpy-shell-toggle-dedicated-shell (&optional arg)
   "Toggle the use of a dedicated python shell for the current buffer.
+
 if ARG is positive, enable the use of a dedicated shell.
 if ARG is negative or 0, disable the use of a dedicated shell."
   (interactive)
