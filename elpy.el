@@ -2319,7 +2319,8 @@ root directory."
   (elpy--fix-code-with-formatter "fix_code"))
 
 (defun elpy-black-fix-code ()
-  "Automatically formats Python code with black."
+  "Automatically formats Python code with black.
+Note: Requires 'toml' to be installed due to legacy reasons."
   (interactive)
   (elpy--fix-code-with-formatter "fix_code_with_black"))
 
