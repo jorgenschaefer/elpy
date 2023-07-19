@@ -34,7 +34,7 @@ jobs:
           - 3.8
     steps:
     # Checkout
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
     # Emacs
     - name: Set up Emacs ${{ matrix.emacs_version }}
       uses: purcell/setup-emacs@master
@@ -47,7 +47,7 @@ jobs:
           version: 'snapshot'
      # Python
     - name: Set up Python ${{ matrix.python_version }}
-      uses: actions/setup-python@v2
+      uses: actions/setup-python@v4
       with:
         python-version : ${{ matrix.python_version }}
     - name: Install Python dependencies
