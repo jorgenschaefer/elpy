@@ -8,7 +8,9 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    # As long as we want to test old versions of Python here in the test, we can only use up to Ubuntu 20.
+    # https://github.com/rwth-i6/returnn/issues/1226
+    runs-on: ubuntu-20.04
     # continue-on-error: true
     strategy:
       fail-fast: false
