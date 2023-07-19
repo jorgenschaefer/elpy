@@ -5,3 +5,4 @@ nose
 twine
 wheel
 virtualenv
+toml
