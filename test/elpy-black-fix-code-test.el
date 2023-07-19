@@ -100,8 +100,8 @@
          (insert "[tool.black]\nline-length = 20\nexclude = '''\n'''\n")
          (save-buffer))
        (set-buffer-string-with-point
-        "_|_print(1, 2, 3, 4, 5, 6, 7)"
-        "x, y, z, a, b, c = 1, 2, 3, 4, 5, 6"
+        "_|_print(1, 2, 3, 4, 5, 6, 7,)"
+        "x, y, z, a, b, c = 1, 2, 3, 4, 5, 6,"
         )
        (elpy-black-fix-code)
        (delete-file "pyproject.toml")
