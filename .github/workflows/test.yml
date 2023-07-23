@@ -30,7 +30,6 @@ jobs:
           - 27.1
           # - snapshot
         python_version:
-          - 3.5
           - 3.6
           - 3.7
           - 3.8
