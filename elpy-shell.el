@@ -1266,7 +1266,6 @@ With a prefix argument, ignore the existing breakpoints."
 	    (if (string= major-mode "python-mode")
 		(progn
 		  (dolist (breakpt (elpy-pdb--get-breakpoint-positions))
-		    (message "Buffer full name: %s" (buffer-file-name))
 		    (setq buffer-breakpoint-lst (cons (list breakpt buffer-file-name) buffer-breakpoint-lst))
 	   	    )
 		  )
