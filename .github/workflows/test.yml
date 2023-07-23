@@ -33,6 +33,10 @@ jobs:
           - 3.6
           - 3.7
           - 3.8
+          - 3.9
+          - 3.10
+          - 3.11
+
     steps:
     # Checkout
     - uses: actions/checkout@v3
