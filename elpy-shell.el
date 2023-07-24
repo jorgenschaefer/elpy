@@ -1266,21 +1266,14 @@ With a prefix argument, ignore the existing breakpoints."
 	    (if (string= major-mode "python-mode")
 		(progn
 		  (dolist (breakpt (elpy-pdb--get-breakpoint-positions))
-		    (setq buffer-breakpoint-lst (cons (list breakpt buffer-file-name) buffer-breakpoint-lst))
-	   	    )
-		  )
-	      )
-	    )
-	  )
+		    (setq buffer-breakpoint-lst (cons (list breakpt buffer-file-name) buffer-breakpoint-lst)))))))
 	(if (or arg (= 0 (length buffer-breakpoint-lst)))
 	    (progn
 	      (elpy-pdb--refresh-breakpoints '())
 	      (elpy-pdb--start-pdb t))
 	  (elpy-pdb--refresh-breakpoints buffer-breakpoint-lst)
 	  (elpy-pdb--start-pdb)
-	  (python-shell-send-string "continue")
-	  )
-	)
+	  (python-shell-send-string "continue")))
       (elpy-shell-display-buffer)))
 
   (defun elpy-pdb-break-at-point ()
