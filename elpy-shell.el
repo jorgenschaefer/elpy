@@ -1228,7 +1228,9 @@ switches focus to Python shell buffer."
     "Start pdb on the current script.
 
 if OUTPUT is non-nil, display the prompt after execution."
-    (let ((string (format "__pdbi._runscript('''%s''')" (buffer-file-name))))
+    (let ((declare-file-name (format "file_name='''%s'''" (buffer-file-name) ))
+	  (string "if hasattr(__pdbi,'_runscript'):\n    __pdbi._runscript(file_name)\nelif hasattr(__pdbi,'run'):\n    __pdbi.run(compile(open(file_name).read(),file_name,'exec'))\nelse:    print('pdb.Pdb() Object error!')"))
+      (python-shell-send-string declare-file-name)
       (if output
           (python-shell-send-string string)
         (python-shell-send-string-no-output string))))
