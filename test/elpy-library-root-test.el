@@ -4,7 +4,7 @@
     (should (f-equal? (elpy-library-root)
                       project-root))))
 
-(ert-deftest elpy-library-root-should-find-current-directory ()
+(ert-deftest elpy-library-root-should-find-current-directory-2 ()
   (elpy-testcase ((:project project-root
                             "p1/p2/test.py"
                             "p1/p2/__init__.py"
