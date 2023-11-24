@@ -234,7 +234,7 @@ needed packages from `elpy-rpc--get-package-list'."
   (let ((rpc-python-version (elpy-rpc--get-python-version)))
     (if (version< rpc-python-version "3.6.0")
         '("jedi" "flake8" "autopep8" "yapf")
-      '("jedi" "flake8" "autopep8" "yapf" "black"))))
+      '("jedi" "flake8" "autopep8" "yapf" "black" "setuptools"))))
 
 (defun elpy-rpc--get-python-version ()
   "Return the RPC python version."
