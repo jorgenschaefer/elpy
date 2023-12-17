@@ -7,8 +7,10 @@ import sys
 from elpy.rpc import Fault
 # in case pkg_resources is not properly installed
 # (see https://github.com/jorgenschaefer/elpy/issues/1674).
+# in case pkg_resources is not properly installed
+# (see https://github.com/jorgenschaefer/elpy/issues/1674).
 try:
-    from pkg_resources import parse_version
+    from packaging.version import Version as parse_version
 except ImportError:  # pragma: no cover
     def parse_version(*arg, **kwargs):
         raise Fault("`pkg_resources` could not be imported, "
