@@ -3285,17 +3285,9 @@ documentation (only used for Emacs >= 28)."
                               after-change-functions))
              (elpy-folding--mark-foldable-lines)))))
 
-(defvar elpy-folding-docstring-regex "[uU]?[rR]?\"\"\""
-  "Regular expression matching docstrings openings and closings.")
-
-(defvar elpy-docstring-block-start-regexp
-  "^\\s-*[uU]?[rR]?\"\"\"\n?\\s-*"
-  "Version of `hs-block-start-regexp' for docstrings.")
-
 (defface elpy-codecell-boundary '((t :inherit 'highlight))
   "Face for elpy codecell boundary."
   :group 'elpy-mode)
-
 
 ;; Indicators
 (defun elpy-folding--display-code-line-counts (ov)
@@ -3399,114 +3391,91 @@ Meant to be used as a hook to `after-change-functions'."
            (deactivate-mark)))))))
 
 ;; Hidding docstrings
-(defun elpy-folding--hide-docstring-region (beg end)
-  "Hide a region from BEG to END, marking it as a docstring.
-
-BEG and END have to be respectively on the first and last line
-of the docstring, their values are adapted to hide only the
-docstring body."
-  (hs-life-goes-on
-   ;; do not fold oneliners
-   (when (not (save-excursion
-                (goto-char beg)
-                (beginning-of-line)
-                (re-search-forward
-                 (concat elpy-folding-docstring-regex
-                         ".*"
-                         elpy-folding-docstring-regex)
-                 (line-end-position) t)))
-     ;; get begining position (do not fold first doc line)
-     (save-excursion
-       (goto-char beg)
-       (when (save-excursion
-               (beginning-of-line)
-               (re-search-forward
-                (concat elpy-folding-docstring-regex
-                        "[[:space:]]*$")
-                (line-end-position) t))
-         (forward-line 1))
-       (beginning-of-line)
-       (back-to-indentation)
-       (setq beg (point))
-       (setq ov-beg (line-end-position)))
-     ;; get end position
-     (save-excursion
-       (goto-char end)
-       (setq end (line-beginning-position))
-       (setq ov-end (line-end-position)))
-     (hs-discard-overlays ov-beg ov-end)
-     (hs-make-overlay ov-beg ov-end 'docstring (- beg ov-beg) (- end ov-end))
-     (run-hooks 'hs-hide-hook)
-     (goto-char beg))))
-
-(defun elpy-folding--hide-docstring-at-point ()
-  "Hide the docstring at point."
-  (hs-life-goes-on
-   (let ((hs-block-start-regexp elpy-docstring-block-start-regexp))
-     (when (and (python-info-docstring-p) (not (hs-already-hidden-p)))
-       (let (beg end line-beg line-end)
-         ;; Get first doc line
-         (if (not (save-excursion (forward-line -1)
-                                  (python-info-docstring-p)))
-             (setq beg (line-beginning-position))
-           (forward-line -1)
-           (end-of-line)
-           (re-search-backward (concat "^[[:space:]]*"
-                                       elpy-folding-docstring-regex)
-                               nil t)
-           (setq beg (line-beginning-position)))
-         ;; Go to docstring opening (to be sure to be inside the docstring)
-         (re-search-forward elpy-folding-docstring-regex nil t)
-         (setq line-beg (line-number-at-pos))
-         ;; Get last line
-         (if (not (save-excursion (forward-line 1)
-                                  (python-info-docstring-p)))
-             (progn
-               (setq end (line-end-position))
-               (setq line-end (line-number-at-pos)))
-           (re-search-forward elpy-folding-docstring-regex nil t)
-           (setq end (line-end-position))
-           (setq line-end (line-number-at-pos)))
-         ;; hide the docstring
-         (when (not (= line-end line-beg))
-           (elpy-folding--hide-docstring-region beg end)))))))
-
-(defun elpy-folding--show-docstring-at-point ()
-  "Show docstring at point."
-  (hs-life-goes-on
-   (let ((hs-block-start-regexp elpy-docstring-block-start-regexp))
-     (when (python-info-docstring-p)
-       (hs-show-block)))))
-
 (defvar-local elpy-folding-docstrings-hidden nil
   "If docstrings are globally hidden or not.")
 
+(defvar elpy-folding-class-def-start-regexp
+  "^\s*\\(\\bdef\\b\\|\\bclass\\b\\)")
+
+(defun elpy-folding-find-docstring-overlay-start ()
+  "Find where should the docstring overlay start.
+
+Assume that point is at the first docstring delimiter."
+  (let (overlay-start)
+    (save-excursion
+      ;; Focusing on ''' or """ docstrings is enough in our case
+      (goto-char (+ 3 (point)))
+      (when (looking-at-p "[[:space:]]*$")
+	(forward-line))
+      (setq overlay-start (line-end-position)))
+    overlay-start))
+
+(defun elpy-folding-request-toggle-docstring-hiding-p ()
+  "Decide whether to request docstring folding.
+
+Assume that point is at the first docstring delimiter."
+  (when (python-info-docstring-p)
+    (goto-char (elpy-folding-find-docstring-overlay-start))
+    (let ((ov (hs-overlay-at (point))))
+      (when (not (eq (not elpy-folding-docstrings-hidden)
+		     (overlayp ov)))
+	;; respect overlay if not of kind 'docstring
+	(unless (and ov
+		     (not (eq (overlay-get ov 'hs)
+			      'docstring)))
+	  t)))))
+
+(defun elpy-folding-search-docstring-delimiter ()
+  "Search docstring delimiter while jumping over delimiters in comments."
+  (let ((in-comment t))
+    (while in-comment
+      (re-search-forward "\"\\|\'" nil t)
+      (setq in-comment (nth 4 (syntax-ppss))))))
+
 (defun elpy-folding-toggle-docstrings ()
-  "Fold or unfold every docstrings in the current buffer."
+  "Toggle hiding of all docstrings in the current buffer.
+
+A potential module-level docstring is handled first. A missing docstring is not
+a problem."
   (interactive)
-  (if (not hs-minor-mode)
-      (message "Please enable the 'Folding module' to use this functionality.")
-    (hs-life-goes-on
-     (save-excursion
-       (goto-char (point-min))
-       (while (python-nav-forward-defun)
-         (search-forward-regexp ")\\s-*:" nil t)
-         (forward-line)
-         (when (and (python-info-docstring-p)
-                    (progn
-                      (beginning-of-line)
-                      (search-forward-regexp elpy-folding-docstring-regex
-                                             nil t)))
-           (forward-char 2)
-           (back-to-indentation)
-           ;; be sure not to act on invisible docstrings
-           (unless (and (hs-overlay-at (point))
-                        (not (eq (overlay-get (hs-overlay-at (point)) 'hs)
-                                 'docstring)))
-             (if elpy-folding-docstrings-hidden
-                 (elpy-folding--show-docstring-at-point)
-               (elpy-folding--hide-docstring-at-point)))))))
-    (setq elpy-folding-docstrings-hidden (not elpy-folding-docstrings-hidden))))
+  (hs-life-goes-on
+   (save-excursion
+     (goto-char (point-min))
+     (elpy-folding-search-docstring-delimiter)
+     (when (elpy-folding-request-toggle-docstring-hiding-p)
+       (elpy-folding-toggle-hide-docstring t))
+     (while (re-search-forward elpy-folding-class-def-start-regexp nil t)
+       (search-forward-regexp ":" nil t)
+       (elpy-folding-search-docstring-delimiter)
+       (when (elpy-folding-request-toggle-docstring-hiding-p)
+	 (elpy-folding-toggle-hide-docstring t)))
+     (setq elpy-folding-docstrings-hidden (not elpy-folding-docstrings-hidden)))))
+
+(defun elpy-folding-toggle-hide-docstring (&optional into-docstring)
+  "Toggle hiding of docstring at point.
+
+When INTO-DOCSTRING is t, we assume that we are in a docstring and don't bother
+checking."
+  (when (or into-docstring (python-info-docstring-p))
+    (let (docstring-end docstring-start overlay-start indent docstring-is-hidden)
+      (save-excursion
+	(python-nav-end-of-statement)
+	(setq docstring-end (point)))
+      (save-excursion
+	(python-nav-beginning-of-statement)
+	(setq docstring-start (point)
+	      indent (current-column)
+	      overlay-start (elpy-folding-find-docstring-overlay-start))
+	(goto-char overlay-start)
+	(setq docstring-is-hidden (hs-overlay-at (point))))
+      (if docstring-is-hidden
+	  (save-excursion (hs-show-block))
+	(when (> (count-lines docstring-start docstring-end) 1)
+	  (goto-char overlay-start)
+	  (move-to-column indent)
+	  (hs-discard-overlays overlay-start docstring-end)
+	  (hs-make-overlay overlay-start docstring-end 'docstring)
+	  (run-hooks 'hs-hide-hook))))))
 
 ;; Hiding comments
 (defvar-local elpy-folding-comments-hidden nil
@@ -3603,19 +3572,14 @@ If a region is selected, fold that region."
      ;; Use selected region
      (if (use-region-p)
          (elpy-folding--hide-region (region-beginning) (region-end))
-       ;; Adapt starting regexp if on a docstring
-       (let ((hs-block-start-regexp
-              (if (python-info-docstring-p)
-                  elpy-docstring-block-start-regexp
-                hs-block-start-regexp)))
-         ;; Hide or fold
-         (cond
-          ((hs-already-hidden-p)
-           (hs-show-block))
-          ((python-info-docstring-p)
-           (elpy-folding--hide-docstring-at-point))
-          (t
-           (hs-hide-block))))))))
+       ;; Hide or fold
+       (cond
+	((hs-already-hidden-p)
+	 (hs-show-block))
+	((python-info-docstring-p)
+	 (elpy-folding-toggle-hide-docstring t))
+	(t
+	 (hs-hide-block)))))))
 
 ;;;;;;;;;;;;;;;;;;;
 ;;; Module: Flymake
