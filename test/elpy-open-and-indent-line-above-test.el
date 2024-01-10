@@ -1,4 +1,4 @@
-(ert-deftest elpy-open-and-indent-line-below ()
+(ert-deftest elpy-open-and-indent-line-above ()
   (elpy-testcase ()
     (elpy-enable)
     (python-mode)

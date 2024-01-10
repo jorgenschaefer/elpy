@@ -17,7 +17,7 @@
               (should (equal error 'elpy-rpc--default-error-callback))))
       (elpy-rpc "test-method" nil 'success))))
 
-(ert-deftest elpy-rpc-should-use-default-without-error-callback ()
+(ert-deftest elpy-rpc-should-use-default-without-error-callback-2 ()
   (elpy-testcase ()
     (mletf* ((elpy-rpc--call-blocking
               (method params)
