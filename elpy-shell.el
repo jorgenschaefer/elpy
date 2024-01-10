@@ -598,8 +598,10 @@ complete). Otherwise, does nothing."
   (let ((from-point (point)))
     (insert string)
     (if (not no-font-lock)
-        (add-text-properties from-point (point)
-                             (list 'front-sticky t 'font-lock-face face)))))
+        (if (eq face 'python-font-lock)
+            (python-shell-font-lock-post-command-hook)
+          (add-text-properties from-point (point)
+                               (list 'front-sticky t 'font-lock-face face))))))
 
 (defun elpy-shell--append-to-shell-output (string &optional no-font-lock prepend-cont-prompt)
   "Append the given STRING to the output of the Python shell buffer.
@@ -624,7 +626,7 @@ Prepends a continuation promt if PREPEND-CONT-PROMPT is set."
                    (lines (split-string string "\n")))
               (goto-char mark-point)
               (elpy-shell--insert-and-font-lock
-               (car lines) 'comint-highlight-input no-font-lock)
+               (car lines) 'python-font-lock no-font-lock)
               (when (cdr lines)
                   ;; no additional newline at end for multiline
                   (dolist (line (cdr lines))
@@ -637,11 +639,11 @@ Prepends a continuation promt if PREPEND-CONT-PROMPT is set."
                        '(field output inhibit-line-move-field-capture t
                                rear-nonsticky t)))
                     (elpy-shell--insert-and-font-lock
-                     line 'comint-highlight-input no-font-lock)))
+                     line 'python-font-lock no-font-lock)))
                 ;; but put one for single line
                 (insert "\n"))
           (elpy-shell--insert-and-font-lock
-           string 'comint-highlight-input no-font-lock))
+           string 'python-font-lock no-font-lock))
         (set-marker (process-mark process) (point)))))))
 
 (defun elpy-shell--string-head-lines (string n)
