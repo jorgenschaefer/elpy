@@ -8,9 +8,7 @@ on:
 
 jobs:
   build:
-    # As long as we want to test old versions of Python here in the test, we can only use up to Ubuntu 20.
-    # https://github.com/rwth-i6/returnn/issues/1226
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     # continue-on-error: true
     strategy:
       fail-fast: false
@@ -24,18 +22,22 @@ jobs:
           # - 25.1
           # - 25.2
           # - 25.3
-          - 26.1
-          - 26.2
-          - 26.3
-          - 27.1
+          # - 26.1
+          # - 26.2
+          # - 26.3
+          # - 27.1
+          - 29.3
           # - snapshot
         python_version:
-          - 3.6
-          - 3.7
-          - 3.8
+          # - 3.6
+          # - 3.7
+          # - 3.8
+          - "3.10"
+          - 3.11
+          - 3.12
     steps:
     # Checkout
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
     # Emacs
     - name: Set up Emacs ${{ matrix.emacs_version }}
       uses: purcell/setup-emacs@master
@@ -48,7 +50,7 @@ jobs:
           version: 'snapshot'
      # Python
     - name: Set up Python ${{ matrix.python_version }}
-      uses: actions/setup-python@v4
+      uses: actions/setup-python@v5
       with:
         python-version : ${{ matrix.python_version }}
         check-latest: true
@@ -68,7 +70,7 @@ jobs:
         python -m virtualenv $HOME/.virtualenvs/elpy-test-venv
     # Run tests
     - name: Run Emacs tests
-      uses: nick-invision/retry@v2
+      uses: nick-invision/retry@v3
       with:
         timeout_minutes: 10
         max_attempts: 5
