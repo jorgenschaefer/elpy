@@ -1,4 +1,4 @@
-(ert-deftest elpy-rpc-get-completions ()
+(ert-deftest elpy-rpc-get-usages ()
   (elpy-testcase ()
     (mletf* ((called-args nil)
              (elpy-rpc (&rest args) (setq called-args args)))

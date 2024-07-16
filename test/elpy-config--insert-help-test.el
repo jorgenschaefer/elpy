@@ -2,6 +2,6 @@
 ;; with output. We will test its constituent functions later, and just
 ;; make sure it doesn't throw an error here.
 
-(ert-deftest elpy-config-should-not-fail ()
+(ert-deftest elpy-config-should-not-fail-with-insert-help ()
   (elpy-testcase ()
     (elpy-config--insert-help)))
