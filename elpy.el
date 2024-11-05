@@ -640,7 +640,7 @@ warnings.filterwarnings('ignore', category=FutureWarning)
 warnings.filterwarnings('ignore', category=DeprecationWarning)
 warnings.filterwarnings('ignore', category=PendingDeprecationWarning)
 
-from distutils.version import LooseVersion
+from packaging.version import parse
 
 try:
     import urllib2 as urllib
@@ -663,7 +663,7 @@ def latest(package, version=None):
         response = urllib.urlopen('https://pypi.org/pypi/{package}/json'.format(package=package),
                timeout=2).read()
         latest = json.loads(response)['info']['version']
-        if version is None or LooseVersion(version) < LooseVersion(latest):
+        if version is None or parse(version) < parse(latest):
             return latest
         else:
             return None
