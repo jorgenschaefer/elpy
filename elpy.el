@@ -3260,7 +3260,7 @@ documentation (only used for Emacs >= 28)."
   :group 'elpy)
 
 (defface elpy-folding-fringe-face
-  '((t (:inherit 'font-lock-comment-face
+  '((t (:inherit font-lock-comment-face
                  :box (:line-width 1 :style released-button))))
   "Face for folding bitmaps appearing on the fringe."
   :group 'elpy)
@@ -3271,7 +3271,7 @@ documentation (only used for Emacs >= 28)."
   :group 'elpy)
 
 (defface elpy-folding-face
-  '((t (:inherit 'font-lock-comment-face :box t)))
+  '((t (:inherit font-lock-comment-face :box t)))
   "Face for the folded region indicator."
   :group 'elpy)
 
@@ -3292,7 +3292,7 @@ documentation (only used for Emacs >= 28)."
   "^\\s-*[uU]?[rR]?\"\"\"\n?\\s-*"
   "Version of `hs-block-start-regexp' for docstrings.")
 
-(defface elpy-codecell-boundary '((t :inherit 'highlight))
+(defface elpy-codecell-boundary '((t :inherit highlight))
   "Face for elpy codecell boundary."
   :group 'elpy-mode)
 
