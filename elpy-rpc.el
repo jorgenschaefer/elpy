@@ -229,12 +229,21 @@ needed packages from `elpy-rpc--get-package-list'."
    (t
     (error "Invalid value for `elpy-rpc-virtualenv-path', please set it to a proper value using customize"))))
 
+(defun elpy-rpc--get-pip-dependencies (python-version)
+  "Return a list of RPC dependencies, based on the current PYTHON-VERSION."
+  (let*
+      ((basic-py-deps '("jedi" "flake8" "autopep8" "yapf"))
+       (common-py-deps (cons "black" basic-py-deps))
+       (modern-py-deps (cons "setuptools" common-py-deps)))
+
+    (cond ((version< python-version "3.6") basic-py-deps)
+          ((version< python-version "3.12") common-py-deps)
+          (t modern-py-deps))))
+
 (defun elpy-rpc--get-package-list ()
   "Return the list of packages to be installed in the RPC virtualenv."
   (let ((rpc-python-version (elpy-rpc--get-python-version)))
-    (if (version< rpc-python-version "3.6.0")
-        '("jedi" "flake8" "autopep8" "yapf")
-      '("jedi" "flake8" "autopep8" "yapf" "black"))))
+    (elpy-rpc--get-pip-dependencies rpc-python-version)))
 
 (defun elpy-rpc--get-python-version ()
   "Return the RPC python version."
