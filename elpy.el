@@ -640,7 +640,10 @@ warnings.filterwarnings('ignore', category=FutureWarning)
 warnings.filterwarnings('ignore', category=DeprecationWarning)
 warnings.filterwarnings('ignore', category=PendingDeprecationWarning)
 
-from distutils.version import LooseVersion
+try:
+    from distutils.version import LooseVersion
+except ModuleNotFoundError:
+    from packaging.version import parse as LooseVersion
 
 try:
     import urllib2 as urllib
