@@ -582,6 +582,27 @@ currently selected company candidate.
    The idle delay in seconds until documentation is updated automatically.
 
 
+Variable explorer
+=================
+
+Elpy offers a way of visualizing the variables defined in the current python interpreter.
+
+.. command:: elpy-ve-display-variable-explorer
+   :kbd: C-c C-a
+
+   Display a buffer with a list of the variables currently defined and
+   their values. You can navigate this list with the `up` and `down`
+   arrows. For convenience, variables with long names or values (like
+   long list or arrays) are truncated. Hitting `return` on a given
+   line will display a new buffer with the full variable name and
+   value. The variable explorer is automatically refreshed, but you can
+   refresh it manually by hitting `C-c C-a` again.
+
+.. option:: elpy-ve-row-max-height
+
+   Maximum height of a variable explorer row (default to 10 characters).
+
+
 Snippets
 ========
 
