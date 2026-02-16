@@ -2831,7 +2831,9 @@ If you need your modeline, you can set the variable `elpy-remove-modeline-lighte
        (message
         (concat "Buffer %s larger than elpy-rpc-ignored-buffer-size (%d)."
                 " Elpy will turn off completion.")
-        (buffer-name) elpy-rpc-ignored-buffer-size)))
+        (buffer-name) elpy-rpc-ignored-buffer-size)
+       (when (yes-or-no-p "Buffer size is bigger than maximum size allowed, enabling completetion may slow Emacs down. proceed?")
+           (setq elpy-rpc-ignored-buffer-size (+ (buffer-size) 1)))))
     (`buffer-stop
      (company-mode -1)
      (kill-local-variable 'company-idle-delay)
