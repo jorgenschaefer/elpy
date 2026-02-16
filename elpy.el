@@ -725,6 +725,13 @@ except:
 json.dump(config, sys.stdout)
 ")
 
+(defun elpy-kill-buffer-complete ()
+  "Kill autocomplete for the buffer."
+  (company-mode -1)
+  (kill-local-variable 'company-idle-delay)
+  (kill-local-variable 'company-tooltip-align-annotations)
+  (kill-local-variable 'company-backends))
+
 (defun elpy-config-error (&optional fmt &rest args)
   "Note a configuration problem.
 
@@ -2831,13 +2838,12 @@ If you need your modeline, you can set the variable `elpy-remove-modeline-lighte
        (message
         (concat "Buffer %s larger than elpy-rpc-ignored-buffer-size (%d)."
                 " Elpy will turn off completion.")
-        (buffer-name) elpy-rpc-ignored-buffer-size)))
+        (buffer-name) elpy-rpc-ignored-buffer-size)
+       (elpy-kill-buffer-complete)))
     (`buffer-stop
-     (company-mode -1)
-     (kill-local-variable 'company-idle-delay)
-     (kill-local-variable 'company-tooltip-align-annotations)
-     (kill-local-variable 'company-backends))
+        (elpy-kill-buffer-complete))
     ))
+
 
 (defvar elpy-company--cache nil
   "Buffer-local cache for candidate information.")
