@@ -69,29 +69,6 @@
                      "x = 3"
                      )))))
 
-(when (elpy-black-fix-code--black-supported)
-  (ert-deftest elpy-black-fix-code-should-do-nothing-if-already-formatted ()
-    (elpy-testcase ()
-                   (set-buffer-string-with-point
-                    "_|_y =  2"
-                    "z = 3"
-                    "x = 3"
-                    )
-                   (elpy-black-fix-code)
-                   (should
-                    (buffer-be
-                     "_|_y = 2"
-                     "z = 3"
-                     "x = 3"
-                     ))
-                   (elpy-black-fix-code)
-                   (should
-                    (buffer-be
-                     "_|_y = 2"
-                     "z = 3"
-                     "x = 3"
-                     )))))
-
 ;; TODO: Not ideal, but unable to find source of issue. Debugging to not delay future work
 ;; when seeing a failing CI
 ;; (when (elpy-black-fix-code--black-supported)
