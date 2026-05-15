@@ -46,10 +46,8 @@ jobs:
       run: |
         uv pip install --system -r requirements.txt --upgrade
         uv pip install --system -r requirements-rpc.txt --upgrade
+        uv pip install --system -r requirements-rpc3.6.txt --upgrade
         uv pip install --system -r requirements-dev.txt --upgrade
-        if [[ ${{ matrix.python_version }} > 3.5 ]] ; then
-          uv pip install --system -r requirements-rpc3.6.txt --upgrade ;
-        fi
         uv pip install --system coveralls
         uv venv $HOME/.virtualenvs/elpy-test-venv
     # Run tests
