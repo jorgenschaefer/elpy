@@ -17,6 +17,7 @@
   (ert-deftest elpy-rpc-get-virtualenv-path-should-return-current-venv-path ()
     (elpy-testcase ()
       (let ((elpy-rpc-virtualenv-path 'current)
+            (elpy-rpc-python-command "python")
             (old-venv pyvenv-virtual-env))
         (should-not (string-match "elpy-test-venv"
                                   (elpy-rpc-get-virtualenv-path)))

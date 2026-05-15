@@ -57,7 +57,7 @@ jobs:
       uses: nick-invision/retry@v3
       with:
         timeout_minutes: 10
-        max_attempts: 5
+        max_attempts: 1
         command: cask install ; PYTHONPATH="`pwd`" cask exec ert-runner --reporter ert+duration
     - name: Run Python tests
       run: python -m unittest discover elpy

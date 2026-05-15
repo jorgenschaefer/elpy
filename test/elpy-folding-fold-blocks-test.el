@@ -56,13 +56,13 @@
      "def foo(a, b):"
      "  c = a + b"
      "  return c"
-     "_|_"
-     "var2 = foo(var1, 4)")
+     ""
+     "_|_var2 = foo(var1, 4)")
     (elpy-enable)
     (python-mode)
     (elpy-folding-toggle-at-point)
-    ;; Position
-    (should (= (point) 49))))
+    ;; Position should not change (no foldable block at this point)
+    (should (= (point) 50))))
 
 (ert-deftest elpy-fold-at-point-should-fold-and-unfold-nested-functions ()
   (elpy-testcase ()

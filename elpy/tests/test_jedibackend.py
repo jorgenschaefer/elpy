@@ -100,10 +100,16 @@ class TestRPCGetOnelineDocstring(RPCGetOnelineDocstringTests,
                 ' ``bytearray`` instance containing a JSON'
                 ' document) to a Python object.'
             )
-            self.JSON_DOCSTRING = (
-                "JSON (JavaScript Object Notation) <http://json.org>"
-                " is a subset of JavaScript syntax (ECMA-262"
-                " 3rd edition) used as a lightweight data interchange format.")
+            if sys.version_info >= (3, 12):
+                self.JSON_DOCSTRING = (
+                    "JSON (JavaScript Object Notation) <https://json.org>"
+                    " is a subset of JavaScript syntax (ECMA-262"
+                    " 3rd edition) used as a lightweight data interchange format.")
+            else:
+                self.JSON_DOCSTRING = (
+                    "JSON (JavaScript Object Notation) <http://json.org>"
+                    " is a subset of JavaScript syntax (ECMA-262"
+                    " 3rd edition) used as a lightweight data interchange format.")
         elif sys.version_info >= (3, 0):
             self.JSON_LOADS_DOCSTRING = (
                 'Deserialize ``s`` (a ``str`` instance '
@@ -188,14 +194,24 @@ class TestRPCGetCalltip(RPCGetCalltipTests,
                    'params': [u'a', u'b'],
                    'name': u'add'}
     if compat.PYTHON3:
-        THREAD_CALLTIP = {'name': 'Thread',
-                          'index': 0,
-                          'params': ['group: None=...',
-                                     'target: Optional[Callable[..., Any]]=...',
-                                     'name: Optional[str]=...',
-                                     'args: Iterable[Any]=...',
-                                     'kwargs: Mapping[str, Any]=...',
-                                     'daemon: Optional[bool]=...']}
+        if jedibackend.JEDISUP19:
+            THREAD_CALLTIP = {'name': 'Thread',
+                              'index': 0,
+                              'params': ['group: None=None',
+                                         'target: Callable[..., object] | None=None',
+                                         'name: str | None=None',
+                                         'args: Iterable[Any]=()',
+                                         'kwargs: Mapping[str, Any] | None=None',
+                                         'daemon: bool | None=None']}
+        else:
+            THREAD_CALLTIP = {'name': 'Thread',
+                              'index': 0,
+                              'params': ['group: None=...',
+                                         'target: Optional[Callable[..., Any]]=...',
+                                         'name: Optional[str]=...',
+                                         'args: Iterable[Any]=...',
+                                         'kwargs: Mapping[str, Any]=...',
+                                         'daemon: Optional[bool]=...']}
 
     else:
         THREAD_CALLTIP = {'index': 0,

@@ -30,6 +30,7 @@ except ImportError:  # pragma: no cover
                         " `M-x elpy-rpc-reinstall-virtualenv`", code=400)
 JEDISUP17 = parse_version(jedi.__version__) >= parse_version("0.17.0")
 JEDISUP18 = parse_version(jedi.__version__) >= parse_version("0.18.0")
+JEDISUP19 = parse_version(jedi.__version__) >= parse_version("0.19.0")
 
 
 class JediBackend(object):

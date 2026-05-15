@@ -3027,7 +3027,7 @@ and return the list."
     (`prefix
      (when (and elpy-mode
                 (not (company-in-string-or-comment)))
-       (company-grab-symbol-cons "\\." 1)))
+       (company-grab-symbol-parts "\\." 1)))
     ;; candidates <prefix> => return candidates for this prefix
     (`candidates
      (cons :async
@@ -3152,10 +3152,10 @@ documentation (only used for Emacs >= 28)."
                                             'face
                                             'font-lock-function-name-face)))
                       (setq doc
-                            (if (version<= emacs-version "25")
-                                (format "%s%s" thing doc)
-                              (let ((eldoc-echo-area-use-multiline-p nil))
-                                (eldoc-docstring-format-sym-doc thing doc)))))
+                            (if (fboundp 'eldoc-docstring-format-sym-doc)
+                                (let ((eldoc-echo-area-use-multiline-p nil))
+                                  (eldoc-docstring-format-sym-doc thing doc))
+                              (format "%s%s" thing doc))))
                     (eldoc-message doc)))))
         (flymake-error (elpy-flymake-error-at-point)))
     (if flymake-error
