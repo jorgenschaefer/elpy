@@ -41,5 +41,4 @@
       (elpy-enable)
       (python-mode)
       (should (equal python-check-command "flake8"))
-      (if (version<= "26.1" emacs-version)
-          (should (equal python-flymake-command '("flake8" "-")))))))
+      (should (equal python-flymake-command '("flake8" "-"))))))

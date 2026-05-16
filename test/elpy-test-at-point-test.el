@@ -52,9 +52,7 @@
                      (list "/project/root"
                            "/project/root/tests/test.py"
                            "tests.test"
-                           (if (version< emacs-version "24.3")
-                               nil
-                             "TestClass"))))
+                           "TestClass")))
       (should (eq saved 'one)))))
 
 (ert-deftest elpy-test-at-point-should-return-current-test-method ()
@@ -74,7 +72,5 @@
                      (list "/project/root"
                            "/project/root/tests/test.py"
                            "tests.test"
-                           (if (version< emacs-version "24.3")
-                               "TestClass"
-                             "TestClass.test_method"))))
+                           "TestClass.test_method")))
       (should (eq saved 'one)))))

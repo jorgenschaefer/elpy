@@ -236,9 +236,8 @@ needed packages from `elpy-rpc--get-package-list'."
        (common-py-deps (cons "black" basic-py-deps))
        (modern-py-deps (cons "setuptools" common-py-deps)))
 
-    (cond ((version< python-version "3.6") basic-py-deps)
-          ((version< python-version "3.12") common-py-deps)
-          (t modern-py-deps))))
+    (if (version< python-version "3.12") common-py-deps
+      modern-py-deps)))
 
 (defun elpy-rpc--get-package-list ()
   "Return the list of packages to be installed in the RPC virtualenv."

@@ -365,13 +365,8 @@ if nil, use the first formatter found amongst
     (define-key map (kbd "<M-left>") 'elpy-nav-indent-shift-left)
     (define-key map (kbd "<M-right>") 'elpy-nav-indent-shift-right)
 
-    (unless (fboundp 'xref-find-definitions)
-        (define-key map (kbd "M-.") 'elpy-goto-definition))
-    (if (not (fboundp 'xref-find-definitions-other-window))
-        (define-key map (kbd "C-x 4 M-.") 'elpy-goto-definition-other-window)
-      (define-key map (kbd "C-x 4 M-.") 'xref-find-definitions-other-window))
-    (when (fboundp 'xref-pop-marker-stack)
-        (define-key map (kbd "M-*") 'xref-pop-marker-stack))
+    (define-key map (kbd "C-x 4 M-.") 'xref-find-definitions-other-window)
+    (define-key map (kbd "M-*") 'xref-pop-marker-stack)
 
     (define-key map (kbd "M-TAB") 'elpy-company-backend)
 
@@ -451,9 +446,7 @@ This option need to bet set through `customize' or `customize-set-variable' to b
     ["Go to Definition" elpy-goto-definition
      :help "Go to the definition of the symbol at point"]
     ["Go to previous definition" pop-tag-mark
-     :active (if (version< emacs-version "25.1")
-                 (not (ring-empty-p find-tag-marker-ring))
-               (> xref-marker-ring-length 0))
+     :active (> xref-marker-ring-length 0)
      :help "Return to the position"]
     ["Complete" elpy-company-backend
      :keys "M-TAB"
@@ -640,15 +633,9 @@ warnings.filterwarnings('ignore', category=FutureWarning)
 warnings.filterwarnings('ignore', category=DeprecationWarning)
 warnings.filterwarnings('ignore', category=PendingDeprecationWarning)
 
-try:
-    from distutils.version import LooseVersion
-except ModuleNotFoundError:
-    from packaging.version import parse as LooseVersion
+from packaging.version import parse as LooseVersion
 
-try:
-    import urllib2 as urllib
-except ImportError:
-    import urllib.request as urllib
+import urllib.request as urllib
 
 
 # Check if we can connect to pypi quickly enough
@@ -1762,11 +1749,8 @@ with a prefix argument)."
 
 If OTHER-WINDOW-P is non-nil, show the same in other window."
 
-  ;; `find-tag-marker-ring' is marked as obsolete in 25.1
-  ;; and not available in 27.
-  (if (version< emacs-version "25.1")
-      (ring-insert find-tag-marker-ring (point-marker))
-    (xref-push-marker-stack))
+  ;; `find-tag-marker-ring' was removed in Emacs 27.
+  (xref-push-marker-stack)
   (let ((buffer (find-file-noselect filename)))
     (if other-window-p
         (pop-to-buffer buffer t)
@@ -3357,15 +3341,14 @@ Meant to be used as a hook to `after-change-functions'."
                    (ov (make-overlay beg end))
                    (marker-string "*fringe-dummy*")
                    (marker-length (length marker-string)))
-              (when (version<= "25.2" emacs-version)
-                (put-text-property 0 marker-length
+              (put-text-property 0 marker-length
                                    'display
                                    (list
                                     'left-fringe
                                     'elpy-folding-fringe-foldable-marker
                                     'elpy-folding-fringe-face)
                                    marker-string)
-                (overlay-put ov 'before-string marker-string))
+              (overlay-put ov 'before-string marker-string)
               (overlay-put ov 'elpy-hs-foldable t))))))))
 
 ;; Mouse interaction
@@ -3628,13 +3611,8 @@ If a region is selected, fold that region."
   (pcase command
     (`global-init
      (require 'flymake)
-     ;; flymake modeline is quite useful for emacs > 26.1
-     (when (version< emacs-version "26.1")
-       (elpy-modules-remove-modeline-lighter 'flymake-mode))
-     ;; Add our initializer function.
-     (unless (version<= "26.1" emacs-version)
-       (add-to-list 'flymake-allowed-file-name-masks
-                    '("\\.py\\'" elpy-flymake-python-init))))
+     ;; flymake modeline is quite useful
+     )
 
     (`buffer-init
      ;; Avoid fringes clash between flymake and folding indicators
@@ -3642,15 +3620,14 @@ If a region is selected, fold that region."
               elpy-folding-fringe-indicators)
          (setq-local flymake-fringe-indicator-position 'right-fringe)
        (setq-local flymake-fringe-indicator-position 'left-fringe))
-     ;; For emacs > 26.1, python.el natively supports flymake,
+     ;; python.el natively supports flymake,
      ;; so we just tell python.el to use the wanted syntax checker
-     (when (version<= "26.1" emacs-version)
-       (setq-local python-flymake-command
-                   (let ((command (split-string elpy-syntax-check-command)))
-                     (if (string= (file-name-nondirectory (car command))
-                                  "flake8")
-                         (append command '("-"))
-                       command))))
+     (setq-local python-flymake-command
+                 (let ((command (split-string elpy-syntax-check-command)))
+                   (if (string= (file-name-nondirectory (car command))
+                                "flake8")
+                       (append command '("-"))
+                     command)))
 
      ;; `flymake-no-changes-timeout': The original value of 0.5 is too
      ;; short for Python code, as that will result in the current line
@@ -3668,37 +3645,16 @@ If a region is selected, fold that region."
           nil)
 
      ;; Enable warning faces for flake8 output.
-     ;; Useless for emacs >= 26.1, as warning are handled fine
-     ;; COMPAT: Obsolete variable as of 24.4
-     (cond
-      ((version<= "26.1" emacs-version)
-       (setq-default python-flymake-msg-alist
-                     '(("^W[0-9]+" . :warning)
-                       ("^E[0-9]+" . :error))))
-      ((boundp 'flymake-warning-predicate)
-       (set (make-local-variable 'flymake-warning-predicate) "^W[0-9]"))
-      (t
-       (set (make-local-variable 'flymake-warning-re) "^W[0-9]")))
+     (setq-default python-flymake-msg-alist
+                   '(("^W[0-9]+" . :warning)
+                     ("^E[0-9]+" . :error)))
 
-     ;; for emacs >= 26.1, elpy relies on `python-flymake-command`, and
-     ;; doesn't need `python-check-command` anymore.
-     (when (and (buffer-file-name)
-                (or (version<= "26.1" emacs-version)
-                    (executable-find python-check-command)))
+     (when (buffer-file-name)
        (flymake-mode 1)))
     (`buffer-stop
      (flymake-mode -1)
      (kill-local-variable 'flymake-no-changes-timeout)
-     (kill-local-variable 'flymake-start-syntax-check-on-newline)
-     ;; Disable warning faces for flake8 output.
-     ;; Useless for emacs >= 26.1, as warning are handled fine
-     ;; COMPAT: Obsolete variable as of 24.4
-     (cond
-      ((version<= "26.1" emacs-version) t)
-      ((boundp 'flymake-warning-predicate)
-       (kill-local-variable 'flymake-warning-predicate))
-      (t
-       (kill-local-variable 'flymake-warning-re))))))
+     (kill-local-variable 'flymake-start-syntax-check-on-newline))))
 
 
 (defun elpy-flymake-python-init ()
@@ -3898,106 +3854,6 @@ If a region is selected, fold that region."
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Backwards compatibility
 
-;; TODO Some/most of this compatibility code can now go, as minimum required
-;; Emacs version is 24.4.
-
-;; Functions for Emacs 24 before 24.3
-(unless (fboundp 'python-info-current-defun)
-  (defalias 'python-info-current-defun 'python-current-defun))
-
-(unless (fboundp 'python-nav-forward-statement)
-  (defun python-nav-forward-statement (&rest ignored)
-    "Function added in Emacs 24.3"
-    (error "Enhanced Python navigation only available in Emacs 24.3+")))
-
-(unless (fboundp 'python-nav-backward-up-list)
-  (defun python-nav-backward-up-list ()
-    "Compatibility function for older Emacsen"
-    (ignore-errors
-      (backward-up-list))))
-
-(unless (fboundp 'python-shell-calculate-exec-path)
-  (defun python-shell-calculate-exec-path ()
-    "Compatibility function for older Emacsen."
-    exec-path))
-
-(unless (fboundp 'python-shell-calculate-process-environment)
-  (defun python-shell-calculate-process-environment ()
-    "Compatibility function for older Emacsen."
-    process-environment))
-
-(unless (fboundp 'python-shell-get-process-name)
-  (defun python-shell-get-process-name (_dedicated)
-    "Compatibility function for older Emacsen."
-    "Python"))
-
-(unless (fboundp 'python-shell-parse-command)
-  (defun python-shell-parse-command ()
-    "Compatibility function for older Emacsen."
-    python-python-command))
-
-(unless (fboundp 'python-shell-send-buffer)
-  (defun python-shell-send-buffer (&optional _arg)
-    (python-send-buffer)))
-
-(unless (fboundp 'python-shell-send-string)
-  (defalias 'python-shell-send-string 'python-send-string))
-
-(unless (fboundp 'python-indent-shift-right)
-  (defalias 'python-indent-shift-right 'python-shift-right))
-
-(unless (fboundp 'python-indent-shift-left)
-  (defalias 'python-indent-shift-left 'python-shift-left))
-
-;; Emacs 24.2 made `locate-dominating-file' accept a predicate instead
-;; of a string. Simply overwrite the current one, it's
-;; backwards-compatible. The code below is taken from Emacs 24.3.
-(when (or (< emacs-major-version 24)
-          (and (= emacs-major-version 24)
-               (<= emacs-minor-version 2)))
-  (defun locate-dominating-file (file name)
-    "Look up the directory hierarchy from FILE for a directory containing NAME.
-Stop at the first parent directory containing a file NAME,
-and return the directory.  Return nil if not found.
-Instead of a string, NAME can also be a predicate taking one argument
-\(a directory) and returning a non-nil value if that directory is the one for
-which we're looking."
-    ;; We used to use the above locate-dominating-files code, but the
-    ;; directory-files call is very costly, so we're much better off doing
-    ;; multiple calls using the code in here.
-    ;;
-    ;; Represent /home/luser/foo as ~/foo so that we don't try to look for
-    ;; `name' in /home or in /.
-    (setq file (abbreviate-file-name file))
-    (let ((root nil)
-          ;; `user' is not initialized outside the loop because
-          ;; `file' may not exist, so we may have to walk up part of the
-          ;; hierarchy before we find the "initial UID".  Note: currently unused
-          ;; (user nil)
-          try)
-      (while (not (or root
-                      (null file)
-                      ;; FIXME: Disabled this heuristic because it is sometimes
-                      ;; inappropriate.
-                      ;; As a heuristic, we stop looking up the hierarchy of
-                      ;; directories as soon as we find a directory belonging
-                      ;; to another user.  This should save us from looking in
-                      ;; things like /net and /afs.  This assumes that all the
-                      ;; files inside a project belong to the same user.
-                      ;; (let ((prev-user user))
-                      ;;   (setq user (nth 2 (file-attributes file)))
-                      ;;   (and prev-user (not (equal user prev-user))))
-                      (string-match locate-dominating-stop-dir-regexp file)))
-        (setq try (if (stringp name)
-                      (file-exists-p (expand-file-name name file))
-                    (funcall name file)))
-        (cond (try (setq root file))
-              ((equal file (setq file (file-name-directory
-                                       (directory-file-name file))))
-               (setq file nil))))
-      (if root (file-name-as-directory root))))
-  )
-
 ;; highlight-indentation 0.5 does not use modes yet
 (unless (fboundp 'highlight-indentation-mode)
   (defun highlight-indentation-mode (on-or-off)
@@ -4008,69 +3864,6 @@ which we're looking."
      ((and (<= on-or-off 0)
            highlight-indent-active)
       (highlight-indentation)))))
-
-;; https://debbugs.gnu.org/cgi/bugreport.cgi?bug=25753#44
-(when (version< emacs-version "25.2")
-  (defun python-shell-completion-native-try ()
-    "Return non-nil if can trigger native completion."
-    (let ((python-shell-completion-native-enable t)
-          (python-shell-completion-native-output-timeout
-           python-shell-completion-native-try-output-timeout))
-      (python-shell-completion-native-get-completions
-       (get-buffer-process (current-buffer))
-       nil "_"))))
-
-;; python.el in Emacs 24 does not have functions to determine buffer encoding.
-;; In these versions, we fix the encoding to utf-8 (safe choice when no encoding
-;; is defined since Python 2 uses ASCII and Python 3 UTF-8).
-(unless (fboundp 'python-info-encoding)
-  (defun python-info-encoding ()
-    'utf-8))
-
-;; first-prompt-hook has been added in emacs 25.
-;; for earlier versions, make sure Elpy's setup code is
-;; still send to the python shell.
-(unless (boundp 'python-shell-first-prompt-hook)
-  (add-hook 'inferior-python-mode-hook
-            (lambda ()
-              (when (elpy-project-root)
-                (let ((process (get-buffer-process (current-buffer))))
-                  (python-shell-send-string
-                   (format "import sys;sys.path.append('%s');del sys"
-                           (elpy-project-root))
-                   process))))))
-
-
-
-;; Added in Emacs 25
-(unless (fboundp 'python-shell-comint-end-of-output-p)
-  (defun python-shell-comint-end-of-output-p (output)
-    "Return non-nil if OUTPUT is ends with input prompt."
-    (string-match
-     ;; XXX: It seems on macOS an extra carriage return is attached
-     ;; at the end of output, this handles that too.
-     (concat
-      "\r?\n?"
-      ;; Remove initial caret from calculated regexp
-      (replace-regexp-in-string
-       (rx string-start ?^) ""
-       python-shell--prompt-calculated-input-regexp)
-      (rx eos))
-     output)))
-
-(unless (fboundp 'python-info-docstring-p)
-  (defun python-info-docstring-p (&optional syntax-ppss)
-    "Return non-nil if point is in a docstring."
-    (save-excursion
-      (and (progn (python-nav-beginning-of-statement)
-                  (looking-at "\\(\"\\|'\\)"))
-           (progn (forward-line -1)
-                  (beginning-of-line)
-                  (python-info-looking-at-beginning-of-defun))))))
-
-(unless (fboundp 'alist-get)
-  (defun alist-get (key alist &rest rest)
-    (cdr (assoc key alist))))
 
 (provide 'elpy)
 ;;; elpy.el ends here

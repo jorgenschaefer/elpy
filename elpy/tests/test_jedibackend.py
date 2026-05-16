@@ -4,15 +4,11 @@ import sys
 import unittest
 
 import jedi
-try:
-    from unittest import mock
-except ImportError:
-    import mock
+from unittest import mock
 import re
 
 from elpy import jedibackend
 from elpy import rpc
-from elpy.tests import compat
 from elpy.tests.support import BackendTestCase
 from elpy.tests.support import RPCGetCompletionsTests
 from elpy.tests.support import RPCGetCompletionDocstringTests
@@ -94,36 +90,17 @@ class TestRPCGetOnelineDocstring(RPCGetOnelineDocstringTests,
 
     def __init__(self, *args, **kwargs):
         super(TestRPCGetOnelineDocstring, self).__init__(*args, **kwargs)
-        if sys.version_info >= (3, 6):
-            self.JSON_LOADS_DOCSTRING = (
-                'Deserialize ``s`` (a ``str``, ``bytes`` or'
-                ' ``bytearray`` instance containing a JSON'
-                ' document) to a Python object.'
-            )
-            if sys.version_info >= (3, 12):
-                self.JSON_DOCSTRING = (
-                    "JSON (JavaScript Object Notation) <https://json.org>"
-                    " is a subset of JavaScript syntax (ECMA-262"
-                    " 3rd edition) used as a lightweight data interchange format.")
-            else:
-                self.JSON_DOCSTRING = (
-                    "JSON (JavaScript Object Notation) <http://json.org>"
-                    " is a subset of JavaScript syntax (ECMA-262"
-                    " 3rd edition) used as a lightweight data interchange format.")
-        elif sys.version_info >= (3, 0):
-            self.JSON_LOADS_DOCSTRING = (
-                'Deserialize ``s`` (a ``str`` instance '
-                'containing a JSON document) to a Python object.'
-            )
+        self.JSON_LOADS_DOCSTRING = (
+            'Deserialize ``s`` (a ``str``, ``bytes`` or'
+            ' ``bytearray`` instance containing a JSON'
+            ' document) to a Python object.'
+        )
+        if sys.version_info >= (3, 12):
             self.JSON_DOCSTRING = (
-                "JSON (JavaScript Object Notation) <http://json.org>"
+                "JSON (JavaScript Object Notation) <https://json.org>"
                 " is a subset of JavaScript syntax (ECMA-262"
                 " 3rd edition) used as a lightweight data interchange format.")
         else:
-            self.JSON_LOADS_DOCSTRING = (
-                'Deserialize ``s`` (a ``str`` or ``unicode`` '
-                'instance containing a JSON document) to a Python object.'
-            )
             self.JSON_DOCSTRING = (
                 "JSON (JavaScript Object Notation) <http://json.org>"
                 " is a subset of JavaScript syntax (ECMA-262"
@@ -193,34 +170,24 @@ class TestRPCGetCalltip(RPCGetCalltipTests,
     ADD_CALLTIP = {'index': 0,
                    'params': [u'a', u'b'],
                    'name': u'add'}
-    if compat.PYTHON3:
-        if jedibackend.JEDISUP19:
-            THREAD_CALLTIP = {'name': 'Thread',
-                              'index': 0,
-                              'params': ['group: None=None',
-                                         'target: Callable[..., object] | None=None',
-                                         'name: str | None=None',
-                                         'args: Iterable[Any]=()',
-                                         'kwargs: Mapping[str, Any] | None=None',
-                                         'daemon: bool | None=None']}
-        else:
-            THREAD_CALLTIP = {'name': 'Thread',
-                              'index': 0,
-                              'params': ['group: None=...',
-                                         'target: Optional[Callable[..., Any]]=...',
-                                         'name: Optional[str]=...',
-                                         'args: Iterable[Any]=...',
-                                         'kwargs: Mapping[str, Any]=...',
-                                         'daemon: Optional[bool]=...']}
-
+    if jedibackend.JEDISUP19:
+        THREAD_CALLTIP = {'name': 'Thread',
+                          'index': 0,
+                          'params': ['group: None=None',
+                                     'target: Callable[..., object] | None=None',
+                                     'name: str | None=None',
+                                     'args: Iterable[Any]=()',
+                                     'kwargs: Mapping[str, Any] | None=None',
+                                     'daemon: bool | None=None']}
     else:
-        THREAD_CALLTIP = {'index': 0,
-                          'name': u'Thread',
-                          'params': [u'group: None=...',
-                                     u'target: Optional[Callable[..., Any]]=...',
-                                     u'name: Optional[str]=...',
-                                     u'args: Iterable[Any]=...',
-                                     u'kwargs: Mapping[str, Any]=...']}
+        THREAD_CALLTIP = {'name': 'Thread',
+                          'index': 0,
+                          'params': ['group: None=...',
+                                     'target: Optional[Callable[..., Any]]=...',
+                                     'name: Optional[str]=...',
+                                     'args: Iterable[Any]=...',
+                                     'kwargs: Mapping[str, Any]=...',
+                                     'daemon: Optional[bool]=...']}
 
     def test_should_not_fail_with_get_subscope_by_name(self):
         # Bug #677 / jedi#628

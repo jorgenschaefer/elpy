@@ -1,18 +1,9 @@
-"""Python 2/3 compatibility definitions.
+"""Compatibility definitions for test code.
 
-These are used by the rest of Elpy to keep compatibility definitions
-in one place.
-
+This module previously held Python 2/3 shims.  With Python 3.11+ as the
+minimum supported version, they are no longer needed.  The remaining
+public names are kept for import compatibility.
 """
 
-import sys
-
-
-if sys.version_info >= (3, 0):
-    PYTHON3 = True
-    import builtins
-    from io import StringIO
-else:
-    PYTHON3 = False
-    import __builtin__ as builtins  # noqa
-    from StringIO import StringIO  # noqa
+import builtins  # noqa: F401
+from io import StringIO  # noqa: F401

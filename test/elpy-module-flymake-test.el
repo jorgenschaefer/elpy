@@ -1,10 +1,6 @@
 (ert-deftest elpy-module-flymake-global-init ()
   (elpy-testcase ()
-    (elpy-module-flymake 'global-init)
-
-    (when (version< emacs-version "26.1")
-        (should (member '("\\.py\\'" elpy-flymake-python-init)
-                        flymake-allowed-file-name-masks)))))
+    (elpy-module-flymake 'global-init)))
 
 (ert-deftest elpy-module-flymake-buffer-init ()
   (elpy-testcase ((:project project-root
@@ -17,13 +13,7 @@
     ;; (should flymake-mode)
 
     (should (equal flymake-no-changes-timeout 60))
-    (should (equal flymake-start-syntax-check-on-newline nil))
-
-    (when (version< emacs-version "26.1")
-        (should (equal "^W[0-9]"
-                       (if (boundp 'flymake-warning-predicate)
-                           flymake-warning-predicate
-                         flymake-warning-re))))))
+    (should (equal flymake-start-syntax-check-on-newline nil))))
 
 (ert-deftest elpy-module-flymake-buffer-stop ()
   (elpy-testcase ()

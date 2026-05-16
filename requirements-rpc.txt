@@ -1,5 +1,4 @@
 jedi
 autopep8
 yapf
-setuptools; python_version<"3.12"
-packaging; python_version>="3.12"
+packaging

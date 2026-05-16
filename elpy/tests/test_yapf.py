@@ -9,12 +9,9 @@ from elpy.rpc import Fault
 from elpy.tests.support import BackendTestCase
 
 
-@unittest.skipIf(yapfutil.YAPF_NOT_SUPPORTED,
-                 'yapf not supported for current python version')
 class YAPFTestCase(BackendTestCase):
     def setUp(self):
-        if yapfutil.YAPF_NOT_SUPPORTED:
-            raise unittest.SkipTest
+        super().setUp()
 
     def test_fix_code_should_throw_error_for_invalid_code(self):
         src = 'x = '

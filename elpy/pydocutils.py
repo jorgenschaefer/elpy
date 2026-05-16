@@ -4,8 +4,6 @@ import types
 from pydoc import safeimport, resolve, ErrorDuringImport
 from pkgutil import iter_modules
 
-from elpy import compat
-
 # Types we want to recurse into (nodes).
 CONTAINER_TYPES = (type, types.ModuleType)
 # Types of attributes we can get documentation for (leaves).
@@ -15,10 +13,6 @@ PYDOC_TYPES = (type,
                types.BuiltinMethodType,
                types.MethodType,
                types.ModuleType)
-if not compat.PYTHON3:  # pragma: nocover
-    # Python 2 old style classes
-    CONTAINER_TYPES = tuple(list(CONTAINER_TYPES) + [types.ClassType])
-    PYDOC_TYPES = tuple(list(PYDOC_TYPES) + [types.ClassType])
 
 
 def get_pydoc_completions(modulename):
@@ -27,7 +21,6 @@ def get_pydoc_completions(modulename):
     Returns a list of possible values to be passed to pydoc.
 
     """
-    modulename = compat.ensure_not_unicode(modulename)
     modulename = modulename.rstrip(".")
     if modulename == "":
         return sorted(get_modules())
@@ -68,7 +61,6 @@ def get_modules(modulename=None):
     and packages.
 
     """
-    modulename = compat.ensure_not_unicode(modulename)
     if not modulename:
         try:
             return ([modname for (importer, modname, ispkg)
@@ -76,7 +68,6 @@ def get_modules(modulename=None):
                      if not modname.startswith("_")] +
                     list(sys.builtin_module_names))
         except OSError:
-            # Bug in Python 2.6, see #275
             return list(sys.builtin_module_names)
     try:
         module = safeimport(modulename)

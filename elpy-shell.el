@@ -517,12 +517,9 @@ Return non-nil is the shell is running and not busy, nil otherwise."
 ;; Echoing
 
 (defmacro elpy-shell--with-maybe-echo (body)
-  ;; Echoing is apparently buggy for emacs < 25...
-  (if (<= 25 emacs-major-version)
-      `(elpy-shell--with-maybe-echo-output
-        (elpy-shell--with-maybe-echo-input
-         ,body))
-    body))
+  `(elpy-shell--with-maybe-echo-output
+    (elpy-shell--with-maybe-echo-input
+     ,body)))
 
 
 (defmacro elpy-shell--with-maybe-echo-input (body)
@@ -1213,9 +1210,7 @@ switches focus to Python shell buffer."
 ;;;;;;;;;;;;;;;;;;;;;;;
 ;; Debugging features
 
-(when (version<= "25" emacs-version)
-
-  (defun elpy-pdb--refresh-breakpoints (lines)
+(defun elpy-pdb--refresh-breakpoints (lines)
     "Add new breakpoints at lines LINES of the current buffer."
     ;; Forget old breakpoints
     (python-shell-send-string-no-output "import bdb as __bdb; __bdb.Breakpoint.bplist={}; __bdb.Breakpoint.next=1;__bdb.Breakpoint.bpbynumber=[None]")
@@ -1367,7 +1362,7 @@ region or buffer."
     "Remove the breakpoints in the current region or buffer."
     (if (use-region-p)
         (remove-overlays (region-beginning) (region-end) 'elpy-breakpoint t)
-      (remove-overlays (point-min) (point-max) 'elpy-breakpoint t))))
+      (remove-overlays (point-min) (point-max) 'elpy-breakpoint t)))
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;

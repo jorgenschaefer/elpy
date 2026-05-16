@@ -21,7 +21,6 @@ import unittest
 
 from elpy import jedibackend
 from elpy.rpc import Fault
-from elpy.tests import compat
 
 if jedibackend.JEDISUP18:
     import pathlib
@@ -52,11 +51,7 @@ class BackendTestCase(unittest.TestCase):
             os.makedirs(os.path.dirname(full_name))
         except OSError:
             pass
-        if compat.PYTHON3:
-            fobj = open(full_name, "w", encoding="utf-8")
-        else:
-            fobj = open(full_name, "w")
-        with fobj as f:
+        with open(full_name, "w", encoding="utf-8") as f:
             f.write(contents)
         # return full_name
         if jedibackend.JEDISUP18:
@@ -353,10 +348,7 @@ class RPCGetCompletionsTests(GenericRPCTests):
         for candidate in expected:
             self.assertIn(candidate, actual)
 
-    if sys.version_info >= (3, 5) or sys.version_info < (3, 0):
-        JSON_COMPLETIONS = ["SONDecoder", "SONEncoder", "SONDecodeError"]
-    else:
-        JSON_COMPLETIONS = ["SONDecoder", "SONEncoder"]
+    JSON_COMPLETIONS = ["SONDecoder", "SONEncoder", "SONDecodeError"]
 
     def test_should_complete_imports(self):
         source, offset = source_and_offset("import json\n"
@@ -375,10 +367,7 @@ class RPCGetCompletionsTests(GenericRPCTests):
         completions = self.backend.rpc_get_completions(filename,
                                                        source,
                                                        offset)
-        if compat.PYTHON3:
-            expected = ["processing"]
-        else:
-            expected = ["file", "processing"]
+        expected = ["processing"]
         self.assertEqual(sorted([cand['suffix'] for cand in completions]),
                          sorted(expected))
 
@@ -388,10 +377,7 @@ class RPCGetCompletionsTests(GenericRPCTests):
         completions = self.backend.rpc_get_completions(filename,
                                                        source,
                                                        offset)
-        if sys.version_info < (3, 0):
-            compl = [u'me', u'METext']
-        else:
-            compl = ['me']
+        compl = ['me']
         self.assertEqual([cand['suffix'] for cand in completions],
                          compl)
 
@@ -862,8 +848,6 @@ class RPCGetOnelineDocstringTests(GenericRPCTests):
 
 @unittest.skipIf(not jedibackend.JEDISUP17,
                  "Refactoring not available with jedi<17")
-@unittest.skipIf(sys.version_info < (3, 6),
-                 "Jedi refactoring not available for python < 3.6")
 class RPCGetRenameDiffTests(object):
     METHOD = "rpc_get_rename_diff"
 
@@ -893,8 +877,6 @@ class RPCGetRenameDiffTests(object):
 
 @unittest.skipIf(not jedibackend.JEDISUP17,
                  "Refactoring not available with jedi<17")
-@unittest.skipIf(sys.version_info < (3, 6),
-                 "Jedi refactoring not available for python < 3.6")
 class RPCGetExtractFunctionDiffTests(object):
     METHOD = "rpc_get_extract_function_diff"
 
@@ -918,8 +900,6 @@ class RPCGetExtractFunctionDiffTests(object):
 
 @unittest.skipIf(not jedibackend.JEDISUP17,
                  "Refactoring not available with jedi<17")
-@unittest.skipIf(sys.version_info < (3, 6),
-                 "Jedi refactoring not available for python < 3.6")
 class RPCGetExtractVariableDiffTests(object):
     METHOD = "rpc_get_extract_variable_diff"
 
@@ -940,8 +920,6 @@ class RPCGetExtractVariableDiffTests(object):
 
 @unittest.skipIf(not jedibackend.JEDISUP17,
                  "Refactoring not available with jedi<17")
-@unittest.skipIf(sys.version_info < (3, 6),
-                 "Jedi refactoring not available for python < 3.6")
 class RPCGetInlineDiffTests(object):
     METHOD = "rpc_get_inline_diff"
 

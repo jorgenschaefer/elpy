@@ -1,6 +1,4 @@
 bumpversion
 coverage
-mock
 twine
 wheel
-toml

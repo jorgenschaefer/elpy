@@ -3,32 +3,16 @@
 """
 
 import os
-import sys
+
+from packaging.version import parse as parse_version
 
 from elpy.rpc import Fault
 
-YAPF_NOT_SUPPORTED = sys.version_info < (2, 7) or (
-    sys.version_info >= (3, 0) and sys.version_info < (3, 4))
-
-# This came from elpy/blackutil.py it should probably be in a library
 try:
-    from pkg_resources import parse_version
-except ImportError:  # pragma: no cover
-    try:
-        from packaging.version import parse as parse_version
-    except ImportError:  # pragma: no cover
-        def parse_version(*args, **kwargs):
-            raise Fault("Neither `packaging` nor `pkg_resources` could be imported, "
-                        "please reinstall Elpy RPC virtualenv with"
-                        " `M-x elpy-rpc-reinstall-virtualenv`", code=400)
-try:
-    if YAPF_NOT_SUPPORTED:
-        yapf_api = None
-    else:
-        from yapf.yapflib import yapf_api
-        from yapf.yapflib import file_resources
-        from yapf import __version__
-        yapf_version = parse_version(__version__)
+    from yapf.yapflib import yapf_api
+    from yapf.yapflib import file_resources
+    from yapf import __version__
+    yapf_version = parse_version(__version__)
 except ImportError:  # pragma: no cover
     yapf_api = None
 

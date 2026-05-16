@@ -1,7 +1,5 @@
-(unless (or (version< (elpy-rpc--get-python-version) "3.6" )
-            (version< emacs-version "25.0")  ;; diffs are not parsed properly before emacs 25
-            (string= (alist-get 'success (elpy-rpc-get-rename-diff "foo"))
-                     "Not available"))
+(unless (string= (alist-get 'success (elpy-rpc-get-rename-diff "foo"))
+                 "Not available")
 
 (ert-deftest elpy-refactor-rpc-inline-should-return-diff ()
   (elpy-testcase ((:project project-root "test.py"))
