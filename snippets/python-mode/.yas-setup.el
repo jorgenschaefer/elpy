@@ -1,3 +1,5 @@
+(require 'python)
+
 (defvar elpy-snippet-split-arg-arg-regex
 "\\([[:alnum:]*]+\\)\\(:[[:blank:]]*[[:alpha:]]*\\)?\\([[:blank:]]*=[[:blank:]]*[[:alnum:]]*\\)?"
 "Regular expression matching an argument of a python function.
