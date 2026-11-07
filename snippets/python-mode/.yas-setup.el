@@ -1,3 +1,5 @@
+;;; .yas-setup.el --- Helpers for elpy python-mode snippets  -*- lexical-binding: t -*-
+
 (defvar elpy-snippet-split-arg-arg-regex
 "\\([[:alnum:]*]+\\)\\(:[[:blank:]]*[[:alpha:]]*\\)?\\([[:blank:]]*=[[:blank:]]*[[:alnum:]]*\\)?"
 "Regular expression matching an argument of a python function.
